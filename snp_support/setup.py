@@ -18,6 +18,7 @@ setup(
         (os.path.join('share', package_name, 'urdf'), glob('urdf/*')),
         (os.path.join('share', package_name, 'meshes/hc10/visual'), glob('meshes/hc10/visual/*')),
         (os.path.join('share', package_name, 'meshes/hc10/collision'), glob('meshes/hc10/collision/*')),
+        (os.path.join('share', package_name, 'meshes/pushcorp'), glob('meshes/pushcorp/*')),
         (os.path.join('share', package_name), glob('rviz/*')),
     ],
     install_requires=['setuptools'],

@@ -11,7 +11,7 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
-    urdf_file_name = 'urdf/hc10.xacro'
+    urdf_file_name = 'urdf/workcell.xacro'
     urdf = os.path.join(
         get_package_share_directory('snp_support'),
         urdf_file_name)

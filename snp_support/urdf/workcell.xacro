@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<robot name="workcell" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find snp_support)/urdf/hc10.xacro"/>
+
+  <link name="pushcorp">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tool0_to_pushcorp" type="fixed">
+    <parent link="tool0"/>
+    <child link="pushcorp"/>
+    <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+</robot>
