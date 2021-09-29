@@ -19,13 +19,10 @@ def generate_launch_description():
     robot_desc_config = xacro.process_file(urdf)
     robot_desc = robot_desc_config.toxml()
 
-    rviz_file_name = 'demo.rviz'
+    rviz_file_name = 'rviz/demo.rviz'
     rviz = os.path.join(
         get_package_share_directory('snp_support'),
         rviz_file_name)
-
-    print(rviz)
-    print('-d %s' % rviz)
 
     return LaunchDescription([
         DeclareLaunchArgument(
