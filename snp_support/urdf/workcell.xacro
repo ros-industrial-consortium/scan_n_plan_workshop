@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot name="workcell" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find snp_support)/urdf/hc10.xacro"/>
+  <xacro:include filename="$(find snp_support)/urdf/mh180_120.xacro"/>
 
   <link name="pushcorp">
     <visual>
@@ -19,7 +19,104 @@
   <joint name="tool0_to_pushcorp" type="fixed">
     <parent link="tool0"/>
     <child link="pushcorp"/>
-    <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+    <origin xyz="0 0 0" rpy="${pi/2} ${pi} 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <material name="gray">
+    <color rgba="0.5 0.5 0.5 1"/>
+  </material>
+
+  <link name="floor"/>
+
+  <link name="platform">
+    <visual>
+      <geometry>
+        <box size="3 3 0.25"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="3 3 0.25"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="robot_mount">
+    <visual>
+      <geometry>
+        <box size="1 1 .75"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="1 1 .75"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="control_boxes">
+    <visual>
+      <geometry>
+        <box size="3.0 1.0 1.75"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="3.0 1.0 1.75"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="pushcorp_box">
+   <visual>
+      <geometry>
+        <box size="0.75 0.5 1.5"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.75 0.5 1.5"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="floor_to_platform" type="fixed">
+    <parent link="floor"/>
+    <child link="platform"/>
+    <origin xyz="0 0 0.125" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="platform_to_mount" type="fixed">
+    <parent link="platform"/>
+    <child link="robot_mount"/>
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="platform_to_control_boxes" type="fixed">
+    <parent link="platform"/>
+    <child link="control_boxes"/>
+    <origin xyz="1 -2.5 0.75" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="mount_to_base" type="fixed">
+    <parent link="robot_mount"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.375" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="platform_to_pushcorp_box" type="fixed">
+    <parent link="platform"/>
+    <child link="pushcorp_box"/>
+    <origin xyz="-1 1.25 0.625" rpy="0 0 0"/>
     <axis xyz="0 0 0"/>
   </joint>
 
