@@ -3,24 +3,46 @@
 
   <xacro:include filename="$(find snp_support)/urdf/mh180_120.xacro"/>
 
-  <link name="pushcorp">
+  <link name="pushcorp_base">
     <visual>
       <geometry>
-        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp.dae"/>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_base.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp.dae"/>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_base.dae"/>
       </geometry>
     </collision>
   </link>
 
-  <joint name="tool0_to_pushcorp" type="fixed">
+  <link name="pushcorp_compliance">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_compliance.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_compliance.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tool0_to_pushcorp_base" type="fixed">
     <parent link="tool0"/>
-    <child link="pushcorp"/>
-    <origin xyz="0 0 0" rpy="${pi/2} ${pi} 0"/>
+    <child link="pushcorp_base"/>
+    <origin xyz="0 0 0.01635" rpy="${pi/2} 0 ${pi}"/>
     <axis xyz="0 0 0"/>
+  </joint>
+
+  <!-- TODO do we care about effort and velocity limits?-->
+  <joint name="pushcorp_actuator" type="prismatic">
+    <parent link="pushcorp_base"/>
+    <child link="pushcorp_compliance"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit upper="0.01778" lower="-0.01778" effort="0" velocity="0"/>
   </joint>
 
   <material name="light_gray">
