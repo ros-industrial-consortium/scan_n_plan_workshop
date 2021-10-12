@@ -1,0 +1,201 @@
+<?xml version="1.0" ?>
+<robot name="workcell" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find snp_support)/urdf/mh180_120.xacro"/>
+
+  <link name="pushcorp_base">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_base.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_base.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="pushcorp_compliance">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_compliance.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/pushcorp/pushcorp_compliance.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tool0_to_pushcorp_base" type="fixed">
+    <parent link="tool0"/>
+    <child link="pushcorp_base"/>
+    <origin xyz="0 0 0.01635" rpy="${pi/2} 0 ${pi}"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <!-- TODO do we care about effort and velocity limits?-->
+  <joint name="pushcorp_actuator" type="prismatic">
+    <parent link="pushcorp_base"/>
+    <child link="pushcorp_compliance"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit upper="0.01778" lower="-0.01778" effort="0" velocity="0"/>
+  </joint>
+
+  <material name="light_gray">
+    <color rgba="0.7 0.7 0.7 1"/>
+  </material>
+
+  <material name="dark_gray">
+    <color rgba="0.3 0.3 0.3 1"/>
+  </material>
+
+  <xacro:property name="platform_height" value="${5*0.0254}"/>
+  <xacro:property name="mount_height" value="${19.6*0.0254}"/>
+  <xacro:property name="mount_width" value="${28.5*0.0254}"/>
+  <xacro:property name="pushcorp_box_height" value="${30*0.0254}"/>
+  <xacro:property name="pushcorp_box_width" value="${17*0.0254}"/>
+  <xacro:property name="pushcorp_box_length" value="${28*0.0254}"/>
+  <xacro:property name="control_boxes_height" value="${60*0.0254}"/>
+  <xacro:property name="control_boxes_width" value="${38*0.0254}"/>
+  <xacro:property name="control_boxes_length" value="${130*0.0254}"/>
+
+  <link name="floor"/>
+
+  <link name="platform">
+    <visual>
+      <geometry>
+        <box size="${96*0.0254} ${72*0.0254} ${platform_height}"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${96*0.0254} ${72*0.0254} ${platform_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="robot_mount">
+    <visual>
+      <geometry>
+        <box size="${mount_width} ${mount_width} ${mount_height}"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${mount_width} ${mount_width} ${mount_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="pushcorp_box_support_1">
+    <visual>
+      <geometry>
+        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="pushcorp_box_support_2">
+    <visual>
+      <geometry>
+        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="pushcorp_box">
+    <visual>
+      <geometry>
+        <box size="${pushcorp_box_length} ${pushcorp_box_width} ${pushcorp_box_height}"/>
+      </geometry>
+      <material name="light_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${pushcorp_box_length} ${pushcorp_box_width} ${pushcorp_box_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="control_boxes">
+   <visual>
+      <geometry>
+        <box size="${control_boxes_length} ${control_boxes_width} ${control_boxes_height}"/>
+      </geometry>
+      <material name="light_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${control_boxes_length} ${control_boxes_width} ${control_boxes_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="floor_to_platform" type="fixed">
+    <parent link="floor"/>
+    <child link="platform"/>
+    <origin xyz="0 0 ${platform_height/2}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="platform_to_mount" type="fixed">
+    <parent link="platform"/>
+    <child link="robot_mount"/>
+    <origin xyz="0 0 ${platform_height/2 + mount_height/2}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="floor_to_control_boxes" type="fixed">
+    <parent link="floor"/>
+    <child link="control_boxes"/>
+    <origin xyz="${4*0.0254 + control_boxes_length/2} -${56*0.0254 + control_boxes_width/2} ${control_boxes_height/2}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="mount_to_base" type="fixed">
+    <parent link="robot_mount"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${mount_height/2}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="floor_to_pushcorp_support_1" type="fixed">
+    <parent link="floor"/>
+    <child link="pushcorp_box_support_1"/>
+    <origin xyz="-${mount_width/2 + 2.75*0.0254} ${mount_width/2 + 16.25*0.0254} ${20.25*0.0254+platform_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="floor_to_pushcorp_support_2" type="fixed">
+    <parent link="floor"/>
+    <child link="pushcorp_box_support_2"/>
+    <origin xyz="-${mount_width/2 + 1.25*0.0254 + pushcorp_box_length} ${mount_width/2 + 16.25*0.0254} ${20.25*0.0254+platform_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <joint name="floor_to_pushcorp_box" type="fixed">
+    <parent link="floor"/>
+    <child link="pushcorp_box"/>
+    <origin xyz="-${mount_width/2 + 2*0.0254 + pushcorp_box_length/2} ${mount_width/2 + 17*0.0254 + pushcorp_box_width/2} ${14*0.0254 + pushcorp_box_height/2}" rpy="0 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+</robot>
