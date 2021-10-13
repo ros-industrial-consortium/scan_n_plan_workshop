@@ -1,10 +1,23 @@
-#include <memory> // std::make_shared(), std::shared_ptr
+#include <snp_tpp/snp_tpp.h>
 
-#include <rclcpp/rclcpp.hpp>
-#include <snp_msgs/srv/generate_tool_paths.hpp>
+#include <functional> // std::bind(), std::placeholders
 
-void callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request,
-                 const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Response> response)
+namespace snp_tpp
+{
+
+TPPNode::TPPNode(const std::string& name)
+  : rclcpp::Node(name)
+{
+  srvr_ = this->create_service<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths",
+                                                                 std::bind(&TPPNode::callPlanner,
+                                                                           this,
+                                                                           std::placeholders::_1,
+                                                                           std::placeholders::_2));
+  return;
+}
+
+void TPPNode::callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request,
+                          const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Response> response)
 {
   // Unpack the request
   // Convert shape_msgs::Mesh to pcl::PolygonMesh
@@ -16,23 +29,21 @@ void callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request
   return;
 }
 
+} // namespace snp_tpp
+
 int main(int argc, char **argv)
 {
   // Initialize ROS2
   rclcpp::init(argc, argv);
 
   // Instantiate a ROS2 node
-  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("tool_path_planning_server");
-
-  // Initialize the service server
-  rclcpp::Service<snp_msgs::srv::GenerateToolPaths>::SharedPtr srvr =
-      node->create_service<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths", &callPlanner);
+  std::shared_ptr<rclcpp::Node> tpp_node = std::make_shared<snp_tpp::TPPNode>("tool_path_planning_server");
 
   // Notify that this node is ready
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Tool Path Planning Server is ready");
 
   // Spin to accept service calls until ROS shuts down.
-  rclcpp::spin(node);
+  rclcpp::spin(tpp_node);
   rclcpp::shutdown();
   return 0;
 }

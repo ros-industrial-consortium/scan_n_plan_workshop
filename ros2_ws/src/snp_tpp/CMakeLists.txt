@@ -21,6 +21,9 @@ find_package(rclcpp REQUIRED)
 find_package(snp_msgs REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/snp_tpp_node.cpp)
+target_include_directories(${PROJECT_NAME}_node PRIVATE
+    include
+)
 ament_target_dependencies(${PROJECT_NAME}_node rclcpp snp_msgs)
 #rosidl_target_interfaces(${PROJECT_NAME}_node "rosidl_typesupport_cpp")
 
