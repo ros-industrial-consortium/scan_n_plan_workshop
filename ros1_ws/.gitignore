@@ -2,3 +2,6 @@
 /devel
 /install
 /logs
+/.catkin_tools
+/*.workspace
+/*.workspace.user
