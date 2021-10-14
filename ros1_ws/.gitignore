@@ -3,3 +3,6 @@
 /install
 /log
 /logs
+/.catkin_tools
+/*.workspace
+/*.workspace.user

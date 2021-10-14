@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<robot name="workcell" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="snp_workcell" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include filename="$(find snp_support)/urdf/mh180_120.xacro"/>
 

@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="rviz" default="true" />
+  <arg name="robot_ip" default="192.168.1.1" />
+  <arg name="sim_robot" default="true" />
+  <arg name="sim_sensor" default="true" />
+
+  <!-- Tesseract Monitor Parameters -->
+  <arg name="robot_description" default="robot_description"/>
+  <arg name="discrete_plugin" default="BulletDiscreteBVHManager"/>
+  <arg name="continuous_plugin" default="BulletCastBVHManager"/>
+  <arg name="joint_state_topic" default=""/>
+  <arg name="monitor_namespace" default="snp_workshop_environment"/>
+
+  <!-- Load universal robot description format (URDF) -->
+  <param name="$(arg robot_description)" command="$(find xacro)/xacro --inorder '$(find snp_support)/urdf/workcell.xacro'" />
+
+  <!-- The semantic description that corresponds to the URDF -->
+  <param name="$(arg robot_description)_semantic" textfile="$(find snp_support)/config/workcell.srdf" />
+
+  <!-- Launch Tesseract Monitor -->
+  <node pkg="tesseract_monitoring" type="tesseract_monitoring_environment_node" name="tesseract_environment_monitor" output="screen" required="true">
+    <param name="robot_description" type="string" value="$(arg robot_description)"/>
+    <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
+    <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
+    <param name="joint_state_topic" type="string" value="$(arg joint_state_topic)"/>
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)"/>
+    <param name="publish_environment" type="bool" value="true"/>
+  </node>
+
+  <!-- Launch Tesseract Planning Server -->
+  <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
+  <node pkg="snp_motion_planning" type="snp_motion_planning_planning_server_node" name="snp_planning_server" output="screen" required="true">
+    <param name="robot_description" type="string" value="$(arg robot_description)"/>
+    <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
+    <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)_planning_server"/>
+    <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
+  </node>
+
+  <!-- Launch Tesseract Contact Monitor -->
+  <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
+  <node name="tesseract_contact_monitoring" pkg="tesseract_monitoring" type="tesseract_monitoring_contacts_node" required="true">
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)_contact_monitor"/>
+    <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
+    <param name="publish_markers" value="true"/>
+    <param name="publish_environment" value="true"/>
+  </node>
+
+  <!-- Launch joint state publisher and listen to robot_joint_states -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <rosparam>
+      source_list:
+        robot_joint_states
+    </rosparam>
+  </node>
+
+  <!-- Launch robot drivers -->
+  <include unless="$(arg sim_robot)" file="$(find snp_bringup_ros1)/launch/robot_interface_streaming_mh180_120.launch">
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+  </include>
+
+  <!-- Launch realsense drivers -->
+  <include unless="$(arg sim_sensor)" file="$(find snp_bringup_ros1)/launch/bringup_realsense.launch">
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+  </include>
+
+  <!-- Launch RViz -->
+  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find snp_bringup_ros1)/config/snp.rviz" output="screen" required="true"/>
+
+</launch>
