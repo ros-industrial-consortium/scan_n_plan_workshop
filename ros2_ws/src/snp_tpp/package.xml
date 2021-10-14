@@ -14,8 +14,13 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <build_depend>ros_industrial_cmake_boilerplate</build_depend>
+  <depend>geometry_msgs</depend>
+  <depend>noether_tpp</depend>
   <depend>rclcpp</depend>
+  <depend>shape_msgs</depend>
   <depend>snp_msgs</depend>
+  <depend>tf2_eigen</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

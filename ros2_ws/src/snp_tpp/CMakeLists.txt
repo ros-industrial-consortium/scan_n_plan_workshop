@@ -17,15 +17,30 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(noether_tpp REQUIRED)
+find_package(PCL REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(shape_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
+find_package(tf2_eigen REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/snp_tpp_node.cpp)
 target_include_directories(${PROJECT_NAME}_node PRIVATE
-    include
+  include
+  ${PCL_INCLUDE_DIRS}
 )
-ament_target_dependencies(${PROJECT_NAME}_node rclcpp snp_msgs)
-#rosidl_target_interfaces(${PROJECT_NAME}_node "rosidl_typesupport_cpp")
+ament_target_dependencies(${PROJECT_NAME}_node
+  geometry_msgs
+  rclcpp
+  shape_msgs
+  snp_msgs
+  tf2_eigen
+)
+target_link_libraries(${PROJECT_NAME}_node
+  ${PCL_LIBRARIES}
+  noether::noether_tpp
+)
 
 install(TARGETS ${PROJECT_NAME}_node
   DESTINATION lib/${PROJECT_NAME}
