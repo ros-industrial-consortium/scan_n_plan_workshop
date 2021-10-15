@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<Workspace>
+    <Distribution path="/opt/ros/galactic"/>
+    <DefaultBuildSystem value="2"/>
+</Workspace>

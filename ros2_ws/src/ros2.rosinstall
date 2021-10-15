@@ -5,3 +5,6 @@
 # Industrial CMake Boilerplate
 # Macros and boilerplate code to make writing CMake easier
 - git: {local-name: ros_industrial_cmake_boilerplate, uri: 'https://github.com/ros-industrial/ros_industrial_cmake_boilerplate.git', version: master}
+
+# Open3d Interface
+- git: {local-name: open3d_interface, uri: 'https://github.com/Levi-Armstrong/open3d_interface.git', version: master}

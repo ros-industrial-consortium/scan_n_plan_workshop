@@ -3,3 +3,6 @@
 /install
 /log
 /logs
+/src/open3d_interface
+/*.workspace
+/*.workspace.user
