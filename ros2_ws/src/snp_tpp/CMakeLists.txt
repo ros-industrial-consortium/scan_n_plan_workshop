@@ -21,7 +21,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(noether_tpp REQUIRED)
 find_package(PCL REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(shape_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 
@@ -33,7 +32,6 @@ target_include_directories(${PROJECT_NAME}_node PRIVATE
 ament_target_dependencies(${PROJECT_NAME}_node
   geometry_msgs
   rclcpp
-  shape_msgs
   snp_msgs
   tf2_eigen
 )
