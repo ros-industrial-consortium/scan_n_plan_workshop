@@ -40,7 +40,14 @@ target_link_libraries(${PROJECT_NAME}_node
   noether::noether_tpp
 )
 
-install(TARGETS ${PROJECT_NAME}_node
+add_executable(${PROJECT_NAME}_test src/snp_tpp_test_node.cpp)
+ament_target_dependencies(${PROJECT_NAME}_test
+  geometry_msgs
+  rclcpp
+  snp_msgs
+)
+
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test
   DESTINATION lib/${PROJECT_NAME}
 )
 
