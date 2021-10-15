@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="sim_robot" default="true" />
+  <arg name="sim_sensor" default="true" />
+
+  <!-- Launch Toolpath Planning Node -->
+  <node pkg="snp_tpp" exec="snp_tpp_node">
+<!--    <param name="robot_description" type="string" value="$(arg robot_description)"/>-->
+  </node>
+
+  <!-- Launch Open3d Interface Node -->
+  <node pkg="open3d_interface" exec="open3d_yak">
+    <param name="depth_image_topic" value="/camera/depth_registered/image"/>
+    <param name="color_image_topic" value="/camera/rgb/image_rect_color"/>
+    <param name="camera_info_topic" value="/camera/rgb/camera_info"/>
+    <param name="cache_count" value="10"/>
+    <param name="slop" value="0.01"/>
+  </node>
+
+</launch>
