@@ -16,10 +16,6 @@
     uri: https://github.com/ros-industrial-consortium/tesseract_planning.git
     version: 4c4073ae94923a52457b55f03edfeb82097632ed
 - git:
-    local-name: tesseract_ros
-    uri: https://github.com/ros-industrial-consortium/tesseract_ros.git
-    version: 8b56cfc8cba6f0490fade6e03da9f6275e655279
-- git:
     local-name: descartes_light
     uri: https://github.com/swri-robotics/descartes_light.git
     version: 0eeeaf216677112c24d8ec51b984044e7f62c209
