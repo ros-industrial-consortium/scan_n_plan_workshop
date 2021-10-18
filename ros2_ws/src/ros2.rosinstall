@@ -3,7 +3,7 @@
 - git: {local-name: noether, uri: 'https://github.com/DavidMerzJr/noether.git', version: roscon-2021}
 
 # Open3d Interface
-- git: {local-name: open3d_interface, uri: 'https://github.com/Levi-Armstrong/open3d_interface.git', version: master}
+- git: {local-name: open3d_interface, uri: 'https://github.com/Levi-Armstrong/open3d_interface.git', version: ros2}
 
 # GL Depth SIM
 - git: {local-name: gl_depth_sim, uri: 'https://github.com/marrts/gl_depth_sim.git', version: ros2}
