@@ -23,8 +23,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TESSERACT_ROSUTILS_PLOTTING_H
-#define TESSERACT_ROSUTILS_PLOTTING_H
+#ifndef TESSERACT_ROSUTILS_ROS2_PLOTTING_H
+#define TESSERACT_ROSUTILS_ROS2_PLOTTING_H
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH

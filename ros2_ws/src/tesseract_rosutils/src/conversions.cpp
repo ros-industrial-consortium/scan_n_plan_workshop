@@ -25,15 +25,14 @@
  */
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
-//#include <eigen_conversions/eigen_msg.h>
 #include <iostream>
 #include <fstream>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string.hpp>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
-#include <tesseract_rosutils/conversions.h>
-#include <tesseract_rosutils/utils.h>
+#include <tesseract_rosutils/ros2/conversions.h>
+#include <tesseract_rosutils/ros2/utils.h>
 #include <tesseract_command_language/command_language.h>
 #include <tesseract_command_language/utils/flatten_utils.h>
 

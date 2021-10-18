@@ -23,8 +23,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TESSERACT_ROSUTILS_CONVERSIONS_H
-#define TESSERACT_ROSUTILS_CONVERSIONS_H
+#ifndef TESSERACT_ROSUTILS_ROS2_CONVERSIONS_H
+#define TESSERACT_ROSUTILS_ROS2_CONVERSIONS_H
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
@@ -76,4 +76,4 @@ bool toCSVFile(const std::vector<tesseract_msgs::msg::JointState>& trajectory_ms
 std::vector<tesseract_msgs::msg::JointState> trajectoryFromCSVFile(const std::string& file_path, char separator = ',');
 
 }  // namespace tesseract_rosutils
-#endif  // TESSERACT_ROSUTILS_CONVERSIONS_H
+#endif  // TESSERACT_ROSUTILS_ROS2_CONVERSIONS_H

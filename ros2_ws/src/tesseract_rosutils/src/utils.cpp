@@ -27,7 +27,6 @@
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <octomap_msgs/conversions.h>
-//#include <eigen_conversions/eigen_msg.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <tesseract_msgs/msg/string_limits_pair.h>
 #include <rclcpp/logging.hpp>
@@ -35,7 +34,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_command_language/core/serialization.h>
-#include <tesseract_rosutils/utils.h>
+#include <tesseract_rosutils/ros2/utils.h>
 #include <map>
 
 namespace tesseract_rosutils::ros2
