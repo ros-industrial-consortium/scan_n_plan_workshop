@@ -1,41 +1,34 @@
 #!/bin/bash
 
-# Install ROS?
-
-# Install ROS tools - colcon, rosdep, vcstool etc
-sudo apt-get install python3-colcon-common-extensions python3-rosdep python3-vcstool
-sudo rosdep init
-rosdep update
-
 # Get Taskflow
 sudo add-apt-repository ppa:ros-industrial/ppa
 sudo apt-get update
 sudo apt-get install taskflow
 
 # Clone workshop repo
-cd /home/user
-git clone
-https://github.com/ros-industrial-consortium/roscon_workshop_2021
+cd $HOME
+git clone https://github.com/ros-industrial-consortium/roscon_workshop_2021.git workshop/
 
 # Move to and vcstool dep_ws
-cd /home/user/roscon_workshop_2021/dep_ws/src
-vcs import < deps.rosinstall
+cd ~/workshop/dep_ws
+vcs import src/ < src/deps.rosinstall
+rosdep install --from-paths src --ignore-src --rosdistro noetic -r -y
 
 # Move to, vcstool, and rosdep ros1_ws
-cd /home/user/roscon_workshop_2021/ros1_ws/src
-vcs import < ros1.rosinstall
-cd /home/user/roscon_workshop_2021/ros1_ws
+cd ~/workshop/ros1_ws
+vcs import src/ < src/ros1.rosinstall
 rosdep install --from-paths src --ignore-src --rosdistro noetic -r -y
 
 # Move to, vcstool, and rosdep ros2_ws
-cd /home/user/roscon_workshop_2021/ros2_ws/src
-vcs import < ros2.rosinstall
-cd /home/user/roscon_workshop_2021/ros2_ws
-rosdep install --from-paths src --ignore-src --rosdistro galactic -r -y
+cd ~/workshop/ros2_ws
+vcs import src/ < src/ros2.rosinstall
+rosdep install --from-paths src --ignore-src --rosdistro foxy -r -y
 
 # Move to, vcstool, and rosdep bridge_ws
-cd /home/user/roscon_workshop_2021/bridge_ws/src
-vcs import < bridge.rosinstall
-cd /home/user/roscon_workshop_2021/bridge_ws
-rosdep install --from-paths src --ignore-src --rosdistro galactic -r -y
+cd ~/workshop/bridge_ws
+vcs import src/ < src/bridge.rosinstall
+rosdep install --from-paths src --ignore-src --rosdistro foxy -r -y
 
+# Build dep_ws
+cd ~/workshop/dep_ws
+colcon build --merge-install
