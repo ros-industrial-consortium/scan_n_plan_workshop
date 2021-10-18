@@ -1,11 +1,15 @@
+# Build-generated files
 /build
 /devel
 /install
 /log
 /logs
-/src/open3d_interface
+
+# IDE Files
 /*.workspace
 /*.workspace.user
+
+# Motion Planning Libraries
 /src/fcl
 /src/ifopt
 /src/industrial_calibration
@@ -17,4 +21,3 @@
 /src/trajopt_ros-2
 /src/trajopt_ros
 /src/descartes_light
-/src/gl_depth_sim

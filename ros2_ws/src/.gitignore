@@ -1,3 +1,5 @@
 # Add the directory for any dependencies in the rosinstall
+/gl_depth_sim
 /noether
+/open3d_interface
 /ros_industrial_cmake_boilerplate

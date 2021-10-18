@@ -70,7 +70,7 @@ void GetMotionPlanActionBridge::translate_goal_2_to_1(
   const ROS2Goal & goal2,
   ROS1Goal & goal1)
 {
-  goal1.request.environment_state
+  goal1.request.environment_state;
 
 //  goal1.trajectory.joint_names = goal2.trajectory.joint_names;
 //  const size_t num = goal2.trajectory.points.size();
