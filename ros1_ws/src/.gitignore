@@ -1,1 +1,4 @@
 # Add the directory for any dependencies in the rosinstall
+/motoman
+/rviz_camera_stream
+/tesseract_ros

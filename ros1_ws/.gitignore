@@ -1,18 +1,20 @@
+# Build-generated files
 /build
 /devel
 /install
 /log
 /logs
 /.catkin_tools
+
+# IDE Files
 /*.workspace
 /*.workspace.user
-/src/motoman
+
+# Motion Planning Libraries
 /src/tesseract-1
 /src/tesseract
 /src/tesseract_planning
-/src/tesseract_ros
 /src/trajopt_ros-2
 /src/trajopt_ros
 /src/opw_kinematics
 /src/descartes_light
-/src/rviz_camera_stream
