@@ -67,6 +67,22 @@
     <arg name="publish_tf" value="false" />
   </include>
 
+  <group if="$(arg sim_sensor)" ns="camera">
+    <node pkg="tf" type="static_transform_publisher" name="camera_broadcaster"
+        args="0.000, -0.590, -0.000 0.500, -0.500, 0.500, -0.500 camera_link camera_color_optical_frame 10" />
+    <node name="camera_info" pkg="rostopic" type="rostopic"
+        args="pub camera_info sensor_msgs/CameraInfo
+       '{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: 'camera_color_optical_frame'},
+        height: 720, width: 1280, distortion_model: 'plumb_bob',
+        D: [-0.053805962204933167, 0.06546983867883682, 0.0005139514687471092, -0.0007036244496703148, -0.02081681229174137],
+        K: [637.2805786132812, 0.0, 625.6758422851562, 0.0, 635.815185546875, 373.4616394042969, 0.0, 0.0, 1.0],
+        R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+        P: [637.2805786132812, 0.0, 625.6758422851562, 0.0, 0.0, 635.815185546875, 373.4616394042969, 0.0, 0.0, 0.0, 1.0, 0.0],
+        binning_x: 0, binning_y: 0,
+        roi: {x_offset: 0, y_offset: 0, height: 0, width: 0, do_rectify: false}}' -r 2"
+        output="screen"/>
+  </group>
+
   <!-- Launch RViz -->
   <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find snp_bringup_ros1)/config/snp.rviz" output="screen" required="true"/>
 
