@@ -7,8 +7,10 @@ Panels:
         - /Global Options1
         - /Status1
         - /EnvironmentState1/Environment1
-      Splitter Ratio: 0.5
-    Tree Height: 549
+        - /EnvironmentState1/Link Tree1
+        - /EnvironmentState1/Link Tree1/floor1
+      Splitter Ratio: 0.2851637899875641
+    Tree Height: 355
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -27,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: RealsenseRectColor
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -67,106 +69,174 @@ Visualization Manager:
       Joint State Monitor:
         Topic: joint_states
         Value: ""
-      Links:
+      Link Tree:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        control_boxes:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
+        Link Tree Style: Tree of links
         floor:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        link_b:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        link_l:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        link_r:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        link_s:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        link_t:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        link_u:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        platform:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        pushcorp_base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        pushcorp_box:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        pushcorp_box_support_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        pushcorp_box_support_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        pushcorp_compliance:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        tool0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
+          Details:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          control_boxes:
+            Details:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            Value: true
+          platform:
+            Details:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            Value: true
+            robot_mount:
+              Details:
+                Alpha: 1
+                Show Axes: false
+                Show Trail: false
+              Value: true
+              base_link:
+                Details:
+                  Alpha: 1
+                  Show Axes: true
+                  Show Trail: false
+                Value: true
+                base:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                link_s:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                  Value: true
+                  link_l:
+                    Details:
+                      Alpha: 1
+                      Show Axes: false
+                      Show Trail: false
+                    Value: true
+                    link_u:
+                      Details:
+                        Alpha: 1
+                        Show Axes: false
+                        Show Trail: false
+                      Value: true
+                      link_r:
+                        Details:
+                          Alpha: 1
+                          Show Axes: false
+                          Show Trail: false
+                        Value: true
+                        link_b:
+                          Details:
+                            Alpha: 1
+                            Show Axes: false
+                            Show Trail: false
+                          Value: true
+                          link_t:
+                            Details:
+                              Alpha: 1
+                              Show Axes: false
+                              Show Trail: false
+                            Value: true
+                            tool0:
+                              Details:
+                                Alpha: 1
+                                Show Axes: false
+                                Show Trail: false
+                              camera_link:
+                                Details:
+                                  Alpha: 1
+                                  Show Axes: false
+                                  Show Trail: false
+                              pushcorp_base:
+                                Details:
+                                  Alpha: 1
+                                  Show Axes: false
+                                  Show Trail: false
+                                Value: true
+                                pushcorp_compliance:
+                                  Details:
+                                    Alpha: 1
+                                    Show Axes: false
+                                    Show Trail: false
+                                  Value: true
+                target_base_link:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+          pushcorp_box:
+            Details:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            Value: true
+          pushcorp_box_support_1:
+            Details:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            Value: true
+          pushcorp_box_support_2:
+            Details:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            Value: true
       Name: EnvironmentState
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /camera/color/image_rect_color
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: RealsenseRectColor
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /camera/colorized_pointcloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: floor
     Frame Rate: 30
   Name: root
   Tools:
@@ -198,17 +268,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.31770700216293335
-        Y: 1.321305274963379
-        Z: 0.5198870897293091
+        X: 0.3311769664287567
+        Y: 0.1190260723233223
+        Z: 0.3985144793987274
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5553982257843018
+      Pitch: 0.34039822220802307
       Target Frame: <Fixed Frame>
-      Yaw: 5.543575286865234
+      Yaw: 1.4003874063491821
     Saved: ~
 Window Geometry:
   Displays:
@@ -216,7 +286,9 @@ Window Geometry:
   Height: 846
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000002b0fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000002b0000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002b0fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d000002b0000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004f30000003efc0100000002fb0000000800540069006d00650100000000000004f3000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000282000002b000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000248000002b0fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001ee000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000024005200650061006c00730065006e0073006500520065006300740043006f006c006f00720100000231000000bc0000001600ffffff000000010000010f000002b0fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d000002b0000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004f30000003efc0100000002fb0000000800540069006d00650100000000000004f3000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000190000002b000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  RealsenseRectColor:
+    collapsed: false
   Selection:
     collapsed: false
   Time:
@@ -226,5 +298,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1267
-  X: 60
-  Y: 23
+  X: 72
+  Y: 27

@@ -6,3 +6,13 @@
 /.catkin_tools
 /*.workspace
 /*.workspace.user
+/src/motoman
+/src/tesseract-1
+/src/tesseract
+/src/tesseract_planning
+/src/tesseract_ros
+/src/trajopt_ros-2
+/src/trajopt_ros
+/src/opw_kinematics
+/src/descartes_light
+/src/rviz_camera_stream

@@ -30,3 +30,7 @@
     local-name: ifopt
     uri: https://github.com/ethz-adrl/ifopt.git
     version: 27451ce3212d3c0ccd3a0db9a1ee9a9963466674
+- git:
+    local-name: motoman
+    uri: https://github.com/ros-industrial/motoman.git
+    version: kinetic-devel
