@@ -35,7 +35,7 @@ ament_export_include_directories(include)
 include_directories(include)
 
 add_executable(reverse_action_bridge_get_motion_plan_node
-    "src/reverse_action_bridge_get_motion_plan.cpp"
+    src/reverse_action_bridge_get_motion_plan.cpp
 )
 ament_target_dependencies(reverse_action_bridge_get_motion_plan_node
     "ros1_roscpp" "ros1_actionlib" "ros1_tesseract_msgs"
