@@ -1,7 +1,7 @@
 # Request
 
 # Mesh - the input to the path planning algorithm
-shape_msgs/Mesh surface_mesh	# The surfaces on which to generate paths.
+string mesh_filename	# The surfaces on which to generate paths.
 
 # Planning Parameters - configure the path planning - all in meters (m)
 float64 line_spacing       # The desired space between path lines

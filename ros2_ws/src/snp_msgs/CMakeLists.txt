@@ -17,7 +17,6 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(shape_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -26,7 +25,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     "srv/GenerateToolPaths.srv"
   DEPENDENCIES
     geometry_msgs
-    shape_msgs
 )
 
 if(BUILD_TESTING)
@@ -35,5 +33,5 @@ if(BUILD_TESTING)
 endif()
 
 # Ament package settings
-ament_export_dependencies(geometry_msgs rosidl_default_runtime shape_msgs)
+ament_export_dependencies(geometry_msgs rosidl_default_runtime)
 ament_package()
