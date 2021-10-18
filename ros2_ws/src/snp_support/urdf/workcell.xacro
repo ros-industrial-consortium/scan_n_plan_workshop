@@ -29,7 +29,13 @@
     </collision>
   </link>
   <link name="camera_link"/>
-  <link name="target_base_link"/>
+  <link name="target_base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_support/meshes/rosWorldCalib.dae"/>
+      </geometry>
+    </visual>
+  </link>
 
 
   <joint name="tool0_to_pushcorp_base" type="fixed">
