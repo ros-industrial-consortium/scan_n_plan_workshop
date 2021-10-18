@@ -22,6 +22,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/ToolPath.msg"
     "msg/ToolPaths.msg"
+    "srv/GenerateRobotProgram.srv"
     "srv/GenerateToolPaths.srv"
   DEPENDENCIES
     geometry_msgs

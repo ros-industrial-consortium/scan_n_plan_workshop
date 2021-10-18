@@ -17,4 +17,7 @@
     <param name="slop" value="0.01"/>
   </node>
 
+  <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
+  <include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>
+
 </launch>

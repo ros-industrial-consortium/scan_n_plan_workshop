@@ -6,3 +6,15 @@
 /src/open3d_interface
 /*.workspace
 /*.workspace.user
+/src/fcl
+/src/ifopt
+/src/industrial_calibration
+/src/mutable_transform_publisher
+/src/opw_kinematics
+/src/tesseract-1
+/src/tesseract
+/src/tesseract_planning
+/src/trajopt_ros-2
+/src/trajopt_ros
+/src/descartes_light
+/src/gl_depth_sim
