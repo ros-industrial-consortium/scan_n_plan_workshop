@@ -7,9 +7,14 @@ sudo apt-get install python3-colcon-common-extensions python3-rosdep python3-vcs
 sudo rosdep init
 rosdep update
 
+# Get Taskflow
+sudo add-apt-repository ppa:ros-industrial/ppa
+sudo apt-get update
+sudo apt-get install taskflow
+
 # Clone workshop repo
 cd /home/user
-git clone 
+git clone
 https://github.com/ros-industrial-consortium/roscon_workshop_2021
 
 # Move to and vcstool dep_ws
