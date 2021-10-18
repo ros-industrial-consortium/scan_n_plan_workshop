@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
- <name>motion_execution</name>
+ <name>snp_motion_execution</name>
  <version>0.0.1</version>
  <description>Motoman Motion Executon Package for Roscon 2021</description>
  <maintainer email="colin.lewis@swri.org">colin lewis</maintainer>
@@ -8,7 +8,7 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-
+  <depend>snp_msgs</depend>
 
  <export>
    <build_type>ament_python</build_type>

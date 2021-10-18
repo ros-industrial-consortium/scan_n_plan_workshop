@@ -3,3 +3,6 @@
 /install
 /log
 /logs
+/src/ros_industrial_cmake_boilerplate
+/*.workspace
+/*.workspace.user
