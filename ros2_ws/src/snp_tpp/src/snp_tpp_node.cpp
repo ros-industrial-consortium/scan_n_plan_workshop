@@ -3,15 +3,14 @@
 #include <functional> // std::bind(), std::placeholders
 
 #include <pcl/conversions.h>
+#include <pcl/io/vtk_lib_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/Vertices.h>
 
-#include <geometry_msgs/msg/point.h>
 #include <geometry_msgs/msg/pose.h>
-#include <shape_msgs/msg/mesh.h>
-#include <shape_msgs/msg/mesh_triangle.h>
+#include <geometry_msgs/msg/pose_array.h>
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <noether_tpp/core/types.h>
@@ -19,29 +18,11 @@
 #include <noether_tpp/tool_path_planners/raster/origin_generators.h>
 #include <noether_tpp/tool_path_planners/raster/plane_slicer_raster_planner.h>
 
+#include <snp_msgs/msg/tool_path.h>
+#include <snp_msgs/msg/tool_paths.h>
+
 namespace
 {
-
-pcl::PolygonMesh toPCLMesh(const shape_msgs::msg::Mesh& mesh)
-{
-  // Copy the triangle indices
-  pcl::PolygonMesh pcl_mesh;
-  pcl_mesh.polygons.reserve(mesh.triangles.size());
-  for (const shape_msgs::msg::MeshTriangle& t : mesh.triangles)
-  {
-    pcl::Vertices v;
-    v.vertices = { t.vertex_indices[0], t.vertex_indices[1], t.vertex_indices[2] };
-    pcl_mesh.polygons.push_back(v);
-  }
-
-  // Copy the vertices
-  pcl::PointCloud<pcl::PointXYZ> cloud;
-  cloud.reserve(mesh.vertices.size());
-  for (const geometry_msgs::msg::Point& p : mesh.vertices)
-    cloud.push_back(pcl::PointXYZ(p.x, p.y, p.z));
-  pcl::toPCLPointCloud2(cloud, pcl_mesh.cloud);
-  return pcl_mesh;
-}
 
 geometry_msgs::msg::PoseArray toMsg(const noether::ToolPathSegment& segment)
 {
@@ -89,32 +70,40 @@ TPPNode::TPPNode(const std::string& name)
 void TPPNode::callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request,
                           const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Response> response)
 {
+  response->success = true;
+
   // Convert shape_msgs::Mesh to pcl::PolygonMesh
-  pcl::PolygonMesh pcl_mesh = toPCLMesh(request->surface_mesh);
-
-  // Create a planner
-  noether::PlaneSlicerRasterPlanner planner(std::make_unique<noether::PrincipalAxisDirectionGenerator>(),
-                                            std::make_unique<noether::FixedOriginGenerator>());
-
-  // Configure the planner
-  planner.setLineSpacing(request->line_spacing);
-  planner.setMinHoleSize(request->min_hole_size);
-  planner.setMinSegmentSize(request->min_segment_length);
-  planner.setPointSpacing(request->point_spacing);
-  planner.setSearchRadius(request->search_radius);
-
-  // Call the planner
-  noether::ToolPaths paths = planner.plan(pcl_mesh);
-
-  // Convert noether::ToolPaths to snp_msgs::msg::ToolPaths
-  response->tool_paths = toMsg(paths);
-
-  // Pack the response
-  response->success = !paths.empty();
-  if (response->success)
-    response->message = "Successfully generated paths";
+  pcl::PolygonMesh pcl_mesh;
+  if (pcl::io::loadPolygonFile(request->mesh_filename, pcl_mesh) == 0)
+  {
+    response->success = false;
+    response->message = "Could not open mesh file `" + request->mesh_filename + "`";
+  }
   else
-    response->message = "Generated no paths";
+  {
+    // Create a planner
+    noether::PlaneSlicerRasterPlanner planner(std::make_unique<noether::PrincipalAxisDirectionGenerator>(),
+                                              std::make_unique<noether::FixedOriginGenerator>());
+
+    // Configure the planner
+    planner.setLineSpacing(request->line_spacing);
+    planner.setMinHoleSize(request->min_hole_size);
+    planner.setMinSegmentSize(request->min_segment_length);
+    planner.setPointSpacing(request->point_spacing);
+    planner.setSearchRadius(request->search_radius);
+
+    // Call the planner
+    noether::ToolPaths paths = planner.plan(pcl_mesh);
+
+    // Convert noether::ToolPaths to snp_msgs::msg::ToolPaths
+    response->tool_paths = toMsg(paths);
+
+    if (paths.empty())
+    {
+      response->success = false;
+      response->message = "Path generation failed";
+    }
+  }
 
   return;
 }
