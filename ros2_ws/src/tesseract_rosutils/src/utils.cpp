@@ -26,6 +26,7 @@
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
+#include <sstream> // Missing in octomap_msgs/conversions.h
 #include <octomap_msgs/conversions.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <tesseract_msgs/msg/string_limits_pair.h>
