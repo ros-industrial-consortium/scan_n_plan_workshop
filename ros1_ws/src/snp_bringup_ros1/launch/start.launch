@@ -2,8 +2,7 @@
 <launch>
   <arg name="rviz" default="true" />
   <arg name="robot_ip" default="192.168.1.20" />
-  <arg name="sim_robot" default="true" />
-  <arg name="sim_sensor" default="true" />
+  <arg name="sim" default="true" />
 
   <!-- Tesseract Monitor Parameters -->
   <arg name="robot_description" default="robot_description"/>
@@ -48,28 +47,25 @@
   </node>
 
   <!-- Launch joint state publisher and listen to robot_joint_states -->
-<!--  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-    <rosparam>
-      source_list:
-        robot_joint_states
-    </rosparam>
-  </node>-->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <rosparam param="source_list">[robot_joint_states]</rosparam>
+  </node>
 
   <!-- Launch robot drivers -->
-  <include unless="$(arg sim_robot)" file="$(find snp_bringup_ros1)/launch/robot_interface_streaming_mh180_120.launch">
+  <include unless="$(arg sim)" file="$(find snp_bringup_ros1)/launch/robot_interface_streaming_mh180_120.launch">
     <arg name="robot_ip" value="$(arg robot_ip)" />
   </include>
 
   <!-- Launch realsense drivers -->
-  <include unless="$(arg sim_sensor)" file="$(find snp_bringup_ros1)/launch/rs_camera.launch">
+  <include unless="$(arg sim)" file="$(find snp_bringup_ros1)/launch/rs_camera.launch">
     <arg name="align_depth" value="true" />
     <arg name="enable_pointcloud" value="true" />
     <arg name="publish_tf" value="false" />
   </include>
 
-  <group if="$(arg sim_sensor)" ns="camera">
-    <node pkg="tf" type="static_transform_publisher" name="camera_broadcaster"
-        args="0.000, -0.590, -0.000 0.500, -0.500, 0.500, -0.500 camera_link camera_color_optical_frame 10" />
+  <group if="$(arg sim)" ns="camera/rgb">
+<!--    <node pkg="tf" type="static_transform_publisher" name="camera_broadcaster"
+        args="0.000, -0.590, -0.000 0.500, -0.500, 0.500, -0.500 camera_link camera_color_optical_frame 10" />-->
     <node name="camera_info" pkg="rostopic" type="rostopic"
         args="pub camera_info sensor_msgs/CameraInfo
        '{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: 'camera_color_optical_frame'},

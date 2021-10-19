@@ -31,6 +31,7 @@
   <link name="camera_link"/>
   <link name="target_base_link">
     <visual>
+      <origin xyz="0.37565 0.2809875 0" rpy="${pi/2} 0 ${pi}"/>
       <geometry>
         <mesh filename="package://snp_support/meshes/rosWorldCalib.dae"/>
       </geometry>
@@ -55,7 +56,7 @@
   <joint name="world_to_target_joint" type="fixed">
     <parent link="floor"/>
     <child link="target_base_link"/>
-    <origin xyz="0.7 0 0.15" rpy="0 0 -${pi/2}"/>
+    <origin xyz="0.555 0.061 0.126" rpy="0.004 -0.004 -1.628"/>
     <axis xyz="0 0 0"/>
   </joint>
 

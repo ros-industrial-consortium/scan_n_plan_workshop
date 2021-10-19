@@ -78,41 +78,39 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
 
 void ROSConWindow::observe()
 {
-    bool success;
-    // std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+   bool success;
+   std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-    // auto result = observe_client_->async_send_request(request);
-    // if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto response = result.get();
-    //     success = response->success;
-    // }
+   auto result = observe_client_->async_send_request(request);
+   if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+   {
+       auto response = result.get();
+       success = response->success;
+   }
 
-    success = true; // TODO get rid of this
-    if (success)
-    {
-        ui_->run_calibration_button->setEnabled(true);
-        ui_->status_label->setText("Gathered observation.");
-    }
-    else
-    {
-        ui_->status_label->setText("Failed to get observation.");
-    }
+  if (success)
+  {
+      ui_->run_calibration_button->setEnabled(true);
+      ui_->status_label->setText("Gathered observation.");
+  }
+  else
+  {
+      ui_->status_label->setText("Failed to get observation.");
+  }
 }
 
 void ROSConWindow::run_calibration()
 {
     bool success;
-    // std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+     std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-    // auto result = run_calibration_client_->async_send_request(request);
-    // if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto response = result.get();
-    //     success = response->success;
-    // }
+     auto result = run_calibration_client_->async_send_request(request);
+     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+     {
+         auto response = result.get();
+         success = response->success;
+     }
 
-    success = true; // TODO get rid of this
     if (success)
     {
         ui_->install_calibration_button->setEnabled(true);
@@ -127,16 +125,15 @@ void ROSConWindow::run_calibration()
 void ROSConWindow::install_calibration()
 {
     bool success;
-    // std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+     std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-    // auto result = install_calibration_client_->async_send_request(request);
-    // if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto response = result.get();
-    //     success = response->success;
-    // }
+     auto result = install_calibration_client_->async_send_request(request);
+     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+     {
+         auto response = result.get();
+         success = response->success;
+     }
 
-    success = true; // TODO get rid of this
     update_status(success, "Calibration", nullptr, "scan", ui_->scan_button, 1);
 }
 
@@ -151,8 +148,8 @@ void ROSConWindow::scan()
     open3d_interface_msgs::srv::StartYakReconstruction::Request::SharedPtr start_request = 
         std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
-    start_request->tracking_frame = "TODO";
-    start_request->relative_frame = "TODO";
+    start_request->tracking_frame = "camera_color_optical_frame";
+    start_request->relative_frame = "floor";
     
     // TODO parameters
     start_request->translation_distance = 0.0; 
@@ -167,22 +164,22 @@ void ROSConWindow::scan()
     start_request->rgbd_params.depth_trunc = 3.0;
     start_request->rgbd_params.convert_rgb_to_intensity = true;
 
-    // auto start_result = start_reconstruction_client_->async_send_request(start_request);
-    // if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto start_response = start_result.get();
-    //     success = start_response->success;
-    // }
-    // else
-    // {
-    //     success = false;
-    // }
+     auto start_result = start_reconstruction_client_->async_send_request(start_request);
+     if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
+     {
+         auto start_response = start_result.get();
+         success = start_response->success;
+     }
+     else
+     {
+         success = false;
+     }
 
-    // if (!success)
-    // {
-    //     RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
-    //     update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
-    // }
+     if (!success)
+     {
+         RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
+         update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+     }
 
     if (sim_robot_)
     {
@@ -223,8 +220,6 @@ void ROSConWindow::scan()
 
             rate.sleep();
         }
-
-        success = true; // TODO fake data?
     }
     else
     {
@@ -234,27 +229,26 @@ void ROSConWindow::scan()
         confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
         confirmation_box.exec();
 
-        success = true; // TODO get rid of this
     }
 
-    // // call reconstruction stop
-    // open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request = 
-    //     std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
+   // call reconstruction stop
+   open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request =
+       std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
 
-    // stop_request->archive_directory = "";
-    // stop_request->results_directory = "scan";
+   stop_request->archive_directory = "";
+   stop_request->results_directory = "scan";
 
-    // auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
-    // if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto stop_response = stop_result.get();
-    //     success = stop_response->success;
-    //     mesh_filepath_ = stop_response->mesh_filepath;
-    // }
-    // else
-    // {
-    //     success = false;
-    // }
+   auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
+   if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
+   {
+       auto stop_response = stop_result.get();
+       success = stop_response->success;
+       mesh_filepath_ = stop_response->mesh_filepath;
+   }
+   else
+   {
+       success = false;
+   }
 
 
     update_status(success, "Scanning and reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
@@ -265,35 +259,34 @@ void ROSConWindow::plan_tool_paths()
 {
     bool success;
 
-    // // do tpp things
-    // snp_msgs::srv::GenerateToolPaths::Request::SharedPtr request =
-    //   std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
+     // do tpp things
+     snp_msgs::srv::GenerateToolPaths::Request::SharedPtr request =
+       std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
 
-    // request->mesh_filename = mesh_filepath_;
+     request->mesh_filename = mesh_filepath_;
 
-    // // TODO what parameters? will they be configurable?
-    // request->line_spacing = 0.05;
-    // request->min_hole_size = 0.02;
-    // request->min_segment_length = 0.01;
-    // request->point_spacing = 0.02;
-    // request->search_radius = 0.02;
+     // TODO what parameters? will they be configurable?
+     request->line_spacing = 0.05;
+     request->min_hole_size = 0.02;
+     request->min_segment_length = 0.01;
+     request->point_spacing = 0.02;
+     request->search_radius = 0.02;
 
-    // // TODO wait on a timer instead of indefinitely?
+     // TODO wait on a timer instead of indefinitely?
     
-    // auto result = tpp_client_->async_send_request(request);
-    // if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto response = result.get();
-    //     success = response->success;
-    //     tool_paths_ = std::shared_ptr<snp_msgs::msg::ToolPaths>(&result.get()->tool_paths);
-    // }
-    // else
-    // {
-    //     RCLCPP_ERROR(node_->get_logger(), "TPP call failed");
-    //     success = false;
-    // }
+     auto result = tpp_client_->async_send_request(request);
+     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+     {
+         auto response = result.get();
+         success = response->success;
+         tool_paths_ = std::shared_ptr<snp_msgs::msg::ToolPaths>(&result.get()->tool_paths);
+     }
+     else
+     {
+         RCLCPP_ERROR(node_->get_logger(), "TPP call failed");
+         success = false;
+     }
 
-    success = true; // TODO get rid of this
     update_status(success, "Tool path planning", ui_->tpp_button, "plan motion", ui_->motion_plan_button, 3);
 }
 

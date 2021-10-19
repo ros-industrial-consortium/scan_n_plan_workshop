@@ -6,7 +6,7 @@
 - git:
     local-name: tesseract
     uri: https://github.com/ros-industrial-consortium/tesseract.git
-    version: 41cb83d03f388612412bdc0d8c0538086eb0c516
+    version: ae693b5667d4e9ab4c08b3a76bccf59632db3012
 - git:
     local-name: trajopt
     uri: https://github.com/ros-industrial-consortium/trajopt_ros.git
