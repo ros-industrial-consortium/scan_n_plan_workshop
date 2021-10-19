@@ -10,6 +10,8 @@
 #include <QPushButton>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
@@ -41,6 +43,8 @@ private:
 
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr scan_mesh_pub_;
 
   // service clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;
@@ -63,9 +67,11 @@ private:
                      QPushButton* next_button,
                      int step);
 
-  std::string mesh_filename_;
+  std::string mesh_filepath_;
   tesseract_common::AlignedVector<tesseract_common::Toolpath> tool_paths_;
   tesseract_planning::CompositeInstruction motion_plan_;
+
+//  std::unique_ptr<QTimer> timer_;
 
 public slots:
     void update_calibration_requirement();

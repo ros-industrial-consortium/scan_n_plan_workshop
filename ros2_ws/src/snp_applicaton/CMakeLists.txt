@@ -26,11 +26,14 @@ find_package(Eigen3 REQUIRED)
 find_package(open3d_interface_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tesseract_command_language REQUIRED)
 find_package(tesseract_common REQUIRED)
 find_package(tesseract_msgs REQUIRED)
+find_package(tesseract_rosutils REQUIRED)
 find_package(tesseract_visualization REQUIRED)
 find_package(tf2_eigen)
 
@@ -54,9 +57,12 @@ ament_target_dependencies(roscon_app
   open3d_interface_msgs
   rclcpp
   sensor_msgs
+  geometry_msgs
+  visualization_msgs
   snp_msgs
   std_srvs
   tesseract_msgs
+  tesseract_rosutils
   tf2_eigen)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)

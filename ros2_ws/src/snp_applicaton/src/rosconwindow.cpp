@@ -5,6 +5,7 @@
 
 #include <QMessageBox>
 #include <tf2_eigen/tf2_eigen.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <snp_msgs/msg/tool_paths.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
@@ -13,6 +14,7 @@
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_common/manipulator_info.h>
 #include <tesseract_visualization/trajectory_player.h>
+#include <tesseract_rosutils/ros2/utils.h>
 
 namespace // anonymous restricts visibility to this file
 {
@@ -123,7 +125,7 @@ ROSConWindow::ROSConWindow(QWidget *parent)
 {
   ui_->setupUi(this);
 
-  connect(ui_->calibration_needed_checkbox, SIGNAL(clicked()), this, SLOT(update_calibration_requirement()));
+  connect(ui_->calibration_group_box, SIGNAL(clicked()), this, SLOT(update_calibration_requirement()));
   connect(ui_->observe_button, SIGNAL(clicked()), this, SLOT(observe()));
   connect(ui_->run_calibration_button, SIGNAL(clicked()), this, SLOT(run_calibration()));
   connect(ui_->get_correlation_button, SIGNAL(clicked()), this, SLOT(get_correlation()));
@@ -140,6 +142,8 @@ ROSConWindow::ROSConWindow(QWidget *parent)
   node_->get_parameter<bool>("sim_robot", sim_robot_);
 
   joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_state_update", 10);
+  toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>("toolpath", 10);
+  scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>("scan_mesh", 10);
 
   // TODO register all service/action clients
   observe_client_ = node_->create_client<std_srvs::srv::Trigger>("observe");
@@ -196,7 +200,7 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
 
 void ROSConWindow::update_calibration_requirement()
 {
-  if (!ui_->calibration_needed_checkbox->isChecked() && !past_calibration_)
+  if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
   {
       update_status(true, "Calibration", nullptr, "scan", ui_->scan_button, 1);
   }
@@ -320,17 +324,6 @@ void ROSConWindow::scan()
 {
   bool success;
 
-  ui_->status_label->setText("Performing scan...");
-  ui_->status_label->repaint();
-
-  // call reconstruction start
-  open3d_interface_msgs::srv::StartYakReconstruction::Request::SharedPtr start_request =
-      std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
-
-  start_request->tracking_frame = "camera_color_optical_frame";
-  start_request->relative_frame = "floor";
-
-
     ui_->status_label->setText("Performing scan...");
     ui_->status_label->repaint();
 
@@ -371,42 +364,56 @@ void ROSConWindow::scan()
          update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
      }
 
-    if (sim_robot_)
-    {
-      tesseract_common::JointState joint_state;
-      joint_state.joint_names = joint_names;
-      joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
-      joint_state.time = i * 0.1;
+     if (sim_robot_)
+     {
+         std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
 
-      scan_trajectory.push_back(joint_state);
-    }
-    tesseract_visualization::TrajectoryPlayer trajectory_player;
-    trajectory_player.setTrajectory(scan_trajectory);
+         std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+                                                                    {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+                                                                    {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                    { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                    { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                    {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
 
-    rclcpp::Rate rate(30);
-    while (!trajectory_player.isFinished())
-    {
-      tesseract_common::JointState current_state = trajectory_player.getNext();
+         tesseract_common::JointTrajectory scan_trajectory;
+         for (std::size_t i = 0; i < trajectory_positions.size(); i++)
+         {
+             tesseract_common::JointState joint_state;
+             joint_state.joint_names = joint_names;
+             joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
+             joint_state.time = i * 0.1;
 
-      sensor_msgs::msg::JointState current_state_msg;
+             scan_trajectory.push_back(joint_state);
+         }
+         tesseract_visualization::TrajectoryPlayer trajectory_player;
+         trajectory_player.setTrajectory(scan_trajectory);
 
-      current_state_msg.name = joint_names;
-      current_state_msg.position = std::vector<double>(current_state.position.data(),
-                                                       current_state.position.data() + current_state.position.size());
+         rclcpp::Rate rate(30);
+         while (!trajectory_player.isFinished())
+         {
+             tesseract_common::JointState current_state = trajectory_player.getNext();
 
-      joint_state_pub_->publish(current_state_msg);
+             sensor_msgs::msg::JointState current_state_msg;
 
-      rate.sleep();
-    }
-  }
-  else
-  {
-    QMessageBox confirmation_box;
-    confirmation_box.setWindowTitle("Scan Confirmation");
-    confirmation_box.setText("The robot is currently scanning.");
-    confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
-    confirmation_box.exec();
-  }
+             current_state_msg.name = joint_names;
+             current_state_msg.position = std::vector<double>(current_state.position.data(),
+                                                              current_state.position.data() + current_state.position.size());
+
+             joint_state_pub_->publish(current_state_msg);
+
+             rate.sleep();
+         }
+     }
+     else
+     {
+         QMessageBox confirmation_box;
+         confirmation_box.setWindowTitle("Scan Confirmation");
+         confirmation_box.setText("The robot is currently scanning.");
+         confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
+         confirmation_box.exec();
+
+     }
+
 
   // call reconstruction stop
   open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request =
@@ -420,8 +427,29 @@ void ROSConWindow::scan()
    {
        auto stop_response = stop_result.get();
        success = stop_response->success;
-       mesh_filepath_ = stop_response->mesh_filepath;
+
+//       mesh_filepath_ = stop_response->mesh_filepath;
+       // Instead we are loading from file
+       std::string package_path = ament_index_cpp::get_package_share_directory("snp_support");
+       mesh_filepath_ = package_path + "/meshes/part_scan.ply";
        RCLCPP_INFO(node_->get_logger(), "Mesh saved to '%s'.", mesh_filepath_.c_str());
+
+       visualization_msgs::msg::Marker mesh_marker;
+       mesh_marker.header.frame_id = "floor";
+
+       mesh_marker.color.r = 200;
+       mesh_marker.color.g = 200;
+       mesh_marker.color.b = 0;
+       mesh_marker.color.a = 1;
+
+       mesh_marker.scale.x = 1;
+       mesh_marker.scale.y = 1;
+       mesh_marker.scale.z = 1;
+
+       mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+       mesh_marker.mesh_resource = "file://" + mesh_filepath_;
+
+       scan_mesh_pub_->publish(mesh_marker);
    }
    else
    {
@@ -448,10 +476,10 @@ void ROSConWindow::plan_tool_paths()
     // Fill out the service call
     std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request =
         std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
-    request->mesh_filename = mesh_filename_;
+    request->mesh_filename = mesh_filepath_;
     request->line_spacing = 0.1;
     request->min_hole_size = 0.225;
-    request->min_segment_length = 0.75;
+    request->min_segment_length = 0.25;
     request->point_spacing = 0.05;
     request->search_radius = 0.0125;
 
@@ -464,7 +492,19 @@ void ROSConWindow::plan_tool_paths()
     }
     else
     {
-      tool_paths_ = fromMsg(result.get()->tool_paths);
+      snp_msgs::msg::ToolPaths toolpaths_msg = result.get()->tool_paths;
+      tool_paths_ = fromMsg(toolpaths_msg);
+      geometry_msgs::msg::PoseArray flat_toolpath_msg;
+      flat_toolpath_msg.header.frame_id = "floor";
+      for (const auto& toolpath : toolpaths_msg.paths)
+      {
+        for (const auto& segment : toolpath.segments)
+        {
+         flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
+        }
+      }
+
+      toolpath_pub_->publish(flat_toolpath_msg);
     }
   }
 
