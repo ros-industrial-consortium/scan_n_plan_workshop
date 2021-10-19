@@ -56,6 +56,7 @@ public slots:
     void update_calibration_requirement();
     void observe();
     void run_calibration();
+    void get_correlation();
     void install_calibration();
     void reset_calibration();
     void scan();
