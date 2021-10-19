@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="sim_robot" default="true" />
-  <arg name="sim_sensor" default="true" />
+  <arg name="sim" default="true" />
 
   <!-- Launch Toolpath Planning Node -->
   <node pkg="snp_tpp" exec="snp_tpp_node">
