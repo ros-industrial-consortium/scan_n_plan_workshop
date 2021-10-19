@@ -22,9 +22,12 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QPushButton" name="calibrate_button">
+        <widget class="QCheckBox" name="calibration_checkbox">
          <property name="text">
-          <string>Calibrate Camera</string>
+          <string>Camera Calibrated?</string>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -35,16 +38,6 @@
          </property>
          <property name="text">
           <string>Get Detailed Scan</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="reconstruct_button">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Reconstruct Scan</string>
          </property>
         </widget>
        </item>

@@ -1,23 +1,37 @@
 #include "rosconwindow.h"
 #include "ui_rosconwindow.h"
 
+#include <QMessageBox>
 #include <sstream>
+#include "tesseract_visualization/trajectory_player.h"
 
 ROSConWindow::ROSConWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui_(new Ui::ROSConWindow), node_("roscon_app_node")
+    ui_(new Ui::ROSConWindow)
 {
     ui_->setupUi(this);
 
-    connect(ui_->calibrate_button, SIGNAL(clicked()), this, SLOT(calibrate_camera()));
+    connect(ui_->calibration_checkbox, SIGNAL(clicked()), this, SLOT(calibrate_camera()));
     connect(ui_->scan_button, SIGNAL(clicked()), this, SLOT(scan()));
-    connect(ui_->reconstruct_button, SIGNAL(clicked()), this, SLOT(reconstruct()));
     connect(ui_->tpp_button, SIGNAL(clicked()), this, SLOT(plan_tool_paths()));
     connect(ui_->motion_plan_button, SIGNAL(clicked()), this, SLOT(plan_motion()));
     connect(ui_->execute_button, SIGNAL(clicked()), this, SLOT(execute()));
     connect(ui_->reset_button, SIGNAL(clicked()), this, SLOT(reset()));
 
+    node_ = rclcpp::Node::make_shared("roscon_app_node");
+
+    node_->declare_parameter<bool>("sim_robot");
+    node_->get_parameter("sim_robot", sim_robot_);
+
+    joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_state_update", 10);
+
     // TODO register all service/action clients
+    start_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>("start_reconstruction");
+    stop_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>("stop_reconstruction");
+
+    tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths");
+
+    program_generation_client_ = node_->create_client<snp_msgs::srv::GenerateRobotProgram>("generate_robot_program");
 }
 
 ROSConWindow::~ROSConWindow()
@@ -33,10 +47,14 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
     {
         status_stream << current_process << " completed!\nWaiting to " << next_process << "...";
 
-        ui_->progress_bar->setValue(step/6.0 * 100);
-        current_button->setEnabled(false);
+        ui_->progress_bar->setValue(step/5.0 * 100);
         next_button->setEnabled(true);
         ui_->reset_button->setEnabled(true);
+
+        if (current_button != nullptr) 
+        {
+            current_button->setEnabled(false);
+        }
     }
     else
     {
@@ -48,38 +66,173 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
 
 void ROSConWindow::calibrate_camera()
 {
-    bool success = true; // TODO make this change based on result
-
-    // do calibration things
-
-    update_status(success, "Calibration", ui_->calibrate_button, "scan", ui_->scan_button, 1);
+    // update the GUI
+    if (ui_->calibration_checkbox->isChecked())
+    {
+        // nullptr because we don't want to disable anything
+        update_status(ui_->calibration_checkbox->isChecked(), "Calibration", nullptr, "scan", ui_->scan_button, 1); 
+    }
+    else
+    {
+        reset();
+    }      
 }
 
 void ROSConWindow::scan()
 {
-    bool success = true; // TODO make this change based on result
+    bool success;
 
-    // do scan things
+    ui_->status_label->setText("Performing scan...");
+    ui_->status_label->repaint();
 
-    update_status(success, "Scan", ui_->scan_button, "reconstruct", ui_->reconstruct_button, 2);
-}
+    // call reconstruction start
+    open3d_interface_msgs::srv::StartYakReconstruction::Request::SharedPtr start_request = 
+        std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
-void ROSConWindow::reconstruct()
-{
-    bool success = true; // TODO make this change based on result
+    start_request->tracking_frame = "TODO";
+    start_request->relative_frame = "TODO";
+    
+    // TODO parameters
+    start_request->translation_distance = 0.0; 
+    start_request->rotational_distance = 0.0;
+    start_request->live = false;
 
-    // do reconstruction things
+    // TODO other params (currently set to recommended default)
+    start_request->tsdf_params.voxel_length = 0.01;
+    start_request->tsdf_params.sdf_trunc = 0.04;
 
-    update_status(success, "Reconstruction", ui_->reconstruct_button, "plan tool paths", ui_->tpp_button, 3);
+    start_request->rgbd_params.depth_scale = 1000.0;
+    start_request->rgbd_params.depth_trunc = 3.0;
+    start_request->rgbd_params.convert_rgb_to_intensity = true;
+
+    // auto start_result = start_reconstruction_client_->async_send_request(start_request);
+    // if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
+    // {
+    //     auto start_response = start_result.get();
+    //     success = start_response->success;
+    // }
+    // else
+    // {
+    //     success = false;
+    // }
+
+    // if (!success)
+    // {
+    //     RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
+    //     update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+    // }
+
+    if (sim_robot_)
+    {
+        std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
+        
+        std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+                                                                   {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+                                                                   {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                   { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                   { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                   {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
+
+        tesseract_common::JointTrajectory scan_trajectory;
+        for (std::size_t i = 0; i < trajectory_positions.size(); i++)
+        {
+            tesseract_common::JointState joint_state;
+            joint_state.joint_names = joint_names;
+            joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
+            joint_state.time = i * 0.1;
+
+            scan_trajectory.push_back(joint_state);
+        }
+        tesseract_visualization::TrajectoryPlayer trajectory_player;
+        trajectory_player.setTrajectory(scan_trajectory);
+
+        rclcpp::Rate rate(30);
+        while (!trajectory_player.isFinished())
+        {
+            tesseract_common::JointState current_state = trajectory_player.getNext();
+
+            sensor_msgs::msg::JointState current_state_msg;
+
+            current_state_msg.name = joint_names;
+            current_state_msg.position = std::vector<double>(current_state.position.data(), 
+                                                             current_state.position.data() + current_state.position.size());
+
+            joint_state_pub_->publish(current_state_msg);
+
+            rate.sleep();
+        }
+
+        success = true; // TODO fake data?
+    }
+    else
+    {
+        QMessageBox confirmation_box;
+        confirmation_box.setWindowTitle("Scan Confirmation");
+        confirmation_box.setText("The robot is currently scanning.");
+        confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
+        confirmation_box.exec();
+
+        success = true; // TODO get rid of this
+    }
+
+    // // call reconstruction stop
+    // open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request = 
+    //     std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
+
+    // stop_request->archive_directory = "";
+    // stop_request->results_directory = "scan";
+
+    // auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
+    // if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
+    // {
+    //     auto stop_response = stop_result.get();
+    //     success = stop_response->success;
+    //     mesh_filepath_ = stop_response->mesh_filepath;
+    // }
+    // else
+    // {
+    //     success = false;
+    // }
+
+
+    update_status(success, "Scanning and reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+    
 }
 
 void ROSConWindow::plan_tool_paths()
 {
-    bool success = true; // TODO make this change based on result
+    bool success;
 
-    // do tpp things
+    // // do tpp things
+    // snp_msgs::srv::GenerateToolPaths::Request::SharedPtr request =
+    //   std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
 
-    update_status(success, "Tool path planning", ui_->tpp_button, "plan motion", ui_->motion_plan_button, 4);
+    // request->mesh_filename = mesh_filepath_;
+
+    // // TODO what parameters? will they be configurable?
+    // request->line_spacing = 0.05;
+    // request->min_hole_size = 0.02;
+    // request->min_segment_length = 0.01;
+    // request->point_spacing = 0.02;
+    // request->search_radius = 0.02;
+
+    // // TODO wait on a timer instead of indefinitely?
+    
+    // auto result = tpp_client_->async_send_request(request);
+    // if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+    // {
+    //     auto response = result.get();
+    //     success = response->success;
+    //     tool_paths_ = std::shared_ptr<snp_msgs::msg::ToolPaths>(&result.get()->tool_paths);
+    // }
+    // else
+    // {
+    //     RCLCPP_ERROR(node_->get_logger(), "TPP call failed");
+    //     success = false;
+    // }
+
+    success = true; // TODO get rid of this
+    update_status(success, "Tool path planning", ui_->tpp_button, "plan motion", ui_->motion_plan_button, 3);
 }
 
 void ROSConWindow::plan_motion()
@@ -88,16 +241,86 @@ void ROSConWindow::plan_motion()
 
     // do motion planning things
 
-    update_status(success, "Motion planning", ui_->motion_plan_button, "execute", ui_->execute_button, 5);
+    // TODO Tesseract things...
+
+    update_status(success, "Motion planning", ui_->motion_plan_button, "execute", ui_->execute_button, 4);
 }
 
 void ROSConWindow::execute()
 {
-    bool success = true; // TODO make this change based on result
+    bool success;
 
     // do execution things
+    snp_msgs::srv::GenerateRobotProgram::Request::SharedPtr request = 
+        std::make_shared<snp_msgs::srv::GenerateRobotProgram::Request>();
 
-    update_status(success, "Execution", ui_->execute_button, "reset", ui_->reset_button, 6);
+    request->instructions = {"TODO"};
+
+    // TODO get this working
+    
+
+    if (sim_robot_)
+    {
+        std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
+        
+        // TODO be variable
+        std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+                                                                   {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+                                                                   {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                   { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                   { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+                                                                   {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
+
+        tesseract_common::JointTrajectory scan_trajectory;
+        for (std::size_t i = 0; i < trajectory_positions.size(); i++)
+        {
+            tesseract_common::JointState joint_state;
+            joint_state.joint_names = joint_names;
+            joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
+            joint_state.time = i * 1;
+
+            scan_trajectory.push_back(joint_state);
+        }
+        tesseract_visualization::TrajectoryPlayer trajectory_player;
+        trajectory_player.setTrajectory(scan_trajectory);
+
+        rclcpp::Rate rate(30);
+        while (!trajectory_player.isFinished())
+        {
+            tesseract_common::JointState current_state = trajectory_player.getNext();
+
+            sensor_msgs::msg::JointState current_state_msg;
+
+            current_state_msg.name = joint_names;
+            current_state_msg.position = std::vector<double>(current_state.position.data(), 
+                                                             current_state.position.data() + current_state.position.size());
+
+            joint_state_pub_->publish(current_state_msg);
+
+            rate.sleep();
+        }
+
+        success = true; // TODO fake data?
+    }
+    else 
+    {
+        // auto result  = program_generation_client_->async_send_request(request);
+        // if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+        // {
+        //     success = result.get()->success;
+
+        //     // program is run via teach pendant
+        // }
+        // else
+        // {
+        //     RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
+        //     success = false;
+        // }
+
+        success = true; // TODO get rid of this
+    }
+
+    update_status(success, "Execution", ui_->execute_button, "reset", ui_->reset_button, 5);
 }
 
 void ROSConWindow::reset()
@@ -105,10 +328,7 @@ void ROSConWindow::reset()
     ui_->status_label->setText("Waiting to calibrate...");
 
     // reset button states
-    ui_->calibrate_button->setEnabled(true);
-    
     ui_->scan_button->setEnabled(false);
-    ui_->reconstruct_button->setEnabled(false);
     ui_->tpp_button->setEnabled(false);
     ui_->motion_plan_button->setEnabled(false);
     ui_->execute_button->setEnabled(false);

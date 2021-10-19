@@ -5,6 +5,12 @@
 #include <QPushButton>
 #include <rclcpp/rclcpp.hpp>
 
+#include "open3d_interface_msgs/srv/start_yak_reconstruction.hpp"
+#include "open3d_interface_msgs/srv/stop_yak_reconstruction.hpp"
+#include "snp_msgs/srv/generate_tool_paths.hpp"
+#include "snp_msgs/srv/generate_robot_program.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
+
 namespace Ui {
 class ROSConWindow;
 }
@@ -19,7 +25,20 @@ public:
 
 private:
     Ui::ROSConWindow *ui_;
-    rclcpp::Node node_;
+    std::shared_ptr<rclcpp::Node> node_;
+    bool sim_robot_;
+
+    std::string mesh_filepath_;
+    std::shared_ptr<snp_msgs::msg::ToolPaths> tool_paths_;
+
+    // joint state publisher
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
+
+    // service clients
+    rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr start_reconstruction_client_;
+    rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_reconstruction_client_;
+    rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
+    rclcpp::Client<snp_msgs::srv::GenerateRobotProgram>::SharedPtr program_generation_client_;
 
     void update_status(bool success, std::string current_process, QPushButton* current_button,
                        std::string next_process, QPushButton* next_button, int step);
@@ -27,7 +46,6 @@ private:
 public slots:
     void calibrate_camera();
     void scan();
-    void reconstruct();
     void plan_tool_paths();
     void plan_motion();
     void execute();
