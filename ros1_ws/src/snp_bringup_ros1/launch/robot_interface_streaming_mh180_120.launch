@@ -14,6 +14,7 @@
 
   <rosparam command="load" file="$(find snp_bringup_ros1)/config/joint_names_mh180_120.yaml" />
 
+  <remap from="/joint_states" to="/robot_joint_states" />
   <include file="$(find motoman_driver)/launch/robot_interface_streaming_$(arg controller).launch">
     <arg name="robot_ip" value="$(arg robot_ip)" />
   </include>
