@@ -39,22 +39,12 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QCheckBox" name="calibration_needed_checkbox">
-         <property name="text">
-          <string>Calibration Needed</string>
+        <widget class="QGroupBox" name="calibration_group_box">
+         <property name="title">
+          <string>Camera Calibration</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox">
-         <property name="title">
-          <string>Camera Calibration</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="0" column="1">
@@ -138,6 +128,23 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="motion_execution_button">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Execute Motion Plan</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="reset_button">
+         <property name="text">
+          <string>Reset</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -176,7 +183,7 @@
      <x>0</x>
      <y>0</y>
      <width>1270</width>
-     <height>39</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

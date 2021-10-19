@@ -59,7 +59,8 @@
   <!-- Launch realsense drivers -->
   <include unless="$(arg sim)" file="$(find snp_bringup_ros1)/launch/rs_camera.launch">
     <arg name="align_depth" value="true" />
-    <arg name="enable_pointcloud" value="true" />
+    <arg name="enable_sync" value="true" />
+    <arg name="enable_pointcloud" value="false" />
     <arg name="publish_tf" value="false" />
   </include>
 

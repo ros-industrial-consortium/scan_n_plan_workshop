@@ -8,12 +8,12 @@ kinematic_plugins:
           base_link: base_link
           tip_link: tool0
           params:
-            a1: 0.175
-            a2: -0.175
+            a1: 0.325
+            a2: -0.3
             b: 0.00
-            c1: 0.495
-            c2: 0.9
-            c3: 0.96
-            c4: 0.135
+            c1: 0.650
+            c2: 1.150
+            c3: 1.590
+            c4: 0.225
             offsets: [0, 0, -1.57079632679, 0, 0, 0]
-            sign_corrections: [1, 1, 1, 1, 1, 1]
+            sign_corrections: [1, 1, -1, -1, -1, -1]
