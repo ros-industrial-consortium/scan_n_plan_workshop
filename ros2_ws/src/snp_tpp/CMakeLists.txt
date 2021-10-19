@@ -23,6 +23,7 @@ find_package(PCL REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/snp_tpp_node.cpp)
 target_include_directories(${PROJECT_NAME}_node PRIVATE
