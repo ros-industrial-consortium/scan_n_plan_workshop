@@ -177,14 +177,14 @@ createDescartesPlanProfile()
 
   // Add Vertex Evaluator
   descartes_plan_profile->vertex_evaluator = [](const tesseract_planning::DescartesProblem<float>& prob) {
-    return std::make_shared<snp::DescartesStateValidator>(prob.manip, "robot_base_link", "robot_tool0");
+    return std::make_shared<snp::DescartesStateValidator>(prob.manip, "base_link", "tool0");
   };
 
   Eigen::VectorXd joint_weights = Eigen::VectorXd::Ones(6);
 
   descartes_plan_profile->edge_evaluator = [joint_weights](const tesseract_planning::DescartesProblem<float>& prob) {
         auto e = std::make_shared<descartes_light::CompoundEdgeEvaluator<float>>();
-        e->evaluators.push_back(std::make_shared<snp::RobotConfigEdgeEvaluator<float>>(prob.manip, "robot_base_link", "robot_tool0"));
+        e->evaluators.push_back(std::make_shared<snp::RobotConfigEdgeEvaluator<float>>(prob.manip, "base_link", "tool0"));
         e->evaluators.push_back(std::make_shared<snp::WeightedEuclideanDistanceEdgeEvaluator<float>>(joint_weights));
         return e;
       };

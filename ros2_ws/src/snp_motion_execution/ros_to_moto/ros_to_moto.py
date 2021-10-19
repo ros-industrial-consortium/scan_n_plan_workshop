@@ -2,12 +2,17 @@
 
 # ROS2 boilerplate
 import rclpy
+import sys
+import os
+import numpy as np
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 
 # Roscon
 import geometry_msgs.msg
-from roscon_msgs.srv import GenerateRobotProgram #GenerateRobotProgramResponse, GenerateRobotProgramRequest
+from snp_msgs.srv import GenerateRobotProgram #GenerateRobotProgramResponse, GenerateRobotProgramRequest
+
+sys.path.append(os.path.abspath("/home/larmstrong/catkin_ws/roscon_21/roscon2021/ros2_ws/src/robodk_postprocessors/"))
 
 # Motoman
 from Motoman import *
@@ -75,7 +80,7 @@ class PostProcessor(Node):
         self.declare_parameters(
             namespace='',
             parameters=[('send_prog',True),
-                ('robot_ip', '192.168.0.100'),
+                ('robot_ip', '192.168.1.20'),
                 ('username', 'user'),
                 ('password', 'password'),
                 ('zone', '100'),
@@ -85,34 +90,34 @@ class PostProcessor(Node):
         )
 
         # FTP Programs
-        self.send_prog = Parameter('send_prog', Parameter.Type.BOOL, False)
-        self.robot_ip =  Parameter("robot_ip", Parameter.Type.STRING, '192.168.0.100')
-        self.username =  Parameter('username', Parameter.Type.STRING, 'user')
-        self.password =  Parameter('password', Parameter.Type.STRING, '')
+        self.send_prog = self.get_parameter('send_prog').value
+        self.robot_ip =  self.get_parameter("robot_ip").value
+        self.username =  self.get_parameter('username').value
+        self.password =  self.get_parameter('password').value
 
         # Target program on the teach pendant
         self.master_name = "ROSDEMO"#rospy.get_param("~master_name", None)
 
         # Motion parameters
-        self.zone = Parameter('zone',Parameter.Type.STRING, '100')
-        self.speed = Parameter('speed', Parameter.Type.STRING, '200')  # Cartesian speed (mm/s)
+        self.zone = self.get_parameter('zone').value
+        self.speed = self.get_parameter('speed').value
         #self.joint_speed = self.get_param("joint_speed", Parameter.Type.STRING, '25')
 
         # Save directory
-        self.save_dir = Parameter('save_dir',Parameter.Type.STRING, 'generated_program')
+        self.save_dir = self.get_parameter('save_dir').value
 
         #self.Service = self.Service('generate_robot_program', GenerateRobotProgram, self.generate_robot_program)
 
     # ---------------------High level LS generation -------------------
-    def generate_robot_program(self, req):
+    def generate_robot_program(self, req, res):
         """ It will return a success bool and sets success or aborted
 
         :param req: GenerateRobotProgramRequest
         :return:
         """
+        print("start")
         # Entries in this list are of form [program name, program comment]
-        program_name_list = []
-        self.speed = req.speed * 1000
+        programNameList = []
 
         try:
             #Instructions are provided in a list
@@ -126,41 +131,39 @@ class PostProcessor(Node):
                 end_instr = instruction_list[-1]
 
                 # from_start
-                programNameList.append([createProgramName(len(programNameList)+1),"from_start"])
-                message, success = create_inform_from_robot_process_path(start_instr, programNameList[-1][0], programNameList[-1][1])
-                if not success:
+                programNameList.append([self.createProgramName(len(programNameList)+1),"from_start"])
+                print("hello")
+                message, success = self.create_inform_from_robot_process_path(start_instr, programNameList[-1][0], programNameList[-1][1])
+#                if not success:
+#                    self.get_logger().error("createInformfromRobotProcessPath Failed: %s", message)
+#                    return [message, success]
 
-                    self.get_logger().error("createInformfromRobotProcessPath Failed: %s", message)
-                    return [message, success]
+#                for ind, inst in enumerate(instruction_list[1:-1]):
+#                    programNameList.append([self.createProgramName(len(programNameList)+1),"process" + str(ind)])
+#                    message, success = self.create_inform_from_robot_process_path(inst, programNameList[-1][0], programNameList[-1][1])
+#                    if not success:
 
-                for ind, inst in enumerate(instruction_list[1:-1]):
-                    programNameList.append([createProgramName(len(programNameList)+1),"process" + str(ind)])
-                    message, success = create_inform_from_robot_process_path(inst, programNameList[-1][0], programNameList[-1][1])
-                    if not success:
-
-                        self.get_logger().error("createInformfromRobotProcessPath Failed: %s", message)
-                        return [message, success]
+#                        self.get_logger().error("createInformfromRobotProcessPath Failed: %s", message)
+#                        return [message, success]
 
                 # To Home
-                programNameList.append([createProgramName(len(programNameList)+1),"to_end"])
-                message, success = create_inform_from_robot_process_path(end_instr, programNameList[-1][0], programNameList[-1][1])
+#                programNameList.append([self.createProgramName(len(programNameList)+1),"to_end"])
+#                message, success = self.create_inform_from_robot_process_path(end_instr, programNameList[-1][0], programNameList[-1][1])
 
-                # Create master Inform program
-                self.create_master_file("{}".format(self.master_name), program_name_list)
+#                # Create master Inform program
+#                self.create_master_file("{}".format(self.master_name), programNameList)
 
-                res = GenerateRobotProgramResponse()
                 res.success = True
 
                 return res
 
         except Exception as e:
-            res = GenerateRobotProgramResponse()
             res.success = False
-            res.message = "Error generating program: {}".format(e)
+            res.error = "Error generating program: {}".format(e)
             return res
 
     # ------------------------------support functions for generate robot program----------------------
-    def create_program_name(self, number):
+    def createProgramName(self, number):
       """ Creates a file name using provided index 'number'
 
       :param self:
@@ -197,19 +200,18 @@ class PostProcessor(Node):
         if self.send_prog:
             self.pp.ProgSendRobot(self.robot_ip, "/md:", self.username, self.password)
 
-    def create_inform_from_robot_process_path(data, prgname, prgcomment):
+    def create_inform_from_robot_process_path(self, data, prgname, prgcomment):
 
-
+        print("0")
         # -----prog_start-----
         self.pp.ProgStart(prgname)
-
+        print("0A")
         # ------set_frame-----
-        pose = geometry_msgs.msg.Pose(geometry_msgs.msg.Point(0, 0, 0), geometry_msgs.msg.Quaternion(0, 0, 0, 1))
-        mat_pose = pose_to_matrix(pose)
-        self.pp.setFrame(mat_pose, 0, "frame")
+        print("0C")
+        self.pp.setFrame(np.eye(4), 0, "frame")
 
         smooth_speed = 0.15
-
+        print("1")
         # The following assignment flattens rasters
         waypoints = data.find(".//container").findall(".//waypoint/waypoint")
         for indx in range(0, len(waypoints)):
@@ -217,31 +219,40 @@ class PostProcessor(Node):
           # creates a tree with each Waypoint at the root
           pos = [t.text for t in wpoint.find(".//position")[1].findall("item")]
           pos_vec = [float(i) for i in pos]
+          print("1a")
 
           if wpoint.find(".//velocity"):
-             vel = [t.text for t in wpoint.find(".//velocity")[1].findall("item")]
-
+              vel = [t.text for t in wpoint.find(".//velocity")[1].findall("item")]
+              print("1b")
           else:
-            vel = ["0.0"] * 8
+              print("1bc")
+              vel = ["0.0"] * 8
+              print("1c")
 
           # ------set_speed-----
           self.pp.setSpeed(self.speed)
+          print("1d")
 
           # ------set zone------
           self.pp.setZoneData(self.zone)  # This is a % that rounds to corners to maintain velocity.
+          print("1e")
 
           move_joints = to_joints(pos_vec)
           self.pp.MoveL(None, move_joints)
 
+        print("2")
         # End of motion instruction loop
         # ------prog_finish-----
         self.pp.ProgFinish(prgname)
-
+        print("3")
         # ------prog_save-----
         self.pp.ProgSave(self.save_dir, prgname, False, False)
+        print("4")
         # ------prog_send_robot-----
         if self.send_prog:
             self.pp.ProgSendRobot(self.robot_ip, self.ftp_remote_path, self.username, self.password)
+
+        print("5")
         # Return
         success = True
         message = "Successfully created LS program from robot process path"
