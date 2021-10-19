@@ -7,6 +7,7 @@
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <snp_msgs/msg/tool_paths.hpp>
+#include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <tesseract_visualization/trajectory_player.h>
 
 namespace // anonymous restricts visibility to this file

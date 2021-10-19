@@ -1,6 +1,7 @@
 #ifndef ROSCONWINDOW_H
 #define ROSCONWINDOW_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
