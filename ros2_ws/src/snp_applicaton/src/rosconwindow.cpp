@@ -7,13 +7,16 @@
 
 ROSConWindow::ROSConWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui_(new Ui::ROSConWindow)
+    ui_(new Ui::ROSConWindow),
+    past_calibration_(false)
 {
     ui_->setupUi(this);
 
+    connect(ui_->calibration_needed_checkbox, SIGNAL(clicked()), this, SLOT(update_calibration_requirement()));
     connect(ui_->observe_button, SIGNAL(clicked()), this, SLOT(observe()));
     connect(ui_->run_calibration_button, SIGNAL(clicked()), this, SLOT(run_calibration()));
     connect(ui_->install_calibration_button, SIGNAL(clicked()), this, SLOT(install_calibration()));
+    connect(ui_->reset_calibration_button, SIGNAL(clicked()), this, SLOT(reset_calibration()));
     connect(ui_->scan_button, SIGNAL(clicked()), this, SLOT(scan()));
     connect(ui_->tpp_button, SIGNAL(clicked()), this, SLOT(plan_tool_paths()));
     connect(ui_->motion_plan_button, SIGNAL(clicked()), this, SLOT(plan_motion()));
@@ -29,6 +32,7 @@ ROSConWindow::ROSConWindow(QWidget *parent) :
     // TODO register all service/action clients
     observe_client_ = node_->create_client<std_srvs::srv::Trigger>("observe");
     run_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>("run");
+    get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>("correlation");
     install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>("install");
 
     start_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>("start_reconstruction");
@@ -74,6 +78,22 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
     }
 
     ui_->status_label->setText(status_stream.str().c_str());
+}
+
+void ROSConWindow::update_calibration_requirement()
+{
+    RCLCPP_INFO_STREAM(node_->get_logger(), ui_->calibration_needed_checkbox->isChecked());
+    RCLCPP_INFO_STREAM(node_->get_logger(), past_calibration_);
+    RCLCPP_INFO_STREAM(node_->get_logger(), !ui_->calibration_needed_checkbox->isChecked() && !past_calibration_);
+
+    if (!ui_->calibration_needed_checkbox->isChecked() && !past_calibration_)
+    {
+        update_status(true, "Calibration", nullptr, "scan", ui_->scan_button, 1);
+    }
+    else
+    {
+        reset();
+    }
 }
 
 void ROSConWindow::observe()
@@ -134,7 +154,34 @@ void ROSConWindow::install_calibration()
          success = response->success;
      }
 
+    past_calibration_ = success;
     update_status(success, "Calibration", nullptr, "scan", ui_->scan_button, 1);
+}
+
+void ROSConWindow::reset_calibration()
+{
+    bool success;
+    std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+
+    auto result = install_calibration_client_->async_send_request(request);
+    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        auto response = result.get();
+        success = response->success;
+    }
+    else
+    {
+        success = false;
+    }
+
+    if (success)
+    {
+        ui_->run_calibration_button->setEnabled(false);
+        ui_->get_correlation_button->setEnabled(false);
+        ui_->install_calibration_button->setEnabled(false);
+        ui_->reset_calibration_button->setEnabled(false);
+    }
+
 }
 
 void ROSConWindow::scan()
@@ -383,8 +430,8 @@ void ROSConWindow::reset()
     ui_->status_label->setText("Waiting to calibrate...");
 
     // reset button states
-
     ui_->run_calibration_button->setEnabled(false);
+    ui_->get_correlation_button->setEnabled(false);
     ui_->install_calibration_button->setEnabled(false);
     ui_->scan_button->setEnabled(false);
     ui_->tpp_button->setEnabled(false);
