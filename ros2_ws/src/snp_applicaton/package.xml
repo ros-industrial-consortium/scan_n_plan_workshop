@@ -17,6 +17,7 @@
   <depend>snp_msgs</depend>
   <depend>open3d_interface_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_srvs</depend>
 
 
   <test_depend>ament_lint_auto</test_depend>

@@ -28,6 +28,7 @@ find_package(tesseract_visualization REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(open3d_interface_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 include_directories(include
   ${EIGEN3_INCLUDE_DIRS})
@@ -39,7 +40,7 @@ add_executable(roscon_app
     include/rosconwindow.h
 )
 target_link_libraries(roscon_app Qt5::Widgets tesseract_visualization)
-ament_target_dependencies(roscon_app rclcpp snp_msgs open3d_interface_msgs tesseract_visualization sensor_msgs)
+ament_target_dependencies(roscon_app rclcpp snp_msgs open3d_interface_msgs tesseract_visualization sensor_msgs std_srvs)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
 
