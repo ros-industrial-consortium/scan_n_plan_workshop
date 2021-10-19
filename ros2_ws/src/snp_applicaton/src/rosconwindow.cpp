@@ -38,6 +38,75 @@ tesseract_common::AlignedVector<tesseract_common::Toolpath> fromMsg(const snp_ms
   return tps;
 }
 
+tesseract_planning::CompositeInstruction createProgram(const tesseract_planning::ManipulatorInfo& manip_info, const tesseract_common::Toolpath& raster_strips)
+{
+
+  std::string raster_profile {"RASTER_ROBOT"};
+  std::string transition_profile {"TRANSITION_ROBOT"};
+  std::string freespace_profile {"FREESPACE_ROBOT"};
+  std::vector<std::string> joint_names { "robot_joint_1", "robot_joint_2", "robot_joint_3", "robot_joint_4", "robot_joint_5", "robot_joint_6" };
+
+  tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
+
+  tesseract_planning::StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(joint_names.size()));
+  tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START, freespace_profile);
+  program.setStartInstruction(start_instruction);
+
+  for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
+  {
+    if (rs == 0)
+    {
+      // Define from start composite instruction
+      tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
+      tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE, freespace_profile);
+      plan_f0.setDescription("from_start_plan");
+      tesseract_planning::CompositeInstruction from_start(freespace_profile);
+      from_start.setDescription("from_start");
+      from_start.push_back(plan_f0);
+      program.push_back(from_start);
+    }
+
+    // Define raster
+    tesseract_planning::CompositeInstruction raster_segment(raster_profile);
+    raster_segment.setDescription("Raster #" + std::to_string(rs + 1));
+
+    for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
+    {
+      tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
+      raster_segment.push_back(tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, raster_profile));
+    }
+    program.push_back(raster_segment);
+
+
+    if (rs < raster_strips.size() - 1)
+    {
+      // Add transition
+      tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
+
+      tesseract_planning::PlanInstruction transition_instruction1(twp, tesseract_planning::PlanInstructionType::FREESPACE, transition_profile);
+      transition_instruction1.setDescription("transition_from_end_plan");
+
+      tesseract_planning::CompositeInstruction transition(transition_profile);
+      transition.setDescription("transition_from_end");
+      transition.push_back(transition_instruction1);
+
+      program.push_back(transition);
+    }
+    else
+    {
+      // Add to end instruction
+      tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE, freespace_profile);
+      plan_f2.setDescription("to_end_plan");
+      tesseract_planning::CompositeInstruction to_end(freespace_profile);
+      to_end.setDescription("to_end");
+      to_end.push_back(plan_f2);
+      program.push_back(to_end);
+    }
+  }
+
+  return program;
+}
+
 }
 
 ROSConWindow::ROSConWindow(QWidget *parent)
@@ -75,6 +144,8 @@ ROSConWindow::ROSConWindow(QWidget *parent)
   stop_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>("stop_reconstruction");
 
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths");
+
+  motion_planning_client_ = node_->create_client<tesseract_msgs::srv::GetMotionPlan>("/twc_planning_server/tesseract_get_motion_plan");
 
   program_generation_client_ = node_->create_client<snp_msgs::srv::GenerateRobotProgram>("generate_robot_program");
 }
@@ -360,9 +431,7 @@ void ROSConWindow::plan_tool_paths()
   tool_paths_ = tesseract_common::AlignedVector<tesseract_common::Toolpath>();
 
   // do tpp things
-  rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr client =
-      node_->create_client<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths");
-  if (!client->wait_for_service(std::chrono::seconds(10)))
+  if (!tpp_client_->wait_for_service(std::chrono::seconds(10)))
   {
     RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Could not find TPP server");
     success = false;
@@ -380,7 +449,7 @@ void ROSConWindow::plan_tool_paths()
     request->search_radius = 0.0125;
 
     // Call the service
-    auto result  = client->async_send_request(request);
+    auto result = tpp_client_->async_send_request(request);
     if (rclcpp::spin_until_future_complete(node_, result) != rclcpp::FutureReturnCode::SUCCESS)
     {
       RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "TPP call failed");
@@ -397,12 +466,40 @@ void ROSConWindow::plan_tool_paths()
 
 void ROSConWindow::plan_motion()
 {
-  bool success = true; // TODO make this change based on result
+  bool success = true;
+  motion_plan_ = tesseract_planning::Instruction();
 
   // do motion planning things
+  if (tool_paths_.size() > 0)
+  {
+    // Make a program out of the raster plan
+    tesseract_planning::ManipulatorInfo manip_info("robot_only");   // TODO: maybe manipulator?
+    manip_info.tcp = tesseract_planning::ToolCenterPoint("tool0");  // TODO: need actual TCP
+    manip_info.working_frame = "world"; // TODO: need correct value
+    tesseract_planning::CompositeInstruction program = createProgram(manip_info, tool_paths_[0]);
 
-  // TODO Tesseract things...
+    // Fill a service request
+    std::shared_ptr<tesseract_msgs::srv::GetMotionPlan::Request> request =
+        std::make_shared<tesseract_msgs::srv::GetMotionPlan::Request>();
+    request->request.name = goal.request.RASTER_G_FT_PLANNER_NAME;  // TODO: use correct planner
+    request->request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(program);
 
+    // Call the service
+    auto result = motion_planning_client_->async_send_request(request);
+    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::Instruction>(result.get()->response.results);
+    }
+    else
+    {
+      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Motion Planning call failed");
+      success = false;
+    }
+  }
+  else
+  {
+    success = false;
+  }
   update_status(success, "Motion planning", ui_->motion_plan_button, "execute", ui_->execute_button, 4);
 }
 

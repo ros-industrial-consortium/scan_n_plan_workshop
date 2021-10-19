@@ -50,6 +50,7 @@ private:
   rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_reconstruction_client_;
 
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
+  rclcpp::Client<tesseract_msgs::srv::GetMotionPlan>::SharedPtr motion_planning_client_;
 
   rclcpp::Client<snp_msgs::srv::GenerateRobotProgram>::SharedPtr program_generation_client_;
 
@@ -62,6 +63,7 @@ private:
 
   std::string mesh_filename_;
   tesseract_common::AlignedVector<tesseract_common::Toolpath> tool_paths_;
+  tesseract_planning::Instruction motion_plan_;
 
 public slots:
     void update_calibration_requirement();
