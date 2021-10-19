@@ -15,13 +15,6 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0">
-     <widget class="QLabel" name="status_label">
-      <property name="text">
-       <string>Waiting to calibrate...</string>
-      </property>
-     </widget>
-    </item>
     <item row="3" column="0" colspan="2">
      <widget class="QProgressBar" name="progress_bar">
       <property name="value">
@@ -32,6 +25,13 @@
       </property>
      </widget>
     </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="status_label">
+      <property name="text">
+       <string>Waiting to calibrate...</string>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="1">
      <widget class="QGroupBox" name="button_box">
       <property name="title">
@@ -39,19 +39,25 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
+        <widget class="QCheckBox" name="calibration_needed_checkbox">
+         <property name="text">
+          <string>Calibration Needed</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Camera Calibration</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QPushButton" name="observe_button">
-            <property name="text">
-             <string>Observe</string>
-            </property>
-           </widget>
-          </item>
-          <item>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="1">
            <widget class="QPushButton" name="run_calibration_button">
             <property name="enabled">
              <bool>false</bool>
@@ -61,13 +67,40 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="0" column="2">
            <widget class="QPushButton" name="install_calibration_button">
             <property name="enabled">
              <bool>false</bool>
             </property>
             <property name="text">
              <string>Install</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QPushButton" name="observe_button">
+            <property name="text">
+             <string>Observe</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="get_correlation_button">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Get Correlation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QPushButton" name="reset_calibration_button">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Reset</string>
             </property>
            </widget>
           </item>

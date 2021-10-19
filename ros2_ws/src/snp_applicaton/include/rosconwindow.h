@@ -28,6 +28,7 @@ private:
     Ui::ROSConWindow *ui_;
     std::shared_ptr<rclcpp::Node> node_;
     bool sim_robot_;
+    bool past_calibration_;
 
     std::string mesh_filepath_;
     std::shared_ptr<snp_msgs::msg::ToolPaths> tool_paths_;
@@ -38,6 +39,7 @@ private:
     // service clients
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr run_calibration_client_;
+    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr get_correlation_client_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr install_calibration_client_;
 
     rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr start_reconstruction_client_;
@@ -51,9 +53,11 @@ private:
                        std::string next_process, QPushButton* next_button, int step);
 
 public slots:
+    void update_calibration_requirement();
     void observe();
     void run_calibration();
     void install_calibration();
+    void reset_calibration();
     void scan();
     void plan_tool_paths();
     void plan_motion();
