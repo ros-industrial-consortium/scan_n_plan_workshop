@@ -15,6 +15,7 @@ ROSConWindow::ROSConWindow(QWidget *parent) :
     connect(ui_->calibration_needed_checkbox, SIGNAL(clicked()), this, SLOT(update_calibration_requirement()));
     connect(ui_->observe_button, SIGNAL(clicked()), this, SLOT(observe()));
     connect(ui_->run_calibration_button, SIGNAL(clicked()), this, SLOT(run_calibration()));
+    connect(ui_->get_correlation_button, SIGNAL(clicked()), this, SLOT(get_correlation()));
     connect(ui_->install_calibration_button, SIGNAL(clicked()), this, SLOT(install_calibration()));
     connect(ui_->reset_calibration_button, SIGNAL(clicked()), this, SLOT(reset_calibration()));
     connect(ui_->scan_button, SIGNAL(clicked()), this, SLOT(scan()));
@@ -82,10 +83,6 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
 
 void ROSConWindow::update_calibration_requirement()
 {
-    RCLCPP_INFO_STREAM(node_->get_logger(), ui_->calibration_needed_checkbox->isChecked());
-    RCLCPP_INFO_STREAM(node_->get_logger(), past_calibration_);
-    RCLCPP_INFO_STREAM(node_->get_logger(), !ui_->calibration_needed_checkbox->isChecked() && !past_calibration_);
-
     if (!ui_->calibration_needed_checkbox->isChecked() && !past_calibration_)
     {
         update_status(true, "Calibration", nullptr, "scan", ui_->scan_button, 1);
@@ -139,6 +136,28 @@ void ROSConWindow::run_calibration()
     else
     {
         ui_->status_label->setText("Calibration attempt failed.");
+    }
+}
+
+void ROSConWindow::get_correlation()
+{
+    bool success;
+    std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+
+    auto result = get_correlation_client_->async_send_request(request);
+    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        auto response = result.get();
+        success = response->success;
+    }
+
+    if (success)
+    {
+        ui_->status_label->setText("Correlation written to file.");
+    }
+    else
+    {
+        ui_->status_label->setText("Failed to write correlation to file.");
     }
 }
 
