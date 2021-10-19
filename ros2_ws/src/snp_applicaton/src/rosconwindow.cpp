@@ -15,6 +15,7 @@
 #include <tesseract_common/manipulator_info.h>
 #include <tesseract_visualization/trajectory_player.h>
 #include <tesseract_rosutils/ros2/utils.h>
+#include <tesseract_command_language/utils/utils.h>
 
 namespace // anonymous restricts visibility to this file
 {
@@ -138,7 +139,7 @@ ROSConWindow::ROSConWindow(QWidget *parent)
   node_->declare_parameter("sim_robot");
   node_->get_parameter<bool>("sim_robot", sim_robot_);
 
-  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_state_update", 10);
+  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("robot_joint_states", 10);
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>("toolpath", 10);
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>("scan_mesh", 10);
   trajectory_pub_ = node_->create_publisher<tesseract_msgs::msg::Trajectory>("motion_trajectory", 10);
@@ -362,55 +363,55 @@ void ROSConWindow::scan()
          update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
      }
 
-     if (sim_robot_)
-     {
-         std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
+//     if (sim_robot_)
+//     {
+//       std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
 
-         std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-                                                                    {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-                                                                    {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-                                                                    { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-                                                                    { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-                                                                    {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
+//       std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+//                                                                  {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+//                                                                  {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+//                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+//                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+//                                                                  {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
 
-         tesseract_common::JointTrajectory scan_trajectory;
-         for (std::size_t i = 0; i < trajectory_positions.size(); i++)
-         {
-             tesseract_common::JointState joint_state;
-             joint_state.joint_names = joint_names;
-             joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
-             joint_state.time = i * 0.1;
+//       tesseract_common::JointTrajectory scan_trajectory;
+//       for (std::size_t i = 0; i < trajectory_positions.size(); i++)
+//       {
+//           tesseract_common::JointState joint_state;
+//           joint_state.joint_names = joint_names;
+//           joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
+//           joint_state.time = i * 0.1;
 
-             scan_trajectory.push_back(joint_state);
-         }
-         tesseract_visualization::TrajectoryPlayer trajectory_player;
-         trajectory_player.setTrajectory(scan_trajectory);
+//           scan_trajectory.push_back(joint_state);
+//       }
+//       tesseract_visualization::TrajectoryPlayer trajectory_player;
+//       trajectory_player.setTrajectory(scan_trajectory);
 
-         rclcpp::Rate rate(30);
-         while (!trajectory_player.isFinished())
-         {
-             tesseract_common::JointState current_state = trajectory_player.getNext();
+//       rclcpp::Rate rate(30);
+//       while (!trajectory_player.isFinished())
+//       {
+//           tesseract_common::JointState current_state = trajectory_player.getNext();
 
-             sensor_msgs::msg::JointState current_state_msg;
+//           sensor_msgs::msg::JointState current_state_msg;
 
-             current_state_msg.name = joint_names;
-             current_state_msg.position = std::vector<double>(current_state.position.data(),
-                                                              current_state.position.data() + current_state.position.size());
+//           current_state_msg.name = joint_names;
+//           current_state_msg.position = std::vector<double>(current_state.position.data(),
+//                                                            current_state.position.data() + current_state.position.size());
 
-             joint_state_pub_->publish(current_state_msg);
+//           joint_state_pub_->publish(current_state_msg);
 
-             rate.sleep();
-         }
-     }
-     else
-     {
-         QMessageBox confirmation_box;
-         confirmation_box.setWindowTitle("Scan Confirmation");
-         confirmation_box.setText("The robot is currently scanning.");
-         confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
-         confirmation_box.exec();
+//           rate.sleep();
+//       }
+//   }
+//   else
+//   {
+//       QMessageBox confirmation_box;
+//       confirmation_box.setWindowTitle("Scan Confirmation");
+//       confirmation_box.setText("The robot is currently scanning.");
+//       confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
+//       confirmation_box.exec();
 
-     }
+//   }
 
 
   // call reconstruction stop
@@ -576,26 +577,12 @@ void ROSConWindow::execute()
 
   if (sim_robot_)
   {
+    auto inst = tesseract_planning::Serialization::fromArchiveFileXML<tesseract_planning::Instruction>("/tmp/motion_planning_instructions_results.xml").as<tesseract_planning::CompositeInstruction>();
+
+    tesseract_common::JointTrajectory scan_trajectory = tesseract_planning::toJointTrajectory(inst);
+
     std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
 
-    // TODO be variable
-    std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-                                                               {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-                                                               {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-                                                               { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-                                                               { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-                                                               {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
-
-    tesseract_common::JointTrajectory scan_trajectory;
-    for (std::size_t i = 0; i < trajectory_positions.size(); i++)
-    {
-      tesseract_common::JointState joint_state;
-      joint_state.joint_names = joint_names;
-      joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
-      joint_state.time = i * 1;
-
-      scan_trajectory.push_back(joint_state);
-    }
     tesseract_visualization::TrajectoryPlayer trajectory_player;
     trajectory_player.setTrajectory(scan_trajectory);
 
