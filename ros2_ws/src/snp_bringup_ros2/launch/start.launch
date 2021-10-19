@@ -19,6 +19,9 @@
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
 <!--  <include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
 
+  <!-- Launch Motion Execution Node -->
+<!--  <node pkg="ros_to_moto" exec="motion_execution" emulate_tty="true"/>-->
+
   <!-- Launch Application Node -->
   <node pkg="snp_application" exec="roscon_app">
     <param name="sim_robot" value="$(var sim)"/>

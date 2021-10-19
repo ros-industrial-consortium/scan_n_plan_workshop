@@ -21,6 +21,7 @@
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
 #include <tesseract_msgs/srv/get_motion_plan.hpp>
+#include <tesseract_msgs/msg/trajectory.hpp>
 
 
 namespace Ui {
@@ -45,6 +46,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr scan_mesh_pub_;
+  rclcpp::Publisher<tesseract_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
 
   // service clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;
@@ -56,7 +58,9 @@ private:
   rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_reconstruction_client_;
 
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
-  rclcpp::Client<tesseract_msgs::srv::GetMotionPlan>::SharedPtr motion_planning_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr motion_planning_client_;
+
+
 
   rclcpp::Client<snp_msgs::srv::GenerateRobotProgram>::SharedPtr program_generation_client_;
 
@@ -68,7 +72,7 @@ private:
                      int step);
 
   std::string mesh_filepath_;
-  tesseract_common::AlignedVector<tesseract_common::Toolpath> tool_paths_;
+  tesseract_common::Toolpath tool_paths_;
   tesseract_planning::CompositeInstruction motion_plan_;
 
 //  std::unique_ptr<QTimer> timer_;

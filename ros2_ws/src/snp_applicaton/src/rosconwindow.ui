@@ -157,16 +157,6 @@
          </property>
         </spacer>
        </item>
-       <item>
-        <widget class="QPushButton" name="execute_button">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Execute Motion</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
     </item>
