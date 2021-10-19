@@ -9,15 +9,15 @@
 
   <!-- Launch Open3d Interface Node -->
   <node pkg="open3d_interface" exec="open3d_yak">
-    <param name="depth_image_topic" value="/camera/depth_registered/image"/>
-    <param name="color_image_topic" value="/camera/rgb/image_rect_color"/>
-    <param name="camera_info_topic" value="/camera/rgb/camera_info"/>
+    <param name="depth_image_topic" value="/camera/aligned_depth_to_color/image_raw"/>
+    <param name="color_image_topic" value="/camera/color/image_rect_color"/>
+    <param name="camera_info_topic" value="/camera/color/camera_info"/>
     <param name="cache_count" value="10"/>
     <param name="slop" value="0.01"/>
   </node>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
-  <include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>
+<!--  <include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
 
   <!-- Launch Application Node -->
   <node pkg="snp_application" exec="roscon_app">

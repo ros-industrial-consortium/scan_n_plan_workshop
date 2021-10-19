@@ -218,8 +218,8 @@ void ROSConWindow::scan()
     start_request->relative_frame = "floor";
     
     // TODO parameters
-    start_request->translation_distance = 0.0; 
-    start_request->rotational_distance = 0.0;
+    start_request->translation_distance = 0.01;
+    start_request->rotational_distance = 0.05;
     start_request->live = false;
 
     // TODO other params (currently set to recommended default)
@@ -228,7 +228,7 @@ void ROSConWindow::scan()
 
     start_request->rgbd_params.depth_scale = 1000.0;
     start_request->rgbd_params.depth_trunc = 3.0;
-    start_request->rgbd_params.convert_rgb_to_intensity = true;
+    start_request->rgbd_params.convert_rgb_to_intensity = false;
 
      auto start_result = start_reconstruction_client_->async_send_request(start_request);
      if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
@@ -302,7 +302,7 @@ void ROSConWindow::scan()
        std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
 
    stop_request->archive_directory = "";
-   stop_request->results_directory = "/tmp/roscon/scan";
+   stop_request->results_directory = "/tmp";
 
    auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
    if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
