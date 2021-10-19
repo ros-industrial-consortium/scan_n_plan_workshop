@@ -302,7 +302,7 @@ void ROSConWindow::scan()
        std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
 
    stop_request->archive_directory = "";
-   stop_request->results_directory = "scan";
+   stop_request->results_directory = "/tmp/roscon/scan";
 
    auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
    if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
@@ -310,6 +310,7 @@ void ROSConWindow::scan()
        auto stop_response = stop_result.get();
        success = stop_response->success;
        mesh_filepath_ = stop_response->mesh_filepath;
+       RCLCPP_INFO(node_->get_logger(), "Mesh saved to '%s'.", mesh_filepath_.c_str());
    }
    else
    {
