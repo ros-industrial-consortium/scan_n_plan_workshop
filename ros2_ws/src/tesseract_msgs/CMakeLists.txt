@@ -72,18 +72,14 @@ set(srv_files
   "srv/ComputeContactResultVector.srv"
   "srv/GetEnvironmentChanges.srv"
   "srv/GetEnvironmentInformation.srv"
+  "srv/GetMotionPlan.srv"
   "srv/ModifyEnvironment.srv"
   "srv/SaveSceneGraph.srv"
-)
-
-set(action_files
-  "action/GetMotionPlan.action"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
     ${msg_files}
     ${srv_files}
-    ${action_files}
   DEPENDENCIES
     builtin_interfaces
     std_msgs

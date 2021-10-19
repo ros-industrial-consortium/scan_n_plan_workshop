@@ -8,6 +8,10 @@
 
 #include <snp_msgs/msg/tool_paths.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
+#include <tesseract_command_language/cartesian_waypoint.h>
+#include <tesseract_command_language/plan_instruction.h>
+#include <tesseract_command_language/state_waypoint.h>
+#include <tesseract_common/manipulator_info.h>
 #include <tesseract_visualization/trajectory_player.h>
 
 namespace // anonymous restricts visibility to this file
@@ -113,6 +117,9 @@ ROSConWindow::ROSConWindow(QWidget *parent)
   : QMainWindow(parent)
   , ui_(new Ui::ROSConWindow)
   , past_calibration_(false)
+  , motion_plan_("",
+                 tesseract_planning::CompositeInstructionOrder(),
+                 tesseract_common::ManipulatorInfo("","",""))
 {
   ui_->setupUi(this);
 
@@ -129,8 +136,8 @@ ROSConWindow::ROSConWindow(QWidget *parent)
 
   node_ = rclcpp::Node::make_shared("roscon_app_node");
 
-  node_->declare_parameter<bool>("sim_robot");
-  node_->get_parameter("sim_robot", sim_robot_);
+  node_->declare_parameter("sim_robot");
+  node_->get_parameter<bool>("sim_robot", sim_robot_);
 
   joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_state_update", 10);
 
@@ -467,28 +474,29 @@ void ROSConWindow::plan_tool_paths()
 void ROSConWindow::plan_motion()
 {
   bool success = true;
-  motion_plan_ = tesseract_planning::Instruction();
-
+  motion_plan_ = tesseract_planning::CompositeInstruction("",
+                                                          tesseract_planning::CompositeInstructionOrder(),
+                                                          tesseract_common::ManipulatorInfo("", "", ""));
   // do motion planning things
   if (tool_paths_.size() > 0)
   {
     // Make a program out of the raster plan
-    tesseract_planning::ManipulatorInfo manip_info("robot_only");   // TODO: maybe manipulator?
-    manip_info.tcp = tesseract_planning::ToolCenterPoint("tool0");  // TODO: need actual TCP
-    manip_info.working_frame = "world"; // TODO: need correct value
+    tesseract_planning::ManipulatorInfo manip_info("robot_only", "", ""); // TODO: maybe manipulator?
+    manip_info.tcp_frame = "tool0"; // TODO: need actual TCP
+    manip_info.working_frame = "world";                                   // TODO: need correct value
     tesseract_planning::CompositeInstruction program = createProgram(manip_info, tool_paths_[0]);
 
     // Fill a service request
     std::shared_ptr<tesseract_msgs::srv::GetMotionPlan::Request> request =
         std::make_shared<tesseract_msgs::srv::GetMotionPlan::Request>();
-    request->request.name = goal.request.RASTER_G_FT_PLANNER_NAME;  // TODO: use correct planner
-    request->request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(program);
+    request->request.name = request->request.RASTER_G_FT_PLANNER_NAME;  // TODO: use correct planner
+    request->request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::CompositeInstruction>(program);
 
     // Call the service
     auto result = motion_planning_client_->async_send_request(request);
     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
     {
-      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::Instruction>(result.get()->response.results);
+      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::CompositeInstruction>(result.get()->response.results);
     }
     else
     {

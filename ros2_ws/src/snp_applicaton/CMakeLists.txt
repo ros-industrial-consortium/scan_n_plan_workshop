@@ -28,7 +28,9 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(tesseract_command_language REQUIRED)
 find_package(tesseract_common REQUIRED)
+find_package(tesseract_msgs REQUIRED)
 find_package(tesseract_visualization REQUIRED)
 find_package(tf2_eigen)
 
@@ -45,6 +47,7 @@ add_executable(roscon_app
 )
 target_link_libraries(roscon_app
   Qt5::Widgets
+  tesseract::tesseract_command_language
   tesseract::tesseract_common
   tesseract::tesseract_visualization)
 ament_target_dependencies(roscon_app
@@ -53,7 +56,7 @@ ament_target_dependencies(roscon_app
   sensor_msgs
   snp_msgs
   std_srvs
-  tesseract_visualization
+  tesseract_msgs
   tf2_eigen)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)

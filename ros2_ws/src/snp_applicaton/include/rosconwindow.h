@@ -16,7 +16,9 @@
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <snp_msgs/srv/generate_robot_program.hpp>
+#include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
+#include <tesseract_msgs/srv/get_motion_plan.hpp>
 
 
 namespace Ui {
@@ -63,7 +65,7 @@ private:
 
   std::string mesh_filename_;
   tesseract_common::AlignedVector<tesseract_common::Toolpath> tool_paths_;
-  tesseract_planning::Instruction motion_plan_;
+  tesseract_planning::CompositeInstruction motion_plan_;
 
 public slots:
     void update_calibration_requirement();
