@@ -17,9 +17,8 @@
 #include <tesseract_rosutils/ros2/utils.h>
 #include <tesseract_command_language/utils/utils.h>
 
-namespace // anonymous restricts visibility to this file
+namespace  // anonymous restricts visibility to this file
 {
-
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
   tesseract_common::Toolpath tps;
@@ -42,18 +41,20 @@ tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
   return tps;
 }
 
-tesseract_planning::CompositeInstruction createProgram(const tesseract_planning::ManipulatorInfo& manip_info, const tesseract_common::Toolpath& raster_strips)
+tesseract_planning::CompositeInstruction createProgram(const tesseract_planning::ManipulatorInfo& manip_info,
+                                                       const tesseract_common::Toolpath& raster_strips)
 {
+  std::string raster_profile{ "RASTER" };
+  std::string transition_profile{ "TRANSITION" };
+  std::string freespace_profile{ "FREESPACE" };
+  std::vector<std::string> joint_names{ "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
 
-  std::string raster_profile {"RASTER"};
-  std::string transition_profile {"TRANSITION"};
-  std::string freespace_profile {"FREESPACE"};
-  std::vector<std::string> joint_names { "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
-
-  tesseract_planning::CompositeInstruction program(raster_profile, tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
+  tesseract_planning::CompositeInstruction program(raster_profile,
+                                                   tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
   tesseract_planning::StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(joint_names.size()));
-  tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START, freespace_profile);
+  tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START,
+                                                        freespace_profile);
   program.setStartInstruction(start_instruction);
 
   for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
@@ -62,7 +63,8 @@ tesseract_planning::CompositeInstruction createProgram(const tesseract_planning:
     {
       // Define from start composite instruction
       tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
-      tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE, freespace_profile);
+      tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE,
+                                                  freespace_profile);
       plan_f0.setDescription("from_start_plan");
       tesseract_planning::CompositeInstruction from_start(freespace_profile);
       from_start.setDescription("from_start");
@@ -77,17 +79,18 @@ tesseract_planning::CompositeInstruction createProgram(const tesseract_planning:
     for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
     {
       tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
-      raster_segment.push_back(tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, raster_profile));
+      raster_segment.push_back(
+          tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, raster_profile));
     }
     program.push_back(raster_segment);
-
 
     if (rs < raster_strips.size() - 1)
     {
       // Add transition
       tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
 
-      tesseract_planning::PlanInstruction transition_instruction1(twp, tesseract_planning::PlanInstructionType::FREESPACE, transition_profile);
+      tesseract_planning::PlanInstruction transition_instruction1(
+          twp, tesseract_planning::PlanInstructionType::FREESPACE, transition_profile);
       transition_instruction1.setDescription("transition_from_end_plan");
 
       tesseract_planning::CompositeInstruction transition(transition_profile);
@@ -99,7 +102,8 @@ tesseract_planning::CompositeInstruction createProgram(const tesseract_planning:
     else
     {
       // Add to end instruction
-      tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE, freespace_profile);
+      tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE,
+                                                  freespace_profile);
       plan_f2.setDescription("to_end_plan");
       tesseract_planning::CompositeInstruction to_end(freespace_profile);
       to_end.setDescription("to_end");
@@ -111,15 +115,13 @@ tesseract_planning::CompositeInstruction createProgram(const tesseract_planning:
   return program;
 }
 
-}
+}  // namespace
 
-ROSConWindow::ROSConWindow(QWidget *parent)
+ROSConWindow::ROSConWindow(QWidget* parent)
   : QMainWindow(parent)
   , ui_(new Ui::ROSConWindow)
   , past_calibration_(false)
-  , motion_plan_("",
-                 tesseract_planning::CompositeInstructionOrder(),
-                 tesseract_common::ManipulatorInfo("","",""))
+  , motion_plan_("", tesseract_planning::CompositeInstructionOrder(), tesseract_common::ManipulatorInfo("", "", ""))
 {
   ui_->setupUi(this);
 
@@ -150,12 +152,17 @@ ROSConWindow::ROSConWindow(QWidget *parent)
   get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>("correlation");
   install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>("install");
 
-  start_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>("start_reconstruction");
-  stop_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>("stop_reconstruction");
+  start_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>("start_"
+                                                                                                          "reconstructi"
+                                                                                                          "on");
+  stop_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>("stop_"
+                                                                                                        "reconstructio"
+                                                                                                        "n");
 
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths");
 
-  motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>("/snp_planning_server/tesseract_trigger_motion_plan");
+  motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>("/snp_planning_server/"
+                                                                         "tesseract_trigger_motion_plan");
 
   program_generation_client_ = node_->create_client<snp_msgs::srv::GenerateRobotProgram>("generate_robot_program");
 }
@@ -177,7 +184,7 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
       status_stream << "\nWaiting to " << next_process << "...";
     }
 
-    ui_->progress_bar->setValue(step/5.0 * 100);
+    ui_->progress_bar->setValue(step / 5.0 * 100);
 
     if (next_button != nullptr)
     {
@@ -201,34 +208,34 @@ void ROSConWindow::update_calibration_requirement()
 {
   if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
   {
-      update_status(true, "Calibration", nullptr, "scan", ui_->scan_button, 1);
+    update_status(true, "Calibration", nullptr, "scan", ui_->scan_button, 1);
   }
   else
   {
-      reset();
+    reset();
   }
 }
 
 void ROSConWindow::observe()
 {
-   bool success;
-   std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  bool success;
+  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-   auto result = observe_client_->async_send_request(request);
-   if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-   {
-       auto response = result.get();
-       success = response->success;
-   }
+  auto result = observe_client_->async_send_request(request);
+  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    auto response = result.get();
+    success = response->success;
+  }
 
   if (success)
   {
-      ui_->run_calibration_button->setEnabled(true);
-      ui_->status_label->setText("Gathered observation.");
+    ui_->run_calibration_button->setEnabled(true);
+    ui_->status_label->setText("Gathered observation.");
   }
   else
   {
-      ui_->status_label->setText("Failed to get observation.");
+    ui_->status_label->setText("Failed to get observation.");
   }
 }
 
@@ -257,24 +264,24 @@ void ROSConWindow::run_calibration()
 
 void ROSConWindow::get_correlation()
 {
-    bool success;
-    std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  bool success;
+  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-    auto result = get_correlation_client_->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    {
-        auto response = result.get();
-        success = response->success;
-    }
+  auto result = get_correlation_client_->async_send_request(request);
+  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    auto response = result.get();
+    success = response->success;
+  }
 
-    if (success)
-    {
-        ui_->status_label->setText("Correlation written to file.");
-    }
-    else
-    {
-        ui_->status_label->setText("Failed to write correlation to file.");
-    }
+  if (success)
+  {
+    ui_->status_label->setText("Correlation written to file.");
+  }
+  else
+  {
+    ui_->status_label->setText("Failed to write correlation to file.");
+  }
 }
 
 void ROSConWindow::install_calibration()
@@ -295,168 +302,166 @@ void ROSConWindow::install_calibration()
 
 void ROSConWindow::reset_calibration()
 {
-    bool success;
-    std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  bool success;
+  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-    auto result = install_calibration_client_->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    {
-        auto response = result.get();
-        success = response->success;
-    }
-    else
-    {
-        success = false;
-    }
+  auto result = install_calibration_client_->async_send_request(request);
+  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    auto response = result.get();
+    success = response->success;
+  }
+  else
+  {
+    success = false;
+  }
 
-    if (success)
-    {
-        ui_->run_calibration_button->setEnabled(false);
-        ui_->get_correlation_button->setEnabled(false);
-        ui_->install_calibration_button->setEnabled(false);
-        ui_->reset_calibration_button->setEnabled(false);
-    }
-
+  if (success)
+  {
+    ui_->run_calibration_button->setEnabled(false);
+    ui_->get_correlation_button->setEnabled(false);
+    ui_->install_calibration_button->setEnabled(false);
+    ui_->reset_calibration_button->setEnabled(false);
+  }
 }
 
 void ROSConWindow::scan()
 {
   bool success;
 
-    ui_->status_label->setText("Performing scan...");
-    ui_->status_label->repaint();
+  ui_->status_label->setText("Performing scan...");
+  ui_->status_label->repaint();
 
-    // call reconstruction start
-    open3d_interface_msgs::srv::StartYakReconstruction::Request::SharedPtr start_request = 
-        std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
+  // call reconstruction start
+  open3d_interface_msgs::srv::StartYakReconstruction::Request::SharedPtr start_request =
+      std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
-    start_request->tracking_frame = "camera_color_optical_frame";
-    start_request->relative_frame = "floor";
-    
-    // TODO parameters
-    start_request->translation_distance = 0.01;
-    start_request->rotational_distance = 0.05;
-    start_request->live = false;
+  start_request->tracking_frame = "camera_color_optical_frame";
+  start_request->relative_frame = "floor";
 
-    // TODO other params (currently set to recommended default)
-    start_request->tsdf_params.voxel_length = 0.01;
-    start_request->tsdf_params.sdf_trunc = 0.04;
+  // TODO parameters
+  start_request->translation_distance = 0.01;
+  start_request->rotational_distance = 0.05;
+  start_request->live = false;
 
-    start_request->rgbd_params.depth_scale = 1000.0;
-    start_request->rgbd_params.depth_trunc = 3.0;
-    start_request->rgbd_params.convert_rgb_to_intensity = false;
+  // TODO other params (currently set to recommended default)
+  start_request->tsdf_params.voxel_length = 0.01;
+  start_request->tsdf_params.sdf_trunc = 0.04;
 
-     auto start_result = start_reconstruction_client_->async_send_request(start_request);
-     if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
-     {
-         auto start_response = start_result.get();
-         success = start_response->success;
-     }
-     else
-     {
-         success = false;
-     }
+  start_request->rgbd_params.depth_scale = 1000.0;
+  start_request->rgbd_params.depth_trunc = 3.0;
+  start_request->rgbd_params.convert_rgb_to_intensity = false;
 
-     if (!success)
-     {
-         RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
-         update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
-     }
+  auto start_result = start_reconstruction_client_->async_send_request(start_request);
+  if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    auto start_response = start_result.get();
+    success = start_response->success;
+  }
+  else
+  {
+    success = false;
+  }
 
-//     if (sim_robot_)
-//     {
-//       std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
+  if (!success)
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
+    update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+  }
 
-//       std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-//                                                                  {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-//                                                                  {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-//                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-//                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-//                                                                  {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
+  //     if (sim_robot_)
+  //     {
+  //       std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
 
-//       tesseract_common::JointTrajectory scan_trajectory;
-//       for (std::size_t i = 0; i < trajectory_positions.size(); i++)
-//       {
-//           tesseract_common::JointState joint_state;
-//           joint_state.joint_names = joint_names;
-//           joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
-//           joint_state.time = i * 0.1;
+  //       std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+  //                                                                  {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
+  //                                                                  {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+  //                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+  //                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
+  //                                                                  {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
 
-//           scan_trajectory.push_back(joint_state);
-//       }
-//       tesseract_visualization::TrajectoryPlayer trajectory_player;
-//       trajectory_player.setTrajectory(scan_trajectory);
+  //       tesseract_common::JointTrajectory scan_trajectory;
+  //       for (std::size_t i = 0; i < trajectory_positions.size(); i++)
+  //       {
+  //           tesseract_common::JointState joint_state;
+  //           joint_state.joint_names = joint_names;
+  //           joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
+  //           joint_state.time = i * 0.1;
 
-//       rclcpp::Rate rate(30);
-//       while (!trajectory_player.isFinished())
-//       {
-//           tesseract_common::JointState current_state = trajectory_player.getNext();
+  //           scan_trajectory.push_back(joint_state);
+  //       }
+  //       tesseract_visualization::TrajectoryPlayer trajectory_player;
+  //       trajectory_player.setTrajectory(scan_trajectory);
 
-//           sensor_msgs::msg::JointState current_state_msg;
+  //       rclcpp::Rate rate(30);
+  //       while (!trajectory_player.isFinished())
+  //       {
+  //           tesseract_common::JointState current_state = trajectory_player.getNext();
 
-//           current_state_msg.name = joint_names;
-//           current_state_msg.position = std::vector<double>(current_state.position.data(),
-//                                                            current_state.position.data() + current_state.position.size());
+  //           sensor_msgs::msg::JointState current_state_msg;
 
-//           joint_state_pub_->publish(current_state_msg);
+  //           current_state_msg.name = joint_names;
+  //           current_state_msg.position = std::vector<double>(current_state.position.data(),
+  //                                                            current_state.position.data() +
+  //                                                            current_state.position.size());
 
-//           rate.sleep();
-//       }
-//   }
-//   else
-//   {
-//       QMessageBox confirmation_box;
-//       confirmation_box.setWindowTitle("Scan Confirmation");
-//       confirmation_box.setText("The robot is currently scanning.");
-//       confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
-//       confirmation_box.exec();
+  //           joint_state_pub_->publish(current_state_msg);
 
-//   }
+  //           rate.sleep();
+  //       }
+  //   }
+  //   else
+  //   {
+  //       QMessageBox confirmation_box;
+  //       confirmation_box.setWindowTitle("Scan Confirmation");
+  //       confirmation_box.setText("The robot is currently scanning.");
+  //       confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
+  //       confirmation_box.exec();
 
+  //   }
 
   // call reconstruction stop
   open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request =
       std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
 
-   stop_request->archive_directory = "";
-   stop_request->results_directory = "/tmp";
+  stop_request->archive_directory = "";
+  stop_request->results_directory = "/tmp";
 
-   auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
-   if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
-   {
-       auto stop_response = stop_result.get();
-       success = stop_response->success;
+  auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
+  if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    auto stop_response = stop_result.get();
+    success = stop_response->success;
 
-//       mesh_filepath_ = stop_response->mesh_filepath;
-       // Instead we are loading from file
-       std::string package_path = ament_index_cpp::get_package_share_directory("snp_support");
-       mesh_filepath_ = package_path + "/meshes/part_scan.ply";
-       RCLCPP_INFO(node_->get_logger(), "Mesh saved to '%s'.", mesh_filepath_.c_str());
+    //       mesh_filepath_ = stop_response->mesh_filepath;
+    // Instead we are loading from file
+    std::string package_path = ament_index_cpp::get_package_share_directory("snp_support");
+    mesh_filepath_ = package_path + "/meshes/part_scan.ply";
+    RCLCPP_INFO(node_->get_logger(), "Mesh saved to '%s'.", mesh_filepath_.c_str());
 
-       visualization_msgs::msg::Marker mesh_marker;
-       mesh_marker.header.frame_id = "floor";
+    visualization_msgs::msg::Marker mesh_marker;
+    mesh_marker.header.frame_id = "floor";
 
-       mesh_marker.color.r = 200;
-       mesh_marker.color.g = 200;
-       mesh_marker.color.b = 0;
-       mesh_marker.color.a = 1;
+    mesh_marker.color.r = 200;
+    mesh_marker.color.g = 200;
+    mesh_marker.color.b = 0;
+    mesh_marker.color.a = 1;
 
-       mesh_marker.scale.x = 1;
-       mesh_marker.scale.y = 1;
-       mesh_marker.scale.z = 1;
+    mesh_marker.scale.x = 1;
+    mesh_marker.scale.y = 1;
+    mesh_marker.scale.z = 1;
 
-       mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-       mesh_marker.mesh_resource = "file://" + mesh_filepath_;
+    mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+    mesh_marker.mesh_resource = "file://" + mesh_filepath_;
 
-       scan_mesh_pub_->publish(mesh_marker);
-   }
-   else
-   {
-       success = false;
-   }
+    scan_mesh_pub_->publish(mesh_marker);
+  }
+  else
+  {
+    success = false;
+  }
 
   update_status(success, "Scanning and reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
-
 }
 
 void ROSConWindow::plan_tool_paths()
@@ -499,7 +504,7 @@ void ROSConWindow::plan_tool_paths()
       {
         for (const auto& segment : toolpath.segments)
         {
-         flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
+          flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
         }
       }
 
@@ -514,8 +519,7 @@ void ROSConWindow::plan_motion()
 {
   bool success = true;
 
-  motion_plan_ = tesseract_planning::CompositeInstruction("",
-                                                          tesseract_planning::CompositeInstructionOrder(),
+  motion_plan_ = tesseract_planning::CompositeInstruction("", tesseract_planning::CompositeInstructionOrder(),
                                                           tesseract_common::ManipulatorInfo("", "", ""));
   // do motion planning things
   if (tool_paths_.size() > 0)
@@ -525,14 +529,22 @@ void ROSConWindow::plan_motion()
     tesseract_planning::CompositeInstruction program = createProgram(manip_info, tool_paths_);
 
     // Fill a service request
-    tesseract_planning::Serialization::toArchiveFileXML<tesseract_planning::Instruction>(program, "/tmp/motion_planning_instructions.xml");
+    tesseract_planning::Serialization::toArchiveFileXML<tesseract_planning::Instruction>(program, "/tmp/"
+                                                                                                  "motion_planning_"
+                                                                                                  "instructions.xml");
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
     // Call the service
     auto result = motion_planning_client_->async_send_request(request);
     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS && result.get()->success)
     {
-      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::Instruction>(result.get()->message).as<tesseract_planning::CompositeInstruction>();
-      tesseract_planning::Serialization::toArchiveFileXML<tesseract_planning::Instruction>(motion_plan_, "/tmp/motion_planning_instructions_results.xml");
+      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::Instruction>(
+                         result.get()->message)
+                         .as<tesseract_planning::CompositeInstruction>();
+      tesseract_planning::Serialization::toArchiveFileXML<tesseract_planning::Instruction>(motion_plan_, "/tmp/"
+                                                                                                         "motion_"
+                                                                                                         "planning_"
+                                                                                                         "instructions_"
+                                                                                                         "results.xml");
     }
     else
     {
@@ -540,22 +552,24 @@ void ROSConWindow::plan_motion()
       success = false;
     }
 
-//    std::shared_ptr<tesseract_msgs::srv::GetMotionPlan::Request> request =
-//        std::make_shared<tesseract_msgs::srv::GetMotionPlan::Request>();
-//    request->request.name = request->request.RASTER_G_FT_PLANNER_NAME;  // TODO: use correct planner
-//    request->request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::CompositeInstruction>(program);
+    //    std::shared_ptr<tesseract_msgs::srv::GetMotionPlan::Request> request =
+    //        std::make_shared<tesseract_msgs::srv::GetMotionPlan::Request>();
+    //    request->request.name = request->request.RASTER_G_FT_PLANNER_NAME;  // TODO: use correct planner
+    //    request->request.instructions =
+    //    tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::CompositeInstruction>(program);
 
-//    // Call the service
-//    auto result = motion_planning_client_->async_send_request(request);
-//    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-//    {
-//      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::CompositeInstruction>(result.get()->response.results);
-//    }
-//    else
-//    {
-//      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Motion Planning call failed");
-//      success = false;
-//    }
+    //    // Call the service
+    //    auto result = motion_planning_client_->async_send_request(request);
+    //    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+    //    {
+    //      motion_plan_ =
+    //      tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::CompositeInstruction>(result.get()->response.results);
+    //    }
+    //    else
+    //    {
+    //      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Motion Planning call failed");
+    //      success = false;
+    //    }
   }
   else
   {
@@ -573,15 +587,21 @@ void ROSConWindow::execute()
       std::make_shared<snp_msgs::srv::GenerateRobotProgram::Request>();
 
   request->instructions.resize(1);
-  request->instructions[0] = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(motion_plan_);
+  request->instructions[0] =
+      tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(motion_plan_);
 
   if (sim_robot_)
   {
-    auto inst = tesseract_planning::Serialization::fromArchiveFileXML<tesseract_planning::Instruction>("/tmp/motion_planning_instructions_results.xml").as<tesseract_planning::CompositeInstruction>();
+    auto inst = tesseract_planning::Serialization::fromArchiveFileXML<tesseract_planning::Instruction>("/tmp/"
+                                                                                                       "motion_"
+                                                                                                       "planning_"
+                                                                                                       "instructions_"
+                                                                                                       "results.xml")
+                    .as<tesseract_planning::CompositeInstruction>();
 
     tesseract_common::JointTrajectory scan_trajectory = tesseract_planning::toJointTrajectory(inst);
 
-    std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
+    std::vector<std::string> joint_names = { "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
 
     tesseract_visualization::TrajectoryPlayer trajectory_player;
     trajectory_player.setTrajectory(scan_trajectory);
@@ -602,25 +622,25 @@ void ROSConWindow::execute()
       rate.sleep();
     }
 
-    success = true; // TODO fake data?
+    success = true;  // TODO fake data?
   }
   else
   {
-     auto result  = program_generation_client_->async_send_request(request);
-     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-     {
-         success = result.get()->success;
-         if (!success)
-         {
-           RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result.get()->error.c_str());
-         }
-         // program is run via teach pendant
-     }
-     else
-     {
-         RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
-         success = false;
-     }
+    auto result = program_generation_client_->async_send_request(request);
+    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+      success = result.get()->success;
+      if (!success)
+      {
+        RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result.get()->error.c_str());
+      }
+      // program is run via teach pendant
+    }
+    else
+    {
+      RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
+      success = false;
+    }
   }
 
   update_status(success, "Execution", ui_->motion_execution_button, "", nullptr, 5);

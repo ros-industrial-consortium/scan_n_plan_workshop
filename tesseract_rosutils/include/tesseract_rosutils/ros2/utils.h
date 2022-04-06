@@ -127,7 +127,8 @@ bool fromMsg(tesseract_scene_graph::Visual::Ptr& visual, const tesseract_msgs::m
 
 bool toMsg(tesseract_msgs::msg::CollisionGeometry& collision_msg, const tesseract_scene_graph::Collision& collision);
 
-bool fromMsg(tesseract_scene_graph::Collision::Ptr& collision, const tesseract_msgs::msg::CollisionGeometry& collision_msg);
+bool fromMsg(tesseract_scene_graph::Collision::Ptr& collision,
+             const tesseract_msgs::msg::CollisionGeometry& collision_msg);
 
 bool toMsg(tesseract_msgs::msg::Link& link_msg, const tesseract_scene_graph::Link& link);
 
@@ -145,16 +146,19 @@ bool toMsg(tesseract_msgs::msg::JointDynamics& joint_dynamics_msg,
 bool fromMsg(tesseract_scene_graph::JointDynamics::Ptr& joint_dynamics,
              const tesseract_msgs::msg::JointDynamics& joint_dynamics_msg);
 
-bool toMsg(tesseract_msgs::msg::JointLimits& joint_limits_msg, const tesseract_scene_graph::JointLimits::Ptr& joint_limits);
+bool toMsg(tesseract_msgs::msg::JointLimits& joint_limits_msg,
+           const tesseract_scene_graph::JointLimits::Ptr& joint_limits);
 
 bool fromMsg(tesseract_scene_graph::JointLimits::Ptr& joint_limits,
              const tesseract_msgs::msg::JointLimits& joint_limits_msg);
 
 bool toMsg(tesseract_msgs::msg::JointMimic& joint_mimic_msg, const tesseract_scene_graph::JointMimic::Ptr& joint_mimic);
 
-bool fromMsg(tesseract_scene_graph::JointMimic::Ptr& joint_mimic, const tesseract_msgs::msg::JointMimic& joint_mimic_msg);
+bool fromMsg(tesseract_scene_graph::JointMimic::Ptr& joint_mimic,
+             const tesseract_msgs::msg::JointMimic& joint_mimic_msg);
 
-bool toMsg(tesseract_msgs::msg::JointSafety& joint_safety_msg, const tesseract_scene_graph::JointSafety::Ptr& joint_safety);
+bool toMsg(tesseract_msgs::msg::JointSafety& joint_safety_msg,
+           const tesseract_scene_graph::JointSafety::Ptr& joint_safety);
 
 bool fromMsg(tesseract_scene_graph::JointSafety::Ptr& joint_safety,
              const tesseract_msgs::msg::JointSafety& joint_safety_msg);
@@ -163,7 +167,8 @@ bool toMsg(tesseract_msgs::msg::Joint& joint_msg, const tesseract_scene_graph::J
 
 tesseract_planning::PlannerProfileRemapping
 fromMsg(const tesseract_msgs::msg::PlannerProfileRemapping& profile_remapping_msg);
-tesseract_msgs::msg::PlannerProfileRemapping toMsg(const tesseract_planning::PlannerProfileRemapping& profile_remapping);
+tesseract_msgs::msg::PlannerProfileRemapping
+toMsg(const tesseract_planning::PlannerProfileRemapping& profile_remapping);
 
 tesseract_common::PairsCollisionMarginData
 fromMsg(const std::vector<tesseract_msgs::msg::ContactMarginPair>& contact_margin_pairs_msg);
@@ -200,11 +205,9 @@ tesseract_environment::Commands fromMsg(const std::vector<tesseract_msgs::msg::E
 tesseract_environment::Command::Ptr fromMsg(const tesseract_msgs::msg::EnvironmentCommand& command_msg);
 
 bool toMsg(std::vector<tesseract_msgs::msg::EnvironmentCommand>& commands_msg,
-           const tesseract_environment::Commands& commands,
-           unsigned long past_revision);
+           const tesseract_environment::Commands& commands, unsigned long past_revision);
 
-void toMsg(tesseract_msgs::msg::EnvironmentState& state_msg,
-           const tesseract_environment::Environment& env,
+void toMsg(tesseract_msgs::msg::EnvironmentState& state_msg, const tesseract_environment::Environment& env,
            bool include_joint_states = true);
 
 /**
@@ -223,7 +226,8 @@ void toMsg(std::vector<tesseract_msgs::msg::JointState>& traj_msg, const tessera
 tesseract_common::JointTrajectory fromMsg(const std::vector<tesseract_msgs::msg::JointState>& traj_msg);
 
 bool processMsg(tesseract_environment::Environment& env, const sensor_msgs::msg::JointState& joint_state_msg);
-bool processMsg(const tesseract_environment::Environment::Ptr& env, const sensor_msgs::msg::JointState& joint_state_msg);
+bool processMsg(const tesseract_environment::Environment::Ptr& env,
+                const sensor_msgs::msg::JointState& joint_state_msg);
 
 /**
  * @brief Apply the provided commands to the environment
@@ -251,8 +255,7 @@ bool fromMsg(Eigen::Isometry3d& pose, const geometry_msgs::msg::Pose& pose_msg);
 bool toMsg(geometry_msgs::msg::Pose& pose_msg, const Eigen::Isometry3d& pose);
 
 void toMsg(tesseract_msgs::msg::ContactResult& contact_result_msg,
-           const tesseract_collision::ContactResult& contact_result,
-           const rclcpp::Time& stamp = rclcpp::Time());
+           const tesseract_collision::ContactResult& contact_result, const rclcpp::Time& stamp = rclcpp::Time());
 
 /**
  * @brief Convert kinematics plugin info to message
@@ -310,7 +313,8 @@ tesseract_msgs::msg::GroupsTCPs toMsg(tesseract_srdf::GroupTCPs::const_reference
  * @param manager The Manipulator manager to convert to message
  * @return True if successful, otherwise false
  */
-bool toMsg(tesseract_msgs::msg::KinematicsInformation& kin_info_msg, const tesseract_srdf::KinematicsInformation& kin_info);
+bool toMsg(tesseract_msgs::msg::KinematicsInformation& kin_info_msg,
+           const tesseract_srdf::KinematicsInformation& kin_info);
 
 /**
  * @brief This will populate the kinematics information from the kinematics information message
@@ -381,8 +385,7 @@ bool fromMsg(std::unordered_map<std::string, double>& joint_state, const sensor_
  * @param include_joint_states If true, the joint_states element will be populated with the current state
  * @return True if successful, otherwise false
  */
-bool toMsg(tesseract_msgs::msg::Environment& environment_msg,
-           const tesseract_environment::Environment& env,
+bool toMsg(tesseract_msgs::msg::Environment& environment_msg, const tesseract_environment::Environment& env,
            bool include_joint_states = true);
 
 /**
@@ -392,8 +395,7 @@ bool toMsg(tesseract_msgs::msg::Environment& environment_msg,
  * @param include_joint_states If true, the joint_states element will be populated with the current state
  * @return True if successful, otherwise false
  */
-bool toMsg(tesseract_msgs::msg::Environment& environment_msg,
-           const tesseract_environment::Environment::ConstPtr& env,
+bool toMsg(tesseract_msgs::msg::Environment& environment_msg, const tesseract_environment::Environment::ConstPtr& env,
            bool include_joint_states = true);
 
 /**
@@ -424,10 +426,10 @@ tesseract_planning::TaskInfo::Ptr fromMsg(const tesseract_msgs::msg::TaskInfo& t
  * @return Resulting Tesseract
  */
 trajectory_msgs::msg::JointTrajectory toMsg(const tesseract_common::JointTrajectory& joint_trajectory,
-                                       const tesseract_scene_graph::SceneState& initial_state);
+                                            const tesseract_scene_graph::SceneState& initial_state);
 
-//template <typename MessageType>
-//inline bool toFile(const std::string& filepath, const MessageType& msg)
+// template <typename MessageType>
+// inline bool toFile(const std::string& filepath, const MessageType& msg)
 //{
 //  std::ofstream ofs(filepath, std::ios::out | std::ios::binary);
 
@@ -442,8 +444,8 @@ trajectory_msgs::msg::JointTrajectory toMsg(const tesseract_common::JointTraject
 //  return true;
 //}
 
-//template <typename MessageType>
-//inline MessageType fromFile(const std::string& filepath)
+// template <typename MessageType>
+// inline MessageType fromFile(const std::string& filepath)
 //{
 //  std::ifstream ifs(filepath, std::ios::in | std::ios::binary);
 //  ifs.seekg(0, std::ios::end);
@@ -463,6 +465,6 @@ trajectory_msgs::msg::JointTrajectory toMsg(const tesseract_common::JointTraject
 //  return msg;
 //}
 
-}  // namespace tesseract_rosutils
+}  // namespace tesseract_rosutils::ros2
 
 #endif

@@ -60,8 +60,7 @@ Eigen::VectorXd toEigen(const sensor_msgs::msg::JointState& joint_state, const s
   return position;
 }
 
-bool toCSVFile(const std::vector<tesseract_msgs::msg::JointState>& trajectory_msg,
-               const std::string& file_path,
+bool toCSVFile(const std::vector<tesseract_msgs::msg::JointState>& trajectory_msg, const std::string& file_path,
                char separator)
 {
   std::ofstream myfile;
@@ -140,4 +139,4 @@ std::vector<tesseract_msgs::msg::JointState> trajectoryFromCSVFile(const std::st
   return trajectory;
 }
 
-}  // namespace tesseract_rosutils
+}  // namespace tesseract_rosutils::ros2

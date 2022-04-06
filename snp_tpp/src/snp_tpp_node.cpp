@@ -1,24 +1,24 @@
 /**
-* @copyright Copyright (c) 2021, Southwest Research Institute
-*
-* @par License
-* Software License Agreement (Apache License)
-* @par
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* @par
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * @copyright Copyright (c) 2021, Southwest Research Institute
+ *
+ * @par License
+ * Software License Agreement (Apache License)
+ * @par
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * @par
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <snp_tpp/snp_tpp.h>
 
-#include <functional> // std::bind(), std::placeholders
+#include <functional>  // std::bind(), std::placeholders
 
 #include <pcl/conversions.h>
 #include <pcl/io/vtk_lib_io.h>
@@ -41,7 +41,6 @@
 
 namespace
 {
-
 geometry_msgs::msg::PoseArray toMsg(const noether::ToolPathSegment& segment)
 {
   geometry_msgs::msg::PoseArray pose_array;
@@ -69,19 +68,14 @@ snp_msgs::msg::ToolPaths toMsg(const noether::ToolPaths& paths)
   return paths_msg;
 }
 
-}
+}  // namespace
 
 namespace snp_tpp
 {
-
-TPPNode::TPPNode(const std::string& name)
-  : rclcpp::Node(name)
+TPPNode::TPPNode(const std::string& name) : rclcpp::Node(name)
 {
-  srvr_ = this->create_service<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths",
-                                                                 std::bind(&TPPNode::callPlanner,
-                                                                           this,
-                                                                           std::placeholders::_1,
-                                                                           std::placeholders::_2));
+  srvr_ = this->create_service<snp_msgs::srv::GenerateToolPaths>(
+      "generate_tool_paths", std::bind(&TPPNode::callPlanner, this, std::placeholders::_1, std::placeholders::_2));
   return;
 }
 
@@ -126,9 +120,9 @@ void TPPNode::callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths
   return;
 }
 
-} // namespace snp_tpp
+}  // namespace snp_tpp
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   // Initialize ROS2
   rclcpp::init(argc, argv);

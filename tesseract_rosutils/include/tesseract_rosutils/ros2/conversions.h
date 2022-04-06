@@ -63,8 +63,7 @@ Eigen::VectorXd toEigen(const sensor_msgs::msg::JointState& joint_state, const s
  * @param separator The separator to use
  * @return true if successful
  */
-bool toCSVFile(const std::vector<tesseract_msgs::msg::JointState>& trajectory_msg,
-               const std::string& file_path,
+bool toCSVFile(const std::vector<tesseract_msgs::msg::JointState>& trajectory_msg, const std::string& file_path,
                char separator = ',');
 
 /**
@@ -75,5 +74,5 @@ bool toCSVFile(const std::vector<tesseract_msgs::msg::JointState>& trajectory_ms
  */
 std::vector<tesseract_msgs::msg::JointState> trajectoryFromCSVFile(const std::string& file_path, char separator = ',');
 
-}  // namespace tesseract_rosutils
+}  // namespace tesseract_rosutils::ros2
 #endif  // TESSERACT_ROSUTILS_ROS2_CONVERSIONS_H

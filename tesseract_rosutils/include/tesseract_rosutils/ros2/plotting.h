@@ -57,17 +57,14 @@ public:
   void plotEnvironmentState(const tesseract_scene_graph::SceneState& state, std::string ns = "") override;
 
   void plotTrajectory(const tesseract_common::JointTrajectory& traj,
-                      const tesseract_scene_graph::StateSolver& state_solver,
-                      std::string ns = "") override;
+                      const tesseract_scene_graph::StateSolver& state_solver, std::string ns = "") override;
 
   void plotTrajectory(const tesseract_msgs::Trajectory& traj, std::string ns = "");
 
-  void plotTrajectory(const tesseract_environment::Environment& env,
-                      const tesseract_planning::Instruction& instruction,
+  void plotTrajectory(const tesseract_environment::Environment& env, const tesseract_planning::Instruction& instruction,
                       std::string ns = "");
 
-  void plotToolpath(const tesseract_environment::Environment& env,
-                    const tesseract_planning::Instruction& instruction,
+  void plotToolpath(const tesseract_environment::Environment& env, const tesseract_planning::Instruction& instruction,
                     std::string ns);
 
   void plotMarker(const tesseract_visualization::Marker& marker, std::string ns = "") override;
@@ -80,34 +77,23 @@ public:
 
   const std::string& getRootLink() const;
 
-  static visualization_msgs::MarkerArray getMarkerAxisMsg(int& id_counter,
-                                                          const std::string& frame_id,
-                                                          const std::string& ns,
-                                                          const ros::Time& time_stamp,
-                                                          const Eigen::Isometry3d& axis,
-                                                          const Eigen::Vector3d& scale);
+  static visualization_msgs::MarkerArray getMarkerAxisMsg(int& id_counter, const std::string& frame_id,
+                                                          const std::string& ns, const ros::Time& time_stamp,
+                                                          const Eigen::Isometry3d& axis, const Eigen::Vector3d& scale);
 
-  static visualization_msgs::Marker getMarkerArrowMsg(int& id_counter,
-                                                      const std::string& frame_id,
-                                                      const std::string& ns,
-                                                      const ros::Time& time_stamp,
+  static visualization_msgs::Marker getMarkerArrowMsg(int& id_counter, const std::string& frame_id,
+                                                      const std::string& ns, const ros::Time& time_stamp,
                                                       const tesseract_visualization::ArrowMarker& marker);
 
-  static visualization_msgs::Marker getMarkerCylinderMsg(int& id_counter,
-                                                         const std::string& frame_id,
-                                                         const std::string& ns,
-                                                         const ros::Time& time_stamp,
+  static visualization_msgs::Marker getMarkerCylinderMsg(int& id_counter, const std::string& frame_id,
+                                                         const std::string& ns, const ros::Time& time_stamp,
                                                          const Eigen::Ref<const Eigen::Vector3d>& pt1,
                                                          const Eigen::Ref<const Eigen::Vector3d>& pt2,
-                                                         const Eigen::Ref<const Eigen::Vector4d>& rgba,
-                                                         double scale);
+                                                         const Eigen::Ref<const Eigen::Vector4d>& rgba, double scale);
 
-  static visualization_msgs::MarkerArray
-  getContactResultsMarkerArrayMsg(int& id_counter,
-                                  const std::string& frame_id,
-                                  const std::string& ns,
-                                  const ros::Time& time_stamp,
-                                  const tesseract_visualization::ContactResultsMarker& marker);
+  static visualization_msgs::MarkerArray getContactResultsMarkerArrayMsg(
+      int& id_counter, const std::string& frame_id, const std::string& ns, const ros::Time& time_stamp,
+      const tesseract_visualization::ContactResultsMarker& marker);
 
 private:
   std::string root_link_;         /**< Root link of markers */

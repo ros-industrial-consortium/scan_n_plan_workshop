@@ -23,8 +23,8 @@
 #include <tesseract_msgs/srv/get_motion_plan.hpp>
 #include <tesseract_msgs/msg/trajectory.hpp>
 
-
-namespace Ui {
+namespace Ui
+{
 class ROSConWindow;
 }
 
@@ -33,11 +33,11 @@ class ROSConWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  explicit ROSConWindow(QWidget *parent = nullptr);
+  explicit ROSConWindow(QWidget* parent = nullptr);
   ~ROSConWindow();
 
 private:
-  Ui::ROSConWindow *ui_;
+  Ui::ROSConWindow* ui_;
   std::shared_ptr<rclcpp::Node> node_;
   bool sim_robot_;
   bool past_calibration_;
@@ -60,35 +60,29 @@ private:
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr motion_planning_client_;
 
-
-
   rclcpp::Client<snp_msgs::srv::GenerateRobotProgram>::SharedPtr program_generation_client_;
 
-  void update_status(bool success,
-                     std::string current_process,
-                     QPushButton* current_button,
-                     std::string next_process,
-                     QPushButton* next_button,
-                     int step);
+  void update_status(bool success, std::string current_process, QPushButton* current_button, std::string next_process,
+                     QPushButton* next_button, int step);
 
   std::string mesh_filepath_;
   tesseract_common::Toolpath tool_paths_;
   tesseract_planning::CompositeInstruction motion_plan_;
 
-//  std::unique_ptr<QTimer> timer_;
+  //  std::unique_ptr<QTimer> timer_;
 
 public slots:
-    void update_calibration_requirement();
-    void observe();
-    void run_calibration();
-    void get_correlation();
-    void install_calibration();
-    void reset_calibration();
-    void scan();
-    void plan_tool_paths();
-    void plan_motion();
-    void execute();
-    void reset();
+  void update_calibration_requirement();
+  void observe();
+  void run_calibration();
+  void get_correlation();
+  void install_calibration();
+  void reset_calibration();
+  void scan();
+  void plan_tool_paths();
+  void plan_motion();
+  void execute();
+  void reset();
 };
 
-#endif // ROSCONWINDOW_H
+#endif  // ROSCONWINDOW_H

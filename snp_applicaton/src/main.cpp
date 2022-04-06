@@ -1,13 +1,13 @@
 #include "rosconwindow.h"
 #include <QApplication>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    rclcpp::init(argc, argv);
+  rclcpp::init(argc, argv);
 
-    QApplication a(argc, argv);
-    ROSConWindow w;
-    w.show();
+  QApplication a(argc, argv);
+  ROSConWindow w;
+  w.show();
 
-    return a.exec();
+  return a.exec();
 }

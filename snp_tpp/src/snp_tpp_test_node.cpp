@@ -1,23 +1,23 @@
 /**
-* @copyright Copyright (c) 2021, Southwest Research Institute
-*
-* @par License
-* Software License Agreement (Apache License)
-* @par
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* @par
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * @copyright Copyright (c) 2021, Southwest Research Institute
+ *
+ * @par License
+ * Software License Agreement (Apache License)
+ * @par
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * @par
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include <chrono> // std::chono::seconds()
-#include <memory> // std::make_shared(), std::shared_ptr
+#include <chrono>  // std::chono::seconds()
+#include <memory>  // std::make_shared(), std::shared_ptr
 
 #include <geometry_msgs/msg/pose.h>
 #include <geometry_msgs/msg/pose_array.h>
@@ -47,9 +47,9 @@ geometry_msgs::msg::PoseArray compressPaths(const snp_msgs::msg::ToolPaths& tps)
 
   return compressed;
 }
-}
+}  // namespace
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   // Initialize ROS2
   rclcpp::init(argc, argv);
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   request->search_radius = 0.0125;
 
   // Call the service
-  auto result  = client->async_send_request(request);
+  auto result = client->async_send_request(request);
   if (rclcpp::spin_until_future_complete(node, result) != rclcpp::FutureReturnCode::SUCCESS)
   {
     RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "TPP call failed");

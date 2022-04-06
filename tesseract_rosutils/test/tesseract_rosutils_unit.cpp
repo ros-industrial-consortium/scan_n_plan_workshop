@@ -193,8 +193,8 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].group, "manipulator1");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins.size(), 1);
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].first, "KDLFwdKinChain");
-  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.class_name,
-            "KDLFwdKinChainFactory");
+  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.class_name, "KDLFwdKinChainFacto"
+                                                                                                   "ry");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.is_default, true);
   EXPECT_FALSE(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.config.empty());
 
@@ -203,8 +203,8 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].group, "manipulator2");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins.size(), 2);
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].first, "KDLInvKinChainLMA");
-  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.class_name,
-            "KDLInvKinChainLMAFactory");
+  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.class_name, "KDLInvKinChainLMAFa"
+                                                                                                   "ctory");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.is_default, true);
   EXPECT_FALSE(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.config.empty());
 
@@ -213,8 +213,8 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].group, "manipulator2");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins.size(), 2);
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].first, "KDLInvKinChainNR");
-  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.class_name,
-            "KDLInvKinChainNRFactory");
+  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.class_name, "KDLInvKinChainNRFac"
+                                                                                                   "tory");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.is_default, true);
   EXPECT_FALSE(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.config.empty());
 
@@ -253,8 +253,12 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_NO_THROW(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1"));
   EXPECT_EQ(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").size(), 1);
   EXPECT_NO_THROW(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain"));
-  EXPECT_EQ(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain").class_name,
-            "KDLFwdKinChainFactory");
+  EXPECT_EQ(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain").class_name, "KDLF"
+                                                                                                                  "wdKi"
+                                                                                                                  "nCha"
+                                                                                                                  "inFa"
+                                                                                                                  "ctor"
+                                                                                                                  "y");
   EXPECT_EQ(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain").is_default, true);
   EXPECT_TRUE(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain").config);
 
