@@ -1,3 +1,0 @@
-{
-    "hooks": ["share/fcl/hook/ament_prefix_path.dsv", "share/fcl/hook/ros_package_path.dsv"]
-}
