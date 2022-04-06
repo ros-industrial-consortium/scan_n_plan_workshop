@@ -1731,7 +1731,6 @@ tesseract_msgs::msg::PluginInfo toMsg(const tesseract_common::PluginInfo& info)
 {
   tesseract_msgs::msg::PluginInfo msg;
   msg.class_name = info.class_name;
-  msg.is_default = info.is_default;
 
   if (info.config)
   {
@@ -1949,7 +1948,6 @@ tesseract_common::PluginInfo fromMsg(const tesseract_msgs::msg::PluginInfo& info
 {
   tesseract_common::PluginInfo info;
   info.class_name = info_msg.class_name;
-  info.is_default = info_msg.is_default;
 
   if (!info_msg.config.empty())
     info.config = YAML::Load(info_msg.config);

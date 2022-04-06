@@ -132,7 +132,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   {
     tesseract_common::PluginInfo info;
     info.class_name = "KDLFwdKinChainFactory";
-    info.is_default = true;
     info.config["base_link"] = "base_link";
     info.config["tip_link"] = "tool0";
     kin_info.kinematics_plugin_info.fwd_plugin_infos["manipulator1"]["KDLFwdKinChain"] = info;
@@ -141,7 +140,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   {
     tesseract_common::PluginInfo info;
     info.class_name = "KDLInvKinChainLMAFactory";
-    info.is_default = true;
     info.config["base_link"] = "base_link";
     info.config["tip_link"] = "tool0";
     kin_info.kinematics_plugin_info.inv_plugin_infos["manipulator2"]["KDLInvKinChainLMA"] = info;
@@ -150,7 +148,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   {
     tesseract_common::PluginInfo info;
     info.class_name = "KDLInvKinChainNRFactory";
-    info.is_default = true;
     info.config["base_link"] = "base_link";
     info.config["tip_link"] = "tool0";
     kin_info.kinematics_plugin_info.inv_plugin_infos["manipulator2"]["KDLInvKinChainNR"] = info;
@@ -195,7 +192,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].first, "KDLFwdKinChain");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.class_name, "KDLFwdKinChainFacto"
                                                                                                    "ry");
-  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.is_default, true);
   EXPECT_FALSE(kin_info_msg.kinematics_plugin_info.group_fwd_plugins[0].plugins[0].second.config.empty());
 
   EXPECT_EQ(kin_info.kinematics_plugin_info.inv_plugin_infos.size(),
@@ -205,7 +201,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].first, "KDLInvKinChainLMA");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.class_name, "KDLInvKinChainLMAFa"
                                                                                                    "ctory");
-  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.is_default, true);
   EXPECT_FALSE(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[0].second.config.empty());
 
   EXPECT_EQ(kin_info.kinematics_plugin_info.inv_plugin_infos.size(),
@@ -215,7 +210,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].first, "KDLInvKinChainNR");
   EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.class_name, "KDLInvKinChainNRFac"
                                                                                                    "tory");
-  EXPECT_EQ(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.is_default, true);
   EXPECT_FALSE(kin_info_msg.kinematics_plugin_info.group_inv_plugins[0].plugins[1].second.config.empty());
 
   tesseract_srdf::KinematicsInformation kin_info2;
@@ -259,7 +253,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
                                                                                                                   "inFa"
                                                                                                                   "ctor"
                                                                                                                   "y");
-  EXPECT_EQ(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain").is_default, true);
   EXPECT_TRUE(kin_info2.kinematics_plugin_info.fwd_plugin_infos.at("manipulator1").at("KDLFwdKinChain").config);
 
   EXPECT_EQ(kin_info2.kinematics_plugin_info.inv_plugin_infos.size(),
@@ -269,8 +262,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_NO_THROW(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainLMA"));
   EXPECT_EQ(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainLMA").class_name,
             "KDLInvKinChainLMAFactory");
-  EXPECT_EQ(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainLMA").is_default,
-            true);
   EXPECT_TRUE(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainLMA").config);
 
   EXPECT_EQ(kin_info2.kinematics_plugin_info.inv_plugin_infos.size(),
@@ -280,8 +271,6 @@ TEST_F(TesseractROSUtilsUnit, KinematicsInformation)  // NOLINT
   EXPECT_NO_THROW(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainNR"));
   EXPECT_EQ(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainNR").class_name,
             "KDLInvKinChainNRFactory");
-  EXPECT_EQ(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainNR").is_default,
-            true);
   EXPECT_TRUE(kin_info2.kinematics_plugin_info.inv_plugin_infos.at("manipulator2").at("KDLInvKinChainNR").config);
 }
 
