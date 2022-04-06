@@ -26,31 +26,23 @@ find_package(tf2_eigen REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/snp_tpp_node.cpp)
-target_include_directories(${PROJECT_NAME}_node PRIVATE
-  include
-  ${PCL_INCLUDE_DIRS}
-)
-ament_target_dependencies(${PROJECT_NAME}_node
+target_include_directories(${PROJECT_NAME}_node PRIVATE include ${PCL_INCLUDE_DIRS})
+ament_target_dependencies(
+  ${PROJECT_NAME}_node
   geometry_msgs
   rclcpp
   snp_msgs
-  tf2_eigen
-)
-target_link_libraries(${PROJECT_NAME}_node
-  ${PCL_LIBRARIES}
-  noether::noether_tpp
-)
+  tf2_eigen)
+target_link_libraries(${PROJECT_NAME}_node ${PCL_LIBRARIES} noether::noether_tpp)
 
 add_executable(${PROJECT_NAME}_test src/snp_tpp_test_node.cpp)
-ament_target_dependencies(${PROJECT_NAME}_test
+ament_target_dependencies(
+  ${PROJECT_NAME}_test
   geometry_msgs
   rclcpp
-  snp_msgs
-)
+  snp_msgs)
 
-install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test
-  DESTINATION lib/${PROJECT_NAME}
-)
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

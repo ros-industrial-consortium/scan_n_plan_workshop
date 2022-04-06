@@ -37,23 +37,22 @@ find_package(tesseract_rosutils REQUIRED)
 find_package(tesseract_visualization REQUIRED)
 find_package(tf2_eigen)
 
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-)
+include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
-add_executable(roscon_app
+add_executable(
+  roscon_app
   src/rosconwindow.ui
   src/rosconwindow.cpp
   src/main.cpp
-  include/rosconwindow.h
-)
-target_link_libraries(roscon_app
+  include/rosconwindow.h)
+target_link_libraries(
+  roscon_app
   Qt5::Widgets
   tesseract::tesseract_command_language
   tesseract::tesseract_common
   tesseract::tesseract_visualization)
-ament_target_dependencies(roscon_app
+ament_target_dependencies(
+  roscon_app
   open3d_interface_msgs
   rclcpp
   sensor_msgs
