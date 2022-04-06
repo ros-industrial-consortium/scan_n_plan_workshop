@@ -1,3 +1,23 @@
-# ROSCon2021
+# Scan And Plan Demo
 
-This repository contains three workspaces: a ROS1 catkin workspace, a ROS2 colcon workspace, and a colcon workspace for building the ROS1-ROS2 bridge.  This means that dependencies need to be cloned into the `src` directories two levels down in this workspace.  To avoid git zaniness, add the directories for each source dependency to the `.gitignore` file of the `src` directory into which it gets cloned.
+## Install
+
+1. Install the prerequisite packages:
+    - `taskflow` (from the ROS-I PPA)
+      ```bash
+      sudo add-apt-repository ppa:ros-industrial/ppa
+      sudo apt-get update
+      sudo apt-get install taskflow
+        ```
+
+1. Install the ROS2 dependencies
+    ```bash
+    cd <snpd_workspace>
+    vcs import < src/roscon_2021_demo/dependencies.rosinstall
+    rosdep install --from-paths src --ignore-src -r -y
+    ```
+
+1. Build
+    ```bash
+    colcon build
+    ```
