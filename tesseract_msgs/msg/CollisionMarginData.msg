@@ -1,2 +1,0 @@
-float64 default_margin
-tesseract_msgs/ContactMarginPair[] margin_pairs
