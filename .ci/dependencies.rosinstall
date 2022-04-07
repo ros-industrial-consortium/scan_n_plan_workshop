@@ -1,4 +1,8 @@
 - git:
+    local-name: tesseract_ros2
+    uri: https://github.com/tesseract-robotics/tesseract_ros2.git
+    version: 92d5d27ce44a0f032ba5f7af4805b5699a02b6c5
+- git:
     local-name: noether
     uri: 'https://github.com/DavidMerzJr/noether.git'
     version: 1b19e6aa033cf5de8c0e258717605ceaf6b97860
