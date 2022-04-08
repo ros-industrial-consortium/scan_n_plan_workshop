@@ -14,7 +14,7 @@
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_common/manipulator_info.h>
 #include <tesseract_visualization/trajectory_player.h>
-#include <tesseract_rosutils/ros2/utils.h>
+#include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/utils/utils.h>
 
 namespace  // anonymous restricts visibility to this file
