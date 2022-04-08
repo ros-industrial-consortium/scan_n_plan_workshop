@@ -20,7 +20,6 @@
 #include <snp_msgs/srv/generate_robot_program.hpp>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
-#include <tesseract_msgs/srv/get_motion_plan.hpp>
 #include <tesseract_msgs/msg/trajectory.hpp>
 
 namespace Ui
