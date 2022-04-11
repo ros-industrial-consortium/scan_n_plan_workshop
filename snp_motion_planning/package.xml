@@ -13,6 +13,7 @@
   <depend>rclcpp</depend>
   <depend>snp_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>tesseract_command_language</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

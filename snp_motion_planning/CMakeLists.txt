@@ -11,6 +11,7 @@ endif()
 
 set(ROS2_DEPS rclcpp snp_msgs std_srvs)
 
+find_package(tesseract_command_language REQUIRED)
 find_package(ament_cmake REQUIRED)
 foreach(dep ${ROS2_DEPS})
   find_package(${dep} REQUIRED)
@@ -18,6 +19,7 @@ endforeach()
 
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
+target_link_libraries(${PROJECT_NAME}_node tesseract::tesseract_command_language)
 
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
 
