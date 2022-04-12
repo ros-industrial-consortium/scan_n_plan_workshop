@@ -14,7 +14,7 @@ int main(int argc, char** argv)
   auto node = rclcpp::Node::make_shared("snp_planning_server");
   auto service = node->create_service<std_srvs::srv::Trigger>("tesseract_trigger_motion_plan", &plan);
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Started SNP motion planning server");
+  RCLCPP_INFO(node->get_logger(), "Started SNP motion planning server");
   rclcpp::spin(node);
   rclcpp::shutdown();
 }
