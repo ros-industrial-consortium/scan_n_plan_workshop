@@ -9,17 +9,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(ROS2_DEPS rclcpp snp_msgs std_srvs)
+
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(snp_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
+foreach(dep ${ROS2_DEPS})
+  find_package(${dep} REQUIRED)
+endforeach()
 
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
-ament_target_dependencies(
-  ${PROJECT_NAME}_node
-  rclcpp
-  snp_msgs
-  std_srvs)
+ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
 
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
 
@@ -28,4 +26,5 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+ament_export_dependencies(${ROS2_DEPS})
 ament_package()
