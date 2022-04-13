@@ -17,7 +17,7 @@
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
-#include <snp_msgs/srv/generate_robot_program.hpp>
+#include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
 #include <tesseract_msgs/msg/trajectory.hpp>
@@ -59,7 +59,7 @@ private:
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr motion_planning_client_;
 
-  rclcpp::Client<snp_msgs::srv::GenerateRobotProgram>::SharedPtr program_generation_client_;
+  rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
 
   void update_status(bool success, std::string current_process, QPushButton* current_button, std::string next_process,
                      QPushButton* next_button, int step);

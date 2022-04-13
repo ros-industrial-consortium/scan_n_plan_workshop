@@ -7,6 +7,8 @@ snp_msgs/ToolPaths tool_paths
 
 # Params
 # [insert any relevant motion planning parameters here]
+string motion_group
+string tcp_frame
 
 ---
 # Response
