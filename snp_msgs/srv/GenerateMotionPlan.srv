@@ -1,0 +1,19 @@
+# Request
+
+# Tool Paths - the input tool paths that need to be planned on.  These follow Noether conventions.
+# i.e. ToolPaths is a raster pattern.  ToolPath is a single raster, which may be broken up into
+# discrete segments, each made of waypoints.
+snp_msgs/ToolPaths tool_paths
+
+# Params
+# [insert any relevant motion planning parameters here]
+
+---
+# Response
+
+# Motion Plan - a joint trajectory for the robot to follow
+trajectory_msgs/JointTrajectory motion_plan
+
+# Success and error information
+bool success
+string message
