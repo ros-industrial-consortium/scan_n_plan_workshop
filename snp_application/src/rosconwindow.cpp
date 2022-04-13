@@ -90,7 +90,7 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>("/snp_planning_server/"
                                                                          "tesseract_trigger_motion_plan");
 
-  program_generation_client_ = node_->create_client<snp_msgs::srv::GenerateRobotProgram>("generate_robot_program");
+  motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>("execute_motion_plan");
 }
 
 ROSConWindow::~ROSConWindow()
@@ -500,68 +500,69 @@ void ROSConWindow::plan_motion()
 
 void ROSConWindow::execute()
 {
-  bool success;
+  bool success = true;
 
   // do execution things
-  snp_msgs::srv::GenerateRobotProgram::Request::SharedPtr request =
-      std::make_shared<snp_msgs::srv::GenerateRobotProgram::Request>();
+  snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
+      std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
 
-  request->instructions.resize(1);
-  request->instructions[0] =
-      tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(motion_plan_);
-
-  if (sim_robot_)
-  {
-    auto inst = tesseract_planning::Serialization::fromArchiveFileXML<tesseract_planning::Instruction>("/tmp/"
-                                                                                                       "motion_"
-                                                                                                       "planning_"
-                                                                                                       "instructions_"
-                                                                                                       "results.xml")
-                    .as<tesseract_planning::CompositeInstruction>();
-
-    tesseract_common::JointTrajectory scan_trajectory = tesseract_planning::toJointTrajectory(inst);
-
-    std::vector<std::string> joint_names = { "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
-
-    tesseract_visualization::TrajectoryPlayer trajectory_player;
-    trajectory_player.setTrajectory(scan_trajectory);
-
-    rclcpp::Rate rate(30);
-    while (!trajectory_player.isFinished())
-    {
-      tesseract_common::JointState current_state = trajectory_player.getNext();
-
-      sensor_msgs::msg::JointState current_state_msg;
-
-      current_state_msg.name = joint_names;
-      current_state_msg.position = std::vector<double>(current_state.position.data(),
-                                                       current_state.position.data() + current_state.position.size());
-
-      joint_state_pub_->publish(current_state_msg);
-
-      rate.sleep();
-    }
-
-    success = true;  // TODO fake data?
-  }
-  else
-  {
-    auto result = program_generation_client_->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-    {
-      success = result.get()->success;
-      if (!success)
-      {
-        RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result.get()->error.c_str());
-      }
-      // program is run via teach pendant
-    }
-    else
-    {
-      RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
-      success = false;
-    }
-  }
+  // request->instructions.resize(1);
+  // request->instructions[0] =
+  //     tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(motion_plan_);
+  //
+  // if (sim_robot_)
+  // {
+  //   auto inst = tesseract_planning::Serialization::fromArchiveFileXML<tesseract_planning::Instruction>("/tmp/"
+  //                                                                                                      "motion_"
+  //                                                                                                      "planning_"
+  //                                                                                                      "instructions_"
+  //                                                                                                      "results.xml")
+  //                   .as<tesseract_planning::CompositeInstruction>();
+  //
+  //   tesseract_common::JointTrajectory scan_trajectory = tesseract_planning::toJointTrajectory(inst);
+  //
+  //   std::vector<std::string> joint_names = { "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
+  //
+  //   tesseract_visualization::TrajectoryPlayer trajectory_player;
+  //   trajectory_player.setTrajectory(scan_trajectory);
+  //
+  //   rclcpp::Rate rate(30);
+  //   while (!trajectory_player.isFinished())
+  //   {
+  //     tesseract_common::JointState current_state = trajectory_player.getNext();
+  //
+  //     sensor_msgs::msg::JointState current_state_msg;
+  //
+  //     current_state_msg.name = joint_names;
+  //     current_state_msg.position = std::vector<double>(current_state.position.data(),
+  //                                                      current_state.position.data() +
+  //                                                      current_state.position.size());
+  //
+  //     joint_state_pub_->publish(current_state_msg);
+  //
+  //     rate.sleep();
+  //   }
+  //
+  //   success = true;  // TODO fake data?
+  // }
+  // else
+  // {
+  //   auto result = motion_execution_client_->async_send_request(request);
+  //   if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  //   {
+  //     success = result.get()->success;
+  //     if (!success)
+  //     {
+  //       RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result.get()->error.c_str());
+  //     }
+  //     // program is run via teach pendant
+  //   }
+  //   else
+  //   {
+  //     RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
+  //     success = false;
+  //   }
+  // }
 
   update_status(success, "Execution", ui_->motion_execution_button, "", nullptr, 5);
 }
