@@ -20,7 +20,7 @@
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
-#include <tesseract_msgs/msg/trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
 
 namespace Ui
 {
@@ -45,7 +45,6 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr scan_mesh_pub_;
-  rclcpp::Publisher<tesseract_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
 
   // service clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;
@@ -66,7 +65,7 @@ private:
 
   std::string mesh_filepath_;
   tesseract_common::Toolpath tool_paths_;
-  tesseract_planning::CompositeInstruction motion_plan_;
+  trajectory_msgs::msg::JointTrajectory motion_plan_;
 
   //  std::unique_ptr<QTimer> timer_;
 

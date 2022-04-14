@@ -43,11 +43,7 @@ tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 
 }  // namespace
 
-ROSConWindow::ROSConWindow(QWidget* parent)
-  : QMainWindow(parent)
-  , ui_(new Ui::ROSConWindow)
-  , past_calibration_(false)
-  , motion_plan_("", tesseract_planning::CompositeInstructionOrder(), tesseract_common::ManipulatorInfo("", "", ""))
+ROSConWindow::ROSConWindow(QWidget* parent) : QMainWindow(parent), ui_(new Ui::ROSConWindow), past_calibration_(false)
 {
   ui_->setupUi(this);
 
@@ -70,7 +66,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("robot_joint_states", 10);
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>("toolpath", 10);
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>("scan_mesh", 10);
-  trajectory_pub_ = node_->create_publisher<tesseract_msgs::msg::Trajectory>("motion_trajectory", 10);
 
   // TODO register all service/action clients
   observe_client_ = node_->create_client<std_srvs::srv::Trigger>("observe");
@@ -445,8 +440,8 @@ void ROSConWindow::plan_motion()
 {
   bool success = true;
 
-  motion_plan_ = tesseract_planning::CompositeInstruction("", tesseract_planning::CompositeInstructionOrder(),
-                                                          tesseract_common::ManipulatorInfo("", "", ""));
+  motion_plan_ = trajectory_msgs::msg::JointTrajectory();
+
   // do motion planning things
   if (tool_paths_.size() > 0)
   {
@@ -457,14 +452,7 @@ void ROSConWindow::plan_motion()
     auto result = motion_planning_client_->async_send_request(request);
     if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS && result.get()->success)
     {
-      motion_plan_ = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::Instruction>(
-                         result.get()->message)
-                         .as<tesseract_planning::CompositeInstruction>();
-      tesseract_planning::Serialization::toArchiveFileXML<tesseract_planning::Instruction>(motion_plan_, "/tmp/"
-                                                                                                         "motion_"
-                                                                                                         "planning_"
-                                                                                                         "instructions_"
-                                                                                                         "results.xml");
+      // motion_plan_ = result.get()->motion_plan
     }
     else
     {
@@ -505,64 +493,25 @@ void ROSConWindow::execute()
   // do execution things
   snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
       std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+  request->motion_plan = motion_plan_;
+  request->use_tool = true;
 
-  // request->instructions.resize(1);
-  // request->instructions[0] =
-  //     tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(motion_plan_);
-  //
-  // if (sim_robot_)
-  // {
-  //   auto inst = tesseract_planning::Serialization::fromArchiveFileXML<tesseract_planning::Instruction>("/tmp/"
-  //                                                                                                      "motion_"
-  //                                                                                                      "planning_"
-  //                                                                                                      "instructions_"
-  //                                                                                                      "results.xml")
-  //                   .as<tesseract_planning::CompositeInstruction>();
-  //
-  //   tesseract_common::JointTrajectory scan_trajectory = tesseract_planning::toJointTrajectory(inst);
-  //
-  //   std::vector<std::string> joint_names = { "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
-  //
-  //   tesseract_visualization::TrajectoryPlayer trajectory_player;
-  //   trajectory_player.setTrajectory(scan_trajectory);
-  //
-  //   rclcpp::Rate rate(30);
-  //   while (!trajectory_player.isFinished())
-  //   {
-  //     tesseract_common::JointState current_state = trajectory_player.getNext();
-  //
-  //     sensor_msgs::msg::JointState current_state_msg;
-  //
-  //     current_state_msg.name = joint_names;
-  //     current_state_msg.position = std::vector<double>(current_state.position.data(),
-  //                                                      current_state.position.data() +
-  //                                                      current_state.position.size());
-  //
-  //     joint_state_pub_->publish(current_state_msg);
-  //
-  //     rate.sleep();
-  //   }
-  //
-  //   success = true;  // TODO fake data?
-  // }
-  // else
-  // {
-  //   auto result = motion_execution_client_->async_send_request(request);
-  //   if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-  //   {
-  //     success = result.get()->success;
-  //     if (!success)
-  //     {
-  //       RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result.get()->error.c_str());
-  //     }
-  //     // program is run via teach pendant
-  //   }
-  //   else
-  //   {
-  //     RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
-  //     success = false;
-  //   }
-  // }
+  auto future = motion_execution_client_->async_send_request(request);
+  if (rclcpp::spin_until_future_complete(node_, future) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    auto result = future.get();
+    success = result->success;
+    if (!success)
+    {
+      RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result->message.c_str());
+    }
+    // program is run via teach pendant
+  }
+  else
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
+    success = false;
+  }
 
   update_status(success, "Execution", ui_->motion_execution_button, "", nullptr, 5);
 }
