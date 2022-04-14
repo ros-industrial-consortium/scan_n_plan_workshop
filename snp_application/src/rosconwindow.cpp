@@ -503,13 +503,13 @@ void ROSConWindow::execute()
     success = result->success;
     if (!success)
     {
-      RCLCPP_ERROR(node_->get_logger(), "Program generation call failed '%s'", result->message.c_str());
+      RCLCPP_ERROR(node_->get_logger(), "Motion execution failed '%s'", result->message.c_str());
     }
     // program is run via teach pendant
   }
   else
   {
-    RCLCPP_ERROR(node_->get_logger(), "Program generation call failed");
+    RCLCPP_ERROR(node_->get_logger(), "Call to motion execution failed");
     success = false;
   }
 
