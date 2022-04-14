@@ -15,14 +15,11 @@ public:
     using namespace std::placeholders;
 
     this->action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
-        this, "follow_joint_trajectory",
-          std::bind(&ExecSimServer::handleGoal, this, _1, _2),
-        std::bind(&ExecSimServer::handleCancel, this, _1),
-          std::bind(&ExecSimServer::handleAccepted, this, _1));
+        this, "follow_joint_trajectory", std::bind(&ExecSimServer::handleGoal, this, _1, _2),
+        std::bind(&ExecSimServer::handleCancel, this, _1), std::bind(&ExecSimServer::handleAccepted, this, _1));
 
-     this->service_srv_ = this->create_service<std_srvs::srv::Trigger>(
-          "robot_enable",
-          std::bind(&ExecSimServer::set_response, this, _1, _2));
+    this->service_srv_ = this->create_service<std_srvs::srv::Trigger>(
+        "robot_enable", std::bind(&ExecSimServer::set_response, this, _1, _2));
 
     RCLCPP_INFO(this->get_logger(), "Node started");
   }
@@ -32,7 +29,7 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service_srv_;
 
   rclcpp_action::GoalResponse handleGoal(const rclcpp_action::GoalUUID& uuid,
-                                          std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Goal> goal)
+                                         std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Goal> goal)
   {
     RCLCPP_INFO(this->get_logger(), "Received goal request");
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -70,7 +67,6 @@ private:
     RCLCPP_INFO(this->get_logger(), "Robot Enabled");
   }
 };
-
 
 int main(int argc, char** argv)
 {

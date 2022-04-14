@@ -20,7 +20,12 @@ find_package(rclcpp_action REQUIRED)
 # uncomment the following section in order to fill in further dependencies manually. find_package(<dependency> REQUIRED)
 
 add_executable(exec_sim_node src/exec_sim_node.cpp)
-ament_target_dependencies(exec_sim_node rclcpp std_srvs rclcpp_action control_msgs)
+ament_target_dependencies(
+  exec_sim_node
+  rclcpp
+  std_srvs
+  rclcpp_action
+  control_msgs)
 
 install(TARGETS exec_sim_node DESTINATION lib/${PROJECT_NAME})
 
