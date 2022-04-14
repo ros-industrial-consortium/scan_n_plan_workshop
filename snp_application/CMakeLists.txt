@@ -32,10 +32,10 @@ find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tesseract_command_language REQUIRED)
 find_package(tesseract_common REQUIRED)
-find_package(tesseract_msgs REQUIRED)
 find_package(tesseract_rosutils REQUIRED)
 find_package(tesseract_visualization REQUIRED)
-find_package(tf2_eigen)
+find_package(tf2_eigen REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
@@ -60,9 +60,9 @@ ament_target_dependencies(
   visualization_msgs
   snp_msgs
   std_srvs
-  tesseract_msgs
   tesseract_rosutils
-  tf2_eigen)
+  tf2_eigen
+  trajectory_msgs)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
 
