@@ -19,5 +19,5 @@
 
 1. Build
     ```bash
-    colcon build
+    colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF
     ```
