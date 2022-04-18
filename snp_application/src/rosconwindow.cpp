@@ -346,7 +346,7 @@ void ROSConWindow::scan()
       std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
 
   stop_request->archive_directory = "";
-  stop_request->results_directory = "/tmp";
+  stop_request->mesh_filepath = "/tmp/results_mesh.ply";
 
   auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
   if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)

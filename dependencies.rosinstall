@@ -37,7 +37,7 @@
 - git:
     local-name: open3d_interface
     uri: 'https://github.com/marrts/open3d_interface.git'
-    version: b4321d6e1e602d048c5c88f7e12017320c5e8a97
+    version: 49fe643eeec8777fcfda81c652bae72b66790040
 - git:
     local-name: gl_depth_sim
     uri: 'https://github.com/marrts/gl_depth_sim.git'
