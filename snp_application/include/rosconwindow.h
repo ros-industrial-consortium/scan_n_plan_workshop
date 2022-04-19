@@ -13,7 +13,10 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <control_msgs/action/follow_joint_trajectory.hpp>
 
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
@@ -59,6 +62,8 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr motion_planning_client_;
 
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
+  rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr follow_joint_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr enable_client_;
 
   void update_status(bool success, std::string current_process, QPushButton* current_button, std::string next_process,
                      QPushButton* next_button, int step);
@@ -77,6 +82,14 @@ public slots:
   void install_calibration();
   void reset_calibration();
   void scan();
+  void stopScan();
+  void startScan();
+  void onApproachDone(
+      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
+  void
+  onTrajDone(const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
+  void onDepartDone(
+      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
   void plan_tool_paths();
   void plan_motion();
   void execute();

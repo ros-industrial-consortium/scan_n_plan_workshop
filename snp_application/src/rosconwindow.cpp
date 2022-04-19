@@ -2,11 +2,17 @@
 #include "ui_rosconwindow.h"
 
 #include <sstream>
-
+#include <memory>
+#include <functional>
+#include <thread>
 #include <QMessageBox>
 #include <tf2_eigen/tf2_eigen.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <snp_msgs/msg/tool_paths.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <tesseract_command_language/cartesian_waypoint.h>
@@ -86,6 +92,12 @@ ROSConWindow::ROSConWindow(QWidget* parent) : QMainWindow(parent), ui_(new Ui::R
                                                                          "tesseract_trigger_motion_plan");
 
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>("execute_motion_plan");
+
+  follow_joint_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(node_, "follow_"
+                                                                                                          "joint_"
+                                                                                                          "trajectory");
+
+  enable_client_ = node_->create_client<std_srvs::srv::Trigger>("robot_enable");
 }
 
 ROSConWindow::~ROSConWindow()
@@ -261,9 +273,9 @@ void ROSConWindow::scan()
   start_request->relative_frame = "floor";
 
   // TODO parameters
-  start_request->translation_distance = 0.01;
-  start_request->rotational_distance = 0.05;
-  start_request->live = false;
+  start_request->translation_distance = 0;
+  start_request->rotational_distance = 0;
+  start_request->live = true;
 
   // TODO other params (currently set to recommended default)
   start_request->tsdf_params.voxel_length = 0.01;
@@ -289,75 +301,24 @@ void ROSConWindow::scan()
     RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
     update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
   }
+}
 
-  //     if (sim_robot_)
-  //     {
-  //       std::vector<std::string> joint_names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
-
-  //       std::vector<std::vector<double> > trajectory_positions = { { 0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-  //                                                                  {-0.2, 0.0,  0.0, 0.0, 0.0, 0.0},
-  //                                                                  {-0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-  //                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-  //                                                                  { 0.2, 0.1, -0.1, 0.0, 0.0, 0.0},
-  //                                                                  {-0.2, 0.2, -0.2, 0.0, 0.0, 0.0} };
-
-  //       tesseract_common::JointTrajectory scan_trajectory;
-  //       for (std::size_t i = 0; i < trajectory_positions.size(); i++)
-  //       {
-  //           tesseract_common::JointState joint_state;
-  //           joint_state.joint_names = joint_names;
-  //           joint_state.position = Eigen::Matrix<double, 6, 1>(trajectory_positions[i].data());
-  //           joint_state.time = i * 0.1;
-
-  //           scan_trajectory.push_back(joint_state);
-  //       }
-  //       tesseract_visualization::TrajectoryPlayer trajectory_player;
-  //       trajectory_player.setTrajectory(scan_trajectory);
-
-  //       rclcpp::Rate rate(30);
-  //       while (!trajectory_player.isFinished())
-  //       {
-  //           tesseract_common::JointState current_state = trajectory_player.getNext();
-
-  //           sensor_msgs::msg::JointState current_state_msg;
-
-  //           current_state_msg.name = joint_names;
-  //           current_state_msg.position = std::vector<double>(current_state.position.data(),
-  //                                                            current_state.position.data() +
-  //                                                            current_state.position.size());
-
-  //           joint_state_pub_->publish(current_state_msg);
-
-  //           rate.sleep();
-  //       }
-  //   }
-  //   else
-  //   {
-  //       QMessageBox confirmation_box;
-  //       confirmation_box.setWindowTitle("Scan Confirmation");
-  //       confirmation_box.setText("The robot is currently scanning.");
-  //       confirmation_box.setInformativeText("Click ok when the robot has completed the scan path.");
-  //       confirmation_box.exec();
-
-  //   }
-
+void ROSConWindow::stopScan()
+{
   // call reconstruction stop
   open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request =
       std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
 
+  mesh_filepath_ = "/tmp/results_mesh.ply";
   stop_request->archive_directory = "";
-  stop_request->mesh_filepath = "/tmp/results_mesh.ply";
+  stop_request->mesh_filepath = mesh_filepath_;
 
   auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
   if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
   {
     auto stop_response = stop_result.get();
-    success = stop_response->success;
+    bool success = stop_response->success;
 
-    //       mesh_filepath_ = stop_response->mesh_filepath;
-    // Instead we are loading from file
-    std::string package_path = ament_index_cpp::get_package_share_directory("snp_support");
-    mesh_filepath_ = package_path + "/meshes/part_scan.ply";
     RCLCPP_INFO(node_->get_logger(), "Mesh saved to '%s'.", mesh_filepath_.c_str());
 
     visualization_msgs::msg::Marker mesh_marker;
@@ -376,13 +337,10 @@ void ROSConWindow::scan()
     mesh_marker.mesh_resource = "file://" + mesh_filepath_;
 
     scan_mesh_pub_->publish(mesh_marker);
-  }
-  else
-  {
-    success = false;
-  }
 
-  update_status(success, "Scanning and reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+    success = true;
+    update_status(success, "Scanning and reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+  }
 }
 
 void ROSConWindow::plan_tool_paths()
@@ -434,6 +392,131 @@ void ROSConWindow::plan_tool_paths()
   }
 
   update_status(success, "Tool path planning", ui_->tpp_button, "plan motion", ui_->motion_plan_button, 3);
+}
+
+void ROSConWindow::startScan()
+{
+  if (!this->follow_joint_client_->wait_for_action_server())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Action server not available after waiting");
+    rclcpp::shutdown();
+  }
+
+  RCLCPP_INFO(node_->get_logger(), "Sending approach goal");
+
+  // TODO: fill out later
+  control_msgs::action::FollowJointTrajectory::Goal approachGoal;
+
+  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+
+  send_goal_options.result_callback = std::bind(&ROSConWindow::onApproachDone, this, std::placeholders::_1);
+
+  follow_joint_client_->async_send_goal(approachGoal, send_goal_options);
+}
+
+void ROSConWindow::onApproachDone(
+    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
+{
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    case rclcpp_action::ResultCode::ABORTED:
+      RCLCPP_ERROR(node_->get_logger(), "Approach was aborted");
+      rclcpp::shutdown();
+      return;
+
+    case rclcpp_action::ResultCode::CANCELED:
+      RCLCPP_ERROR(node_->get_logger(), "Approach was canceled");
+      rclcpp::shutdown();
+      return;
+
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Unknown result code");
+      return;
+  }
+
+  if (!this->follow_joint_client_->wait_for_action_server())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Action server not available after waiting");
+    rclcpp::shutdown();
+  }
+
+  RCLCPP_INFO(node_->get_logger(), "Sending Trajectory goal");
+
+  // TODO replace
+  control_msgs::action::FollowJointTrajectory::Goal trajGoal;
+
+  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+
+  send_goal_options.result_callback =
+      std::bind(&ROSConWindow::onTrajDone, this, std::placeholders::_1);  // bind different callback to it
+  this->follow_joint_client_->async_send_goal(trajGoal, send_goal_options);
+
+  ROSConWindow::scan();  // calls the actual scanner?
+}
+
+void ROSConWindow::onTrajDone(
+    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
+{
+  // Error checking about action
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    case rclcpp_action::ResultCode::ABORTED:
+      RCLCPP_ERROR(node_->get_logger(), "Scan Trajectory was aborted");
+      rclcpp::shutdown();
+      return;
+
+    case rclcpp_action::ResultCode::CANCELED:
+      RCLCPP_ERROR(node_->get_logger(), "Scan Trajectory was canceled");
+      rclcpp::shutdown();
+      return;
+
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Unknown result code");
+      return;
+  }
+
+  if (!this->follow_joint_client_->wait_for_action_server())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Action server not available after waiting");
+    rclcpp::shutdown();
+  }
+  RCLCPP_INFO(node_->get_logger(), "Sending goal");
+
+  control_msgs::action::FollowJointTrajectory::Goal departGoal;
+
+  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+
+  send_goal_options.result_callback =
+      std::bind(&ROSConWindow::onDepartDone, this, std::placeholders::_1);  // bind different callback to it
+  this->follow_joint_client_->async_send_goal(departGoal, send_goal_options);
+
+  ROSConWindow::stopScan();  // stops the actual scanner
+}
+
+// this is just winding down the action node once the departure is handled.
+void ROSConWindow::onDepartDone(
+    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
+{
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    case rclcpp_action::ResultCode::ABORTED:
+      RCLCPP_ERROR(node_->get_logger(), "Departure was aborted");
+      return;
+    case rclcpp_action::ResultCode::CANCELED:
+      RCLCPP_ERROR(node_->get_logger(), "Departure was canceled");
+      return;
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Unknown result code");
+      return;
+  }
+  RCLCPP_INFO(node_->get_logger(), "Departure Successful, shutting down node");
+  rclcpp::shutdown();
 }
 
 void ROSConWindow::plan_motion()

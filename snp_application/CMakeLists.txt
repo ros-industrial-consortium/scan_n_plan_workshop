@@ -25,8 +25,12 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(open3d_interface_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_components REQUIRED)
+
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(control_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -55,6 +59,9 @@ ament_target_dependencies(
   roscon_app
   open3d_interface_msgs
   rclcpp
+  rclcpp_action
+  rclcpp_components
+  control_msgs
   sensor_msgs
   geometry_msgs
   visualization_msgs
