@@ -50,7 +50,7 @@ foxy:
     ROS_REPO: main
     PREFIX: snpd_
     UNDERLAY: /root/tesseract-robotics/tesseract_planning_target_ws/install
-    UPSTREAM_WORKSPACE: .ci/dependencies.rosinstall
+    UPSTREAM_WORKSPACE: dependencies.rosinstall
     BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/$ROS_DISTRO/setup.bash'
     ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
     AFTER_SCRIPT: ""

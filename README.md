@@ -13,6 +13,7 @@
 1. Install the ROS2 dependencies
     ```bash
     cd <snpd_workspace>
+    vcs import < src/roscon_2021_demo/tesseract-dependencies.rosinstall
     vcs import < src/roscon_2021_demo/dependencies.rosinstall
     rosdep install --from-paths src --ignore-src -r -y
     ```
