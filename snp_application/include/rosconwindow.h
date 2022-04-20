@@ -2,7 +2,7 @@
 #define ROSCONWINDOW_H
 
 #include <QMainWindow>
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
@@ -32,9 +32,14 @@ class ROSConWindow : public QMainWindow
 public:
   explicit ROSConWindow(QWidget* parent = nullptr);
 
+  rclcpp::Node::SharedPtr getNode() const
+  {
+    return node_;
+  }
+
 private:
   Ui::ROSConWindow* ui_;
-  std::shared_ptr<rclcpp::Node> node_;
+  rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
 
   // joint state publisher
