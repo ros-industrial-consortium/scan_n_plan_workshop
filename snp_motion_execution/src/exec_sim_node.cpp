@@ -28,15 +28,17 @@ private:
   rclcpp_action::Server<control_msgs::action::FollowJointTrajectory>::SharedPtr action_server_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service_srv_;
 
-  rclcpp_action::GoalResponse handleGoal(const rclcpp_action::GoalUUID& uuid,
-                                         std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Goal> goal)
+  rclcpp_action::GoalResponse
+  handleGoal(const rclcpp_action::GoalUUID& /*uuid*/,
+             std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Goal> /*goal*/)
   {
     RCLCPP_INFO(this->get_logger(), "Received goal request");
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
   }
 
-  rclcpp_action::CancelResponse handleCancel(
-      const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::FollowJointTrajectory>> goal_handle)
+  rclcpp_action::CancelResponse
+  handleCancel(const std::shared_ptr<
+               rclcpp_action::ServerGoalHandle<control_msgs::action::FollowJointTrajectory>> /*goal_handle*/)
   {
     RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
     return rclcpp_action::CancelResponse::ACCEPT;
@@ -60,7 +62,7 @@ private:
     RCLCPP_INFO(this->get_logger(), "Goal succeeded");
   }
 
-  void set_response(const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  void set_response(const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
                     std::shared_ptr<std_srvs::srv::Trigger::Response> response)
   {
     response->success = true;
