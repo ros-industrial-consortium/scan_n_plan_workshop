@@ -42,10 +42,11 @@ private:
     std::string mesh_sourcepath = package_path + "/meshes/part_scan.ply";
     // copy this file to mesh_filepath mesh_sourcepath_
     // convert strings to file system paths
-    boost::filesystem::path mesh_sourcepath_path(mesh_sourcepath); //this is the path version of mesh_sourcepath
-    boost::filesystem::path mesh_filepath_path(request->mesh_filepath); //this is the path version of mesh_filepath
+    boost::filesystem::path mesh_sourcepath_path(mesh_sourcepath);       // this is the path version of mesh_sourcepath
+    boost::filesystem::path mesh_filepath_path(request->mesh_filepath);  // this is the path version of mesh_filepath
 
-    boost::filesystem::copy_file(mesh_sourcepath_path, mesh_filepath_path,boost::filesystem::copy_option::overwrite_if_exists);
+    boost::filesystem::copy_file(mesh_sourcepath_path, mesh_filepath_path,
+                                 boost::filesystem::copy_option::overwrite_if_exists);
 
     RCLCPP_INFO_STREAM(this->get_logger(), "Yak Sim Stopped, mesh saved to " << request->mesh_filepath);
   }
