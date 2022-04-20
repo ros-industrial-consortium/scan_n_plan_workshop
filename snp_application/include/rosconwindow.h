@@ -1,34 +1,29 @@
 #ifndef ROSCONWINDOW_H
 #define ROSCONWINDOW_H
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include <Eigen/Dense>
 #include <QMainWindow>
-#include <QPushButton>
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/joint_state.hpp>
-#include <geometry_msgs/msg/pose_array.hpp>
-#include <visualization_msgs/msg/marker.hpp>
-#include <std_srvs/srv/trigger.hpp>
-#include <control_msgs/action/follow_joint_trajectory.hpp>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
-#include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
-#include <snp_msgs/srv/generate_tool_paths.hpp>
-#include <snp_msgs/srv/execute_motion_plan.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp_action/client.hpp>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
+// Messages
+#include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
+#include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <snp_msgs/srv/generate_tool_paths.hpp>
+#include <snp_msgs/srv/execute_motion_plan.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 namespace Ui
 {
 class ROSConWindow;
 }
+
+class QPushButton;
 
 class ROSConWindow : public QMainWindow
 {
@@ -36,12 +31,15 @@ class ROSConWindow : public QMainWindow
 
 public:
   explicit ROSConWindow(QWidget* parent = nullptr);
-  ~ROSConWindow();
+
+  rclcpp::Node::SharedPtr getNode() const
+  {
+    return node_;
+  }
 
 private:
   Ui::ROSConWindow* ui_;
-  std::shared_ptr<rclcpp::Node> node_;
-  bool sim_robot_;
+  rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
 
   // joint state publisher
@@ -63,33 +61,32 @@ private:
 
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
   rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr follow_joint_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr enable_client_;
 
   void update_status(bool success, std::string current_process, QPushButton* current_button, std::string next_process,
                      QPushButton* next_button, int step);
 
-  std::string mesh_filepath_;
+  const std::string mesh_filepath_;
   tesseract_common::Toolpath tool_paths_;
   trajectory_msgs::msg::JointTrajectory motion_plan_;
 
-  //  std::unique_ptr<QTimer> timer_;
-
-public slots:
   void update_calibration_requirement();
   void observe();
   void run_calibration();
   void get_correlation();
   void install_calibration();
   void reset_calibration();
+
+  // Scan motion and reconstruction
+  using FJTResult = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult;
+  using StartScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedFuture;
+  using StopScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedFuture;
   void scan();
-  void stopScan();
-  void startScan();
-  void onApproachDone(
-      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
-  void
-  onTrajDone(const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
-  void onDepartDone(
-      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
+  void onScanApproachDone(const FJTResult& result);
+  void onScanStartDone(StartScanFuture result);
+  void onScanDone(const FJTResult& result);
+  void onScanStopDone(StopScanFuture result);
+  void onScanDepartureDone(const FJTResult& result);
+
   void plan_tool_paths();
   void plan_motion();
   void execute();
