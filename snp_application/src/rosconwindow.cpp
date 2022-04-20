@@ -2,6 +2,8 @@
 #include "ui_rosconwindow.h"
 
 #include <QMessageBox>
+#include <QScrollBar>
+#include <QTextStream>
 #include <rclcpp_action/create_client.hpp>
 #include <tesseract_command_language/cartesian_waypoint.h>
 #include <tesseract_command_language/plan_instruction.h>
@@ -26,6 +28,28 @@ static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajecto
 static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_toolpaths";
 static const std::string MOTION_PLAN_SERVICE = "/snp_planning_server/tesseract_trigger_motion_plan";
 static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
+
+static const QString CALIBRATION_ST = "calibrate";
+static const QString SCAN_APPROACH_ST = "execute scan approach";
+static const QString START_RECONSTRUCTION_ST = "start reconstruction";
+static const QString SCAN_EXECUTION_ST = "execute scan";
+static const QString STOP_RECONSTRUCTION_ST = "stop reconstruction";
+static const QString SCAN_DEPARTURE_ST = "execute scan departure";
+static const QString TPP_ST = "plan tool paths";
+static const QString MOTION_PLANNING_ST = "perform motion planning";
+static const QString MOTION_EXECUTION_ST = "execute process motion";
+
+static const std::map<QString, unsigned> STATES = {
+  { CALIBRATION_ST, 0 },
+  { SCAN_APPROACH_ST, 1 },
+  { START_RECONSTRUCTION_ST, 2 },
+  { SCAN_EXECUTION_ST, 3 },
+  { STOP_RECONSTRUCTION_ST, 4 },
+  { SCAN_DEPARTURE_ST, 5 },
+  { TPP_ST, 6 },
+  { MOTION_PLANNING_ST, 7 },
+  { MOTION_EXECUTION_ST, 8 },
+};
 
 namespace  // anonymous restricts visibility to this file
 {
@@ -72,6 +96,14 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::plan_tool_paths);
   connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::plan_motion);
   connect(ui_->motion_execution_button, &QPushButton::clicked, this, &ROSConWindow::execute);
+  connect(ui_->reset_button, &QPushButton::clicked, this, &ROSConWindow::reset);
+
+  // Move the text edit scroll bar to the maximum limit whenever it is resized
+  connect(ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
+    ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
+  });
+
+  connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
 
   joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>(JOINT_STATES_TOPIC, 10);
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
@@ -94,10 +126,11 @@ ROSConWindow::ROSConWindow(QWidget* parent)
       rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(node_, FOLLOW_JOINT_TRAJECTORY_ACTION);
 }
 
-void ROSConWindow::update_status(bool success, std::string current_process, QPushButton* current_button,
-                                 std::string next_process, QPushButton* next_button, int step)
+void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
+                                  QString next_process, QPushButton* next_button, unsigned step)
 {
-  std::stringstream status_stream;
+  QString status;
+  QTextStream status_stream(&status);
   if (success)
   {
     status_stream << current_process << " completed!";
@@ -106,7 +139,7 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
       status_stream << "\nWaiting to " << next_process << "...";
     }
 
-    const double progress = static_cast<double>(step) / 5.0 * 100.0;
+    const double progress = (static_cast<double>(step) / static_cast<double>(STATES.size())) * 100.0;
     ui_->progress_bar->setValue(static_cast<int>(progress));
 
     if (next_button != nullptr)
@@ -124,14 +157,14 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
     status_stream << current_process << " failed\nWaiting to attempt again...";
   }
 
-  ui_->status_label->setText(status_stream.str().c_str());
+  ui_->text_edit_log->append(status);
 }
 
 void ROSConWindow::update_calibration_requirement()
 {
   if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
   {
-    update_status(true, "Calibration", nullptr, "scan", ui_->scan_button, 1);
+    emit updateStatus(true, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
   }
   else
   {
@@ -154,11 +187,11 @@ void ROSConWindow::observe()
   if (success)
   {
     ui_->run_calibration_button->setEnabled(true);
-    ui_->status_label->setText("Gathered observation.");
+    ui_->text_edit_log->append("Gathered observation.");
   }
   else
   {
-    ui_->status_label->setText("Failed to get observation.");
+    ui_->text_edit_log->append("Failed to get observation.");
   }
 }
 
@@ -177,11 +210,11 @@ void ROSConWindow::run_calibration()
   if (success)
   {
     ui_->install_calibration_button->setEnabled(true);
-    ui_->status_label->setText("Calibration run.");
+    ui_->text_edit_log->append("Calibration run.");
   }
   else
   {
-    ui_->status_label->setText("Calibration attempt failed.");
+    ui_->text_edit_log->append("Calibration attempt failed.");
   }
 }
 
@@ -199,11 +232,11 @@ void ROSConWindow::get_correlation()
 
   if (success)
   {
-    ui_->status_label->setText("Correlation written to file.");
+    ui_->text_edit_log->append("Correlation written to file.");
   }
   else
   {
-    ui_->status_label->setText("Failed to write correlation to file.");
+    ui_->text_edit_log->append("Failed to write correlation to file.");
   }
 }
 
@@ -220,7 +253,7 @@ void ROSConWindow::install_calibration()
   }
 
   past_calibration_ = success;
-  update_status(success, "Calibration", nullptr, "scan", ui_->scan_button, 1);
+  emit updateStatus(success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
 }
 
 void ROSConWindow::reset_calibration()
@@ -271,9 +304,13 @@ void ROSConWindow::onScanApproachDone(const FJTResult& result)
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
+      emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
+                        STATES.at(START_RECONSTRUCTION_ST));
       break;
     default:
       RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan approach motion");
+      emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                        STATES.at(SCAN_APPROACH_ST));
       return;
   }
 
@@ -305,14 +342,21 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   if (!result.get()->success)
   {
     RCLCPP_ERROR(node_->get_logger(), "Failed to start surface reconstruction");
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   if (!follow_joint_client_->action_server_is_ready())
   {
     RCLCPP_ERROR(node_->get_logger(), "Trajectory execution action server is not available");
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
     return;
   }
+
+  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
+                    STATES.at(SCAN_EXECUTION_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
@@ -330,9 +374,13 @@ void ROSConWindow::onScanDone(const FJTResult& result)
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
+      emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
+                        STATES.at(STOP_RECONSTRUCTION_ST));
       break;
     default:
       RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion");
+      emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                        STATES.at(SCAN_APPROACH_ST));
       return;
   }
 
@@ -350,6 +398,8 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   if (!stop_result.get()->success)
   {
     RCLCPP_INFO(node_->get_logger(), "Failed to stop surface reconstruction");
+    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
@@ -376,8 +426,13 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   if (!follow_joint_client_->action_server_is_ready())
   {
     RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
+    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
     return;
   }
+
+  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
+                    STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 
@@ -396,9 +451,12 @@ void ROSConWindow::onScanDepartureDone(const FJTResult& result)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
       RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
+      emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
       break;
     default:
       RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion departure");
+      emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                        STATES.at(SCAN_APPROACH_ST));
   }
 }
 
@@ -450,7 +508,8 @@ void ROSConWindow::plan_tool_paths()
     }
   }
 
-  update_status(success, "Tool path planning", ui_->tpp_button, "plan motion", ui_->motion_plan_button, 3);
+  emit updateStatus(success, TPP_ST, ui_->tpp_button, MOTION_PLANNING_ST, ui_->motion_plan_button,
+                    STATES.at(MOTION_PLANNING_ST));
 }
 
 void ROSConWindow::plan_motion()
@@ -500,7 +559,8 @@ void ROSConWindow::plan_motion()
   {
     success = false;
   }
-  update_status(success, "Motion planning", ui_->motion_plan_button, "execute", ui_->motion_execution_button, 4);
+  emit updateStatus(success, MOTION_PLANNING_ST, ui_->motion_plan_button, MOTION_EXECUTION_ST,
+                    ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
 }
 
 void ROSConWindow::execute()
@@ -530,12 +590,13 @@ void ROSConWindow::execute()
     success = false;
   }
 
-  update_status(success, "Execution", ui_->motion_execution_button, "", nullptr, 5);
+  emit updateStatus(success, MOTION_EXECUTION_ST, ui_->motion_execution_button, "", nullptr,
+                    static_cast<unsigned>(STATES.size()));
 }
 
 void ROSConWindow::reset()
 {
-  ui_->status_label->setText("Waiting to calibrate...");
+  ui_->text_edit_log->setText("Waiting to calibrate...");
 
   // reset button states
   ui_->run_calibration_button->setEnabled(false);
