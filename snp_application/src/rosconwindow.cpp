@@ -94,11 +94,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
       rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(node_, FOLLOW_JOINT_TRAJECTORY_ACTION);
 }
 
-ROSConWindow::~ROSConWindow()
-{
-  delete ui_;
-}
-
 void ROSConWindow::update_status(bool success, std::string current_process, QPushButton* current_button,
                                  std::string next_process, QPushButton* next_button, int step)
 {

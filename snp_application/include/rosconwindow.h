@@ -31,7 +31,6 @@ class ROSConWindow : public QMainWindow
 
 public:
   explicit ROSConWindow(QWidget* parent = nullptr);
-  ~ROSConWindow();
 
 private:
   Ui::ROSConWindow* ui_;
