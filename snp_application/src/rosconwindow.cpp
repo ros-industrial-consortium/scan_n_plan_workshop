@@ -1,20 +1,8 @@
 #include "rosconwindow.h"
 #include "ui_rosconwindow.h"
 
-#include <sstream>
-#include <memory>
-#include <functional>
-#include <thread>
 #include <QMessageBox>
-#include <tf2_eigen/tf2_eigen.h>
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <control_msgs/action/follow_joint_trajectory.hpp>
-#include <std_srvs/srv/trigger.hpp>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <snp_msgs/msg/tool_paths.hpp>
-#include <snp_msgs/srv/generate_tool_paths.hpp>
+#include <rclcpp_action/create_client.hpp>
 #include <tesseract_command_language/cartesian_waypoint.h>
 #include <tesseract_command_language/plan_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
@@ -22,6 +10,7 @@
 #include <tesseract_visualization/trajectory_player.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/utils/utils.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
 static const std::string TOOL_PATH_TOPIC = "toolpath";
@@ -73,16 +62,16 @@ ROSConWindow::ROSConWindow(QWidget* parent)
 {
   ui_->setupUi(this);
 
-  connect(ui_->calibration_group_box, SIGNAL(clicked()), this, SLOT(update_calibration_requirement()));
-  connect(ui_->observe_button, SIGNAL(clicked()), this, SLOT(observe()));
-  connect(ui_->run_calibration_button, SIGNAL(clicked()), this, SLOT(run_calibration()));
-  connect(ui_->get_correlation_button, SIGNAL(clicked()), this, SLOT(get_correlation()));
-  connect(ui_->install_calibration_button, SIGNAL(clicked()), this, SLOT(install_calibration()));
-  connect(ui_->reset_calibration_button, SIGNAL(clicked()), this, SLOT(reset_calibration()));
-  connect(ui_->scan_button, SIGNAL(clicked()), this, SLOT(scan()));
-  connect(ui_->tpp_button, SIGNAL(clicked()), this, SLOT(plan_tool_paths()));
-  connect(ui_->motion_plan_button, SIGNAL(clicked()), this, SLOT(plan_motion()));
-  connect(ui_->motion_execution_button, SIGNAL(clicked()), this, SLOT(execute()));
+  connect(ui_->calibration_group_box, &QGroupBox::clicked, this, &ROSConWindow::update_calibration_requirement);
+  connect(ui_->observe_button, &QPushButton::clicked, this, &ROSConWindow::observe);
+  connect(ui_->run_calibration_button, &QPushButton::clicked, this, &ROSConWindow::run_calibration);
+  connect(ui_->get_correlation_button, &QPushButton::clicked, this, &ROSConWindow::get_correlation);
+  connect(ui_->install_calibration_button, &QPushButton::clicked, this, &ROSConWindow::install_calibration);
+  connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &ROSConWindow::reset_calibration);
+  connect(ui_->scan_button, &QPushButton::clicked, this, &ROSConWindow::scan);
+  connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::plan_tool_paths);
+  connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::plan_motion);
+  connect(ui_->motion_execution_button, &QPushButton::clicked, this, &ROSConWindow::execute);
 
   joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>(JOINT_STATES_TOPIC, 10);
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
@@ -389,7 +378,6 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     scan_mesh_pub_->publish(mesh_marker);
   }
 
-
   if (!follow_joint_client_->action_server_is_ready())
   {
     RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
@@ -427,7 +415,7 @@ void ROSConWindow::plan_tool_paths()
   // do tpp things
   if (!tpp_client_->wait_for_service(std::chrono::seconds(10)))
   {
-    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Could not find TPP server");
+    RCLCPP_ERROR(node_->get_logger(), "Could not find TPP server");
     success = false;
   }
   else
@@ -446,7 +434,7 @@ void ROSConWindow::plan_tool_paths()
     auto result = tpp_client_->async_send_request(request);
     if (rclcpp::spin_until_future_complete(node_, result) != rclcpp::FutureReturnCode::SUCCESS)
     {
-      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "TPP call failed");
+      RCLCPP_ERROR(node_->get_logger(), "TPP call failed");
       success = false;
     }
     else
@@ -490,7 +478,7 @@ void ROSConWindow::plan_motion()
     }
     else
     {
-      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Motion Planning call failed");
+      RCLCPP_ERROR(node_->get_logger(), "Motion Planning call failed");
       success = false;
     }
 
@@ -509,7 +497,7 @@ void ROSConWindow::plan_motion()
     //    }
     //    else
     //    {
-    //      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Motion Planning call failed");
+    //      RCLCPP_ERROR(node_->get_logger(), "Motion Planning call failed");
     //      success = false;
     //    }
   }
