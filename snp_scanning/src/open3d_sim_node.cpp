@@ -1,7 +1,9 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <memory>
 #include <functional>
+#include <boost/filesystem.hpp>
 #include <thread>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -35,6 +37,16 @@ private:
                  std::shared_ptr<open3d_interface_msgs::srv::StopYakReconstruction::Response> response)
   {
     response->success = true;
+
+    std::string package_path = ament_index_cpp::get_package_share_directory("snp_support");
+    std::string mesh_sourcepath = package_path + "/meshes/part_scan.ply";
+    // copy this file to mesh_filepath mesh_sourcepath_
+    // convert strings to file system paths
+    boost::filesystem::path mesh_sourcepath_path(mesh_sourcepath); //this is the path version of mesh_sourcepath
+    boost::filesystem::path mesh_filepath_path(request->mesh_filepath); //this is the path version of mesh_filepath
+
+    boost::filesystem::copy_file(mesh_sourcepath_path, mesh_filepath_path,boost::filesystem::copy_option::overwrite_if_exists);
+
     RCLCPP_INFO_STREAM(this->get_logger(), "Yak Sim Stopped, mesh saved to " << request->mesh_filepath);
   }
 

@@ -15,7 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(open3d_interface_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rclcpp REQUIRED)
-
+find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(ament_index_cpp REQUIRED)
 # uncomment the following section in order to fill in further dependencies manually. find_package(<dependency> REQUIRED)
 
 add_executable(open3d_sim_node src/open3d_sim_node.cpp)
@@ -23,6 +24,8 @@ ament_target_dependencies(
   open3d_sim_node
   rclcpp
   std_srvs
+  Boost
+  ament_index_cpp
   open3d_interface_msgs)
 
 install(TARGETS open3d_sim_node DESTINATION lib/${PROJECT_NAME})
