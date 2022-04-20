@@ -15,8 +15,7 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
+#include <rclcpp_action/client.hpp>
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
@@ -41,7 +40,6 @@ public:
 private:
   Ui::ROSConWindow* ui_;
   std::shared_ptr<rclcpp::Node> node_;
-  bool sim_robot_;
   bool past_calibration_;
 
   // joint state publisher
@@ -63,16 +61,17 @@ private:
 
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
   rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr follow_joint_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr enable_client_;
 
   void update_status(bool success, std::string current_process, QPushButton* current_button, std::string next_process,
                      QPushButton* next_button, int step);
 
-  std::string mesh_filepath_;
+  const std::string mesh_filepath_;
   tesseract_common::Toolpath tool_paths_;
   trajectory_msgs::msg::JointTrajectory motion_plan_;
 
-  //  std::unique_ptr<QTimer> timer_;
+  using FJTResult = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult;
+  using StartScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedFuture;
+  using StopScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedFuture;
 
 public slots:
   void update_calibration_requirement();
@@ -81,15 +80,15 @@ public slots:
   void get_correlation();
   void install_calibration();
   void reset_calibration();
+
+  // Scan motion acquisition
   void scan();
-  void stopScan();
-  void startScan();
-  void onApproachDone(
-      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
-  void
-  onTrajDone(const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
-  void onDepartDone(
-      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result);
+  void onScanApproachDone(const FJTResult& result);
+  void onScanStartDone(StartScanFuture result);
+  void onScanDone(const FJTResult& result);
+  void onScanStopDone(StopScanFuture result);
+  void onScanDepartureDone(const FJTResult& result);
+
   void plan_tool_paths();
   void plan_motion();
   void execute();

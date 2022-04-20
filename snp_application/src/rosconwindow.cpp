@@ -23,6 +23,21 @@
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/utils/utils.h>
 
+static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
+static const std::string TOOL_PATH_TOPIC = "toolpath";
+static const std::string MESH_TOPIC = "scan_mesh";
+
+static const std::string CALIBRATION_OBSERVE_SERVICE = "observe";
+static const std::string CALIBRATION_RUN_SERVICE = "run";
+static const std::string CALIBRATION_CORRELATION_SERVICE = "correlation";
+static const std::string CALIBRATION_INSTALL_SERVICE = "install";
+static const std::string START_RECONSTRUCTION_SERVICE = "start_reconstruction";
+static const std::string STOP_RECONSTRUCTION_SERVICE = "stop_reconstruction";
+static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory";
+static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_toolpaths";
+static const std::string MOTION_PLAN_SERVICE = "/snp_planning_server/tesseract_trigger_motion_plan";
+static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
+
 namespace  // anonymous restricts visibility to this file
 {
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
@@ -49,7 +64,12 @@ tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 
 }  // namespace
 
-ROSConWindow::ROSConWindow(QWidget* parent) : QMainWindow(parent), ui_(new Ui::ROSConWindow), past_calibration_(false)
+ROSConWindow::ROSConWindow(QWidget* parent)
+  : QMainWindow(parent)
+  , ui_(new Ui::ROSConWindow)
+  , node_(rclcpp::Node::make_shared("roscon_app_node"))
+  , past_calibration_(false)
+  , mesh_filepath_("/tmp/results_mesh.ply")
 {
   ui_->setupUi(this);
 
@@ -64,40 +84,25 @@ ROSConWindow::ROSConWindow(QWidget* parent) : QMainWindow(parent), ui_(new Ui::R
   connect(ui_->motion_plan_button, SIGNAL(clicked()), this, SLOT(plan_motion()));
   connect(ui_->motion_execution_button, SIGNAL(clicked()), this, SLOT(execute()));
 
-  node_ = rclcpp::Node::make_shared("roscon_app_node");
-
-  node_->declare_parameter("sim_robot");
-  node_->get_parameter<bool>("sim_robot", sim_robot_);
-
-  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("robot_joint_states", 10);
-  toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>("toolpath", 10);
-  scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>("scan_mesh", 10);
+  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>(JOINT_STATES_TOPIC, 10);
+  toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
+  scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
   // TODO register all service/action clients
-  observe_client_ = node_->create_client<std_srvs::srv::Trigger>("observe");
-  run_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>("run");
-  get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>("correlation");
-  install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>("install");
+  observe_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
+  run_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_RUN_SERVICE);
+  get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_CORRELATION_SERVICE);
+  install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_INSTALL_SERVICE);
 
-  start_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>("start_"
-                                                                                                          "reconstructi"
-                                                                                                          "on");
-  stop_reconstruction_client_ = node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>("stop_"
-                                                                                                        "reconstructio"
-                                                                                                        "n");
-
-  tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>("generate_tool_paths");
-
-  motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>("/snp_planning_server/"
-                                                                         "tesseract_trigger_motion_plan");
-
-  motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>("execute_motion_plan");
-
-  follow_joint_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(node_, "follow_"
-                                                                                                          "joint_"
-                                                                                                          "trajectory");
-
-  enable_client_ = node_->create_client<std_srvs::srv::Trigger>("robot_enable");
+  start_reconstruction_client_ =
+      node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>(START_RECONSTRUCTION_SERVICE);
+  stop_reconstruction_client_ =
+      node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(STOP_RECONSTRUCTION_SERVICE);
+  tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
+  motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>(MOTION_PLAN_SERVICE);
+  motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
+  follow_joint_client_ =
+      rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(node_, FOLLOW_JOINT_TRAJECTORY_ACTION);
 }
 
 ROSConWindow::~ROSConWindow()
@@ -117,7 +122,8 @@ void ROSConWindow::update_status(bool success, std::string current_process, QPus
       status_stream << "\nWaiting to " << next_process << "...";
     }
 
-    ui_->progress_bar->setValue(step / 5.0 * 100);
+    const double progress = static_cast<double>(step) / 5.0 * 100.0;
+    ui_->progress_bar->setValue(static_cast<int>(progress));
 
     if (next_button != nullptr)
     {
@@ -260,14 +266,35 @@ void ROSConWindow::reset_calibration()
 
 void ROSConWindow::scan()
 {
-  bool success;
+  if (!follow_joint_client_->action_server_is_ready())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
+    return;
+  }
 
-  ui_->status_label->setText("Performing scan...");
-  ui_->status_label->repaint();
+  RCLCPP_INFO(node_->get_logger(), "Sending approach goal");
+
+  // TODO: fill out later
+  control_msgs::action::FollowJointTrajectory::Goal approachGoal;
+
+  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+  send_goal_options.result_callback = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
+  follow_joint_client_->async_send_goal(approachGoal, send_goal_options);
+}
+
+void ROSConWindow::onScanApproachDone(const FJTResult& result)
+{
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan approach motion");
+      return;
+  }
 
   // call reconstruction start
-  open3d_interface_msgs::srv::StartYakReconstruction::Request::SharedPtr start_request =
-      std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
+  auto start_request = std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
   start_request->tracking_frame = "camera_color_optical_frame";
   start_request->relative_frame = "floor";
@@ -278,49 +305,72 @@ void ROSConWindow::scan()
   start_request->live = true;
 
   // TODO other params (currently set to recommended default)
-  start_request->tsdf_params.voxel_length = 0.01;
-  start_request->tsdf_params.sdf_trunc = 0.04;
+  start_request->tsdf_params.voxel_length = 0.01f;
+  start_request->tsdf_params.sdf_trunc = 0.04f;
 
   start_request->rgbd_params.depth_scale = 1000.0;
   start_request->rgbd_params.depth_trunc = 3.0;
   start_request->rgbd_params.convert_rgb_to_intensity = false;
 
-  auto start_result = start_reconstruction_client_->async_send_request(start_request);
-  if (rclcpp::spin_until_future_complete(node_, start_result) == rclcpp::FutureReturnCode::SUCCESS)
-  {
-    auto start_response = start_result.get();
-    success = start_response->success;
-  }
-  else
-  {
-    success = false;
-  }
-
-  if (!success)
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Start reconstruction call failed");
-    update_status(success, "Reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
-  }
+  auto cb = std::bind(&ROSConWindow::onScanStartDone, this, std::placeholders::_1);
+  start_reconstruction_client_->async_send_request(start_request, cb);
 }
 
-void ROSConWindow::stopScan()
+void ROSConWindow::onScanStartDone(StartScanFuture result)
 {
-  // call reconstruction stop
-  open3d_interface_msgs::srv::StopYakReconstruction::Request::SharedPtr stop_request =
-      std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
+  if (!result.get()->success)
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Failed to start surface reconstruction");
+    return;
+  }
 
-  mesh_filepath_ = "/tmp/results_mesh.ply";
+  if (!follow_joint_client_->action_server_is_ready())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution action server is not available");
+    return;
+  }
+
+  RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
+
+  // TODO replace
+  control_msgs::action::FollowJointTrajectory::Goal trajGoal;
+
+  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+  send_goal_options.result_callback = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
+  follow_joint_client_->async_send_goal(trajGoal, send_goal_options);
+}
+
+void ROSConWindow::onScanDone(const FJTResult& result)
+{
+  // Error checking about action
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion");
+      return;
+  }
+
+  // call reconstruction stop
+  auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
   stop_request->archive_directory = "";
   stop_request->mesh_filepath = mesh_filepath_;
 
-  auto stop_result = stop_reconstruction_client_->async_send_request(stop_request);
-  if (rclcpp::spin_until_future_complete(node_, stop_result) == rclcpp::FutureReturnCode::SUCCESS)
+  auto cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
+  stop_reconstruction_client_->async_send_request(stop_request, cb);
+}
+
+void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
+{
+  if (!stop_result.get()->success)
   {
-    auto stop_response = stop_result.get();
-    bool success = stop_response->success;
+    RCLCPP_INFO(node_->get_logger(), "Failed to stop surface reconstruction");
+    return;
+  }
 
-    RCLCPP_INFO(node_->get_logger(), "Mesh saved to '%s'.", mesh_filepath_.c_str());
-
+  // Publish the mesh
+  {
     visualization_msgs::msg::Marker mesh_marker;
     mesh_marker.header.frame_id = "floor";
 
@@ -337,9 +387,35 @@ void ROSConWindow::stopScan()
     mesh_marker.mesh_resource = "file://" + mesh_filepath_;
 
     scan_mesh_pub_->publish(mesh_marker);
+  }
 
-    success = true;
-    update_status(success, "Scanning and reconstruction", ui_->scan_button, "plan tool paths", ui_->tpp_button, 2);
+
+  if (!follow_joint_client_->action_server_is_ready())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
+    return;
+  }
+
+  RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
+
+  // TODO: fill out later
+  control_msgs::action::FollowJointTrajectory::Goal departGoal;
+
+  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+
+  send_goal_options.result_callback = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
+  this->follow_joint_client_->async_send_goal(departGoal, send_goal_options);
+}
+
+void ROSConWindow::onScanDepartureDone(const FJTResult& result)
+{
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
+      break;
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion departure");
   }
 }
 
@@ -392,131 +468,6 @@ void ROSConWindow::plan_tool_paths()
   }
 
   update_status(success, "Tool path planning", ui_->tpp_button, "plan motion", ui_->motion_plan_button, 3);
-}
-
-void ROSConWindow::startScan()
-{
-  if (!this->follow_joint_client_->wait_for_action_server())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Action server not available after waiting");
-    rclcpp::shutdown();
-  }
-
-  RCLCPP_INFO(node_->get_logger(), "Sending approach goal");
-
-  // TODO: fill out later
-  control_msgs::action::FollowJointTrajectory::Goal approachGoal;
-
-  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-
-  send_goal_options.result_callback = std::bind(&ROSConWindow::onApproachDone, this, std::placeholders::_1);
-
-  follow_joint_client_->async_send_goal(approachGoal, send_goal_options);
-}
-
-void ROSConWindow::onApproachDone(
-    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
-{
-  switch (result.code)
-  {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      break;
-    case rclcpp_action::ResultCode::ABORTED:
-      RCLCPP_ERROR(node_->get_logger(), "Approach was aborted");
-      rclcpp::shutdown();
-      return;
-
-    case rclcpp_action::ResultCode::CANCELED:
-      RCLCPP_ERROR(node_->get_logger(), "Approach was canceled");
-      rclcpp::shutdown();
-      return;
-
-    default:
-      RCLCPP_ERROR(node_->get_logger(), "Unknown result code");
-      return;
-  }
-
-  if (!this->follow_joint_client_->wait_for_action_server())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Action server not available after waiting");
-    rclcpp::shutdown();
-  }
-
-  RCLCPP_INFO(node_->get_logger(), "Sending Trajectory goal");
-
-  // TODO replace
-  control_msgs::action::FollowJointTrajectory::Goal trajGoal;
-
-  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-
-  send_goal_options.result_callback =
-      std::bind(&ROSConWindow::onTrajDone, this, std::placeholders::_1);  // bind different callback to it
-  this->follow_joint_client_->async_send_goal(trajGoal, send_goal_options);
-
-  ROSConWindow::scan();  // calls the actual scanner?
-}
-
-void ROSConWindow::onTrajDone(
-    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
-{
-  // Error checking about action
-  switch (result.code)
-  {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      break;
-    case rclcpp_action::ResultCode::ABORTED:
-      RCLCPP_ERROR(node_->get_logger(), "Scan Trajectory was aborted");
-      rclcpp::shutdown();
-      return;
-
-    case rclcpp_action::ResultCode::CANCELED:
-      RCLCPP_ERROR(node_->get_logger(), "Scan Trajectory was canceled");
-      rclcpp::shutdown();
-      return;
-
-    default:
-      RCLCPP_ERROR(node_->get_logger(), "Unknown result code");
-      return;
-  }
-
-  if (!this->follow_joint_client_->wait_for_action_server())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Action server not available after waiting");
-    rclcpp::shutdown();
-  }
-  RCLCPP_INFO(node_->get_logger(), "Sending goal");
-
-  control_msgs::action::FollowJointTrajectory::Goal departGoal;
-
-  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-
-  send_goal_options.result_callback =
-      std::bind(&ROSConWindow::onDepartDone, this, std::placeholders::_1);  // bind different callback to it
-  this->follow_joint_client_->async_send_goal(departGoal, send_goal_options);
-
-  ROSConWindow::stopScan();  // stops the actual scanner
-}
-
-// this is just winding down the action node once the departure is handled.
-void ROSConWindow::onDepartDone(
-    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
-{
-  switch (result.code)
-  {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      break;
-    case rclcpp_action::ResultCode::ABORTED:
-      RCLCPP_ERROR(node_->get_logger(), "Departure was aborted");
-      return;
-    case rclcpp_action::ResultCode::CANCELED:
-      RCLCPP_ERROR(node_->get_logger(), "Departure was canceled");
-      return;
-    default:
-      RCLCPP_ERROR(node_->get_logger(), "Unknown result code");
-      return;
-  }
-  RCLCPP_INFO(node_->get_logger(), "Departure Successful, shutting down node");
-  rclcpp::shutdown();
 }
 
 void ROSConWindow::plan_motion()
