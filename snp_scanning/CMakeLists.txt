@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
-project(snp_scanning)
+# Extract package name and version
+find_package(ros_industrial_cmake_boilerplate REQUIRED)
+extract_package_metadata(pkg)
+project(${pkg_extracted_name} VERSION ${pkg_extracted_version} LANGUAGES CXX)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)

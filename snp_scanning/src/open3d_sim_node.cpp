@@ -6,7 +6,6 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
 
@@ -23,10 +22,12 @@ public:
 
     stop_yak_srv_ = this->create_service<open3d_interface_msgs::srv::StopYakReconstruction>(
         "stop_reconstruction", std::bind(&Open3dSimServer::stopYakCB, this, _1, _2));
+
+    this->declare_parameter<std::string>("mesh_sourcepath", "/meshes/part_scan.ply");
   }
 
 private:
-  void startYakCB(const std::shared_ptr<open3d_interface_msgs::srv::StartYakReconstruction::Request> request,
+  void startYakCB(const std::shared_ptr<open3d_interface_msgs::srv::StartYakReconstruction::Request> /*request*/,
                   std::shared_ptr<open3d_interface_msgs::srv::StartYakReconstruction::Response> response)
   {
     response->success = true;
@@ -39,20 +40,31 @@ private:
     response->success = true;
 
     std::string package_path = ament_index_cpp::get_package_share_directory("snp_support");
-    std::string mesh_sourcepath = package_path + "/meshes/part_scan.ply";
-    // copy this file to mesh_filepath mesh_sourcepath_
-    // convert strings to file system paths
+    this->get_parameter("mesh_sourcepath",
+                        filepath_str);  // get parameter named "mesh_sourcepath" and local-var name it filepath_str
+    std::string mesh_sourcepath = package_path + filepath_str;
+
     boost::filesystem::path mesh_sourcepath_path(mesh_sourcepath);       // this is the path version of mesh_sourcepath
     boost::filesystem::path mesh_filepath_path(request->mesh_filepath);  // this is the path version of mesh_filepath
+    boost::system::error_code ec;                                        // define error code
 
-    boost::filesystem::copy_file(mesh_sourcepath_path, mesh_filepath_path,
-                                 boost::filesystem::copy_option::overwrite_if_exists);
-
-    RCLCPP_INFO_STREAM(this->get_logger(), "Yak Sim Stopped, mesh saved to " << request->mesh_filepath);
+    try
+    {
+      boost::filesystem::copy_file(mesh_sourcepath_path, mesh_filepath_path,
+                                   boost::filesystem::copy_option::overwrite_if_exists, ec);
+      response->success = true;
+      RCLCPP_INFO_STREAM(this->get_logger(),
+                         "Yak simulation complete, mesh saved to '" << request->mesh_filepath << "'");
+    }
+    catch (boost::system::error_code ec)
+    {
+      response->success = false;
+      RCLCPP_INFO_STREAM(this->get_logger(), "Yak simulation incomplete, mesh not saved.");
+    }
   }
-
   rclcpp::Service<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr start_yak_srv_;
   rclcpp::Service<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_yak_srv_;
+  std::string filepath_str;
 };
 
 int main(int argc, char** argv)

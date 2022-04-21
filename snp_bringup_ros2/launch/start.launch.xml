@@ -1,6 +1,8 @@
-<!-- ?xml version="1.0"?-->
+<?xml version="1.0"?>
 <launch>
-  <arg name="sim" default="true" />
+  <arg name="sim_vision" default="True"/>
+  <arg name="sim_robot" default="True"/>
+  <arg name="mesh_sourcepath" default="/meshes/part_scan.ply"/>
 
   <!-- Launch Toolpath Planning Node -->
   <node pkg="snp_tpp" exec="snp_tpp_node">
@@ -8,17 +10,23 @@
   </node>
 
   <!-- Launch Open3d Interface Node -->
-  <!-- node if="$(!arg sim)" pkg="open3d_interface" exec="open3d_yak">
-    <param name="depth_image_topic" value="/camera/aligned_depth_to_color/image_raw"/>
-    <param name="color_image_topic" value="/camera/color/image_rect_color"/>
-    <param name="camera_info_topic" value="/camera/color/camera_info"/>
-    <param name="cache_count" value="10"/>
-    <param name="slop" value="0.01"/>
-  </node-->
+  <group unless="$(var sim_vision)">
+    <node pkg="open3d_interface" exec="open3d_yak">
+      <param name="depth_image_topic" value="/camera/aligned_depth_to_color/image_raw"/>
+      <param name="color_image_topic" value="/camera/color/image_rect_color"/>
+      <param name="camera_info_topic" value="/camera/color/camera_info"/>
+      <param name="cache_count" value="10"/>
+      <param name="slop" value="0.01"/>
+    </node>
+  </group>
 
   <!-- Launch Open3d Interface Node (Sim) -->
-  <node if="$(var sim)" pkg="snp_scanning" exec="open3d_sim_node">
-  </node>
+  <group if="$(var sim_vision)">
+    <node pkg="snp_scanning" exec="open3d_sim_node">
+      <param name="mesh_sourcepath" value="$(var mesh_sourcepath)"/>
+    </node>
+  </group>
+
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
 <!--  <include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
@@ -26,12 +34,19 @@
   <!-- Launch Motion Execution Node -->
 <!--  <node pkg="ros_to_moto" exec="motion_execution" emulate_tty="true"/>-->
 
-  <node pkg="snp_motion_execution" exec="exec_sim_node">
-  </node>
+<!--  <group unless="$(var sim_robot)">
+    <node pkg="snp_motion_execution" exec="exec_node">
+    </node>
+  </group>-->
+
+  <group if="$(var sim_robot)">
+    <node pkg="snp_motion_execution" exec="exec_sim_node">
+    </node>
+  </group>
 
   <!-- Launch Application Node -->
   <node pkg="snp_application" exec="roscon_app">
-    <param name="sim_robot" value="$(var sim)"/>
+    <param name="sim_robot" value="$(var sim_robot)"/>
   </node>
 
 </launch>
