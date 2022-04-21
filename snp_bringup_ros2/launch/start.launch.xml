@@ -2,12 +2,10 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
-  <arg name="mesh_sourcepath" default="/meshes/part_scan.ply"/>
+  <arg name="mesh_file" default="$(find snp_support)/meshes/part_scan.ply"/>
 
   <!-- Launch Toolpath Planning Node -->
-  <node pkg="snp_tpp" exec="snp_tpp_node">
-<!--    <param name="robot_description" type="string" value="$(arg robot_description)"/>-->
-  </node>
+  <node pkg="snp_tpp" exec="snp_tpp_node"/>
 
   <!-- Launch Open3d Interface Node -->
   <group unless="$(var sim_vision)">
