@@ -24,7 +24,6 @@ static const std::string CALIBRATION_CORRELATION_SERVICE = "correlation";
 static const std::string CALIBRATION_INSTALL_SERVICE = "install";
 static const std::string START_RECONSTRUCTION_SERVICE = "start_reconstruction";
 static const std::string STOP_RECONSTRUCTION_SERVICE = "stop_reconstruction";
-static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory";
 static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_tool_paths";
 static const std::string MOTION_PLAN_SERVICE = "create_motion_plan";
 static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
@@ -122,8 +121,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
   motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>(MOTION_PLAN_SERVICE);
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
-  follow_joint_client_ =
-      rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(node_, FOLLOW_JOINT_TRAJECTORY_ACTION);
 }
 
 void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
@@ -268,39 +265,57 @@ void ROSConWindow::reset_calibration()
   ui_->reset_calibration_button->setEnabled(false);
 }
 
-void ROSConWindow::scan()
-{
-  if (!follow_joint_client_->action_server_is_ready())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
-    return;
-  }
-
-  RCLCPP_INFO(node_->get_logger(), "Sending approach goal");
-
-  // TODO: fill out later
+void ROSConWindow::scan()  // EDIT THIS
+{                          // TODO: fill out later
   control_msgs::action::FollowJointTrajectory::Goal approachGoal;
 
-  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-  send_goal_options.result_callback = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
-  follow_joint_client_->async_send_goal(approachGoal, send_goal_options);
+  snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
+      std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+  request->motion_plan = approachGoal.trajectory;
+  request->use_tool = true;
+
+  if (!motion_execution_client_->service_is_ready())
+  {
+    RCLCPP_INFO(node_->get_logger(), "waiting for service, not ready yet");
+    motion_execution_client_->wait_for_service();
+  }
+  RCLCPP_INFO(node_->get_logger(), "send scan request");
+
+  auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
+  motion_execution_client_->async_send_request(request, cb);
+
+  //    if (rclcpp::spin_until_future_complete(node_, future) == rclcpp::FutureReturnCode::SUCCESS)
+  //    {
+  //      auto result = future.get();
+  //      success = result->success;
+  //      if (!success)
+  //      {
+  //        RCLCPP_ERROR(node_->get_logger(), "Approach execution failed '%s'", result->message.c_str());
+  //      }
+  //    }
+  //    else
+  //    {
+  //      RCLCPP_ERROR(node_->get_logger(), "Call to approach execution failed");
+  //      success = false;
+  //    }
 }
 
-void ROSConWindow::onScanApproachDone(const FJTResult& result)
+void ROSConWindow::onScanApproachDone(FJTResult result)
 {
-  switch (result.code)
+  if (!result.get()->success)
   {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
-                        STATES.at(START_RECONSTRUCTION_ST));
-      break;
-    default:
-      RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan approach motion");
-      emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                        STATES.at(SCAN_APPROACH_ST));
-      return;
+    RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan approach motion");
+    emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    return;
+  }
+  else
+  {
+    emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
+                      STATES.at(START_RECONSTRUCTION_ST));
   }
 
+  RCLCPP_INFO(node_->get_logger(), "Successfully executed scan approach motion");
   // call reconstruction start
   auto start_request = std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
@@ -334,42 +349,62 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
     return;
   }
 
-  if (!follow_joint_client_->action_server_is_ready())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution action server is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
+  // not sure how to handle this given the motion exec server rather than action
+  //  if (!follow_joint_client_->action_server_is_ready())
+  //  {
+  //    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution action server is not available");
+  //    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+  //                      STATES.at(SCAN_APPROACH_ST));
+  //    return;
+  //  }
 
-  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
-                    STATES.at(SCAN_EXECUTION_ST));
+  //  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
+  //                    STATES.at(SCAN_EXECUTION_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
   // TODO replace
   control_msgs::action::FollowJointTrajectory::Goal trajGoal;
 
-  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-  send_goal_options.result_callback = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
-  follow_joint_client_->async_send_goal(trajGoal, send_goal_options);
+  snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
+      std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+  request->motion_plan = trajGoal.trajectory;
+  request->use_tool = true;
+
+  auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
+  motion_execution_client_->async_send_request(request, cb);
+  //  if (rclcpp::spin_until_future_complete(node_, future) == rclcpp::FutureReturnCode::SUCCESS)
+  //  {
+  //    auto result = future.get();
+  //    success = result->success;
+  //    if (!success)
+  //    {
+  //      RCLCPP_ERROR(node_->get_logger(), "Scan trajectory execution failed '%s'", result->message.c_str());
+  //    }
+  //  }
+  //  else
+  //  {
+  //    RCLCPP_ERROR(node_->get_logger(), "Call to scan trajectory execution failed");
+  //    success = false;
+  //  }
 }
 
-void ROSConWindow::onScanDone(const FJTResult& result)
+void ROSConWindow::onScanDone(FJTResult result)
 {
   // Error checking about action
-  switch (result.code)
+  if (!result.get()->success)
   {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
-                        STATES.at(STOP_RECONSTRUCTION_ST));
-      break;
-    default:
-      RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion");
-      emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                        STATES.at(SCAN_APPROACH_ST));
-      return;
+    RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion");
+    emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    return;
   }
+  else
+  {
+    emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
+                      STATES.at(STOP_RECONSTRUCTION_ST));
+  }
+  RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
 
   // call reconstruction stop
   auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
@@ -410,40 +445,45 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     scan_mesh_pub_->publish(mesh_marker);
   }
 
-  if (!follow_joint_client_->action_server_is_ready())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
-    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
+  // not sure how to handle this given the motion exec server rather than action
+  //  if (!follow_joint_client_->action_server_is_ready())
+  //  {
+  //    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
+  //    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+  //                      STATES.at(SCAN_APPROACH_ST));
+  //    return;
+  //  }
 
-  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
-                    STATES.at(SCAN_DEPARTURE_ST));
+  //  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
+  //                    STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 
   // TODO: fill out later
   control_msgs::action::FollowJointTrajectory::Goal departGoal;
 
-  auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+  snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
+      std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+  request->motion_plan = departGoal.trajectory;
+  request->use_tool = true;
 
-  send_goal_options.result_callback = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
-  this->follow_joint_client_->async_send_goal(departGoal, send_goal_options);
+  auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
+  motion_execution_client_->async_send_request(request, cb);
 }
 
-void ROSConWindow::onScanDepartureDone(const FJTResult& result)
+void ROSConWindow::onScanDepartureDone(FJTResult result)
 {
-  switch (result.code)
+  if (!result.get()->success)
   {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
-      emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
-      break;
-    default:
-      RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion departure");
-      emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                        STATES.at(SCAN_APPROACH_ST));
+    RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion departure");
+    emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    return;
+  }
+  else
+  {
+    RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
+    emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
   }
 }
 

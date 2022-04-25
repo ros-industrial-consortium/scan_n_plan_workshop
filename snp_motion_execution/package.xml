@@ -9,6 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <exec_depend>snp_msgs</exec_depend>
   <depend>control_msgs</depend>
   <depend>std_srvs</depend>
   <depend>rclcpp</depend>

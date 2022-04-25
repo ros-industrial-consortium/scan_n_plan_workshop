@@ -29,6 +29,7 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service_srv_;
 
   rclcpp_action::GoalResponse
+
   handleGoal(const rclcpp_action::GoalUUID& /*uuid*/,
              std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Goal> /*goal*/)
   {

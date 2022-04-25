@@ -60,7 +60,6 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr motion_planning_client_;
 
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
-  rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr follow_joint_client_;
 
   /**
    * @brief Updates the GUI to reflect the status of the internal state machine
@@ -82,19 +81,18 @@ private:
   void reset_calibration();
 
   // Scan motion and reconstruction
-  using FJTResult = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult;
+  using FJTResult = rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture;
   using StartScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedFuture;
   using StopScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedFuture;
   void scan();
-  void onScanApproachDone(const FJTResult& result);
+  void onScanApproachDone(FJTResult result);
   void onScanStartDone(StartScanFuture result);
-  void onScanDone(const FJTResult& result);
+  void onScanDone(FJTResult result);
   void onScanStopDone(StopScanFuture result);
-  void onScanDepartureDone(const FJTResult& result);
-
+  void onScanDepartureDone(FJTResult result);
+  void execute();
   void plan_tool_paths();
   void plan_motion();
-  void execute();
   void reset();
 
 signals:
