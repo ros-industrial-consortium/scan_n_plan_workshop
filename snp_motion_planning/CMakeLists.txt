@@ -37,3 +37,5 @@ endif()
 
 ament_export_dependencies(${ROS2_DEPS})
 ament_package()
+
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
