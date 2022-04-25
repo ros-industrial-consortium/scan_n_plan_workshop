@@ -23,7 +23,6 @@
       <geometry>
         <box size="${length} ${width} 0.001"/>
       </geometry>
-      <material name="tesseract_white"/>
     </visual>
     <collision>
       <origin xyz="0 -${width/10} 0.001" rpy="0 0 0"/>
