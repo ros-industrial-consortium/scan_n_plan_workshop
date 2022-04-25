@@ -1,105 +1,201 @@
+#include "planner_profiles.hpp"
+#include "taskflow_generators.hpp"
+#include <tesseract_process_managers/core/process_planning_server.h>
+#include <tesseract_motion_planners/default_planner_namespaces.h>
+
 #include <rclcpp/rclcpp.hpp>
-#include <std_srvs/srv/trigger.hpp>  // TODO: replace with snp_msgs service interface
+#include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <tesseract_command_language/command_language.h>
+#include <tesseract_command_language/utils/utils.h>
+#include <tesseract_rosutils/utils.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-tesseract_planning::CompositeInstruction createProgram(const tesseract_planning::ManipulatorInfo& manip_info,
-                                                       const tesseract_common::Toolpath& raster_strips)
+using namespace tesseract_planning;
+
+static const std::string TRANSITION_PLANNER = "TRANSITION";
+static const std::string FREESPACE_PLANNER = "FREESPACE";
+static const std::string RASTER_PLANNER = "RASTER";
+static const std::string PROFILE = "SNPD";
+static const std::string PLANNING_SERVICE = "create_motion_plan";
+
+tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
-  std::string raster_profile{ "RASTER" };
-  std::string transition_profile{ "TRANSITION" };
-  std::string freespace_profile{ "FREESPACE" };
-
-  // TODO: get from motion planning environment and motion group
-  std::vector<std::string> joint_names{ "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
-
-  tesseract_planning::CompositeInstruction program(raster_profile,
-                                                   tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
-
-  tesseract_planning::StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(joint_names.size()));
-  tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START,
-                                                        freespace_profile);
-  program.setStartInstruction(start_instruction);
-
-  for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
+  tesseract_common::Toolpath tps;
+  tps.reserve(msg.paths.size());
+  for (const auto& path : msg.paths)
   {
-    if (rs == 0)
+    for (const auto& segment : path.segments)
     {
-      // Define from start composite instruction
-      tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
-      tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE,
-                                                  freespace_profile);
-      plan_f0.setDescription("from_start_plan");
-      tesseract_planning::CompositeInstruction from_start(freespace_profile);
-      from_start.setDescription("from_start");
-      from_start.push_back(plan_f0);
-      program.push_back(from_start);
+      tesseract_common::VectorIsometry3d seg;
+      seg.reserve(segment.poses.size());
+      for (const auto& pose : segment.poses)
+      {
+        Eigen::Isometry3d p;
+        tf2::fromMsg(pose, p);
+        seg.push_back(p);
+      }
+      tps.push_back(seg);
+    }
+  }
+  return tps;
+}
+
+template <typename T>
+T get(rclcpp::Node* node, const std::string& key)
+{
+  node->declare_parameter(key);
+  T val;
+  if (!node->get_parameter(key, val))
+    throw std::runtime_error("Failed to get '" + key + "' parameter");
+  return val;
+}
+
+class PlanningServer : public rclcpp::Node
+{
+public:
+  PlanningServer()
+    : rclcpp::Node("snp_planning_server")
+    , env_(std::make_shared<tesseract_environment::Environment>())
+    , planning_server_(std::make_shared<ProcessPlanningServer>(env_))
+  {
+    // TODO: Set up an environment monitor
+    {
+      auto urdf_string = get<std::string>(this, "robot_description");
+      auto srdf_string = get<std::string>(this, "robot_description_semantic");
+      auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+      if (!env_->init(urdf_string, srdf_string, resource_locator))
+        throw std::runtime_error("Failed to initialize environment");
     }
 
-    // Define raster
-    tesseract_planning::CompositeInstruction raster_segment(raster_profile);
-    raster_segment.setDescription("Raster #" + std::to_string(rs + 1));
+    // Register custom process planners
+    planning_server_->registerProcessPlanner(TRANSITION_PLANNER, createTransitionTaskflow());
+    planning_server_->registerProcessPlanner(FREESPACE_PLANNER, createFreespaceTaskflow());
+    planning_server_->registerProcessPlanner(RASTER_PLANNER, createRasterTaskflow());
 
-    for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
+    // Add custom profiles
     {
-      tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
-      raster_segment.push_back(
-          tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, raster_profile));
+      auto pd = planning_server_->getProfiles();
+      pd->addProfile<OMPLPlanProfile>(process_planner_names::OMPL_PLANNER_NAME, PROFILE, createOMPLProfile());
+      pd->addProfile<TrajOptCompositeProfile>(process_planner_names::TRAJOPT_PLANNER_NAME, PROFILE,
+                                              createTrajOptProfile());
+      pd->addProfile<DescartesPlanProfile<float>>(process_planner_names::DESCARTES_PLANNER_NAME, PROFILE,
+                                                  createDescartesPlanProfile<float>());
     }
-    program.push_back(raster_segment);
 
-    if (rs < raster_strips.size() - 1)
+    // Advertise the ROS2 service
+    server_ = create_service<snp_msgs::srv::GenerateMotionPlan>(
+        PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
+    RCLCPP_INFO(get_logger(), "Started SNP motion planning server");
+  }
+
+private:
+  CompositeInstruction createProgram(const ManipulatorInfo& info, const tesseract_common::Toolpath& raster_strips)
+  {
+    std::vector<std::string> joint_names = env_->getJointGroup(info.manipulator)->getJointNames();
+
+    CompositeInstruction program(PROFILE, CompositeInstructionOrder::ORDERED, info);
+
+    // Perform a freespace move to the first waypoint
+    StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(static_cast<Eigen::Index>(joint_names.size())));
+    PlanInstruction start_instruction(swp1, PlanInstructionType::START, PROFILE);
+    program.setStartInstruction(start_instruction);
+
+    for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
     {
-      // Add transition
-      tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
+      if (rs == 0)
+      {
+        // Define from start composite instruction
+        CartesianWaypoint wp1 = raster_strips[rs][0];
+        PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, PROFILE);
+        plan_f0.setDescription("from_start_plan");
+        CompositeInstruction from_start(PROFILE);
+        from_start.setDescription("from_start");
+        from_start.push_back(plan_f0);
+        program.push_back(from_start);
+      }
 
-      tesseract_planning::PlanInstruction transition_instruction1(
-          twp, tesseract_planning::PlanInstructionType::FREESPACE, transition_profile);
-      transition_instruction1.setDescription("transition_from_end_plan");
+      // Define raster
+      CompositeInstruction raster_segment(PROFILE);
+      raster_segment.setDescription("Raster #" + std::to_string(rs + 1));
 
-      tesseract_planning::CompositeInstruction transition(transition_profile);
-      transition.setDescription("transition_from_end");
-      transition.push_back(transition_instruction1);
+      for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
+      {
+        CartesianWaypoint wp = raster_strips[rs][i];
+        raster_segment.push_back(PlanInstruction(wp, PlanInstructionType::LINEAR, PROFILE));
+      }
+      program.push_back(raster_segment);
 
-      program.push_back(transition);
+      if (rs < raster_strips.size() - 1)
+      {
+        // Add transition
+        CartesianWaypoint twp = raster_strips[rs + 1].front();
+
+        PlanInstruction transition_instruction1(twp, PlanInstructionType::FREESPACE, PROFILE);
+        transition_instruction1.setDescription("transition_from_end_plan");
+
+        CompositeInstruction transition(PROFILE);
+        transition.setDescription("transition_from_end");
+        transition.push_back(transition_instruction1);
+
+        program.push_back(transition);
+      }
+      else
+      {
+        // Add to end instruction
+        PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, PROFILE);
+        plan_f2.setDescription("to_end_plan");
+        CompositeInstruction to_end(PROFILE);
+        to_end.setDescription("to_end");
+        to_end.push_back(plan_f2);
+        program.push_back(to_end);
+      }
     }
-    else
+
+    return program;
+  }
+
+  void plan(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
+            snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
+  {
+    try
     {
-      // Add to end instruction
-      tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE,
-                                                  freespace_profile);
-      plan_f2.setDescription("to_end_plan");
-      tesseract_planning::CompositeInstruction to_end(freespace_profile);
-      to_end.setDescription("to_end");
-      to_end.push_back(plan_f2);
-      program.push_back(to_end);
+      // Create a manipulator info and program from the service request
+      const std::string base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
+      ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
+
+      ProcessPlanningRequest plan_req;
+      plan_req.name = RASTER_PLANNER;
+      plan_req.instructions = createProgram(manip_info, fromMsg(req->tool_paths));
+      plan_req.env_state = env_->getState();
+
+      ProcessPlanningFuture plan_result = planning_server_->run(plan_req);
+      plan_result.wait();
+
+      if (!plan_result.interface->isSuccessful())
+        throw std::runtime_error("Failed to create motion plan");
+
+      // Convert to joint trajectory
+      tesseract_common::JointTrajectory jt = toJointTrajectory(plan_result.results->as<CompositeInstruction>());
+      res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
+
+      res->success = true;
+    }
+    catch (const std::exception& ex)
+    {
+      res->message = ex.what();
+      res->success = false;
     }
   }
 
-  return program;
-}
-
-void plan(const std_srvs::srv::Trigger::Request::SharedPtr /*req*/, std_srvs::srv::Trigger::Response::SharedPtr res)
-{
-  // Create a manipulator info and program from the service request
-  //  tesseract_planning::ManipulatorInfo manip_info("manipulator", "floor", "buffy_tcp");
-  //  tesseract_planning::CompositeInstruction program = createProgram(manip_info, tool_paths_);
-
-  // Save the instructions to file
-  //  const std::string filename = "/tmp/motion_planning_instructions.xml";
-  //  tesseract_planning::Serialization::toArchiveFileXML<tesseract_planning::Instruction>(program, filename);
-
-  res->success = true;
-  res->message = "TODO: implmement planning server";
-}
+  tesseract_environment::Environment::Ptr env_;
+  ProcessPlanningServer::Ptr planning_server_;
+  rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
+};
 
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-
-  auto node = rclcpp::Node::make_shared("snp_planning_server");
-  auto service = node->create_service<std_srvs::srv::Trigger>("create_motion_plan", &plan);
-
-  RCLCPP_INFO(node->get_logger(), "Started SNP motion planning server");
-  rclcpp::spin(node);
+  auto server = std::make_shared<PlanningServer>();
+  rclcpp::spin(server);
   rclcpp::shutdown();
 }
