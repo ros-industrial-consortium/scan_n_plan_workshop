@@ -34,10 +34,6 @@ find_package(control_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(tesseract_command_language REQUIRED)
-find_package(tesseract_common REQUIRED)
-find_package(tesseract_rosutils REQUIRED)
-find_package(tesseract_visualization REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
@@ -51,10 +47,7 @@ add_executable(
   include/rosconwindow.h)
 target_link_libraries(
   roscon_app
-  Qt5::Widgets
-  tesseract::tesseract_command_language
-  tesseract::tesseract_common
-  tesseract::tesseract_visualization)
+  Qt5::Widgets)
 ament_target_dependencies(
   roscon_app
   open3d_interface_msgs
@@ -67,7 +60,6 @@ ament_target_dependencies(
   visualization_msgs
   snp_msgs
   std_srvs
-  tesseract_rosutils
   tf2_eigen
   trajectory_msgs)
 
