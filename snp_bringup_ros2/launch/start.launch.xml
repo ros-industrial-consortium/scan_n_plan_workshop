@@ -29,7 +29,7 @@
   <node pkg="snp_tpp" exec="snp_tpp_node"/>
 
   <!-- Launch Motion Planning Node -->
-  <node pkg="snp_motion_planning" exec="snp_motion_planning_node"/>
+  <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.py"/>
 
   <!-- Launch Motion Execution Node -->
   <node pkg="snp_motion_execution" exec="snp_motion_execution_node"/>
@@ -42,8 +42,13 @@
   </group>
 
   <!-- Launch Application Node -->
-  <node pkg="snp_application" exec="roscon_app"/>
-
+  <node pkg="snp_application" exec="roscon_app">
+    <param name="mesh_file" value="/tmp/results_mesh.ply"/>
+    <param name="motion_group" value="manipulator"/>
+    <param name="reference_frame" value="floor"/>
+    <param name="tcp_frame" value="buffy_tcp"/>
+    <param name="camera_frame" value="camera_color_optical_frame"/>
+  </node>
 </launch>
 
 
