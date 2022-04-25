@@ -18,3 +18,25 @@ kinematic_plugins:
               c4: 0.225
               offsets: [0, 0, -1.57079632679, 0, 0, 0]
               sign_corrections: [1, 1, -1, -1, -1, -1]
+contact_manager_plugins:
+  search_paths:
+    - /usr/local/lib
+  search_libraries:
+    - tesseract_collision_bullet_factories
+    - tesseract_collision_fcl_factories
+  discrete_plugins:
+    default: BulletDiscreteBVHManager
+    plugins:
+      BulletDiscreteBVHManager:
+        class: BulletDiscreteBVHManagerFactory
+      BulletDiscreteSimpleManager:
+        class: BulletDiscreteSimpleManagerFactory
+      FCLDiscreteBVHManager:
+        class: FCLDiscreteBVHManagerFactory
+  continuous_plugins:
+    default: BulletCastBVHManager
+    plugins:
+      BulletCastBVHManager:
+        class: BulletCastBVHManagerFactory
+      BulletCastSimpleManager:
+        class: BulletCastSimpleManagerFactory
