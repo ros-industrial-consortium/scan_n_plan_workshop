@@ -62,8 +62,13 @@ private:
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
   rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr follow_joint_client_;
 
-  void update_status(bool success, std::string current_process, QPushButton* current_button, std::string next_process,
-                     QPushButton* next_button, int step);
+  /**
+   * @brief Updates the GUI to reflect the status of the internal state machine
+   * @details This method updates elements of the GUI and can only be called from the Qt thread, not in ROS callbacks.
+   * To invoke this method from a ROS callback, emit the `updateStatus` signal
+   */
+  void onUpdateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
+                      QPushButton* next_button, unsigned step);
 
   const std::string mesh_filepath_;
   tesseract_common::Toolpath tool_paths_;
@@ -91,6 +96,10 @@ private:
   void plan_motion();
   void execute();
   void reset();
+
+signals:
+  void updateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
+                    QPushButton* next_button, unsigned step);
 };
 
 #endif  // ROSCONWINDOW_H
