@@ -455,7 +455,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   //  }
 
   emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
-                      STATES.at(SCAN_DEPARTURE_ST));
+                    STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 

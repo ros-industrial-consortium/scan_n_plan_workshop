@@ -18,10 +18,11 @@ public:
     private_node_ =
         std::make_shared<rclcpp::Node>(name + "_private");  // I'm gonna assign the name name+"_private" to private node
 
-    this->action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(private_node_, "follow_"
-                                                                                                           "joint_"
-                                                                                                           "trajector"
-                                                                                                           "y");
+    this->action_client_ =
+        rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(private_node_, "follow_"
+                                                                                                 "joint_"
+                                                                                                 "trajector"
+                                                                                                 "y");
 
     this->serv_client_ = private_node_->create_client<std_srvs::srv::Trigger>("robot_enable");
 
@@ -58,7 +59,6 @@ private:
     result.wait();
     if (result.get()->success)
     {
-
       if (!action_client_->wait_for_action_server())
       {
         RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
@@ -66,15 +66,16 @@ private:
       }
       // send motion trajectory
 
-//      auto send_goal_options = rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-//      send_goal_options.goal_response_callback =
-//          std::bind(&MotionExecNode::goal_response_callback, this, std::placeholders::_1);
-//      send_goal_options.feedback_callback =
-//          std::bind(&MotionExecNode::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
-//      send_goal_options.result_callback =
-//          std::bind(&MotionExecNode::result_callback, this, std::placeholders::_1);
+      //      auto send_goal_options =
+      //      rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
+      //      send_goal_options.goal_response_callback =
+      //          std::bind(&MotionExecNode::goal_response_callback, this, std::placeholders::_1);
+      //      send_goal_options.feedback_callback =
+      //          std::bind(&MotionExecNode::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
+      //      send_goal_options.result_callback =
+      //          std::bind(&MotionExecNode::result_callback, this, std::placeholders::_1);
 
-      auto future = action_client_->async_send_goal(fjt); // ,send_goal_options);
+      auto future = action_client_->async_send_goal(fjt);  // ,send_goal_options);
 
       if (future.wait_for(std::chrono::duration<double>(50)) == std::future_status::timeout)
       {
@@ -109,26 +110,34 @@ private:
     }
   }
 
-  void goal_response_callback(std::shared_future<rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr> future)
+  void goal_response_callback(
+      std::shared_future<rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr>
+          future)
   {
     auto goal_handle = future.get();
-    if (!goal_handle) {
+    if (!goal_handle)
+    {
       RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-    } else {
+    }
+    else
+    {
       RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
     }
   }
 
   void feedback_callback(
       rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr,
-      const std::shared_ptr<const rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::Feedback> /*feedback*/)
+      const std::shared_ptr<
+          const rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::Feedback> /*feedback*/)
   {
     RCLCPP_INFO(this->get_logger(), "feedback");
   }
 
-  void result_callback(const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult & result)
+  void result_callback(
+      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
   {
-    switch (result.code) {
+    switch (result.code)
+    {
       case rclcpp_action::ResultCode::SUCCEEDED:
         break;
       case rclcpp_action::ResultCode::ABORTED:
@@ -141,10 +150,8 @@ private:
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
         return;
     }
-        RCLCPP_INFO(this->get_logger(), "Result received");
+    RCLCPP_INFO(this->get_logger(), "Result received");
   }
-
-
 };
 
 int main(int argc, char** argv)
