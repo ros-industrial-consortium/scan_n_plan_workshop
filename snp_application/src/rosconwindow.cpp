@@ -302,17 +302,17 @@ void ROSConWindow::scan()  // EDIT THIS
 
 void ROSConWindow::onScanApproachDone(FJTResult result)
 {
-  if (!result.get()->success)
+  if (result.get()->success)
+  {
+    emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
+                      STATES.at(START_RECONSTRUCTION_ST));
+  }
+  else
   {
     RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan approach motion");
     emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
     return;
-  }
-  else
-  {
-    emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
-                      STATES.at(START_RECONSTRUCTION_ST));
   }
 
   RCLCPP_INFO(node_->get_logger(), "Successfully executed scan approach motion");
@@ -371,7 +371,7 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   request->motion_plan = trajGoal.trajectory;
   request->use_tool = true;
 
-  auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
+  auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
   //  if (rclcpp::spin_until_future_complete(node_, future) == rclcpp::FutureReturnCode::SUCCESS)
   //  {
@@ -392,17 +392,17 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
 void ROSConWindow::onScanDone(FJTResult result)
 {
   // Error checking about action
-  if (!result.get()->success)
+  if (result.get()->success)
+  {
+    emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
+                      STATES.at(STOP_RECONSTRUCTION_ST));
+  }
+  else
   {
     RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion");
     emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
     return;
-  }
-  else
-  {
-    emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
-                      STATES.at(STOP_RECONSTRUCTION_ST));
   }
   RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
 
@@ -454,8 +454,8 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   //    return;
   //  }
 
-  //  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
-  //                    STATES.at(SCAN_DEPARTURE_ST));
+  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
+                      STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 
