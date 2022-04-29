@@ -26,7 +26,7 @@ static const std::string START_RECONSTRUCTION_SERVICE = "start_reconstruction";
 static const std::string STOP_RECONSTRUCTION_SERVICE = "stop_reconstruction";
 static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory";
 static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_toolpaths";
-static const std::string MOTION_PLAN_SERVICE = "/snp_planning_server/tesseract_trigger_motion_plan";
+static const std::string MOTION_PLAN_SERVICE = "create_motion_plan";
 static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
 
 static const QString CALIBRATION_ST = "calibrate";
