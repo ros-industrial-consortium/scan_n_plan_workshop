@@ -483,12 +483,17 @@ void ROSConWindow::plan_tool_paths()
     else
     {
       tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+
       geometry_msgs::msg::PoseArray flat_toolpath_msg;
       flat_toolpath_msg.header.frame_id = reference_frame_;
-      for (const auto& toolpath : tool_paths_->paths)
+      for (auto& toolpath : tool_paths_->paths)
       {
-        for (const auto& segment : toolpath.segments)
+        for (auto& segment : toolpath.segments)
         {
+          // Update the reference frame
+          segment.header.frame_id = reference_frame_;
+
+          // Insert the waypoints into the flattened structure
           flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
         }
       }
