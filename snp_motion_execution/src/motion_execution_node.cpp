@@ -14,11 +14,11 @@ public:
   explicit MotionExecNode()
     : Node("motion_execution_node"), cb_group_(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant))
   {
-    this->action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, FJT_ACTION);
+    this->fjt_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, FJT_ACTION);
 
-    this->serv_client_ = this->create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);
+    this->enable_client_ = this->create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);
 
-    this->motion_exec_service_ = this->create_service<snp_msgs::srv::ExecuteMotionPlan>(
+    this->server_ = this->create_service<snp_msgs::srv::ExecuteMotionPlan>(
         MOTION_EXEC_SERVICE,
         std::bind(&MotionExecNode::executeMotionPlan, this, std::placeholders::_1, std::placeholders::_2),
         rmw_qos_profile_services_default, cb_group_);
@@ -27,10 +27,10 @@ public:
   }
 
 private:
-  rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr action_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr serv_client_;
+  rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr fjt_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr enable_client_;
 
-  rclcpp::Service<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_exec_service_;
+  rclcpp::Service<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr server_;
   rclcpp::CallbackGroup::SharedPtr cb_group_;
 
   void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
@@ -40,11 +40,11 @@ private:
     {
       // enable robot
       {
-        if (!serv_client_->service_is_ready())
+        if (!enable_client_->service_is_ready())
           throw std::runtime_error("Robot enable server is not available");
 
         auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-        auto future = serv_client_->async_send_request(request);
+        auto future = enable_client_->async_send_request(request);
         future.wait();
 
         std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
@@ -53,13 +53,13 @@ private:
       }
 
       // Check that the server exists
-      if (!action_client_->action_server_is_ready())
+      if (!fjt_client_->action_server_is_ready())
         throw std::runtime_error("Action server not available after waiting");
 
       // Send motion trajectory
       control_msgs::action::FollowJointTrajectory::Goal fjt;
       fjt.trajectory = empRequest->motion_plan;
-      auto fjt_accepted_future = action_client_->async_send_goal(fjt);
+      auto fjt_accepted_future = fjt_client_->async_send_goal(fjt);
 
       // Wait for the goal to be accepted
       fjt_accepted_future.wait();
@@ -77,7 +77,7 @@ private:
       }
 
       // Wait for the trajectory to complete
-      auto fjt_future = action_client_->async_get_result(goal_handle);
+      auto fjt_future = fjt_client_->async_get_result(goal_handle);
       fjt_future.wait();
 
       // Handle the action result code
