@@ -16,18 +16,27 @@ find_package(control_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(snp_msgs REQUIRED)
 
-# uncomment the following section in order to fill in further dependencies manually. find_package(<dependency> REQUIRED)
-
-add_executable(exec_sim_node src/exec_sim_node.cpp)
+add_executable(${PROJECT_NAME}_simulator_node src/execution_simulator_node.cpp)
 ament_target_dependencies(
-  exec_sim_node
+  ${PROJECT_NAME}_simulator_node
   rclcpp
   std_srvs
   rclcpp_action
-  control_msgs)
+  control_msgs
+  snp_msgs)
 
-install(TARGETS exec_sim_node DESTINATION lib/${PROJECT_NAME})
+add_executable(${PROJECT_NAME}_node src/motion_execution_node.cpp)
+ament_target_dependencies(
+  ${PROJECT_NAME}_node
+  rclcpp
+  std_srvs
+  rclcpp_action
+  control_msgs
+  snp_msgs)
+
+install(TARGETS ${PROJECT_NAME}_simulator_node ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

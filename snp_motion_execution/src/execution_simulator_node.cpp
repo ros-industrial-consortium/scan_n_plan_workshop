@@ -29,6 +29,7 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service_srv_;
 
   rclcpp_action::GoalResponse
+
   handleGoal(const rclcpp_action::GoalUUID& /*uuid*/,
              std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Goal> /*goal*/)
   {
@@ -60,6 +61,7 @@ private:
     result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
     goal_handle->succeed(result);
     RCLCPP_INFO(this->get_logger(), "Goal succeeded");
+    return;
   }
 
   void set_response(const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
