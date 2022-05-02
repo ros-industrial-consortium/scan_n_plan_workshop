@@ -1,28 +1,25 @@
-#include <memory>
-#include <functional>
-#include <thread>
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <rclcpp/node.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 
+static const std::string FJT_ACTION = "follow_joint_trajectory";
+static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
+static const std::string ENABLE_SERVICE = "robot_enable";
+
 class MotionExecNode : public rclcpp::Node
 {
 public:
-  explicit MotionExecNode(const std::string& name, const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
-    : Node(name, options), cb_group_(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant))
+  explicit MotionExecNode()
+    : Node("motion_execution_node"), cb_group_(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant))
   {
-    this->action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, "follow_"
-                                                                                                           "joint_"
-                                                                                                           "trajector"
-                                                                                                           "y");
+    this->action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, FJT_ACTION);
 
-    this->serv_client_ = this->create_client<std_srvs::srv::Trigger>("robot_enable");
+    this->serv_client_ = this->create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);
 
     this->motion_exec_service_ = this->create_service<snp_msgs::srv::ExecuteMotionPlan>(
-        "execute_motion_plan",
+        MOTION_EXEC_SERVICE,
         std::bind(&MotionExecNode::executeMotionPlan, this, std::placeholders::_1, std::placeholders::_2),
         rmw_qos_profile_services_default, cb_group_);
 
@@ -39,101 +36,78 @@ private:
   void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
                          const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Response> empResult)
   {
-    // get info from service
-    control_msgs::action::FollowJointTrajectory::Goal fjt;
-    fjt.trajectory = empRequest->motion_plan;
-
-    // enable robot
-    std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
-    auto result = serv_client_->async_send_request(request);
-
-    result.wait();
-    if (result.get()->success)
+    try
     {
-      if (!action_client_->wait_for_action_server())
+      // enable robot
       {
-        RCLCPP_WARN(this->get_logger(), "Action server not available after waiting");
-        return;
-        // rclcpp::shutdown();
+        if (!serv_client_->service_is_ready())
+          throw std::runtime_error("Robot enable server is not available");
+
+        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+        auto future = serv_client_->async_send_request(request);
+        future.wait();
+
+        std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
+        if (!response->success)
+          throw std::runtime_error("Failed to enable robot: '" + response->message + "'");
       }
-      // send motion trajectory
 
-      //      auto send_goal_options =
-      //      rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SendGoalOptions();
-      //      send_goal_options.goal_response_callback =
-      //          std::bind(&MotionExecNode::goal_response_callback, this, std::placeholders::_1);
-      //      send_goal_options.feedback_callback =
-      //          std::bind(&MotionExecNode::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
-      //      send_goal_options.result_callback =
-      //          std::bind(&MotionExecNode::result_callback, this, std::placeholders::_1);
+      // Check that the server exists
+      if (!action_client_->action_server_is_ready())
+        throw std::runtime_error("Action server not available after waiting");
 
-      auto future = action_client_->async_send_goal(fjt);  // ,send_goal_options);
+      // Send motion trajectory
+      control_msgs::action::FollowJointTrajectory::Goal fjt;
+      fjt.trajectory = empRequest->motion_plan;
+      auto fjt_accepted_future = action_client_->async_send_goal(fjt);
 
-      if (future.wait_for(std::chrono::duration<double>(50)) == std::future_status::timeout)
+      // Wait for the goal to be accepted
+      fjt_accepted_future.wait();
+      using FJTGoalHandle = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>;
+      FJTGoalHandle::SharedPtr goal_handle = fjt_accepted_future.get();
+      uint8_t status = goal_handle->get_status();
+      switch (status)
       {
-        throw std::runtime_error("Timed out waiting for goal response");
+        case rclcpp_action::GoalStatus::STATUS_ACCEPTED:
+        case rclcpp_action::GoalStatus::STATUS_SUCCEEDED:
+          break;
+        default:
+          throw std::runtime_error("Follow joint trajectory action goal was not accepted (code " +
+                                   std::to_string(status) + ")");
       }
-      auto goal_handle = future.get();
-      auto resultFuture = action_client_->async_get_result(goal_handle);
 
-      if (resultFuture.wait_for(std::chrono::duration<double>(50)) == std::future_status::timeout)
-      {
-        throw std::runtime_error("Timed out waiting for goal result");
-      }
-      auto result = resultFuture.get().result;
+      // Wait for the trajectory to complete
+      auto fjt_future = action_client_->async_get_result(goal_handle);
+      fjt_future.wait();
 
-      if (result->error_code == result->SUCCESSFUL)
+      // Handle the action result code
+      FJTGoalHandle::WrappedResult fjt_wrapper = fjt_future.get();
+      switch (static_cast<rclcpp_action::ResultCode>(fjt_wrapper.code))
       {
-        empResult->success = true;
+        case rclcpp_action::ResultCode::SUCCEEDED:
+          break;
+        default:
+          throw std::runtime_error("Follow joint trajectory action call did not succeed");
       }
-      else
-      {  // trajectory failure
-        RCLCPP_ERROR(this->get_logger(), "Failed to execute trajectory");
-        empResult->success = false;
-        return;
+
+      // Handle the FJT error code
+      switch (fjt_wrapper.result->error_code)
+      {
+        case control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL:
+          break;
+        default:
+          throw std::runtime_error("Follow joint trajectory action did not succeed: '" +
+                                   fjt_wrapper.result->error_string + "'");
       }
+
+      // Communicate success
+      empResult->success = true;
     }
-    else
+    catch (const std::exception& ex)
     {
-      // enable failure
-      RCLCPP_ERROR(this->get_logger(), "Failed to enable robot");
+      empResult->message = ex.what();
       empResult->success = false;
-      return;
     }
-  }
-
-  void goal_response_callback(
-      std::shared_future<rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr>
-          future)
-  {
-    auto goal_handle = future.get();
-    if (!goal_handle)
-    {
-      RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-    }
-    else
-    {
-      RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
-    }
-  }
-
-  void feedback_callback(
-      rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr,
-      const std::shared_ptr<
-          const rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::Feedback> /*feedback*/)
-  {
-    RCLCPP_INFO(this->get_logger(), "feedback");
-  }
-
-  void result_callback(
-      const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
-  {
-    if (result.code != rclcpp_action::ResultCode::SUCCEEDED)
-    {
-      RCLCPP_ERROR(this->get_logger(), "Goal Unsuccessful");
-      return;
-    }
-    RCLCPP_INFO(this->get_logger(), "Result received");
   }
 };
 
@@ -141,7 +115,7 @@ int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<MotionExecNode>("execute_motion_plan_node");
+  auto node = std::make_shared<MotionExecNode>();
 
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
