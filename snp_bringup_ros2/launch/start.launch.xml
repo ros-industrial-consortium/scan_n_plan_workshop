@@ -46,7 +46,7 @@
     <param name="mesh_file" value="/tmp/results_mesh.ply"/>
     <param name="motion_group" value="manipulator"/>
     <param name="reference_frame" value="floor"/>
-    <param name="tcp_frame" value="buffy_tcp"/>
+    <param name="tcp_frame" value="sand_tcp"/>
     <param name="camera_frame" value="camera_color_optical_frame"/>
   </node>
 </launch>
