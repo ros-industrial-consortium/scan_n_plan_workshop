@@ -41,13 +41,13 @@
   <link name="table">
     <visual>
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/Steel Table 4 ft x 6ft.STL"/>
+        <mesh filename="package://snp_support/meshes/visual/steel_table.ply"/>
       </geometry>
       <material name="dark_gray"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/steel_table.ply"/>
+        <mesh filename="package://snp_support/meshes/collision/steel_table.ply"/>
       </geometry>
     </collision>
   </link>
@@ -60,198 +60,82 @@
   <joint name="table_to_base" type="fixed">
     <parent link="table"/>
     <child link="base_link"/>
-    <origin xyz="-0.61 0 0.723" rpy="0 0 0"/> <!-- model doesn't perfectly match .sldprt lenghts -->
+    <origin xyz="-0.61 0 0.723" rpy="0 0 0"/>end_effector.ply
   </joint>
 
   <!-- Add End Effector Components -->
-  <link name="pushcorp_base">
+  <link name="ee">
     <visual>
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/afd310.ply"/>
+        <mesh filename="package://snp_support/meshes/visual/end_effector.stl"/>
       </geometry>
     </visual>
-    <collision>
+    <collision name="compliance">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/afd310.ply"/>
+        <mesh filename="package://snp_support/meshes/collision/afd310.ply"/>
+      </geometry>
+    </collision>
+    <collision name="spindle">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/rps100.ply"/>
+      </geometry>
+    </collision>
+    <collision name="backplate">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/backplate.ply"/>
+      </geometry>
+    </collision>
+    <collision name="frontplate">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/front.ply"/>
+      </geometry>
+    </collision>
+    <collision name="camera1">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/camera1.ply"/>
+      </geometry>
+    </collision>
+    <collision name="camera2">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/camera2.ply"/>
+      </geometry>
+    </collision>
+    <collision name="sidebracket1">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/bracket1.ply"/>
+      </geometry>
+    </collision>
+    <collision name="sidebracket2">
+      <geometry>
+        <mesh filename="package://snp_support/meshes/collision/bracket2.ply"/>
       </geometry>
     </collision>
   </link>
 
-  <link name="pushcorp_compliance">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/rps100.ply"/>
-      </geometry>
-      <material name="light_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/rps100.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <link name="pushcorp_backplate">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/backplate.ply"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/backplate.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="tool0_to_pushcorp_backplate" type="fixed">
+  <joint name="tool0_to_ee" type="fixed">
     <parent link="tool0"/>
-    <child link="pushcorp_backplate"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
+    <child link="ee"/>
   </joint>
 
-  <link name="pushcorp_camera1">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/camera1.ply"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/camera1.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="tool0_to_pushcorp_camera1" type="fixed">
+  <!-- Calibration -->
+  <link name="camera_color_optical_frame"/>
+  <joint name="camera_cal_joint" type="fixed">
     <parent link="tool0"/>
-    <child link="pushcorp_camera1"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
+    <child link="camera_color_optical_frame"/>
+    <origin xyz="-0.150 0.140 0.08259" rpy="0 ${radians(-90)} 0"/>
   </joint>
 
-  <link name="pushcorp_camera2">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/camera2.ply"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/camera2.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="tool0_to_pushcorp_camera2" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_camera2"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
-  </joint>
-
-  <link name="pushcorp_frontplate">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/frontplate.ply"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/front.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="tool0_to_pushcorp_frontplate" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_frontplate"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
-  </joint>
-
-  <joint name="tool0_to_pushcorp_base" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_base"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
-  </joint>
-
-  <link name="pushcorp_sidebracket1">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/sidebracket1.ply"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/bracket1.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="tool0_to_pushcorp_sidebracket1" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_sidebracket1"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
-  </joint>
-
-  <link name="pushcorp_sidebracket2">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/sidebracket2.ply"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/collision_demo/convex_hulls/bracket2.ply"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="tool0_to_pushcorp_sidebracket2" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_sidebracket2"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
-  </joint>
-
-  <joint name="tool0_to_pushcorp_actuator" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_compliance"/>
-    <origin xyz="0 0 0" rpy="0 0 ${radians(180)}"/>
-  </joint>
-
-  <link name="camera_link"/>
-
-  <!-- Add Target Calibration -->
-  <link name="target_base_link">
+  <link name="target_cal_frame">
     <visual>
       <geometry>
         <mesh filename="package://snp_support/meshes/rosWorldCalib.dae"/>
       </geometry>
     </visual>
   </link>
-
-  <joint name="robot_to_camera_joint" type="fixed">
-    <parent link="tool0"/>
-    <child link="camera_link"/>
-    <origin xyz="0.175 0 0" rpy="0 0 0"/>
-  </joint>
-
-  <joint name="world_to_target_joint" type="fixed">
-    <parent link="floor"/>
-    <child link="target_base_link"/>
-    <origin xyz="0.37565 0.2809875 0.723" rpy="${pi/2} 0 ${pi}"/>
-  </joint>
-
-  <link name="camera_color_optical_frame"/>
-  <link name="target_cal_frame"/>
-
-  <joint name="camera_cal_joint" type="fixed">
-    <parent link="camera_link"/>
-    <child link="camera_color_optical_frame"/>
-  </joint>
-
   <joint name="target_cal_joint" type="fixed">
     <parent link="floor"/>
     <child link="target_cal_frame"/>
-    <origin xyz="0.37565 0.2809875 0.723" rpy="${pi/2} 0 ${pi}"/>
+    <origin xyz="0.37565 0.2809875 0.723" rpy="${radians(90)} 0 ${radians(180)}"/>
   </joint>
 
   <!-- Add TCP -->
@@ -259,7 +143,7 @@
   <joint name="sand_tcp_joint" type="fixed">
     <parent link="tool0"/>
     <child link="sand_tcp"/>
-    <origin xyz="0.23261 0 0.08259" rpy="${radians(90)} 0 ${radians(90)}"/> <!-- values from solidworks -->
+    <origin xyz="-0.23261 0 0.08259" rpy="${radians(-90)} 0 ${radians(90)}"/>
   </joint>
 
 </robot>
