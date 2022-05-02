@@ -4,8 +4,8 @@
   <arg name="sim_robot" default="True"/>
   <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
 
-<!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
-<!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
+  <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
+  <!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
 
   <!-- Launch Open3d Interface Node -->
   <group unless="$(var sim_vision)">
@@ -32,19 +32,16 @@
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node"/>
 
   <!-- Launch Motion Execution Node -->
-
-  <node pkg="snp_motion_execution" exec="execute_motion_plan"/>
+  <node pkg="snp_motion_execution" exec="snp_motion_execution_node"/>
 
   <group unless="$(var sim_robot)">
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
-
   <group if="$(var sim_robot)">
-    <node pkg="snp_motion_execution" exec="exec_sim_node"/>
+    <node pkg="snp_motion_execution" exec="snp_motion_execution_simulator_node"/>
   </group>
 
   <!-- Launch Application Node -->
-
   <node pkg="snp_application" exec="roscon_app"/>
 
 </launch>
