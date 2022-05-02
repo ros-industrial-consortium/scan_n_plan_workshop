@@ -253,7 +253,8 @@ void ROSConWindow::install_calibration()
   std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
 
   past_calibration_ = response->success;
-  emit updateStatus(response->success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
+  emit updateStatus(response->success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button,
+                    STATES.at(SCAN_APPROACH_ST));
 }
 
 void ROSConWindow::reset_calibration()
