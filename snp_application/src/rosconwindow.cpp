@@ -288,14 +288,15 @@ void ROSConWindow::scan()
 
 void ROSConWindow::onScanApproachDone(FJTResult result)
 {
-  if (result.get()->success)
+  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
+  if (response->success)
   {
     emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
                       STATES.at(START_RECONSTRUCTION_ST));
   }
   else
   {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan approach motion");
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan approach motion: '" << response->message << "'");
     emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
     return;
@@ -359,15 +360,15 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
 
 void ROSConWindow::onScanDone(FJTResult result)
 {
-  // Error checking about action
-  if (result.get()->success)
+  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
+  if (response->success)
   {
     emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
                       STATES.at(STOP_RECONSTRUCTION_ST));
   }
   else
   {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion");
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
     emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
     return;
@@ -437,17 +438,18 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
 
 void ROSConWindow::onScanDepartureDone(FJTResult result)
 {
-  if (!result.get()->success)
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to execute scan motion departure");
-    emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
-  else
+  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
+  if (response->success)
   {
     RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
     emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
+  }
+  else
+  {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion departure: '" << response->message << "'");
+    emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    return;
   }
 }
 
