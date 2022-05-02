@@ -174,17 +174,18 @@ void ROSConWindow::update_calibration_requirement()
 
 void ROSConWindow::observe()
 {
-  bool success;
-  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
-
-  auto result = observe_client_->async_send_request(request);
-  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  if (!observe_client_->service_is_ready())
   {
-    auto response = result.get();
-    success = response->success;
+    ui_->text_edit_log->append("Observation service is not available");
+    return;
   }
 
-  if (success)
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto future = observe_client_->async_send_request(request);
+  future.wait();
+
+  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
+  if (response->success)
   {
     ui_->run_calibration_button->setEnabled(true);
     ui_->text_edit_log->append("Gathered observation.");
@@ -197,17 +198,17 @@ void ROSConWindow::observe()
 
 void ROSConWindow::run_calibration()
 {
-  bool success;
-  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
-
-  auto result = run_calibration_client_->async_send_request(request);
-  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  if (!run_calibration_client_->service_is_ready())
   {
-    auto response = result.get();
-    success = response->success;
+    return;
   }
 
-  if (success)
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto future = run_calibration_client_->async_send_request(request);
+  future.wait();
+  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
+
+  if (response->success)
   {
     ui_->install_calibration_button->setEnabled(true);
     ui_->text_edit_log->append("Calibration run.");
@@ -220,17 +221,16 @@ void ROSConWindow::run_calibration()
 
 void ROSConWindow::get_correlation()
 {
-  bool success;
-  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
-
-  auto result = get_correlation_client_->async_send_request(request);
-  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  if (!get_correlation_client_->service_is_ready())
   {
-    auto response = result.get();
-    success = response->success;
+    return;
   }
 
-  if (success)
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto future = get_correlation_client_->async_send_request(request);
+  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
+
+  if (response->success)
   {
     ui_->text_edit_log->append("Correlation written to file.");
   }
@@ -242,43 +242,29 @@ void ROSConWindow::get_correlation()
 
 void ROSConWindow::install_calibration()
 {
-  bool success;
-  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
-
-  auto result = install_calibration_client_->async_send_request(request);
-  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
+  if (!install_calibration_client_->service_is_ready())
   {
-    auto response = result.get();
-    success = response->success;
+    return;
   }
 
-  past_calibration_ = success;
-  emit updateStatus(success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto future = install_calibration_client_->async_send_request(request);
+  future.wait();
+  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
+
+  past_calibration_ = response->success;
+  emit updateStatus(response->success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
 }
 
 void ROSConWindow::reset_calibration()
 {
-  bool success;
-  std_srvs::srv::Trigger::Request::SharedPtr request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  past_calibration_ = false;
 
-  auto result = install_calibration_client_->async_send_request(request);
-  if (rclcpp::spin_until_future_complete(node_, result) == rclcpp::FutureReturnCode::SUCCESS)
-  {
-    auto response = result.get();
-    success = response->success;
-  }
-  else
-  {
-    success = false;
-  }
-
-  if (success)
-  {
-    ui_->run_calibration_button->setEnabled(false);
-    ui_->get_correlation_button->setEnabled(false);
-    ui_->install_calibration_button->setEnabled(false);
-    ui_->reset_calibration_button->setEnabled(false);
-  }
+  // Update the UI
+  ui_->run_calibration_button->setEnabled(false);
+  ui_->get_correlation_button->setEnabled(false);
+  ui_->install_calibration_button->setEnabled(false);
+  ui_->reset_calibration_button->setEnabled(false);
 }
 
 void ROSConWindow::scan()
