@@ -4,17 +4,6 @@
   <arg name="sim_robot" default="True"/>
   <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
 
-<!-- real robot launch additions -->
-<!-- Non-standard joint names:
-     - Create a file [robot_moveit_config]/config/joint_names.yaml
-         controller_joint_names: [joint_1, joint_2, ... joint_N]
-     - Update with joint names for your robot (in order expected by rbt controller)
-     - and uncomment the following line: -->
-<!-- rosparam command="load" file="$(find-pkg-share inspection_cell_moveit_config)/config/joint_names.yaml"/ -->
-
-  <arg name="robot_ip" default="192.168.1.31" />
-  <arg name="controller_joint_names" default="controller_joint_names"/>
-
 <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
 <!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
 
@@ -43,28 +32,20 @@
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node"/>
 
   <!-- Launch Motion Execution Node -->
+
   <node pkg="snp_motion_execution" exec="execute_motion_plan"/>
+
   <group unless="$(var sim_robot)">
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
+
   <group if="$(var sim_robot)">
     <node pkg="snp_motion_execution" exec="exec_sim_node"/>
   </group>
 
-  <!-- publish the robot state (tf transforms) -->
-<!--  <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher" />-->
-
   <!-- Launch Application Node -->
 
   <node pkg="snp_application" exec="roscon_app"/>
-
-<!--    <push-ros-namespace namespace="robot"/>  initialize important robot stuff >
-      <param name="$(arg controller_joint_names)" value="(var mesh_file)" />
-        <value="$(["joint_1_s", "joint_2_l", "joint_3_u", "joint_4_r", "joint_5_b", "joint_6_t"])"/>
-      <include file="$(find-pkg-share motoman_hc10_support)/launch/robot_interface_streaming_hc10.launch" >
-        <arg name="robot_ip" value="$(var robot_ip)"/>
-      </include>>
-    </group-->
 
 </launch>
 

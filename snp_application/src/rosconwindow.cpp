@@ -265,39 +265,29 @@ void ROSConWindow::reset_calibration()
   ui_->reset_calibration_button->setEnabled(false);
 }
 
-void ROSConWindow::scan()  // EDIT THIS
-{                          // TODO: fill out later
+void ROSConWindow::scan()
+{  // TODO: fill out trajectory later
   control_msgs::action::FollowJointTrajectory::Goal approachGoal;
 
   snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
       std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->motion_plan = approachGoal.trajectory;
-  request->use_tool = true;
+  request->use_tool = false;
 
   if (!motion_execution_client_->service_is_ready())
   {
-    RCLCPP_INFO(node_->get_logger(), "waiting for service, not ready yet");
-    motion_execution_client_->wait_for_service();
+    RCLCPP_INFO(node_->get_logger(),
+                "service not ready yet");  // we aren't going to wait, instead we will just reset the buttons
+    // motion_execution_client_->wait_for_service();
+    emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    // ^ does the above reset the options?
+    return;
   }
   RCLCPP_INFO(node_->get_logger(), "send scan request");
 
   auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
-
-  //    if (rclcpp::spin_until_future_complete(node_, future) == rclcpp::FutureReturnCode::SUCCESS)
-  //    {
-  //      auto result = future.get();
-  //      success = result->success;
-  //      if (!success)
-  //      {
-  //        RCLCPP_ERROR(node_->get_logger(), "Approach execution failed '%s'", result->message.c_str());
-  //      }
-  //    }
-  //    else
-  //    {
-  //      RCLCPP_ERROR(node_->get_logger(), "Call to approach execution failed");
-  //      success = false;
-  //    }
 }
 
 void ROSConWindow::onScanApproachDone(FJTResult result)
@@ -349,17 +339,17 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
     return;
   }
 
-  // not sure how to handle this given the motion exec server rather than action
-  //  if (!follow_joint_client_->action_server_is_ready())
-  //  {
-  //    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution action server is not available");
-  //    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-  //                      STATES.at(SCAN_APPROACH_ST));
-  //    return;
-  //  }
+  if (!motion_execution_client_->service_is_ready())
+  {
+    RCLCPP_INFO(node_->get_logger(),
+                "service not ready yet");  // we aren't going to wait, instead we will just reset the buttons
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    return;
+  }
 
-  //  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
-  //                    STATES.at(SCAN_EXECUTION_ST));
+  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
+                    STATES.at(SCAN_EXECUTION_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
@@ -369,24 +359,10 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
       std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->motion_plan = trajGoal.trajectory;
-  request->use_tool = true;
+  request->use_tool = false;
 
   auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
-  //  if (rclcpp::spin_until_future_complete(node_, future) == rclcpp::FutureReturnCode::SUCCESS)
-  //  {
-  //    auto result = future.get();
-  //    success = result->success;
-  //    if (!success)
-  //    {
-  //      RCLCPP_ERROR(node_->get_logger(), "Scan trajectory execution failed '%s'", result->message.c_str());
-  //    }
-  //  }
-  //  else
-  //  {
-  //    RCLCPP_ERROR(node_->get_logger(), "Call to scan trajectory execution failed");
-  //    success = false;
-  //  }
 }
 
 void ROSConWindow::onScanDone(FJTResult result)
@@ -445,14 +421,15 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     scan_mesh_pub_->publish(mesh_marker);
   }
 
-  // not sure how to handle this given the motion exec server rather than action
-  //  if (!follow_joint_client_->action_server_is_ready())
-  //  {
-  //    RCLCPP_ERROR(node_->get_logger(), "Trajectory execution server is not available");
-  //    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-  //                      STATES.at(SCAN_APPROACH_ST));
-  //    return;
-  //  }
+  if (!motion_execution_client_->service_is_ready())
+  {
+    RCLCPP_INFO(node_->get_logger(),
+                "service not ready yet");  // we aren't going to wait, instead we will just reset the buttons
+
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
+                      STATES.at(SCAN_APPROACH_ST));
+    return;
+  }
 
   emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
                     STATES.at(SCAN_DEPARTURE_ST));
@@ -465,7 +442,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   snp_msgs::srv::ExecuteMotionPlan::Request::SharedPtr request =
       std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->motion_plan = departGoal.trajectory;
-  request->use_tool = true;
+  request->use_tool = false;
 
   auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);

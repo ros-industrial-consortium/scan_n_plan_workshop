@@ -6,36 +6,27 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 
 class MotionExecNode : public rclcpp::Node
 {
 public:
   explicit MotionExecNode(const std::string& name, const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
-    : Node(name, options)
+    : Node(name, options), cb_group_(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant))
   {
-    private_node_ =
-        std::make_shared<rclcpp::Node>(name + "_private");  // I'm gonna assign the name name+"_private" to private node
+    this->action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, "follow_"
+                                                                                                           "joint_"
+                                                                                                           "trajector"
+                                                                                                           "y");
 
-    this->action_client_ =
-        rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(private_node_, "follow_"
-                                                                                                 "joint_"
-                                                                                                 "trajector"
-                                                                                                 "y");
-
-    this->serv_client_ = private_node_->create_client<std_srvs::srv::Trigger>("robot_enable");
+    this->serv_client_ = this->create_client<std_srvs::srv::Trigger>("robot_enable");
 
     this->motion_exec_service_ = this->create_service<snp_msgs::srv::ExecuteMotionPlan>(
         "execute_motion_plan",
-        std::bind(&MotionExecNode::executeMotionPlan, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&MotionExecNode::executeMotionPlan, this, std::placeholders::_1, std::placeholders::_2),
+        rmw_qos_profile_services_default, cb_group_);
 
-    RCLCPP_INFO(this->get_logger(), "Node started2");
-  }
-
-  rclcpp::Node::SharedPtr getprivateNode() const
-  {
-    return private_node_;
+    RCLCPP_INFO(this->get_logger(), "Motion execution node started");
   }
 
 private:
@@ -43,7 +34,7 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr serv_client_;
 
   rclcpp::Service<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_exec_service_;
-  rclcpp::Node::SharedPtr private_node_;  // declaration this is the fre-shared, undeined pointer
+  rclcpp::CallbackGroup::SharedPtr cb_group_;
 
   void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
                          const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Response> empResult)
@@ -61,8 +52,9 @@ private:
     {
       if (!action_client_->wait_for_action_server())
       {
-        RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
-        rclcpp::shutdown();
+        RCLCPP_WARN(this->get_logger(), "Action server not available after waiting");
+        return;
+        // rclcpp::shutdown();
       }
       // send motion trajectory
 
@@ -136,19 +128,10 @@ private:
   void result_callback(
       const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult& result)
   {
-    switch (result.code)
+    if (result.code != rclcpp_action::ResultCode::SUCCEEDED)
     {
-      case rclcpp_action::ResultCode::SUCCEEDED:
-        break;
-      case rclcpp_action::ResultCode::ABORTED:
-        RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-        return;
-      case rclcpp_action::ResultCode::CANCELED:
-        RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-        return;
-      default:
-        RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-        return;
+      RCLCPP_ERROR(this->get_logger(), "Goal Unsuccessful");
+      return;
     }
     RCLCPP_INFO(this->get_logger(), "Result received");
   }
@@ -159,11 +142,9 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<MotionExecNode>("execute_motion_plan_node");
-  auto private_node = node->getprivateNode();
 
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
-  executor.add_node(private_node);
 
   executor.spin();
   rclcpp::shutdown();
