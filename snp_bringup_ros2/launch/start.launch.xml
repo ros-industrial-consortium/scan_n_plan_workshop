@@ -27,7 +27,7 @@
   <node pkg="snp_tpp" exec="snp_tpp_node"/>
 
   <!-- Launch Motion Planning Node -->
-  <!-- [[Custom Planning Server Goes Here]] -->
+  <node pkg="snp_motion_planning" exec="snp_motion_planning_node"/>
 
   <!-- Launch Motion Execution Node -->
   <!--<node pkg="snp_motion_execution" exec="exec_node"/>-->
