@@ -7,7 +7,6 @@
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_common/types.h>
 // Messages
-#include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
