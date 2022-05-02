@@ -477,7 +477,7 @@ void ROSConWindow::plan_tool_paths()
     snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = future.get();
     if (!response->success)
     {
-      RCLCPP_ERROR(node_->get_logger(), response->message);
+      RCLCPP_ERROR_STREAM(node_->get_logger(), "TPP Error: '" << response->message << "'");
       success = false;
     }
     else
@@ -536,7 +536,7 @@ void ROSConWindow::plan_motion()
     }
     else
     {
-      RCLCPP_ERROR(node_->get_logger(), response->message);
+      RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion planning error: '" << response->message << "'");
       success = false;
     }
   }
@@ -568,7 +568,7 @@ void ROSConWindow::execute()
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = future.get();
   if (!response->success)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution failed '" << response->message << "'");
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution error: '" << response->message << "'");
     updateStatus(response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
                  ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
     return;
