@@ -1,6 +1,8 @@
 import os
 import xacro
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from ament_index_python import get_package_share_directory
 
@@ -26,8 +28,9 @@ def run_xacro(xacro_file):
     os.system(f'xacro {xacro_file} -o {urdf_file}')
     return urdf_file
 
-
 def generate_launch_description():
+    verbose_arg = DeclareLaunchArgument('verbose', default_value=['False'])
+
     xacro_file = get_package_file('snp_support', 'urdf/workcell.xacro')
     urdf_file = run_xacro(xacro_file)
     srdf_file = get_package_file('snp_support', 'config/workcell.srdf')
@@ -41,10 +44,11 @@ def generate_launch_description():
         package='snp_motion_planning',
         executable='snp_motion_planning_node',
         output='screen',
-        parameters=[
-            {'robot_description': robot_description},
-            {'robot_description_semantic': robot_description_semantic}
-        ]
+        parameters=[{
+            'robot_description': robot_description,
+            'robot_description_semantic': robot_description_semantic,
+            'verbose': LaunchConfiguration('verbose')
+        }]
     )
 
-    return LaunchDescription([planning_server])
+    return LaunchDescription([verbose_arg, planning_server])

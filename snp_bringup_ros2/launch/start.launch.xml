@@ -3,6 +3,7 @@
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
   <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
+  <arg name="verbose" default="False"/>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
   <!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
@@ -29,7 +30,9 @@
   <node pkg="snp_tpp" exec="snp_tpp_node"/>
 
   <!-- Launch Motion Planning Node -->
-  <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.py"/>
+  <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.py">
+    <arg name="verbose" value="$(var verbose)"/>
+  </include>
 
   <!-- Launch Motion Execution Node -->
   <node pkg="snp_motion_execution" exec="snp_motion_execution_node"/>

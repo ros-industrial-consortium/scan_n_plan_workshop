@@ -64,6 +64,7 @@ public:
     : rclcpp::Node("snp_planning_server")
     , env_(std::make_shared<tesseract_environment::Environment>())
     , planning_server_(std::make_shared<ProcessPlanningServer>(env_))
+    , verbose_(get<bool>(this, "verbose"))
   {
     // TODO: Set up an environment monitor
     {
@@ -176,6 +177,8 @@ private:
   {
     try
     {
+      RCLCPP_INFO_STREAM(get_logger(), "Received motion planning request");
+
       // Create a manipulator info and program from the service request
       const std::string base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
       ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
@@ -185,8 +188,15 @@ private:
       plan_req.instructions = createProgram(manip_info, fromMsg(req->tool_paths));
       plan_req.env_state = env_->getState();
 
+      auto log_level = console_bridge::getLogLevel();
+      if (verbose_)
+        console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
+
       ProcessPlanningFuture plan_result = planning_server_->run(plan_req);
       plan_result.wait();
+
+      // Reset the log level
+      console_bridge::setLogLevel(log_level);
 
       if (!plan_result.interface->isSuccessful())
         throw std::runtime_error("Failed to create motion plan");
@@ -195,6 +205,7 @@ private:
       tesseract_common::JointTrajectory jt = toJointTrajectory(plan_result.results->as<CompositeInstruction>());
       res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
 
+      res->message = "Succesfully planned motion";
       res->success = true;
     }
     catch (const std::exception& ex)
@@ -202,11 +213,14 @@ private:
       res->message = ex.what();
       res->success = false;
     }
+
+    RCLCPP_INFO_STREAM(get_logger(), res->message);
   }
 
   tesseract_environment::Environment::Ptr env_;
   ProcessPlanningServer::Ptr planning_server_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
+  bool verbose_{ false };
 };
 
 int main(int argc, char** argv)
