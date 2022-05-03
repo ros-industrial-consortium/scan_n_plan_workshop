@@ -510,6 +510,9 @@ void ROSConWindow::planMotion()
 {
   try
   {
+    if (!motion_planning_client_->service_is_ready())
+      throw std::runtime_error("Motion planning server is not available");
+
     // do motion planning things
     if (tool_paths_->paths.empty())
       throw std::runtime_error("Tool path is empty");
@@ -528,10 +531,12 @@ void ROSConWindow::planMotion()
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), ex.what());
   }
+  QApplication::setOverrideCursor(Qt::BusyCursor);
 }
 
 void ROSConWindow::onPlanMotionDone(PlanFuture future)
 {
+  QApplication::restoreOverrideCursor();
   snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();
   if (!response->success)
   {
