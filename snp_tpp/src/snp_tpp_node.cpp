@@ -45,8 +45,15 @@ geometry_msgs::msg::PoseArray toMsg(const noether::ToolPathSegment& segment)
 {
   geometry_msgs::msg::PoseArray pose_array;
   pose_array.poses.reserve(segment.size());
-  for (const auto& waypoint : segment)
+  for (auto waypoint : segment)
+  {
+    // Renormalize orientation
+    Eigen::Quaterniond q(waypoint.linear());
+    q.normalize();
+    waypoint.matrix().block<3, 3>(0, 0) = q.toRotationMatrix();
+
     pose_array.poses.push_back(tf2::toMsg(waypoint));
+  }
   return pose_array;
 }
 
