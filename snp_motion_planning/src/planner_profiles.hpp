@@ -4,6 +4,7 @@
 #include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
 
@@ -37,9 +38,9 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
       };
 
   profile->vertex_evaluator = nullptr;
-  profile->target_pose_sampler = [](const Eigen::Isometry3d& pose) -> tesseract_common::VectorIsometry3d {
-    return { pose };
-  };
+
+  profile->target_pose_sampler =
+      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 20 * M_PI / 180.0);
 
   return profile;
 }
@@ -62,6 +63,14 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile()
     profile->planners.push_back(rrt);
   }
 
+  return profile;
+}
+
+std::shared_ptr<tesseract_planning::TrajOptPlanProfile> createTrajOptToolZFreePlanProfile()
+{
+  auto profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
+  profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 5.0);
+  profile->cartesian_coeff(5) = 0.0;
   return profile;
 }
 
