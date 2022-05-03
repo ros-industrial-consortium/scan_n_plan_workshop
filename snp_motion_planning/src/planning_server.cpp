@@ -2,6 +2,9 @@
 #include "taskflow_generators.hpp"
 #include <tesseract_process_managers/core/process_planning_server.h>
 #include <tesseract_motion_planners/default_planner_namespaces.h>
+#include <tesseract_process_managers/task_profiles/check_input_profile.h>
+#include <tesseract_process_managers/task_profiles/seed_min_length_profile.h>
+#include <tesseract_process_managers/task_profiles/interative_spline_parameterization_profile.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
@@ -75,11 +78,21 @@ public:
     // Add custom profiles
     {
       auto pd = planning_server_->getProfiles();
-      pd->addProfile<OMPLPlanProfile>(process_planner_names::OMPL_PLANNER_NAME, PROFILE, createOMPLProfile());
-      pd->addProfile<TrajOptCompositeProfile>(process_planner_names::TRAJOPT_PLANNER_NAME, PROFILE,
-                                              createTrajOptProfile());
-      pd->addProfile<DescartesPlanProfile<float>>(process_planner_names::DESCARTES_PLANNER_NAME, PROFILE,
+      pd->addProfile<SimplePlannerPlanProfile>(profile_ns::SIMPLE_DEFAULT_NAMESPACE, PROFILE,
+                                               createSimplePlannerProfile());
+      pd->addProfile<OMPLPlanProfile>(profile_ns::OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
+      pd->addProfile<TrajOptPlanProfile>(profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
+                                         createTrajOptToolZFreePlanProfile());
+      pd->addProfile<TrajOptCompositeProfile>(profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
+      pd->addProfile<DescartesPlanProfile<float>>(profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE,
                                                   createDescartesPlanProfile<float>());
+      pd->addProfile<CheckInputProfile>(profile_ns::CHECK_INPUT_DEFAULT_NAMESPACE, PROFILE,
+                                        std::make_shared<CheckInputProfile>());
+      pd->addProfile<SeedMinLengthProfile>(profile_ns::SEED_MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
+                                           std::make_shared<SeedMinLengthProfile>(5));
+      pd->addProfile<IterativeSplineParameterizationProfile>(
+          profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
+          std::make_shared<IterativeSplineParameterizationProfile>());
     }
 
     // Advertise the ROS2 service
