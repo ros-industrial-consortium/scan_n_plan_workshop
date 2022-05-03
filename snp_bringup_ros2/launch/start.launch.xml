@@ -5,6 +5,11 @@
   <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
   <arg name="verbose" default="False"/>
 
+  <!-- URDF, Rviz -->
+  <include file="$(find-pkg-share snp_support)/launch/test.launch.py">
+    <arg name="rviz_config" value="$(find-pkg-share snp_bringup_ros2)/config/app.rviz"/>
+  </include>
+
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
   <!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
 
