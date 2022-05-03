@@ -2,7 +2,7 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
-  <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
+  <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan_centered_small.ply"/>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
   <!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
