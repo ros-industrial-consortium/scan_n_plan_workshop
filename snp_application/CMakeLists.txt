@@ -42,12 +42,10 @@ include_directories(include ${EIGEN3_INCLUDE_DIRS})
 add_executable(
   roscon_app
   src/rosconwindow.ui
+  include/rosconwindow.h
   src/rosconwindow.cpp
-  src/main.cpp
-  include/rosconwindow.h)
-target_link_libraries(
-  roscon_app
-  Qt5::Widgets)
+  src/main.cpp)
+target_link_libraries(roscon_app Qt5::Widgets)
 ament_target_dependencies(
   roscon_app
   open3d_interface_msgs
