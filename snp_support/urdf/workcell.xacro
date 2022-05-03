@@ -60,7 +60,7 @@
   <joint name="table_to_base" type="fixed">
     <parent link="table"/>
     <child link="base_link"/>
-    <origin xyz="-0.61 0 0.723" rpy="0 0 0"/>end_effector.ply
+    <origin xyz="-0.61 0 0.723" rpy="0 0 0"/>
   </joint>
 
   <!-- Add End Effector Components -->
