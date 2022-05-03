@@ -73,6 +73,12 @@ public:
       auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
       if (!env_->init(urdf_string, srdf_string, resource_locator))
         throw std::runtime_error("Failed to initialize environment");
+
+      // TODO: remove arbitrary start state
+      const std::vector<std::string> joint_names = env_->getJointGroup("manipulator")->getJointNames();
+      Eigen::VectorXd joints = Eigen::VectorXd::Zero(joint_names.size());
+      joints(2) = M_PI / 2.0;
+      env_->setState(joint_names, joints);
     }
 
     // Register custom process planners
@@ -114,7 +120,7 @@ private:
     CompositeInstruction program(PROFILE, CompositeInstructionOrder::ORDERED, info);
 
     // Perform a freespace move to the first waypoint
-    StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(static_cast<Eigen::Index>(joint_names.size())));
+    StateWaypoint swp1(joint_names, env_->getCurrentJointValues(joint_names));
     PlanInstruction start_instruction(swp1, PlanInstructionType::START, PROFILE);
     program.setStartInstruction(start_instruction);
 
