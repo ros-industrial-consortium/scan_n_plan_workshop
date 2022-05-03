@@ -4,89 +4,41 @@
     A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
 -->
 <robot name="motoman_hc10">
-    <!--GROUPS: Representation of a set of joints and links. This can be useful for specifying DOF to plan for, defining arms, end effectors, etc-->
-    <!--LINKS: When a link is specified, the parent joint of that link (if it exists) is automatically included-->
-    <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
-    <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
-    <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="manipulator">
         <chain base_link="base_link" tip_link="tool0"/>
     </group>
-    
+
     <!--Groups kinematic plugins -->
     <kinematics_plugin_config filename="package://snp_support/config/workcell_plugins.yaml"/>
-    <disable_collisions link1="tool0" link2="pushcorp_base" reason="Adjacent"/>
-    <disable_collisions link1="tool0" link2="pushcorp_sidebracket2" reason="Adjacent"/>
-    <disable_collisions link1="tool0" link2="pushcorp_sidebracket1" reason="Adjacent"/>
-    <disable_collisions link1="tool0" link2="pushcorp_frontplate" reason="Adjacent"/>
-    <disable_collisions link1="tool0" link2="pushcorp_camera1" reason="Adjacent"/>
-    <disable_collisions link1="tool0" link2="pushcorp_camera2" reason="Adjacent"/>
-    <disable_collisions link1="tool0" link2="pushcorp_backplate" reason="Adjacent"/>
-  
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_bracket" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_sidebracket2" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_sidebracket1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_frontplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_camera1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_camera2" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_backplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_actuator" reason="Adjacent"/>
-    
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_bracket" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_sidebracket2" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_sidebracket1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_frontplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_camera1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_camera2" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_bracket" link2="pushcorp_backplate" reason="Adjacent"/>
-    
-    <disable_collisions link1="pushcorp_sidebracket1" link2="pushcorp_frontplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_sidebracket2" link2="pushcorp_frontplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_sidebracket1" link2="pushcorp_backplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_sidebracket2" link2="pushcorp_backplate" reason="Adjacent"/>   
-  
-    <disable_collisions link1="pushcorp_sidebracket1" link2="pushcorp_camera1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_sidebracket2" link2="pushcorp_camera2" reason="Adjacent"/>
-    
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_bracket" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_sidebracket2" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_sidebracket1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_frontplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_camera1" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_camera2" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="pushcorp_backplate" reason="Adjacent"/>
-    <disable_collisions link1="pushcorp_actuator" link2="sand_tcp" reason="Adjacent"/>
 
-    
-    <disable_collisions link1="link_s" link2="link_t" reason="Never"/>
-    <disable_collisions link1="link_l" link2="link_t" reason="Never"/>
+    <!-- Contact manager plugins -->
+    <contact_managers_plugin_config filename="package://snp_support/config/workcell_plugins.yaml"/>
+
+    <disable_collisions link1="tool0" link2="ee" reason="Adjacent"/>
+    <disable_collisions link1="link_1_s" link2="link_6_t" reason="Never"/>
+    <disable_collisions link1="link_2_l" link2="link_6_t" reason="Never"/>
     <disable_collisions link1="base_link" link2="table" reason="Never"/>
-    <disable_collisions link1="link_s" link2="platform" reason="Never"/>
-    <disable_collisions link1="base_link" link2="platform" reason="Never"/>
-    <disable_collisions link1="link_l" link2="platform" reason="Never"/>
-    <disable_collisions link1="link_u" link2="platform" reason="Never"/>
-    <disable_collisions link1="link_l" link2="pushcorp_compliance" reason="Never"/>
-    <disable_collisions link1="pushcorp_base" link2="pushcorp_compliance" reason="Adjacent"/>
-    <disable_collisions link1="link_t" link2="pushcorp_base" reason="Allways"/>
-    <disable_collisions link1="link_b" link2="link_r" reason="Adjacent"/>
-    <disable_collisions link1="link_s" link2="table" reason="Never"/>
-    <disable_collisions link1="link_r" link2="link_s" reason="Never"/>
-    <disable_collisions link1="base_link" link2="link_s" reason="Adjacent"/>
-    <disable_collisions link1="link_r" link2="pushcorp_compliance" reason="Never"/>
-    <disable_collisions link1="link_b" link2="pushcorp_base" reason="Never"/>
-    <disable_collisions link1="link_t" link2="link_u" reason="Never"/>
-    <disable_collisions link1="link_b" link2="link_t" reason="Adjacent"/>
-    <disable_collisions link1="link_l" link2="link_s" reason="Adjacent"/>
-    <disable_collisions link1="link_l" link2="table" reason="Never"/>
-    <disable_collisions link1="link_t" link2="pushcorp_compliance" reason="Never"/>
-    <disable_collisions link1="link_r" link2="pushcorp_base" reason="Never"/>
-    <disable_collisions link1="link_r" link2="link_u" reason="Adjacent"/>
-    <disable_collisions link1="link_b" link2="pushcorp_compliance" reason="Never"/>
-    <disable_collisions link1="link_l" link2="link_u" reason="Adjacent"/>
-    <disable_collisions link1="link_l" link2="pushcorp_base" reason="Never"/>
-    <disable_collisions link1="link_b" link2="link_l" reason="Never"/>
-    <disable_collisions link1="link_b" link2="link_u" reason="Never"/>
-    <disable_collisions link1="base_link" link2="link_l" reason="Never"/>
-    <disable_collisions link1="link_l" link2="link_r" reason="Never"/>
-    <disable_collisions link1="link_r" link2="link_t" reason="Never"/>
+    <disable_collisions link1="link_2_l" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_6_t" link2="ee" reason="Allways"/>
+    <disable_collisions link1="link_5_b" link2="link_4_r" reason="Adjacent"/>
+    <disable_collisions link1="link_1_s" link2="table" reason="Never"/>
+    <disable_collisions link1="link_4_r" link2="link_1_s" reason="Never"/>
+    <disable_collisions link1="base_link" link2="link_1_s" reason="Adjacent"/>
+    <disable_collisions link1="link_4_r" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_5_b" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_6_t" link2="link_3_u" reason="Never"/>
+    <disable_collisions link1="link_5_b" link2="link_6_t" reason="Adjacent"/>
+    <disable_collisions link1="link_2_l" link2="link_1_s" reason="Adjacent"/>
+    <disable_collisions link1="link_2_l" link2="table" reason="Never"/>
+    <disable_collisions link1="link_6_t" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_4_r" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_4_r" link2="link_3_u" reason="Adjacent"/>
+    <disable_collisions link1="link_5_b" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_2_l" link2="link_3_u" reason="Adjacent"/>
+    <disable_collisions link1="link_2_l" link2="ee" reason="Never"/>
+    <disable_collisions link1="link_5_b" link2="link_2_l" reason="Never"/>
+    <disable_collisions link1="link_5_b" link2="link_3_u" reason="Never"/>
+    <disable_collisions link1="base_link" link2="link_2_l" reason="Never"/>
+    <disable_collisions link1="link_2_l" link2="link_4_r" reason="Never"/>
+    <disable_collisions link1="link_4_r" link2="link_6_t" reason="Never"/>
 </robot>
