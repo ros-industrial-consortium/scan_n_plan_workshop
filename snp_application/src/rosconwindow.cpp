@@ -535,7 +535,7 @@ void ROSConWindow::planMotion()
   }
 }
 
-void ROSConWindow::onPlanMotionDone(PlanFuture future)
+void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
 {
   QApplication::restoreOverrideCursor();
   snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();

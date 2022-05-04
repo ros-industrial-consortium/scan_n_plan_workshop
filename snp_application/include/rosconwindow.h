@@ -96,8 +96,7 @@ private:
   void plan_tool_paths();
 
   void planMotion();
-  using PlanFuture = rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture;
-  void onPlanMotionDone(PlanFuture result);
+  void onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture result);
 
   void execute();
 
