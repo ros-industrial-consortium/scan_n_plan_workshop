@@ -41,7 +41,7 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
   profile->vertex_evaluator = nullptr;
 
   profile->target_pose_sampler =
-      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 20 * M_PI / 180.0);
+      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 20.0 * M_PI / 180.0);
 
   return profile;
 }
