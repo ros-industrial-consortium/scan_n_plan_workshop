@@ -510,6 +510,9 @@ void ROSConWindow::planMotion()
 {
   try
   {
+    // Reset the internal motion plan container
+    motion_plan_.reset();
+
     if (!motion_planning_client_->service_is_ready())
       throw std::runtime_error("Motion planning server is not available");
 
@@ -546,7 +549,6 @@ void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotion
   else
   {
     // Save the motion plan internally
-    motion_plan_.reset();
     motion_plan_ = std::make_shared<trajectory_msgs::msg::JointTrajectory>(response->motion_plan);
   }
 
