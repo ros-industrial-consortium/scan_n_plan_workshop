@@ -10,28 +10,36 @@ void handleSignal(int)
 
 int main(int argc, char* argv[])
 {
-  rclcpp::init(argc, argv);
+  try
+  {
+    rclcpp::init(argc, argv);
 
-  QApplication app(argc, argv);
+    QApplication app(argc, argv);
 
-  // Handle signals to terminate the Qt Application
-  signal(SIGINT, handleSignal);
-  signal(SIGTERM, handleSignal);
+    // Handle signals to terminate the Qt Application
+    signal(SIGINT, handleSignal);
+    signal(SIGTERM, handleSignal);
 
-  ROSConWindow w;
-  w.show();
+    ROSConWindow w;
+    w.show();
 
-  // Move the ROS spinning into a separate thread since the call to `spin` is synchronous
-  std::thread t{ [&w]() { rclcpp::spin(w.getNode()); } };
+    // Move the ROS spinning into a separate thread since the call to `spin` is synchronous
+    std::thread t{ [&w]() { rclcpp::spin(w.getNode()); } };
 
-  // Run the Qt application, which is also sychronous
-  auto ret = app.exec();
+    // Run the Qt application, which is also sychronous
+    auto ret = app.exec();
 
-  // Shut down ROS to terminate call to `spin`
-  rclcpp::shutdown();
+    // Shut down ROS to terminate call to `spin`
+    rclcpp::shutdown();
 
-  // Wait for the thread to finish
-  t.join();
+    // Wait for the thread to finish
+    t.join();
 
-  return ret;
+    return ret;
+  }
+  catch (const std::exception& ex)
+  {
+    std::cerr << ex.what() << std::endl;
+    return -1;
+  }
 }
