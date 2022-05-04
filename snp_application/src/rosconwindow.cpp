@@ -52,7 +52,7 @@ static const std::string MESH_FILE_PARAM = "mesh_file";
 namespace  // anonymous restricts visibility to this file
 {
 template <typename T>
-T declare_and_get(rclcpp::Node& node, const std::string& key)
+T declareAndGet(rclcpp::Node& node, const std::string& key)
 {
   T val;
   node.declare_parameter(key);
@@ -109,11 +109,11 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 
   // Get values from parameters
-  mesh_file_ = declare_and_get<std::string>(*node_, MESH_FILE_PARAM);
-  motion_group_ = declare_and_get<std::string>(*node_, MOTION_GROUP_PARAM);
-  reference_frame_ = declare_and_get<std::string>(*node_, REF_FRAME_PARAM);
-  tcp_frame_ = declare_and_get<std::string>(*node_, TCP_FRAME_PARAM);
-  camera_frame_ = declare_and_get<std::string>(*node_, CAMERA_FRAME_PARAM);
+  mesh_file_ = declareAndGet<std::string>(*node_, MESH_FILE_PARAM);
+  motion_group_ = declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM);
+  reference_frame_ = declareAndGet<std::string>(*node_, REF_FRAME_PARAM);
+  tcp_frame_ = declareAndGet<std::string>(*node_, TCP_FRAME_PARAM);
+  camera_frame_ = declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM);
 }
 
 void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
