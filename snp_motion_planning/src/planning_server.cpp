@@ -186,7 +186,7 @@ private:
       RCLCPP_INFO_STREAM(get_logger(), "Received motion planning request");
 
       // Create a manipulator info and program from the service request
-      const std::string base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
+      const std::string& base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
       ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
       ProcessPlanningRequest plan_req;
