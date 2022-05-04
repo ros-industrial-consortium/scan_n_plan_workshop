@@ -22,37 +22,39 @@
  */
 tesseract_planning::TaskflowGenerator::UPtr createTransitionTaskflow()
 {
-  using namespace tesseract_planning;
-
   // Create the graph task flow
-  auto graph = std::make_unique<GraphTaskflow>();
+  auto graph = std::make_unique<tesseract_planning::GraphTaskflow>();
 
   // Input/seed checks
-  auto check_input = graph->addNode(std::make_unique<CheckInputTaskGenerator>(), true);
-  int has_seed = graph->addNode(std::make_unique<HasSeedTaskGenerator>(), true);
-  int seed_min_length = graph->addNode(std::make_unique<SeedMinLengthTaskGenerator>(), true);
+  auto check_input = graph->addNode(std::make_unique<tesseract_planning::CheckInputTaskGenerator>(), true);
+  int has_seed = graph->addNode(std::make_unique<tesseract_planning::HasSeedTaskGenerator>(), true);
+  int seed_min_length = graph->addNode(std::make_unique<tesseract_planning::SeedMinLengthTaskGenerator>(), true);
 
   // Simple planner with post-collision check
-  auto simple_planner = std::make_shared<SimpleMotionPlanner>();
-  int simple = graph->addNode(std::make_unique<MotionPlannerTaskGenerator>(simple_planner), true);
-  int simple_collision = graph->addNode(std::make_unique<DiscreteContactCheckTaskGenerator>(), true);
+  auto simple_planner = std::make_shared<tesseract_planning::SimpleMotionPlanner>();
+  int simple = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(simple_planner), true);
+  int simple_collision =
+      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
   // TrajOpt with post-collision check
-  auto trajopt_planner = std::make_shared<TrajOptMotionPlanner>();
-  int trajopt = graph->addNode(std::make_unique<MotionPlannerTaskGenerator>(trajopt_planner), true);
-  int trajopt_collision = graph->addNode(std::make_unique<DiscreteContactCheckTaskGenerator>(), true);
+  auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
+  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner), true);
+  int trajopt_collision =
+      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
   // Time parameterization
-  int time_param = graph->addNode(std::make_unique<IterativeSplineParameterizationTaskGenerator>(), true);
+  int time_param =
+      graph->addNode(std::make_unique<tesseract_planning::IterativeSplineParameterizationTaskGenerator>(), true);
 
-  graph->addEdges(check_input, { GraphTaskflow::ERROR_NODE, has_seed });
+  graph->addEdges(check_input, { tesseract_planning::GraphTaskflow::ERROR_NODE, has_seed });
   graph->addEdges(has_seed, { simple, seed_min_length });
-  graph->addEdges(seed_min_length, { GraphTaskflow::ERROR_NODE, simple_collision });
-  graph->addEdges(simple, { GraphTaskflow::ERROR_NODE, simple_collision });
+  graph->addEdges(seed_min_length, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
+  graph->addEdges(simple, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
   graph->addEdges(simple_collision, { trajopt, time_param });
-  graph->addEdges(trajopt, { GraphTaskflow::ERROR_NODE, trajopt_collision });
-  graph->addEdges(trajopt_collision, { GraphTaskflow::ERROR_NODE, time_param });
-  graph->addEdges(time_param, { GraphTaskflow::ERROR_NODE, GraphTaskflow::DONE_NODE });
+  graph->addEdges(trajopt, { tesseract_planning::GraphTaskflow::ERROR_NODE, trajopt_collision });
+  graph->addEdges(trajopt_collision, { tesseract_planning::GraphTaskflow::ERROR_NODE, time_param });
+  graph->addEdges(time_param,
+                  { tesseract_planning::GraphTaskflow::ERROR_NODE, tesseract_planning::GraphTaskflow::DONE_NODE });
 
   return graph;
 }
@@ -64,47 +66,50 @@ tesseract_planning::TaskflowGenerator::UPtr createTransitionTaskflow()
  */
 tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
 {
-  using namespace tesseract_planning;
-
   // Create the graph task flow
-  auto graph = std::make_unique<GraphTaskflow>();
+  auto graph = std::make_unique<tesseract_planning::GraphTaskflow>();
 
   // Input/seed checks
-  auto check_input = graph->addNode(std::make_unique<CheckInputTaskGenerator>(), true);
-  int has_seed = graph->addNode(std::make_unique<HasSeedTaskGenerator>(), true);
-  int seed_min_length = graph->addNode(std::make_unique<SeedMinLengthTaskGenerator>(), true);
+  auto check_input = graph->addNode(std::make_unique<tesseract_planning::CheckInputTaskGenerator>(), true);
+  int has_seed = graph->addNode(std::make_unique<tesseract_planning::HasSeedTaskGenerator>(), true);
+  int seed_min_length = graph->addNode(std::make_unique<tesseract_planning::SeedMinLengthTaskGenerator>(), true);
 
   // Simple planner with post-collision check
-  auto simple_planner = std::make_shared<SimpleMotionPlanner>();
-  int simple = graph->addNode(std::make_unique<MotionPlannerTaskGenerator>(simple_planner), true);
-  int simple_collision = graph->addNode(std::make_unique<DiscreteContactCheckTaskGenerator>(), true);
+  auto simple_planner = std::make_shared<tesseract_planning::SimpleMotionPlanner>();
+  int simple = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(simple_planner), true);
+  int simple_collision =
+      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
   // TrajOpt with post-collision check
-  auto trajopt_planner = std::make_shared<TrajOptMotionPlanner>();
-  int trajopt = graph->addNode(std::make_unique<MotionPlannerTaskGenerator>(trajopt_planner), true);
-  int trajopt_collision = graph->addNode(std::make_unique<DiscreteContactCheckTaskGenerator>(), true);
+  auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
+  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner), true);
+  int trajopt_collision =
+      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
   // OMPL smoothed by TrajOpt with post-plan collision check
-  auto ompl_planner = std::make_shared<OMPLMotionPlanner>();
-  int ompl = graph->addNode(std::make_unique<MotionPlannerTaskGenerator>(ompl_planner), true);
-  auto ompl_trajopt_planner = std::make_shared<TrajOptMotionPlanner>();
-  int ompl_trajopt = graph->addNode(std::make_unique<MotionPlannerTaskGenerator>(ompl_trajopt_planner), true);
-  int ompl_collision = graph->addNode(std::make_unique<DiscreteContactCheckTaskGenerator>(), true);
+  auto ompl_planner = std::make_shared<tesseract_planning::OMPLMotionPlanner>();
+  int ompl = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(ompl_planner), true);
+  auto ompl_trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
+  int ompl_trajopt =
+      graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(ompl_trajopt_planner), true);
+  int ompl_collision = graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
   // Time parameterization
-  int time_param = graph->addNode(std::make_unique<IterativeSplineParameterizationTaskGenerator>(), true);
+  int time_param =
+      graph->addNode(std::make_unique<tesseract_planning::IterativeSplineParameterizationTaskGenerator>(), true);
 
-  graph->addEdges(check_input, { GraphTaskflow::ERROR_NODE, has_seed });
+  graph->addEdges(check_input, { tesseract_planning::GraphTaskflow::ERROR_NODE, has_seed });
   graph->addEdges(has_seed, { simple, seed_min_length });
-  graph->addEdges(seed_min_length, { GraphTaskflow::ERROR_NODE, simple_collision });
-  graph->addEdges(simple, { GraphTaskflow::ERROR_NODE, simple_collision });
+  graph->addEdges(seed_min_length, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
+  graph->addEdges(simple, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
   graph->addEdges(simple_collision, { trajopt, time_param });
   graph->addEdges(trajopt, { ompl, trajopt_collision });
   graph->addEdges(trajopt_collision, { ompl, time_param });
-  graph->addEdges(ompl, { GraphTaskflow::ERROR_NODE, ompl_trajopt });
-  graph->addEdges(ompl_trajopt, { GraphTaskflow::ERROR_NODE, ompl_collision });
-  graph->addEdges(ompl_collision, { GraphTaskflow::ERROR_NODE, time_param });
-  graph->addEdges(time_param, { GraphTaskflow::ERROR_NODE, GraphTaskflow::DONE_NODE });
+  graph->addEdges(ompl, { tesseract_planning::GraphTaskflow::ERROR_NODE, ompl_trajopt });
+  graph->addEdges(ompl_trajopt, { tesseract_planning::GraphTaskflow::ERROR_NODE, ompl_collision });
+  graph->addEdges(ompl_collision, { tesseract_planning::GraphTaskflow::ERROR_NODE, time_param });
+  graph->addEdges(time_param,
+                  { tesseract_planning::GraphTaskflow::ERROR_NODE, tesseract_planning::GraphTaskflow::DONE_NODE });
 
   return graph;
 }
@@ -114,7 +119,6 @@ tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
  */
 tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 {
-  using namespace tesseract_planning;
-  return std::make_unique<RasterTaskflow>(createFreespaceTaskflow(), createTransitionTaskflow(),
-                                          createCartesianGenerator());
+  return std::make_unique<tesseract_planning::RasterTaskflow>(createFreespaceTaskflow(), createTransitionTaskflow(),
+                                                              tesseract_planning::createCartesianGenerator());
 }

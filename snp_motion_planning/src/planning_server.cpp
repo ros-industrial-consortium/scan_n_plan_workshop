@@ -13,8 +13,6 @@
 #include <tesseract_rosutils/utils.h>
 #include <tf2_eigen/tf2_eigen.h>
 
-using namespace tesseract_planning;
-
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
@@ -63,7 +61,7 @@ public:
   PlanningServer()
     : rclcpp::Node("snp_planning_server")
     , env_(std::make_shared<tesseract_environment::Environment>())
-    , planning_server_(std::make_shared<ProcessPlanningServer>(env_))
+    , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
     , verbose_(get<bool>(this, "verbose"))
   {
     // TODO: Set up an environment monitor
@@ -89,21 +87,25 @@ public:
     // Add custom profiles
     {
       auto pd = planning_server_->getProfiles();
-      pd->addProfile<SimplePlannerPlanProfile>(profile_ns::SIMPLE_DEFAULT_NAMESPACE, PROFILE,
-                                               createSimplePlannerProfile());
-      pd->addProfile<OMPLPlanProfile>(profile_ns::OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
-      pd->addProfile<TrajOptPlanProfile>(profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                                         createTrajOptToolZFreePlanProfile());
-      pd->addProfile<TrajOptCompositeProfile>(profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
-      pd->addProfile<DescartesPlanProfile<float>>(profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE,
-                                                  createDescartesPlanProfile<float>());
-      pd->addProfile<CheckInputProfile>(profile_ns::CHECK_INPUT_DEFAULT_NAMESPACE, PROFILE,
-                                        std::make_shared<CheckInputProfile>());
-      pd->addProfile<SeedMinLengthProfile>(profile_ns::SEED_MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
-                                           std::make_shared<SeedMinLengthProfile>(5));
-      pd->addProfile<IterativeSplineParameterizationProfile>(
-          profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
-          std::make_shared<IterativeSplineParameterizationProfile>());
+      pd->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
+          tesseract_planning::profile_ns::SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
+      pd->addProfile<tesseract_planning::OMPLPlanProfile>(tesseract_planning::profile_ns::OMPL_DEFAULT_NAMESPACE,
+                                                          PROFILE, createOMPLProfile());
+      pd->addProfile<tesseract_planning::TrajOptPlanProfile>(tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE,
+                                                             PROFILE, createTrajOptToolZFreePlanProfile());
+      pd->addProfile<tesseract_planning::TrajOptCompositeProfile>(
+          tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
+      pd->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
+          tesseract_planning::profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
+      pd->addProfile<tesseract_planning::CheckInputProfile>(
+          tesseract_planning::profile_ns::CHECK_INPUT_DEFAULT_NAMESPACE, PROFILE,
+          std::make_shared<tesseract_planning::CheckInputProfile>());
+      pd->addProfile<tesseract_planning::SeedMinLengthProfile>(
+          tesseract_planning::profile_ns::SEED_MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
+          std::make_shared<tesseract_planning::SeedMinLengthProfile>(5));
+      pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
+          tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
+          std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
     }
 
     // Advertise the ROS2 service
@@ -113,15 +115,18 @@ public:
   }
 
 private:
-  CompositeInstruction createProgram(const ManipulatorInfo& info, const tesseract_common::Toolpath& raster_strips)
+  tesseract_planning::CompositeInstruction createProgram(const tesseract_planning::ManipulatorInfo& info,
+                                                         const tesseract_common::Toolpath& raster_strips)
   {
     std::vector<std::string> joint_names = env_->getJointGroup(info.manipulator)->getJointNames();
 
-    CompositeInstruction program(PROFILE, CompositeInstructionOrder::ORDERED, info);
+    tesseract_planning::CompositeInstruction program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
+                                                     info);
 
     // Perform a freespace move to the first waypoint
-    StateWaypoint swp1(joint_names, env_->getCurrentJointValues(joint_names));
-    PlanInstruction start_instruction(swp1, PlanInstructionType::START, PROFILE);
+    tesseract_planning::StateWaypoint swp1(joint_names, env_->getCurrentJointValues(joint_names));
+    tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START,
+                                                          PROFILE);
     program.setStartInstruction(start_instruction);
 
     for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
@@ -129,35 +134,37 @@ private:
       if (rs == 0)
       {
         // Define from start composite instruction
-        CartesianWaypoint wp1 = raster_strips[rs][0];
-        PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, PROFILE);
+        tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
+        tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE, PROFILE);
         plan_f0.setDescription("from_start_plan");
-        CompositeInstruction from_start(PROFILE);
+        tesseract_planning::CompositeInstruction from_start(PROFILE);
         from_start.setDescription("from_start");
         from_start.push_back(plan_f0);
         program.push_back(from_start);
       }
 
       // Define raster
-      CompositeInstruction raster_segment(PROFILE);
+      tesseract_planning::CompositeInstruction raster_segment(PROFILE);
       raster_segment.setDescription("Raster #" + std::to_string(rs + 1));
 
       for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
       {
-        CartesianWaypoint wp = raster_strips[rs][i];
-        raster_segment.push_back(PlanInstruction(wp, PlanInstructionType::LINEAR, PROFILE));
+        tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
+        raster_segment.push_back(
+            tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, PROFILE));
       }
       program.push_back(raster_segment);
 
       if (rs < raster_strips.size() - 1)
       {
         // Add transition
-        CartesianWaypoint twp = raster_strips[rs + 1].front();
+        tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
 
-        PlanInstruction transition_instruction1(twp, PlanInstructionType::FREESPACE, PROFILE);
+        tesseract_planning::PlanInstruction transition_instruction1(
+            twp, tesseract_planning::PlanInstructionType::FREESPACE, PROFILE);
         transition_instruction1.setDescription("transition_from_end_plan");
 
-        CompositeInstruction transition(PROFILE);
+        tesseract_planning::CompositeInstruction transition(PROFILE);
         transition.setDescription("transition_from_end");
         transition.push_back(transition_instruction1);
 
@@ -166,9 +173,9 @@ private:
       else
       {
         // Add to end instruction
-        PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, PROFILE);
+        tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE, PROFILE);
         plan_f2.setDescription("to_end_plan");
-        CompositeInstruction to_end(PROFILE);
+        tesseract_planning::CompositeInstruction to_end(PROFILE);
         to_end.setDescription("to_end");
         to_end.push_back(plan_f2);
         program.push_back(to_end);
@@ -187,9 +194,9 @@ private:
 
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
-      ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
+      tesseract_planning::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
-      ProcessPlanningRequest plan_req;
+      tesseract_planning::ProcessPlanningRequest plan_req;
       plan_req.name = RASTER_PLANNER;
       plan_req.instructions = createProgram(manip_info, fromMsg(req->tool_paths));
       plan_req.env_state = env_->getState();
@@ -198,7 +205,7 @@ private:
       if (verbose_)
         console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
-      ProcessPlanningFuture plan_result = planning_server_->run(plan_req);
+      tesseract_planning::ProcessPlanningFuture plan_result = planning_server_->run(plan_req);
       plan_result.wait();
 
       // Reset the log level
@@ -208,7 +215,8 @@ private:
         throw std::runtime_error("Failed to create motion plan");
 
       // Convert to joint trajectory
-      tesseract_common::JointTrajectory jt = toJointTrajectory(plan_result.results->as<CompositeInstruction>());
+      tesseract_common::JointTrajectory jt =
+          toJointTrajectory(plan_result.results->as<tesseract_planning::CompositeInstruction>());
       res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
 
       res->message = "Succesfully planned motion";
@@ -224,7 +232,7 @@ private:
   }
 
   tesseract_environment::Environment::Ptr env_;
-  ProcessPlanningServer::Ptr planning_server_;
+  tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
   bool verbose_{ false };
 };
