@@ -5,13 +5,6 @@
 #include <QScrollBar>
 #include <QTextStream>
 #include <rclcpp_action/create_client.hpp>
-#include <tesseract_command_language/cartesian_waypoint.h>
-#include <tesseract_command_language/plan_instruction.h>
-#include <tesseract_command_language/state_waypoint.h>
-#include <tesseract_common/manipulator_info.h>
-#include <tesseract_visualization/trajectory_player.h>
-#include <tesseract_rosutils/utils.h>
-#include <tesseract_command_language/utils/utils.h>
 #include <tf2_eigen/tf2_eigen.h>
 
 static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
@@ -50,28 +43,22 @@ static const std::map<QString, unsigned> STATES = {
   { MOTION_EXECUTION_ST, 8 },
 };
 
+static const std::string MOTION_GROUP_PARAM = "motion_group";
+static const std::string REF_FRAME_PARAM = "reference_frame";
+static const std::string TCP_FRAME_PARAM = "tcp_frame";
+static const std::string CAMERA_FRAME_PARAM = "camera_frame";
+static const std::string MESH_FILE_PARAM = "mesh_file";
+
 namespace  // anonymous restricts visibility to this file
 {
-tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
+template <typename T>
+T declareAndGet(rclcpp::Node& node, const std::string& key)
 {
-  tesseract_common::Toolpath tps;
-  tps.reserve(msg.paths.size());
-  for (const auto& path : msg.paths)
-  {
-    for (const auto& segment : path.segments)
-    {
-      tesseract_common::VectorIsometry3d seg;
-      seg.reserve(segment.poses.size());
-      for (const auto& pose : segment.poses)
-      {
-        Eigen::Isometry3d p;
-        tf2::fromMsg(pose, p);
-        seg.push_back(p);
-      }
-      tps.push_back(seg);
-    }
-  }
-  return tps;
+  T val;
+  node.declare_parameter(key);
+  if (!node.get_parameter(key, val))
+    throw std::runtime_error("Failed to get '" + key + "' parameter");
+  return val;
 }
 
 }  // namespace
@@ -81,7 +68,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   , ui_(new Ui::ROSConWindow)
   , node_(rclcpp::Node::make_shared("roscon_app_node"))
   , past_calibration_(false)
-  , mesh_filepath_("/tmp/results_mesh.ply")
 {
   ui_->setupUi(this);
 
@@ -93,7 +79,7 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &ROSConWindow::reset_calibration);
   connect(ui_->scan_button, &QPushButton::clicked, this, &ROSConWindow::scan);
   connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::plan_tool_paths);
-  connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::plan_motion);
+  connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::planMotion);
   connect(ui_->motion_execution_button, &QPushButton::clicked, this, &ROSConWindow::execute);
   connect(ui_->reset_button, &QPushButton::clicked, this, &ROSConWindow::reset);
 
@@ -119,8 +105,15 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   stop_reconstruction_client_ =
       node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(STOP_RECONSTRUCTION_SERVICE);
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
-  motion_planning_client_ = node_->create_client<std_srvs::srv::Trigger>(MOTION_PLAN_SERVICE);
+  motion_planning_client_ = node_->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
+
+  // Get values from parameters
+  mesh_file_ = declareAndGet<std::string>(*node_, MESH_FILE_PARAM);
+  motion_group_ = declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM);
+  reference_frame_ = declareAndGet<std::string>(*node_, REF_FRAME_PARAM);
+  tcp_frame_ = declareAndGet<std::string>(*node_, TCP_FRAME_PARAM);
+  camera_frame_ = declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM);
 }
 
 void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
@@ -306,8 +299,8 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
   // call reconstruction start
   auto start_request = std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
-  start_request->tracking_frame = "camera_color_optical_frame";
-  start_request->relative_frame = "floor";
+  start_request->tracking_frame = camera_frame_;
+  start_request->relative_frame = reference_frame_;
 
   // TODO parameters
   start_request->translation_distance = 0;
@@ -378,7 +371,7 @@ void ROSConWindow::onScanDone(FJTResult result)
   // call reconstruction stop
   auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
   stop_request->archive_directory = "";
-  stop_request->mesh_filepath = mesh_filepath_;
+  stop_request->mesh_filepath = mesh_file_;
 
   auto cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
   stop_reconstruction_client_->async_send_request(stop_request, cb);
@@ -397,7 +390,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   // Publish the mesh
   {
     visualization_msgs::msg::Marker mesh_marker;
-    mesh_marker.header.frame_id = "floor";
+    mesh_marker.header.frame_id = reference_frame_;
 
     mesh_marker.color.r = 200;
     mesh_marker.color.g = 200;
@@ -409,7 +402,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     mesh_marker.scale.z = 1;
 
     mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-    mesh_marker.mesh_resource = "file://" + mesh_filepath_;
+    mesh_marker.mesh_resource = "file://" + mesh_file_;
 
     scan_mesh_pub_->publish(mesh_marker);
   }
@@ -456,7 +449,7 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
 void ROSConWindow::plan_tool_paths()
 {
   bool success = true;
-  tool_paths_ = tesseract_common::Toolpath();
+  tool_paths_.reset();
 
   // do tpp things
   if (!tpp_client_->service_is_ready())
@@ -468,7 +461,7 @@ void ROSConWindow::plan_tool_paths()
   {
     // Fill out the service call
     auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
-    request->mesh_filename = mesh_filepath_;
+    request->mesh_filename = mesh_file_;
     request->line_spacing = 0.1;
     request->min_hole_size = 0.225;
     request->min_segment_length = 0.25;
@@ -489,13 +482,18 @@ void ROSConWindow::plan_tool_paths()
     }
     else
     {
-      tool_paths_ = fromMsg(response->tool_paths);
+      tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+
       geometry_msgs::msg::PoseArray flat_toolpath_msg;
-      flat_toolpath_msg.header.frame_id = "floor";
-      for (const auto& toolpath : response->tool_paths.paths)
+      flat_toolpath_msg.header.frame_id = reference_frame_;
+      for (auto& toolpath : tool_paths_->paths)
       {
-        for (const auto& segment : toolpath.segments)
+        for (auto& segment : toolpath.segments)
         {
+          // Update the reference frame
+          segment.header.frame_id = reference_frame_;
+
+          // Insert the waypoints into the flattened structure
           flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
         }
       }
@@ -508,47 +506,53 @@ void ROSConWindow::plan_tool_paths()
                     STATES.at(MOTION_PLANNING_ST));
 }
 
-void ROSConWindow::plan_motion()
+void ROSConWindow::planMotion()
 {
-  bool success = true;
-
-  motion_plan_ = trajectory_msgs::msg::JointTrajectory();
-
-  // do motion planning things
-  if (tool_paths_.empty())
+  try
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "No tool paths exist");
-    success = false;
+    // Reset the internal motion plan container
+    motion_plan_.reset();
+
+    if (!motion_planning_client_->service_is_ready())
+      throw std::runtime_error("Motion planning server is not available");
+
+    // do motion planning things
+    if (tool_paths_->paths.empty())
+      throw std::runtime_error("Tool path is empty");
+
+    // TODO: Fill a motion planning service request
+    auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();
+    request->motion_group = motion_group_;
+    request->tcp_frame = tcp_frame_;
+    request->tool_paths = *tool_paths_;
+
+    // Call the service
+    motion_planning_client_->async_send_request(
+        request, std::bind(&ROSConWindow::onPlanMotionDone, this, std::placeholders::_1));
+
+    QApplication::setOverrideCursor(Qt::BusyCursor);
   }
-  else if (!motion_planning_client_->service_is_ready())
+  catch (const std::exception& ex)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion planning server is not available");
-    success = false;
+    RCLCPP_ERROR_STREAM(node_->get_logger(), ex.what());
+  }
+}
+
+void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
+{
+  QApplication::restoreOverrideCursor();
+  snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();
+  if (!response->success)
+  {
+    RCLCPP_ERROR(node_->get_logger(), response->message);
   }
   else
   {
-    // TODO: Fill a motion planning service request
-    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-
-    // Call the service
-    auto future = motion_planning_client_->async_send_request(request);
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    future.wait();
-    QApplication::restoreOverrideCursor();
-
-    std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-    if (response->success)
-    {
-      // motion_plan_ = result.get()->motion_plan
-    }
-    else
-    {
-      RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion planning error: '" << response->message << "'");
-      success = false;
-    }
+    // Save the motion plan internally
+    motion_plan_ = std::make_shared<trajectory_msgs::msg::JointTrajectory>(response->motion_plan);
   }
 
-  emit updateStatus(success, MOTION_PLANNING_ST, ui_->motion_plan_button, MOTION_EXECUTION_ST,
+  emit updateStatus(response->success, MOTION_PLANNING_ST, ui_->motion_plan_button, MOTION_EXECUTION_ST,
                     ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
 }
 
@@ -564,7 +568,7 @@ void ROSConWindow::execute()
 
   // do execution things
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  request->motion_plan = motion_plan_;
+  request->motion_plan = *motion_plan_;
   request->use_tool = true;
 
   auto future = motion_execution_client_->async_send_request(request);

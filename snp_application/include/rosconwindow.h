@@ -4,14 +4,13 @@
 #include <QMainWindow>
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
-#include <tesseract_command_language/composite_instruction.h>
-#include <tesseract_common/types.h>
 // Messages
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
 #include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
+#include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
@@ -56,7 +55,7 @@ private:
   rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_reconstruction_client_;
 
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr motion_planning_client_;
+  rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedPtr motion_planning_client_;
 
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
 
@@ -68,9 +67,13 @@ private:
   void onUpdateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
                       QPushButton* next_button, unsigned step);
 
-  const std::string mesh_filepath_;
-  tesseract_common::Toolpath tool_paths_;
-  trajectory_msgs::msg::JointTrajectory motion_plan_;
+  std::string mesh_file_;
+  std::string motion_group_;
+  std::string reference_frame_;
+  std::string tcp_frame_;
+  std::string camera_frame_;
+  snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
+  trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
 
   void update_calibration_requirement();
   void observe();
@@ -89,9 +92,14 @@ private:
   void onScanDone(FJTResult result);
   void onScanStopDone(StopScanFuture result);
   void onScanDepartureDone(FJTResult result);
-  void execute();
+
   void plan_tool_paths();
-  void plan_motion();
+
+  void planMotion();
+  void onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture result);
+
+  void execute();
+
   void reset();
 
 signals:

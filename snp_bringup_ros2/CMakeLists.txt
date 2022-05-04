@@ -7,6 +7,6 @@ project(${pkg_extracted_name} VERSION ${pkg_extracted_version} LANGUAGES CXX)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME}/)
 
 ament_package()
