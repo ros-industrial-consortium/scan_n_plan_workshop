@@ -526,12 +526,13 @@ void ROSConWindow::planMotion()
     // Call the service
     motion_planning_client_->async_send_request(
         request, std::bind(&ROSConWindow::onPlanMotionDone, this, std::placeholders::_1));
+
+    QApplication::setOverrideCursor(Qt::BusyCursor);
   }
   catch (const std::exception& ex)
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), ex.what());
   }
-  QApplication::setOverrideCursor(Qt::BusyCursor);
 }
 
 void ROSConWindow::onPlanMotionDone(PlanFuture future)
