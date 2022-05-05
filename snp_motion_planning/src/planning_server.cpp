@@ -69,7 +69,7 @@ public:
     , plotter_("world")
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
   {
-      verbose_ = get<bool>(node_, "verbose");
+    verbose_ = get<bool>(node_, "verbose");
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
       auto srdf_string = get<std::string>(node_, "robot_description_semantic");
@@ -77,7 +77,8 @@ public:
       if (!env_->init(urdf_string, srdf_string, resource_locator))
         throw std::runtime_error("Failed to initialize environment");
 
-      tesseract_monitor_ = std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
+      tesseract_monitor_ =
+          std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
       // TODO: remove arbitrary start state
       const std::vector<std::string> joint_names = env_->getJointGroup("manipulator")->getJointNames();
       Eigen::VectorXd joints = Eigen::VectorXd::Zero(joint_names.size());
