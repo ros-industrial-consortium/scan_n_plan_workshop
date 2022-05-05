@@ -18,7 +18,7 @@ static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
-static const double MAX_TCP_SPEED = 0.1; //m/s
+static const double MAX_TCP_SPEED = 0.1;  // m/s
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -187,56 +187,58 @@ private:
   }
 
   tesseract_common::JointTrajectory tcpSpeedLimiter(const tesseract_common::JointTrajectory input_trajectory,
-                                                    const double max_speed,
-                                                    const std::string tcp="tool0")
+                                                    const double max_speed, const std::string tcp = "tool0")
   {
-      // Extract objects needed for calculating FK
-      tesseract_common::JointTrajectory output_trajectory = input_trajectory;
-      tesseract_scene_graph::StateSolver::UPtr state_solver = env_->getStateSolver();
+    // Extract objects needed for calculating FK
+    tesseract_common::JointTrajectory output_trajectory = input_trajectory;
+    tesseract_scene_graph::StateSolver::UPtr state_solver = env_->getStateSolver();
 
-      // Find the adjacent waypoints that require the biggest speed reduction to stay under the max tcp speed
-      double strongest_scaling_factor = 1.0;
-      for (std::size_t i = 1; i < output_trajectory.size(); i++)
+    // Find the adjacent waypoints that require the biggest speed reduction to stay under the max tcp speed
+    double strongest_scaling_factor = 1.0;
+    for (std::size_t i = 1; i < output_trajectory.size(); i++)
+    {
+      // Find the previous waypoint position in Cartesian space
+      tesseract_scene_graph::SceneState prev_ss =
+          state_solver->getState(output_trajectory[i - 1].joint_names, output_trajectory[i - 1].position);
+      Eigen::Isometry3d prev_pose = prev_ss.link_transforms[tcp];
+
+      // Find the current waypoint position in Cartesian space
+      tesseract_scene_graph::SceneState curr_ss =
+          state_solver->getState(output_trajectory[i].joint_names, output_trajectory[i].position);
+      Eigen::Isometry3d curr_pose = curr_ss.link_transforms[tcp];
+
+      // Calculate the average TCP velocity between these waypoints
+      double dist_traveled = (curr_pose.translation() - prev_pose.translation()).norm();
+      double time_to_travel = output_trajectory[i].time - output_trajectory[i - 1].time;
+      double original_velocity = dist_traveled / time_to_travel;
+
+      // If the velocity is over the max speed determine the scaling factor and update greatest seen to this point
+      if (original_velocity > max_speed)
       {
-          // Find the previous waypoint position in Cartesian space
-          tesseract_scene_graph::SceneState prev_ss = state_solver->getState(output_trajectory[i-1].joint_names, output_trajectory[i-1].position);
-          Eigen::Isometry3d prev_pose = prev_ss.link_transforms[tcp];
-
-          // Find the current waypoint position in Cartesian space
-          tesseract_scene_graph::SceneState curr_ss = state_solver->getState(output_trajectory[i].joint_names, output_trajectory[i].position);
-          Eigen::Isometry3d curr_pose = curr_ss.link_transforms[tcp];
-
-          // Calculate the average TCP velocity between these waypoints
-          double dist_traveled = (curr_pose.translation() - prev_pose.translation()).norm();
-          double time_to_travel = output_trajectory[i].time - output_trajectory[i-1].time;
-          double original_velocity = dist_traveled / time_to_travel;
-
-          // If the velocity is over the max speed determine the scaling factor and update greatest seen to this point
-          if (original_velocity > max_speed)
-          {
-              double current_needed_scaling_factor = max_speed / original_velocity;
-              if (current_needed_scaling_factor < strongest_scaling_factor)
-                  strongest_scaling_factor = current_needed_scaling_factor;
-          }
+        double current_needed_scaling_factor = max_speed / original_velocity;
+        if (current_needed_scaling_factor < strongest_scaling_factor)
+          strongest_scaling_factor = current_needed_scaling_factor;
       }
+    }
 
-      // Apply the strongest scaling factor to all trajectory points to maintain a smooth trajectory
-      double total_time = 0;
-      for (std::size_t i = 1; i < output_trajectory.size(); i++)
-      {
-          double original_time_diff = input_trajectory[i].time - input_trajectory[i-1].time;
-          double new_time_diff = original_time_diff * strongest_scaling_factor;
-          double new_timestamp = total_time + new_time_diff;
-          // Apply new timestamp
-          output_trajectory[i].time = new_timestamp;
-          // Scale joint velocity by the scaling factor
-          output_trajectory[i].velocity = input_trajectory[i].velocity * strongest_scaling_factor;
-          // Scale joint acceleartion by the scaling factor squared
-          output_trajectory[i].acceleration = input_trajectory[i].acceleration * strongest_scaling_factor * strongest_scaling_factor;
-          // Update the total running time of the trajectory up to this point
-          total_time = new_timestamp;
-      }
-      return output_trajectory;
+    // Apply the strongest scaling factor to all trajectory points to maintain a smooth trajectory
+    double total_time = 0;
+    for (std::size_t i = 1; i < output_trajectory.size(); i++)
+    {
+      double original_time_diff = input_trajectory[i].time - input_trajectory[i - 1].time;
+      double new_time_diff = original_time_diff * strongest_scaling_factor;
+      double new_timestamp = total_time + new_time_diff;
+      // Apply new timestamp
+      output_trajectory[i].time = new_timestamp;
+      // Scale joint velocity by the scaling factor
+      output_trajectory[i].velocity = input_trajectory[i].velocity * strongest_scaling_factor;
+      // Scale joint acceleartion by the scaling factor squared
+      output_trajectory[i].acceleration =
+          input_trajectory[i].acceleration * strongest_scaling_factor * strongest_scaling_factor;
+      // Update the total running time of the trajectory up to this point
+      total_time = new_timestamp;
+    }
+    return output_trajectory;
   }
 
   void plan(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
