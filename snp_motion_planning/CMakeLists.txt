@@ -13,16 +13,16 @@ set(ROS2_DEPS
     rclcpp
     snp_msgs
     std_srvs
-    tesseract_rosutils)
-
-find_package(descartes_light REQUIRED)
-find_package(tesseract_command_language REQUIRED)
-find_package(tesseract_process_managers REQUIRED)
+    tesseract_monitoring)
 
 find_package(ament_cmake REQUIRED)
 foreach(dep ${ROS2_DEPS})
   find_package(${dep} REQUIRED)
 endforeach()
+
+find_package(descartes_light REQUIRED)
+find_package(tesseract_command_language REQUIRED)
+find_package(tesseract_process_managers REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})

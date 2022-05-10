@@ -5,6 +5,9 @@
 #include <tesseract_process_managers/task_profiles/check_input_profile.h>
 #include <tesseract_process_managers/task_profiles/seed_min_length_profile.h>
 #include <tesseract_process_managers/task_profiles/interative_spline_parameterization_profile.h>
+#include <tesseract_monitoring/environment_monitor.h>
+#include <tesseract_monitoring/environment_monitor_interface.h>
+#include <tesseract_rosutils/plotting.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
@@ -18,6 +21,8 @@ static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
+static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
+static const double MAX_TCP_SPEED = 0.25;  // m/s
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -46,7 +51,7 @@ tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 }
 
 template <typename T>
-T get(rclcpp::Node* node, const std::string& key)
+T get(rclcpp::Node::SharedPtr node, const std::string& key)
 {
   node->declare_parameter(key);
   T val;
@@ -55,23 +60,25 @@ T get(rclcpp::Node* node, const std::string& key)
   return val;
 }
 
-class PlanningServer : public rclcpp::Node
+class PlanningServer
 {
 public:
-  PlanningServer()
-    : rclcpp::Node("snp_planning_server")
+  PlanningServer(rclcpp::Node::SharedPtr node)
+    : node_(node)
     , env_(std::make_shared<tesseract_environment::Environment>())
+    , plotter_(env_->getRootLinkName())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
-    , verbose_(get<bool>(this, "verbose"))
   {
-    // TODO: Set up an environment monitor
+    verbose_ = get<bool>(node_, "verbose");
     {
-      auto urdf_string = get<std::string>(this, "robot_description");
-      auto srdf_string = get<std::string>(this, "robot_description_semantic");
+      auto urdf_string = get<std::string>(node_, "robot_description");
+      auto srdf_string = get<std::string>(node_, "robot_description_semantic");
       auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
       if (!env_->init(urdf_string, srdf_string, resource_locator))
         throw std::runtime_error("Failed to initialize environment");
 
+      tesseract_monitor_ =
+          std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
       // TODO: remove arbitrary start state
       const std::vector<std::string> joint_names = env_->getJointGroup("manipulator")->getJointNames();
       Eigen::VectorXd joints = Eigen::VectorXd::Zero(joint_names.size());
@@ -109,9 +116,9 @@ public:
     }
 
     // Advertise the ROS2 service
-    server_ = create_service<snp_msgs::srv::GenerateMotionPlan>(
+    server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
-    RCLCPP_INFO(get_logger(), "Started SNP motion planning server");
+    RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
   }
 
 private:
@@ -185,12 +192,67 @@ private:
     return program;
   }
 
+  tesseract_common::JointTrajectory tcpSpeedLimiter(const tesseract_common::JointTrajectory& input_trajectory,
+                                                    const double max_speed, const std::string tcp)
+  {
+    // Extract objects needed for calculating FK
+    tesseract_common::JointTrajectory output_trajectory = input_trajectory;
+    tesseract_scene_graph::StateSolver::UPtr state_solver = env_->getStateSolver();
+
+    // Find the adjacent waypoints that require the biggest speed reduction to stay under the max tcp speed
+    double strongest_scaling_factor = 1.0;
+    for (std::size_t i = 1; i < output_trajectory.size(); i++)
+    {
+      // Find the previous waypoint position in Cartesian space
+      tesseract_scene_graph::SceneState prev_ss =
+          state_solver->getState(output_trajectory[i - 1].joint_names, output_trajectory[i - 1].position);
+      Eigen::Isometry3d prev_pose = prev_ss.link_transforms[tcp];
+
+      // Find the current waypoint position in Cartesian space
+      tesseract_scene_graph::SceneState curr_ss =
+          state_solver->getState(output_trajectory[i].joint_names, output_trajectory[i].position);
+      Eigen::Isometry3d curr_pose = curr_ss.link_transforms[tcp];
+
+      // Calculate the average TCP velocity between these waypoints
+      double dist_traveled = (curr_pose.translation() - prev_pose.translation()).norm();
+      double time_to_travel = output_trajectory[i].time - output_trajectory[i - 1].time;
+      double original_velocity = dist_traveled / time_to_travel;
+
+      // If the velocity is over the max speed determine the scaling factor and update greatest seen to this point
+      if (original_velocity > max_speed)
+      {
+        double current_needed_scaling_factor = max_speed / original_velocity;
+        if (current_needed_scaling_factor < strongest_scaling_factor)
+          strongest_scaling_factor = current_needed_scaling_factor;
+      }
+    }
+
+    // Apply the strongest scaling factor to all trajectory points to maintain a smooth trajectory
+    double total_time = 0;
+    for (std::size_t i = 1; i < output_trajectory.size(); i++)
+    {
+      double original_time_diff = input_trajectory[i].time - input_trajectory[i - 1].time;
+      double new_time_diff = original_time_diff / strongest_scaling_factor;
+      double new_timestamp = total_time + new_time_diff;
+      // Apply new timestamp
+      output_trajectory[i].time = new_timestamp;
+      // Scale joint velocity by the scaling factor
+      output_trajectory[i].velocity = input_trajectory[i].velocity * strongest_scaling_factor;
+      // Scale joint acceleartion by the scaling factor squared
+      output_trajectory[i].acceleration =
+          input_trajectory[i].acceleration * strongest_scaling_factor * strongest_scaling_factor;
+      // Update the total running time of the trajectory up to this point
+      total_time = new_timestamp;
+    }
+    return output_trajectory;
+  }
+
   void plan(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
             snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
   {
     try
     {
-      RCLCPP_INFO_STREAM(get_logger(), "Received motion planning request");
+      RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
 
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
@@ -217,7 +279,10 @@ private:
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt =
           toJointTrajectory(plan_result.results->as<tesseract_planning::CompositeInstruction>());
-      res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
+      tesseract_common::JointTrajectory tcp_velocity_scaled_jt =
+          tcpSpeedLimiter(jt, MAX_TCP_SPEED, manip_info.tcp_frame);
+      plotter_.plotTrajectory(tcp_velocity_scaled_jt, *env_->getStateSolver());
+      res->motion_plan = tesseract_rosutils::toMsg(tcp_velocity_scaled_jt, env_->getState());
 
       res->message = "Succesfully planned motion";
       res->success = true;
@@ -228,19 +293,23 @@ private:
       res->success = false;
     }
 
-    RCLCPP_INFO_STREAM(get_logger(), res->message);
+    RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
   }
 
   tesseract_environment::Environment::Ptr env_;
   tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
+  tesseract_monitoring::EnvironmentMonitor::Ptr tesseract_monitor_;
+  tesseract_rosutils::ROSPlotting plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
   bool verbose_{ false };
+  rclcpp::Node::SharedPtr node_;
 };
 
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  auto server = std::make_shared<PlanningServer>();
-  rclcpp::spin(server);
+  rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>("snp_planning_server");
+  auto server = std::make_shared<PlanningServer>(node);
+  rclcpp::spin(node);
   rclcpp::shutdown();
 }
