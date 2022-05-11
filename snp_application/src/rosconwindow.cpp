@@ -6,6 +6,10 @@
 #include <QTextStream>
 #include <rclcpp_action/create_client.hpp>
 #include <tf2_eigen/tf2_eigen.h>
+#include "rcl/rcl.h"
+#include "sensor_msgs/msg/joint_state.h" //C version
+#include "rosidl_runtime_c/string_functions.h"
+#include "rosidl_runtime_c/primitives_sequence_functions.h"
 
 static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
 static const std::string TOOL_PATH_TOPIC = "toolpath";
@@ -32,15 +36,15 @@ static const QString MOTION_PLANNING_ST = "perform motion planning";
 static const QString MOTION_EXECUTION_ST = "execute process motion";
 
 static const std::map<QString, unsigned> STATES = {
-  { CALIBRATION_ST, 0 },
-  { SCAN_APPROACH_ST, 1 },
-  { START_RECONSTRUCTION_ST, 2 },
-  { SCAN_EXECUTION_ST, 3 },
-  { STOP_RECONSTRUCTION_ST, 4 },
-  { SCAN_DEPARTURE_ST, 5 },
-  { TPP_ST, 6 },
-  { MOTION_PLANNING_ST, 7 },
-  { MOTION_EXECUTION_ST, 8 },
+  {CALIBRATION_ST, 0},
+  {SCAN_APPROACH_ST, 1},
+  {START_RECONSTRUCTION_ST, 2},
+  {SCAN_EXECUTION_ST, 3},
+  {STOP_RECONSTRUCTION_ST, 4},
+  {SCAN_DEPARTURE_ST, 5},
+  {TPP_ST, 6},
+  {MOTION_PLANNING_ST, 7},
+  {MOTION_EXECUTION_ST, 8},
 };
 
 static const std::string MOTION_GROUP_PARAM = "motion_group";
@@ -51,32 +55,39 @@ static const std::string MESH_FILE_PARAM = "mesh_file";
 
 namespace  // anonymous restricts visibility to this file
 {
-template <typename T>
-T declareAndGet(rclcpp::Node& node, const std::string& key)
+template<typename T>
+T declareAndGet(rclcpp::Node & node, const std::string & key)
 {
   T val;
   node.declare_parameter(key);
-  if (!node.get_parameter(key, val))
+  if (!node.get_parameter(key, val)) {
     throw std::runtime_error("Failed to get '" + key + "' parameter");
+  }
   return val;
 }
 
 }  // namespace
 
-ROSConWindow::ROSConWindow(QWidget* parent)
-  : QMainWindow(parent)
-  , ui_(new Ui::ROSConWindow)
-  , node_(rclcpp::Node::make_shared("roscon_app_node"))
-  , past_calibration_(false)
+ROSConWindow::ROSConWindow(QWidget * parent)
+: QMainWindow(parent),
+  ui_(new Ui::ROSConWindow),
+  node_(rclcpp::Node::make_shared("roscon_app_node")),
+  past_calibration_(false)
 {
   ui_->setupUi(this);
 
-  connect(ui_->calibration_group_box, &QGroupBox::clicked, this, &ROSConWindow::update_calibration_requirement);
+  connect(
+    ui_->calibration_group_box, &QGroupBox::clicked, this,
+    &ROSConWindow::update_calibration_requirement);
   connect(ui_->observe_button, &QPushButton::clicked, this, &ROSConWindow::observe);
   connect(ui_->run_calibration_button, &QPushButton::clicked, this, &ROSConWindow::run_calibration);
   connect(ui_->get_correlation_button, &QPushButton::clicked, this, &ROSConWindow::get_correlation);
-  connect(ui_->install_calibration_button, &QPushButton::clicked, this, &ROSConWindow::install_calibration);
-  connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &ROSConWindow::reset_calibration);
+  connect(
+    ui_->install_calibration_button, &QPushButton::clicked, this,
+    &ROSConWindow::install_calibration);
+  connect(
+    ui_->reset_calibration_button, &QPushButton::clicked, this,
+    &ROSConWindow::reset_calibration);
   connect(ui_->scan_button, &QPushButton::clicked, this, &ROSConWindow::scan);
   connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::plan_tool_paths);
   connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::planMotion);
@@ -84,9 +95,12 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   connect(ui_->reset_button, &QPushButton::clicked, this, &ROSConWindow::reset);
 
   // Move the text edit scroll bar to the maximum limit whenever it is resized
-  connect(ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
-    ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
-  });
+  connect(
+    ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
+      ui_->text_edit_log->verticalScrollBar()->setSliderPosition(
+        ui_->text_edit_log->
+        verticalScrollBar()->maximum());
+    });
 
   connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
 
@@ -94,19 +108,29 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
+  joint_state_sub_ = node_->create_subscription<sensor_msgs::msg::JointState>(
+    JOINT_STATES_TOPIC,
+    rclcpp::SensorDataQoS(),
+    std::bind(&ROSConWindow::callbackJointState, this, std::placeholders::_1));
   // TODO register all service/action clients
   observe_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
   run_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_RUN_SERVICE);
-  get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_CORRELATION_SERVICE);
-  install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_INSTALL_SERVICE);
+  get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>(
+    CALIBRATION_CORRELATION_SERVICE);
+  install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(
+    CALIBRATION_INSTALL_SERVICE);
 
   start_reconstruction_client_ =
-      node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>(START_RECONSTRUCTION_SERVICE);
+    node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>(
+    START_RECONSTRUCTION_SERVICE);
   stop_reconstruction_client_ =
-      node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(STOP_RECONSTRUCTION_SERVICE);
+    node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(
+    STOP_RECONSTRUCTION_SERVICE);
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
-  motion_planning_client_ = node_->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
-  motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
+  motion_planning_client_ = node_->create_client<snp_msgs::srv::GenerateMotionPlan>(
+    MOTION_PLAN_SERVICE);
+  motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(
+    MOTION_EXECUTION_SERVICE);
 
   // Get values from parameters
   mesh_file_ = declareAndGet<std::string>(*node_, MESH_FILE_PARAM);
@@ -116,34 +140,39 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   camera_frame_ = declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM);
 }
 
-void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
-                                  QString next_process, QPushButton* next_button, unsigned step)
+void ROSConWindow::callbackJointState(
+  const sensor_msgs::msg::JointState::ConstSharedPtr state)
+{
+  std::vector<double> zero_vector(6, 0);
+  if (state->name.size() > 0 && state->position != zero_vector) {
+    latest_joint_state_ = *state;
+  }
+}
+
+void ROSConWindow::onUpdateStatus(
+  bool success, QString current_process, QPushButton * current_button,
+  QString next_process, QPushButton * next_button, unsigned step)
 {
   QString status;
   QTextStream status_stream(&status);
-  if (success)
-  {
+  if (success) {
     status_stream << current_process << " completed!";
-    if (next_process != "")
-    {
+    if (next_process != "") {
       status_stream << "\nWaiting to " << next_process << "...";
     }
 
-    const double progress = (static_cast<double>(step) / static_cast<double>(STATES.size())) * 100.0;
+    const double progress = (static_cast<double>(step) / static_cast<double>(STATES.size())) *
+      100.0;
     ui_->progress_bar->setValue(static_cast<int>(progress));
 
-    if (next_button != nullptr)
-    {
+    if (next_button != nullptr) {
       next_button->setEnabled(true);
     }
 
-    if (current_button != nullptr)
-    {
+    if (current_button != nullptr) {
       current_button->setEnabled(false);
     }
-  }
-  else
-  {
+  } else {
     status_stream << current_process << " failed\nWaiting to attempt again...";
   }
 
@@ -152,20 +181,17 @@ void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushBu
 
 void ROSConWindow::update_calibration_requirement()
 {
-  if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
-  {
-    emit updateStatus(true, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
-  }
-  else
-  {
+  if (!ui_->calibration_group_box->isChecked() && !past_calibration_) {
+    emit updateStatus(true, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(
+        SCAN_APPROACH_ST));
+  } else {
     reset();
   }
 }
 
 void ROSConWindow::observe()
 {
-  if (!observe_client_->service_is_ready())
-  {
+  if (!observe_client_->service_is_ready()) {
     ui_->text_edit_log->append("Observation service is not available");
     return;
   }
@@ -175,21 +201,17 @@ void ROSConWindow::observe()
   future.wait();
 
   std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-  if (response->success)
-  {
+  if (response->success) {
     ui_->run_calibration_button->setEnabled(true);
     ui_->text_edit_log->append("Gathered observation.");
-  }
-  else
-  {
+  } else {
     ui_->text_edit_log->append("Failed to get observation.");
   }
 }
 
 void ROSConWindow::run_calibration()
 {
-  if (!run_calibration_client_->service_is_ready())
-  {
+  if (!run_calibration_client_->service_is_ready()) {
     return;
   }
 
@@ -198,21 +220,17 @@ void ROSConWindow::run_calibration()
   future.wait();
   std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
 
-  if (response->success)
-  {
+  if (response->success) {
     ui_->install_calibration_button->setEnabled(true);
     ui_->text_edit_log->append("Calibration run.");
-  }
-  else
-  {
+  } else {
     ui_->text_edit_log->append("Calibration attempt failed.");
   }
 }
 
 void ROSConWindow::get_correlation()
 {
-  if (!get_correlation_client_->service_is_ready())
-  {
+  if (!get_correlation_client_->service_is_ready()) {
     return;
   }
 
@@ -220,20 +238,16 @@ void ROSConWindow::get_correlation()
   auto future = get_correlation_client_->async_send_request(request);
   std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
 
-  if (response->success)
-  {
+  if (response->success) {
     ui_->text_edit_log->append("Correlation written to file.");
-  }
-  else
-  {
+  } else {
     ui_->text_edit_log->append("Failed to write correlation to file.");
   }
 }
 
 void ROSConWindow::install_calibration()
 {
-  if (!install_calibration_client_->service_is_ready())
-  {
+  if (!install_calibration_client_->service_is_ready()) {
     return;
   }
 
@@ -244,7 +258,7 @@ void ROSConWindow::install_calibration()
 
   past_calibration_ = response->success;
   emit updateStatus(response->success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button,
-                    STATES.at(SCAN_APPROACH_ST));
+    STATES.at(SCAN_APPROACH_ST));
 }
 
 void ROSConWindow::reset_calibration()
@@ -261,15 +275,59 @@ void ROSConWindow::reset_calibration()
 void ROSConWindow::scan()
 {
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  // TODO: fill out scan trajectory
-  //  request->motion_plan = ... ;
-  request->use_tool = false;
 
-  if (!motion_execution_client_->service_is_ready())
-  {
+  //Hard-coded scan trajectory points
+  trajectory_msgs::msg::JointTrajectory scan_traj;
+  std::vector<std::string> joint_names = {
+    "joint_1_s",
+    "joint_2_l",
+    "joint_3_u",
+    "joint_4_r",
+    "joint_5_b",
+    "joint_6_t",
+  };
+
+  std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
+
+  std::vector<double> zero_velocity(6, 0);
+
+  trajectory_msgs::msg::JointTrajectoryPoint point0;
+  point0.time_from_start = rclcpp::Duration::from_seconds(0.0);     // start asap
+  point0.positions.resize(joint_names.size());
+  if (latest_joint_state_.name.size() > 0) {
+    point0.positions = latest_joint_state_.position;
+  }
+  point0.velocities = zero_velocity;
+
+  trajectory_msgs::msg::JointTrajectoryPoint point1;
+  point1.time_from_start = rclcpp::Duration::from_seconds(15.0);
+  point1.positions = point0.positions;
+  point1.positions[0] = 0.0;
+  point1.positions[1] = 0.0;
+  point1.positions[2] = 1.57;
+  point1.positions[3] = 0.0;
+  point1.positions[4] = -1.57;
+  point1.positions[5] = 0.0;
+  point1.velocities = zero_velocity;
+
+  std::cout << "pushing points" << std::endl;
+  points.push_back(point0);
+  points.push_back(point1);
+
+  RCLCPP_INFO_STREAM(
+    node_->get_logger(),
+    "Sending a trajectory with " << points.size() << " points");
+
+  scan_traj.joint_names = joint_names;
+  scan_traj.points = points;
+
+  request->use_tool = false;
+  request->motion_plan = scan_traj;
+
+  if (!motion_execution_client_->service_is_ready()) {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
     emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
@@ -282,22 +340,22 @@ void ROSConWindow::scan()
 void ROSConWindow::onScanApproachDone(FJTResult result)
 {
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (response->success)
-  {
-    emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
-                      STATES.at(START_RECONSTRUCTION_ST));
-  }
-  else
-  {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan approach motion: '" << response->message << "'");
+  if (response->success) {
+    emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST,
+      ui_->scan_button,
+      STATES.at(START_RECONSTRUCTION_ST));
+  } else {
+    RCLCPP_ERROR_STREAM(
+      node_->get_logger(), "Failed to execute scan approach motion: '" << response->message << "'");
     emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   RCLCPP_INFO(node_->get_logger(), "Successfully executed scan approach motion");
   // call reconstruction start
-  auto start_request = std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
+  auto start_request =
+    std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
   start_request->tracking_frame = camera_frame_;
   start_request->relative_frame = reference_frame_;
@@ -321,31 +379,86 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
 
 void ROSConWindow::onScanStartDone(StartScanFuture result)
 {
-  if (!result.get()->success)
-  {
+  if (!result.get()->success) {
     RCLCPP_ERROR(node_->get_logger(), "Failed to start surface reconstruction");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST,
+      ui_->scan_button,
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  if (!motion_execution_client_->service_is_ready())
-  {
+  if (!motion_execution_client_->service_is_ready()) {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST,
+      ui_->scan_button,
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
-                    STATES.at(SCAN_EXECUTION_ST));
+  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST,
+    ui_->scan_button,
+    STATES.at(SCAN_EXECUTION_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  // TODO: fill out trajectory
-  //  request->motion_plan = ... ;
+
+  //Hard-coded scan trajectory points
+  trajectory_msgs::msg::JointTrajectory scan_traj;
+  std::vector<std::string> joint_names = {
+    "joint_1_s",
+    "joint_2_l",
+    "joint_3_u",
+    "joint_4_r",
+    "joint_5_b",
+    "joint_6_t",
+  };
+
+  std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
+  std::vector<double> zero_velocity(6, 0);
+
+  trajectory_msgs::msg::JointTrajectoryPoint point0;
+  point0.time_from_start = rclcpp::Duration::from_seconds(0.0);     // start asap
+  point0.positions.resize(joint_names.size());
+  while (latest_joint_state_.name.size() == 0) {
+    rclcpp::sleep_for(std::chrono::seconds(1));
+    RCLCPP_WARN(node_->get_logger(), "Joint state contains zero joint names");
+  }
+  point0.positions = latest_joint_state_.position;
+  point0.velocities = zero_velocity;
+
+  trajectory_msgs::msg::JointTrajectoryPoint point2;
+  point2.time_from_start = rclcpp::Duration::from_seconds(5.0);
+  point2.positions = point0.positions;
+  point2.positions[5] += 0.349066;
+  point2.velocities = zero_velocity;
+
+  trajectory_msgs::msg::JointTrajectoryPoint point3;
+  point3.time_from_start = rclcpp::Duration::from_seconds(10.0);
+  point3.positions = point0.positions;
+  point3.positions[5] -= 0.349066;
+  point3.velocities = zero_velocity;
+
+  trajectory_msgs::msg::JointTrajectoryPoint point4;
+  point4.time_from_start = rclcpp::Duration::from_seconds(15.0);
+  point4.positions = point0.positions;
+  point4.velocities = zero_velocity;
+
+  std::cout << "pushing points" << std::endl;
+  points.push_back(point0);
+  points.push_back(point2);
+  points.push_back(point3);
+  points.push_back(point4);
+
+  RCLCPP_INFO_STREAM(
+    node_->get_logger(),
+    "Sending a trajectory with " << points.size() << " points");
+
+  scan_traj.joint_names = joint_names;
+  scan_traj.points = points;
+
   request->use_tool = false;
+  request->motion_plan = scan_traj;
 
   auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -354,22 +467,23 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
 void ROSConWindow::onScanDone(FJTResult result)
 {
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (response->success)
-  {
-    emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
-                      STATES.at(STOP_RECONSTRUCTION_ST));
-  }
-  else
-  {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
-    emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+  if (response->success) {
+    emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST,
+      ui_->scan_button,
+      STATES.at(STOP_RECONSTRUCTION_ST));
+  } else {
+    RCLCPP_ERROR_STREAM(
+      node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
+    emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST,
+      ui_->scan_button,
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
   RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
 
   // call reconstruction stop
-  auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
+  auto stop_request =
+    std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
   stop_request->archive_directory = "";
   stop_request->mesh_filepath = mesh_file_;
 
@@ -379,11 +493,11 @@ void ROSConWindow::onScanDone(FJTResult result)
 
 void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
 {
-  if (!stop_result.get()->success)
-  {
+  if (!stop_result.get()->success) {
     RCLCPP_INFO(node_->get_logger(), "Failed to stop surface reconstruction");
-    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST,
+      ui_->scan_button,
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
@@ -407,16 +521,17 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     scan_mesh_pub_->publish(mesh_marker);
   }
 
-  if (!motion_execution_client_->service_is_ready())
-  {
+  if (!motion_execution_client_->service_is_ready()) {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST,
+      ui_->scan_button,
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
-                    STATES.at(SCAN_DEPARTURE_ST));
+  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST,
+    ui_->scan_button,
+    STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 
@@ -432,16 +547,17 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
 void ROSConWindow::onScanDepartureDone(FJTResult result)
 {
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (response->success)
-  {
+  if (response->success) {
     RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
-    emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
-  }
-  else
-  {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion departure: '" << response->message << "'");
-    emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(
+        TPP_ST));
+  } else {
+    RCLCPP_ERROR_STREAM(
+      node_->get_logger(),
+      "Failed to execute scan motion departure: '" << response->message << "'");
+    emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST,
+      ui_->scan_button,
+      STATES.at(SCAN_APPROACH_ST));
     return;
   }
 }
@@ -452,13 +568,10 @@ void ROSConWindow::plan_tool_paths()
   tool_paths_.reset();
 
   // do tpp things
-  if (!tpp_client_->service_is_ready())
-  {
+  if (!tpp_client_->service_is_ready()) {
     RCLCPP_ERROR(node_->get_logger(), "Could not find TPP server");
     success = false;
-  }
-  else
-  {
+  } else {
     // Fill out the service call
     auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
     request->mesh_filename = mesh_file_;
@@ -475,26 +588,23 @@ void ROSConWindow::plan_tool_paths()
     QApplication::restoreOverrideCursor();
 
     snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = future.get();
-    if (!response->success)
-    {
+    if (!response->success) {
       RCLCPP_ERROR_STREAM(node_->get_logger(), "TPP Error: '" << response->message << "'");
       success = false;
-    }
-    else
-    {
+    } else {
       tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
 
       geometry_msgs::msg::PoseArray flat_toolpath_msg;
       flat_toolpath_msg.header.frame_id = reference_frame_;
-      for (auto& toolpath : tool_paths_->paths)
-      {
-        for (auto& segment : toolpath.segments)
-        {
+      for (auto & toolpath : tool_paths_->paths) {
+        for (auto & segment : toolpath.segments) {
           // Update the reference frame
           segment.header.frame_id = reference_frame_;
 
           // Insert the waypoints into the flattened structure
-          flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
+          flat_toolpath_msg.poses.insert(
+            flat_toolpath_msg.poses.end(),
+            segment.poses.begin(), segment.poses.end());
         }
       }
 
@@ -503,22 +613,23 @@ void ROSConWindow::plan_tool_paths()
   }
 
   emit updateStatus(success, TPP_ST, ui_->tpp_button, MOTION_PLANNING_ST, ui_->motion_plan_button,
-                    STATES.at(MOTION_PLANNING_ST));
+    STATES.at(MOTION_PLANNING_ST));
 }
 
 void ROSConWindow::planMotion()
 {
-  try
-  {
+  try {
     // Reset the internal motion plan container
     motion_plan_.reset();
 
-    if (!motion_planning_client_->service_is_ready())
+    if (!motion_planning_client_->service_is_ready()) {
       throw std::runtime_error("Motion planning server is not available");
+    }
 
     // do motion planning things
-    if (tool_paths_->paths.empty())
+    if (tool_paths_->paths.empty()) {
       throw std::runtime_error("Tool path is empty");
+    }
 
     // TODO: Fill a motion planning service request
     auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();
@@ -528,41 +639,38 @@ void ROSConWindow::planMotion()
 
     // Call the service
     motion_planning_client_->async_send_request(
-        request, std::bind(&ROSConWindow::onPlanMotionDone, this, std::placeholders::_1));
+      request, std::bind(&ROSConWindow::onPlanMotionDone, this, std::placeholders::_1));
 
     QApplication::setOverrideCursor(Qt::BusyCursor);
-  }
-  catch (const std::exception& ex)
-  {
+  } catch (const std::exception & ex) {
     RCLCPP_ERROR_STREAM(node_->get_logger(), ex.what());
   }
 }
 
-void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
+void ROSConWindow::onPlanMotionDone(
+  rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
 {
   QApplication::restoreOverrideCursor();
   snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();
-  if (!response->success)
-  {
+  if (!response->success) {
     RCLCPP_ERROR(node_->get_logger(), response->message);
-  }
-  else
-  {
+  } else {
     // Save the motion plan internally
     motion_plan_ = std::make_shared<trajectory_msgs::msg::JointTrajectory>(response->motion_plan);
   }
 
-  emit updateStatus(response->success, MOTION_PLANNING_ST, ui_->motion_plan_button, MOTION_EXECUTION_ST,
-                    ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
+  emit updateStatus(response->success, MOTION_PLANNING_ST, ui_->motion_plan_button,
+    MOTION_EXECUTION_ST,
+    ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
 }
 
 void ROSConWindow::execute()
 {
-  if (!motion_execution_client_->service_is_ready())
-  {
+  if (!motion_execution_client_->service_is_ready()) {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution service is not available");
-    updateStatus(false, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
-                 ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
+    updateStatus(
+      false, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
+      ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
     return;
   }
 
@@ -577,17 +685,18 @@ void ROSConWindow::execute()
   QApplication::restoreOverrideCursor();
 
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = future.get();
-  if (!response->success)
-  {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution error: '" << response->message << "'");
-    updateStatus(response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
-                 ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
+  if (!response->success) {
+    RCLCPP_ERROR_STREAM(
+      node_->get_logger(),
+      "Motion execution error: '" << response->message << "'");
+    updateStatus(
+      response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
+      ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
     return;
-  }
-  else
-  {
-    emit updateStatus(response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, "", nullptr,
-                      static_cast<unsigned>(STATES.size()));
+  } else {
+    emit updateStatus(response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, "",
+      nullptr,
+      static_cast<unsigned>(STATES.size()));
   }
 }
 

@@ -18,6 +18,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(ament_cmake REQUIRED)
 find_package(open3d_interface_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(ros_industrial_cmake_boilerplate REQUIRED)
 # uncomment the following section in order to fill in further dependencies manually. find_package(<dependency> REQUIRED)
 
 add_executable(open3d_sim_node src/open3d_sim_node.cpp)

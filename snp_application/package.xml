@@ -21,6 +21,7 @@
   <depend>visualization_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tesseract_rosutils</depend>
+  <depend>tesseract_ros_examples</depend>
 
 
   <test_depend>ament_lint_auto</test_depend>

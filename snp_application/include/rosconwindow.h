@@ -28,7 +28,7 @@ class ROSConWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  explicit ROSConWindow(QWidget* parent = nullptr);
+  explicit ROSConWindow(QWidget * parent = nullptr);
 
   rclcpp::Node::SharedPtr getNode() const
   {
@@ -36,14 +36,18 @@ public:
   }
 
 private:
-  Ui::ROSConWindow* ui_;
+  Ui::ROSConWindow * ui_;
   rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
+
+  sensor_msgs::msg::JointState latest_joint_state_;
 
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr scan_mesh_pub_;
+
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
   // service clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;
@@ -51,8 +55,10 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr get_correlation_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr install_calibration_client_;
 
-  rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr start_reconstruction_client_;
-  rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_reconstruction_client_;
+  rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr
+    start_reconstruction_client_;
+  rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr
+    stop_reconstruction_client_;
 
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
   rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedPtr motion_planning_client_;
@@ -64,8 +70,9 @@ private:
    * @details This method updates elements of the GUI and can only be called from the Qt thread, not in ROS callbacks.
    * To invoke this method from a ROS callback, emit the `updateStatus` signal
    */
-  void onUpdateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
-                      QPushButton* next_button, unsigned step);
+  void onUpdateStatus(
+    bool success, QString current_process, QPushButton * current_button, QString next_process,
+    QPushButton * next_button, unsigned step);
 
   std::string mesh_file_;
   std::string motion_group_;
@@ -74,6 +81,8 @@ private:
   std::string camera_frame_;
   snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
   trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
+
+  void callbackJointState(const sensor_msgs::msg::JointState::ConstSharedPtr state);
 
   void update_calibration_requirement();
   void observe();
@@ -84,8 +93,10 @@ private:
 
   // Scan motion and reconstruction
   using FJTResult = rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture;
-  using StartScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedFuture;
-  using StopScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedFuture;
+  using StartScanFuture =
+    rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedFuture;
+  using StopScanFuture =
+    rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedFuture;
   void scan();
   void onScanApproachDone(FJTResult result);
   void onScanStartDone(StartScanFuture result);
@@ -103,8 +114,9 @@ private:
   void reset();
 
 signals:
-  void updateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
-                    QPushButton* next_button, unsigned step);
+  void updateStatus(
+    bool success, QString current_process, QPushButton * current_button, QString next_process,
+    QPushButton * next_button, unsigned step);
 };
 
 #endif  // ROSCONWINDOW_H
