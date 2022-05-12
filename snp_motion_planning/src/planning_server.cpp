@@ -66,7 +66,6 @@ public:
   PlanningServer(rclcpp::Node::SharedPtr node)
     : node_(node)
     , env_(std::make_shared<tesseract_environment::Environment>())
-    , plotter_(env_->getRootLinkName())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
   {
     verbose_ = get<bool>(node_, "verbose");
@@ -76,15 +75,15 @@ public:
       auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
       if (!env_->init(urdf_string, srdf_string, resource_locator))
         throw std::runtime_error("Failed to initialize environment");
-
-      tesseract_monitor_ =
-          std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
-      // TODO: remove arbitrary start state
-      const std::vector<std::string> joint_names = env_->getJointGroup("manipulator")->getJointNames();
-      Eigen::VectorXd joints = Eigen::VectorXd::Zero(joint_names.size());
-      joints(2) = M_PI / 2.0;
-      env_->setState(joint_names, joints);
     }
+
+    // Create the plotter
+    plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
+
+    // Create the environment monitor
+    tesseract_monitor_ =
+        std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
+    tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
 
     // Register custom process planners
     planning_server_->registerProcessPlanner(TRANSITION_PLANNER, createTransitionTaskflow());
@@ -281,7 +280,7 @@ private:
           toJointTrajectory(plan_result.results->as<tesseract_planning::CompositeInstruction>());
       tesseract_common::JointTrajectory tcp_velocity_scaled_jt =
           tcpSpeedLimiter(jt, MAX_TCP_SPEED, manip_info.tcp_frame);
-      plotter_.plotTrajectory(tcp_velocity_scaled_jt, *env_->getStateSolver());
+      plotter_->plotTrajectory(tcp_velocity_scaled_jt, *env_->getStateSolver());
       res->motion_plan = tesseract_rosutils::toMsg(tcp_velocity_scaled_jt, env_->getState());
 
       res->message = "Succesfully planned motion";
@@ -299,7 +298,7 @@ private:
   tesseract_environment::Environment::Ptr env_;
   tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
   tesseract_monitoring::EnvironmentMonitor::Ptr tesseract_monitor_;
-  tesseract_rosutils::ROSPlotting plotter_;
+  tesseract_rosutils::ROSPlotting::Ptr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
   bool verbose_{ false };
   rclcpp::Node::SharedPtr node_;
