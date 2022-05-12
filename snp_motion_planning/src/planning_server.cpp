@@ -76,15 +76,12 @@ public:
       auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
       if (!env_->init(urdf_string, srdf_string, resource_locator))
         throw std::runtime_error("Failed to initialize environment");
-
-      tesseract_monitor_ =
-          std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
-      // TODO: remove arbitrary start state
-      const std::vector<std::string> joint_names = env_->getJointGroup("manipulator")->getJointNames();
-      Eigen::VectorXd joints = Eigen::VectorXd::Zero(joint_names.size());
-      joints(2) = M_PI / 2.0;
-      env_->setState(joint_names, joints);
     }
+
+    // Create the environment monitor
+    tesseract_monitor_ =
+        std::make_shared<tesseract_monitoring::EnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
+    tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
 
     // Register custom process planners
     planning_server_->registerProcessPlanner(TRANSITION_PLANNER, createTransitionTaskflow());
