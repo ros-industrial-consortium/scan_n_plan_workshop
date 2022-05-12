@@ -11,7 +11,11 @@
 #include "rosidl_runtime_c/string_functions.h"
 #include "rosidl_runtime_c/primitives_sequence_functions.h"
 
-static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
+#include <numeric>
+#include <vector>
+#include <cmath>
+
+static const std::string JOINT_STATES_TOPIC = "joint_states";
 static const std::string TOOL_PATH_TOPIC = "toolpath";
 static const std::string MESH_TOPIC = "scan_mesh";
 
@@ -104,13 +108,12 @@ ROSConWindow::ROSConWindow(QWidget * parent)
 
   connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
 
-  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>(JOINT_STATES_TOPIC, 10);
+//  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>(JOINT_STATES_TOPIC, 10);
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
   joint_state_sub_ = node_->create_subscription<sensor_msgs::msg::JointState>(
-    JOINT_STATES_TOPIC,
-    rclcpp::SensorDataQoS(),
+    JOINT_STATES_TOPIC, 10,
     std::bind(&ROSConWindow::callbackJointState, this, std::placeholders::_1));
   // TODO register all service/action clients
   observe_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
@@ -141,11 +144,21 @@ ROSConWindow::ROSConWindow(QWidget * parent)
 }
 
 void ROSConWindow::callbackJointState(
-  const sensor_msgs::msg::JointState::ConstSharedPtr state)
+  const sensor_msgs::msg::JointState::SharedPtr state)
 {
   std::vector<double> zero_vector(6, 0);
-  if (state->name.size() > 0 && state->position != zero_vector) {
-    latest_joint_state_ = *state;
+  if (state->name.size() > 0) {
+    double sum_joints;
+    for (int i = 0; i < state->position.size(); i++) {
+      sum_joints += std::abs(state->position.at(i));
+    }
+    if (sum_joints > 0.00) {
+      latest_joint_state_ = *state;
+    } else {
+      RCLCPP_WARN(node_->get_logger(), "/joint_states sum to zero");
+    }
+  } else {
+    RCLCPP_WARN(node_->get_logger(), "/joint_states contains no joint names");
   }
 }
 
@@ -294,9 +307,13 @@ void ROSConWindow::scan()
   trajectory_msgs::msg::JointTrajectoryPoint point0;
   point0.time_from_start = rclcpp::Duration::from_seconds(0.0);     // start asap
   point0.positions.resize(joint_names.size());
-  if (latest_joint_state_.name.size() > 0) {
-    point0.positions = latest_joint_state_.position;
+
+  while (latest_joint_state_.name.size() < 1) {
+    rclcpp::sleep_for(std::chrono::seconds(1));
+    RCLCPP_INFO(node_->get_logger(), "Waiting for /joint_states");
   }
+
+  point0.positions = latest_joint_state_.position;
   point0.velocities = zero_velocity;
 
   trajectory_msgs::msg::JointTrajectoryPoint point1;

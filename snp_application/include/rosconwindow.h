@@ -82,7 +82,7 @@ private:
   snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
   trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
 
-  void callbackJointState(const sensor_msgs::msg::JointState::ConstSharedPtr state);
+  void callbackJointState(const sensor_msgs::msg::JointState::SharedPtr state);
 
   void update_calibration_requirement();
   void observe();
