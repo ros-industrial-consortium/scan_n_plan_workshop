@@ -19,57 +19,6 @@ bool common_goal_accepted = false;
 rclcpp_action::ResultCode common_resultcode = rclcpp_action::ResultCode::UNKNOWN;
 int common_action_result_code = FJT_Result::SUCCESSFUL;
 
-void common_goal_response(
-  std::shared_future<rclcpp_action::ClientGoalHandle<FJT>::SharedPtr> future)
-{
-  auto goal_handle = future.get();
-  if (!goal_handle) {
-    common_goal_accepted = false;
-    printf("Goal rejected\n");
-  } else {
-    common_goal_accepted = true;
-    printf("Goal accepted\n");
-  }
-}
-
-void common_result_response(
-  const rclcpp_action::ClientGoalHandle<FJT>::WrappedResult & result)
-{
-  printf("common_result_response time: %f\n", rclcpp::Clock().now().seconds());
-  common_resultcode = result.code;
-  common_action_result_code = result.result->error_code;
-  switch (result.code) {
-    case rclcpp_action::ResultCode::SUCCEEDED:
-      printf("SUCCEEDED result code\n");
-      break;
-    case rclcpp_action::ResultCode::ABORTED:
-      printf("Goal was aborted\n");
-      return;
-    case rclcpp_action::ResultCode::CANCELED:
-      printf("Goal was canceled\n");
-      return;
-    default:
-      printf("Unknown result code\n");
-      return;
-  }
-}
-
-void common_feedback(
-  rclcpp_action::ClientGoalHandle<FJT>::SharedPtr,
-  const std::shared_ptr<const FJT::Feedback> feedback)
-{
-//  cout << "feedback->desired.positions :";
-//  for (auto & x : feedback->desired.positions) {
-//    cout << x << "\t";
-//  }
-//  cout << endl;
-//  cout << "feedback->desired.velocities :";
-//  for (auto & x : feedback->desired.velocities) {
-//    cout << x << "\t";
-//  }
-//  cout << endl;
-}
-
 class MotionExecNode : public rclcpp::Node
 {
 public:
@@ -162,9 +111,6 @@ private:
       control_msgs::action::FollowJointTrajectory::Goal goal_msg;
 
       rclcpp_action::Client<FJT>::SendGoalOptions opt;
-//      opt.goal_response_callback = bind(common_goal_response, std::placeholders::_1);
-//      opt.result_callback = bind(common_result_response, std::placeholders::_1);
-//      opt.feedback_callback = bind(common_feedback, std::placeholders::_1, std::placeholders::_2);
 
       goal_msg.trajectory = empRequest->motion_plan;
 

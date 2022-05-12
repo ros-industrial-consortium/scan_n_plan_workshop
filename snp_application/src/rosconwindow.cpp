@@ -76,12 +76,9 @@ ROSConWindow::ROSConWindow(QWidget * parent)
 : QMainWindow(parent),
   ui_(new Ui::ROSConWindow),
   node_(rclcpp::Node::make_shared("roscon_app_node")),
-  past_calibration_(false),
-  new_joint_state_(false)
+  past_calibration_(false)
 {
   ui_->setupUi(this);
-
-  cb_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
   connect(
     ui_->calibration_group_box, &QGroupBox::clicked, this,
@@ -157,8 +154,6 @@ void ROSConWindow::callbackJointState(
     }
     if (sum_joints > 0.00) {
       latest_joint_state_ = *state;
-      joint_state_time_ = node_->get_clock()->now();
-      new_joint_state_ = true;
     } else {
       RCLCPP_WARN(node_->get_logger(), "/joint_states sum to zero");
     }

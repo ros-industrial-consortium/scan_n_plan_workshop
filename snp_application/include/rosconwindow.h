@@ -39,12 +39,8 @@ private:
   Ui::ROSConWindow * ui_;
   rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
-  rclcpp::CallbackGroup::SharedPtr cb_group_;
 
   sensor_msgs::msg::JointState latest_joint_state_;
-  bool new_joint_state_;
-
-  rclcpp::Time joint_state_time_;
 
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
