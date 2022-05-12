@@ -17,6 +17,7 @@ find_package(std_srvs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(snp_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 add_executable(${PROJECT_NAME}_simulator_node src/execution_simulator_node.cpp)
 ament_target_dependencies(
@@ -34,7 +35,8 @@ ament_target_dependencies(
   std_srvs
   rclcpp_action
   control_msgs
-  snp_msgs)
+  snp_msgs
+  sensor_msgs)
 
 install(TARGETS ${PROJECT_NAME}_simulator_node ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
 

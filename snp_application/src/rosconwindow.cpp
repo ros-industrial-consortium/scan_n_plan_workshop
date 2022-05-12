@@ -76,9 +76,12 @@ ROSConWindow::ROSConWindow(QWidget * parent)
 : QMainWindow(parent),
   ui_(new Ui::ROSConWindow),
   node_(rclcpp::Node::make_shared("roscon_app_node")),
-  past_calibration_(false)
+  past_calibration_(false),
+  new_joint_state_(false)
 {
   ui_->setupUi(this);
+
+  cb_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
   connect(
     ui_->calibration_group_box, &QGroupBox::clicked, this,
@@ -113,7 +116,7 @@ ROSConWindow::ROSConWindow(QWidget * parent)
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
   joint_state_sub_ = node_->create_subscription<sensor_msgs::msg::JointState>(
-    JOINT_STATES_TOPIC, 10,
+    JOINT_STATES_TOPIC, 1,
     std::bind(&ROSConWindow::callbackJointState, this, std::placeholders::_1));
   // TODO register all service/action clients
   observe_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
@@ -154,6 +157,8 @@ void ROSConWindow::callbackJointState(
     }
     if (sum_joints > 0.00) {
       latest_joint_state_ = *state;
+      joint_state_time_ = node_->get_clock()->now();
+      new_joint_state_ = true;
     } else {
       RCLCPP_WARN(node_->get_logger(), "/joint_states sum to zero");
     }
@@ -307,23 +312,20 @@ void ROSConWindow::scan()
   trajectory_msgs::msg::JointTrajectoryPoint point0;
   point0.time_from_start = rclcpp::Duration::from_seconds(0.0);     // start asap
   point0.positions.resize(joint_names.size());
+  point0.positions = latest_joint_state_.position;
 
-  while (latest_joint_state_.name.size() < 1) {
-    rclcpp::sleep_for(std::chrono::seconds(1));
-    RCLCPP_INFO(node_->get_logger(), "Waiting for /joint_states");
-  }
 
   point0.positions = latest_joint_state_.position;
   point0.velocities = zero_velocity;
 
   trajectory_msgs::msg::JointTrajectoryPoint point1;
-  point1.time_from_start = rclcpp::Duration::from_seconds(15.0);
+  point1.time_from_start = rclcpp::Duration::from_seconds(10.0);
   point1.positions = point0.positions;
   point1.positions[0] = 0.0;
   point1.positions[1] = 0.0;
   point1.positions[2] = 1.57;
   point1.positions[3] = 0.0;
-  point1.positions[4] = -1.57;
+  point1.positions[4] = 0.0;
   point1.positions[5] = 0.0;
   point1.velocities = zero_velocity;
 
@@ -417,6 +419,7 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
     STATES.at(SCAN_EXECUTION_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
+  rclcpp::sleep_for(std::chrono::seconds(1));
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
 
@@ -437,35 +440,44 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   trajectory_msgs::msg::JointTrajectoryPoint point0;
   point0.time_from_start = rclcpp::Duration::from_seconds(0.0);     // start asap
   point0.positions.resize(joint_names.size());
-  while (latest_joint_state_.name.size() == 0) {
-    rclcpp::sleep_for(std::chrono::seconds(1));
-    RCLCPP_WARN(node_->get_logger(), "Joint state contains zero joint names");
-  }
   point0.positions = latest_joint_state_.position;
   point0.velocities = zero_velocity;
 
   trajectory_msgs::msg::JointTrajectoryPoint point2;
   point2.time_from_start = rclcpp::Duration::from_seconds(5.0);
-  point2.positions = point0.positions;
-  point2.positions[5] += 0.349066;
+  std::vector<double> position2{-0.38590186834335327, 0.10702726989984512, 1.4005964994430542,
+    0.8829776048660278, 0.4871823787689209, -1.1761752367019653};
+  point2.positions = position2;
   point2.velocities = zero_velocity;
 
   trajectory_msgs::msg::JointTrajectoryPoint point3;
   point3.time_from_start = rclcpp::Duration::from_seconds(10.0);
-  point3.positions = point0.positions;
-  point3.positions[5] -= 0.349066;
+  std::vector<double> position3{-0.28131818771362305, 0.3714495003223419, 1.7587605714797974,
+    0.8751949667930603, 0.3490022122859955, -1.1937779188156128};
+  point3.positions = position3;
   point3.velocities = zero_velocity;
 
   trajectory_msgs::msg::JointTrajectoryPoint point4;
   point4.time_from_start = rclcpp::Duration::from_seconds(15.0);
-  point4.positions = point0.positions;
+  std::vector<double> position4{0.1512664258480072, 0.4333032965660095, 1.5207479000091553,
+    -0.2553083002567291, 0.5397855043411255, 0.6921404600143433};
+  point4.positions = position4;
   point4.velocities = zero_velocity;
+
+  trajectory_msgs::msg::JointTrajectoryPoint point5;
+  point5.time_from_start = rclcpp::Duration::from_seconds(20.0);
+  std::vector<double> position5{0.2679699957370758, 0.04924391210079193, 0.9602519869804382,
+    -0.3716280162334442, 0.7377908825874329, 0.7576895356178284};
+  point5.positions = position5;
+  point5.velocities = zero_velocity;
+
 
   std::cout << "pushing points" << std::endl;
   points.push_back(point0);
   points.push_back(point2);
   points.push_back(point3);
   points.push_back(point4);
+  points.push_back(point5);
 
   RCLCPP_INFO_STREAM(
     node_->get_logger(),
@@ -551,11 +563,56 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
+  rclcpp::sleep_for(std::chrono::seconds(1));
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  // TODO: fill out trajectory
-  //  request->motion_plan = ... ;
+  trajectory_msgs::msg::JointTrajectory scan_traj;
+  std::vector<std::string> joint_names = {
+    "joint_1_s",
+    "joint_2_l",
+    "joint_3_u",
+    "joint_4_r",
+    "joint_5_b",
+    "joint_6_t",
+  };
+
+  std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
+
+  std::vector<double> zero_velocity(6, 0);
+
+  trajectory_msgs::msg::JointTrajectoryPoint point0;
+  point0.time_from_start = rclcpp::Duration::from_seconds(0.0);     // start asap
+  point0.positions.resize(joint_names.size());
+  point0.positions = latest_joint_state_.position;
+
+
+  point0.positions = latest_joint_state_.position;
+  point0.velocities = zero_velocity;
+
+  trajectory_msgs::msg::JointTrajectoryPoint point1;
+  point1.time_from_start = rclcpp::Duration::from_seconds(10.0);
+  point1.positions = point0.positions;
+  point1.positions[0] = 0.0;
+  point1.positions[1] = 0.0;
+  point1.positions[2] = 1.57;
+  point1.positions[3] = 0.0;
+  point1.positions[4] = 0.0;
+  point1.positions[5] = 0.0;
+  point1.velocities = zero_velocity;
+
+  std::cout << "pushing points" << std::endl;
+  points.push_back(point0);
+  points.push_back(point1);
+
+  RCLCPP_INFO_STREAM(
+    node_->get_logger(),
+    "Sending a trajectory with " << points.size() << " points");
+
+  scan_traj.joint_names = joint_names;
+  scan_traj.points = points;
+
   request->use_tool = false;
+  request->motion_plan = scan_traj;
 
   auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);

@@ -3,11 +3,13 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
-
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <mutex>
 
 static const std::string FJT_ACTION = "joint_trajectory_action";
 static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
 static const std::string ENABLE_SERVICE = "robot_enable";
+static const std::string JOINT_STATES_TOPIC = "joint_states";
 
 using FJT = control_msgs::action::FollowJointTrajectory;
 using FJT_Result = control_msgs::action::FollowJointTrajectory_Result;
@@ -87,15 +89,47 @@ public:
         std::placeholders::_2),
       rmw_qos_profile_services_default, cb_group_);
 
+    this->joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+      JOINT_STATES_TOPIC, 1,
+      std::bind(&MotionExecNode::callbackJointState, this, std::placeholders::_1));
+
+
     RCLCPP_INFO(this->get_logger(), "Motion execution node started");
   }
 
 private:
   rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr fjt_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr enable_client_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
+  sensor_msgs::msg::JointState latest_joint_state_;
+  rclcpp::Time joint_state_time_;
 
   rclcpp::Service<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr server_;
   rclcpp::CallbackGroup::SharedPtr cb_group_;
+
+  std::mutex mtx;
+
+  void callbackJointState(
+    const sensor_msgs::msg::JointState::SharedPtr state)
+  {
+    mtx.lock();
+    std::vector<double> zero_vector(6, 0);
+    if (state->name.size() > 0) {
+      double sum_joints;
+      for (int i = 0; i < state->position.size(); i++) {
+        sum_joints += std::abs(state->position.at(i));
+      }
+      if (sum_joints > 0.00) {
+        latest_joint_state_ = *state;
+        joint_state_time_ = this->get_clock()->now();
+      } else {
+        RCLCPP_WARN(this->get_logger(), "/joint_states sum to zero");
+      }
+    } else {
+      RCLCPP_WARN(this->get_logger(), "/joint_states contains no joint names");
+    }
+    mtx.unlock();
+  }
 
   void executeMotionPlan(
     const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
@@ -133,6 +167,18 @@ private:
 //      opt.feedback_callback = bind(common_feedback, std::placeholders::_1, std::placeholders::_2);
 
       goal_msg.trajectory = empRequest->motion_plan;
+
+      {
+        mtx.lock();
+        rclcpp::Time current_time = this->get_clock()->now();
+        rclcpp::Duration joint_state_age = current_time - joint_state_time_;
+        rclcpp::Duration joint_state_age_thresh(0, 5e7);
+
+        if (joint_state_age < joint_state_age_thresh) {
+          goal_msg.trajectory.points.at(0).positions = latest_joint_state_.position;
+        }
+        mtx.unlock();
+      }
 
       RCLCPP_INFO(
         this->get_logger(), "going to send goal with %d points", goal_msg.trajectory.points.size());

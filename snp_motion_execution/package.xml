@@ -11,6 +11,7 @@
 
   <exec_depend>snp_msgs</exec_depend>
   <depend>control_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
