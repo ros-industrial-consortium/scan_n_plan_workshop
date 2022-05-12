@@ -63,7 +63,7 @@
       source install/setup.bash
       ros2 run ros1_bridge dynamic_bridge --bridge-all-1to2-topics
         ```
-1. Start the ROS1 launch file
+1. Start the ROS2 launch file
     - ```bash
       ros2 launch snp_bringup_ros2 start.launch.xml sim_robot:=false
         ```
