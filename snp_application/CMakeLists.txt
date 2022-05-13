@@ -36,7 +36,6 @@ find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(trajectory_msgs REQUIRED)
-find_package(tesseract_ros_examples REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
