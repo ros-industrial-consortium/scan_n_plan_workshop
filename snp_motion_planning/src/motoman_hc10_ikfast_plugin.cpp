@@ -18,6 +18,7 @@
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
+#include <boost/core/demangle.hpp>
 #include <Eigen/Geometry>
 #include <tesseract_kinematics/ikfast/impl/ikfast_inv_kin.hpp>
 #include <tesseract_kinematics/core/kinematics_plugin_factory.h>
@@ -36,7 +37,9 @@ T get(const YAML::Node& node, const std::string& key)
   }
   catch (const YAML::Exception&)
   {
-    throw std::runtime_error("Failed to extract '" + key + "' from configuration");
+    std::stringstream ss;
+    ss << "Failed to extract '" << key << "' from configuration with type '" << boost::core::demangle(typeid(T).name());
+    throw std::runtime_error(ss.str());
   }
 }
 
@@ -51,6 +54,7 @@ public:
   {
     auto base_link = get<std::string>(config, "base_link");
     auto tip_link = get<std::string>(config, "tip_link");
+    std::size_t n_joints = get<std::size_t>(config, "n_joints");
 
     // Get the free joint states
     std::vector<std::vector<double>> free_joint_states;
@@ -65,16 +69,15 @@ public:
 
     // Get the active joints in between the base link and tip link
     tesseract_scene_graph::ShortestPath path = scene_graph.getShortestPath(base_link, tip_link);
-    if (path.active_joints.size() != 6)
+    if (path.active_joints.size() != n_joints)
     {
       std::stringstream ss;
       ss << "Kinematic chain between '" << base_link << "' and '" << tip_link << "' contains "
-         << path.active_joints.size() << " joints, but only 6 can be used";
+         << path.active_joints.size() << " joints, but only " << n_joints << " can be used";
       throw std::runtime_error(ss.str());
     }
 
-    return std::make_unique<IKFastInvKin>(base_link, tip_link, path.active_joints, IKFAST_INV_KIN_CHAIN_SOLVER_NAME,
-                                          free_joint_states);
+    return std::make_unique<IKFastInvKin>(base_link, tip_link, path.active_joints, solver_name, free_joint_states);
   }
 };
 
