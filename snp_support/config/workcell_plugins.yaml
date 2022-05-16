@@ -16,7 +16,6 @@ kinematic_plugins:
             base_link: base_link
             tip_link: tool0
             n_joints: 6
-            free_joint_states: []
 contact_manager_plugins:
   search_paths:
     - /usr/local/lib
