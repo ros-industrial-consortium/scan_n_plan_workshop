@@ -5,7 +5,7 @@
 - git:
     local-name: tesseract
     uri: https://github.com/ros-industrial-consortium/tesseract.git
-    version: 0.7.0
+    version: 0.7.4
 - git:
     local-name: trajopt
     uri: https://github.com/ros-industrial-consortium/trajopt_ros.git
@@ -13,7 +13,7 @@
 - git:
     local-name: tesseract_planning
     uri: https://github.com/ros-industrial-consortium/tesseract_planning.git
-    version: 0.7.0
+    version: 0.7.3
 - git:
     local-name: descartes_light
     uri: https://github.com/swri-robotics/descartes_light.git
