@@ -64,9 +64,9 @@ class PlanningServer
 {
 public:
   PlanningServer(rclcpp::Node::SharedPtr node)
-    : node_(node)
-    , env_(std::make_shared<tesseract_environment::Environment>())
+    : env_(std::make_shared<tesseract_environment::Environment>())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
+    , node_(node)
   {
     verbose_ = get<bool>(node_, "verbose");
     {
