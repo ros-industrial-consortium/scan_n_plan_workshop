@@ -96,7 +96,7 @@ public:
 
       for (std::size_t i = 0; i < path.active_joints.size(); ++i)
       {
-        if(free_joint_states_map.find(i) == free_joint_states_map.end())
+        if (free_joint_states_map.find(i) == free_joint_states_map.end())
         {
           const auto& joint = scene_graph.getJoint(path.active_joints.at(i));
           if (joint->limits->upper - joint->limits->lower > 2 * M_PI)
