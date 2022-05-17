@@ -269,11 +269,12 @@ void ROSConWindow::reset_calibration()
 
 void ROSConWindow::scan()
 {
-  //Get Scan Trajectory from YAML
-  std::string scan_traj_filename = ament_index_cpp::get_package_share_directory("snp_support") + "/config/scan_traj.yaml";
+  // Get Scan Trajectory from YAML
+  std::string scan_traj_filename = ament_index_cpp::get_package_share_directory("snp_support") + "/config/"
+                                                                                                 "scan_traj.yaml";
 
   // De-serialize the message
-  if(!message_serialization::deserialize(scan_traj_filename, scan_traj_))
+  if (!message_serialization::deserialize(scan_traj_filename, scan_traj_))
     return;
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
@@ -283,7 +284,7 @@ void ROSConWindow::scan()
   std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
 
   std::cout << "pushing points" << std::endl;
-  points.push_back(scan_traj_.points.at(0)); //first point in the trajectory is the home position
+  points.push_back(scan_traj_.points.at(0));  // first point in the trajectory is the home position
 
   RCLCPP_INFO_STREAM(node_->get_logger(), "Sending a trajectory with " << points.size() << " points");
 
@@ -378,9 +379,9 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
 
   std::cout << "pushing points" << std::endl;
-  for(int i = 1; i < scan_traj_.points.size(); i++)
+  for (int i = 1; i < scan_traj_.points.size(); i++)
   {
-    points.push_back(scan_traj_.points.at(i)); //all points except for the first one
+    points.push_back(scan_traj_.points.at(i));  // all points except for the first one
   }
 
   RCLCPP_INFO_STREAM(node_->get_logger(), "Sending a trajectory with " << points.size() << " points");
@@ -472,7 +473,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
 
   std::cout << "pushing points" << std::endl;
-  points.push_back(scan_traj_.points.at(0)); //first point in the trajectory is the home position
+  points.push_back(scan_traj_.points.at(0));  // first point in the trajectory is the home position
 
   RCLCPP_INFO_STREAM(node_->get_logger(), "Sending a trajectory with " << points.size() << " points");
 

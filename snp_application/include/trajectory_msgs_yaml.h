@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2018 Southwest Research Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,7 @@
 
 namespace YAML
 {
-
-template<>
+template <>
 struct convert<trajectory_msgs::msg::JointTrajectoryPoint>
 {
   static Node encode(const trajectory_msgs::msg::JointTrajectoryPoint& rhs)
@@ -40,12 +39,13 @@ struct convert<trajectory_msgs::msg::JointTrajectoryPoint>
 
   static bool decode(const Node& node, trajectory_msgs::msg::JointTrajectoryPoint& rhs)
   {
-    if (node.size() != 5) return false;
+    if (node.size() != 5)
+      return false;
 
-    rhs.positions = node["positions"].as<std::vector<double> >();
-    rhs.velocities = node["velocities"].as<std::vector<double> >();
-    rhs.accelerations = node["accelerations"].as<std::vector<double> >();
-    rhs.effort = node["effort"].as<std::vector<double> >();
+    rhs.positions = node["positions"].as<std::vector<double>>();
+    rhs.velocities = node["velocities"].as<std::vector<double>>();
+    rhs.accelerations = node["accelerations"].as<std::vector<double>>();
+    rhs.effort = node["effort"].as<std::vector<double>>();
     rhs.time_from_start.sec = node["time_from_start"]["sec"].as<uint32_t>();
     rhs.time_from_start.nanosec = node["time_from_start"]["nanosec"].as<uint32_t>();
 
@@ -53,7 +53,7 @@ struct convert<trajectory_msgs::msg::JointTrajectoryPoint>
   }
 };
 
-template<>
+template <>
 struct convert<trajectory_msgs::msg::JointTrajectory>
 {
   static Node encode(const trajectory_msgs::msg::JointTrajectory& rhs)
@@ -67,16 +67,17 @@ struct convert<trajectory_msgs::msg::JointTrajectory>
 
   static bool decode(const Node& node, trajectory_msgs::msg::JointTrajectory& rhs)
   {
-    if (node.size() != 3) return false;
-  
+    if (node.size() != 3)
+      return false;
+
     rhs.header = node["header"].as<std_msgs::msg::Header>();
     rhs.joint_names = node["joint_names"].as<std::vector<std::string>>();
     rhs.points = node["points"].as<std::vector<trajectory_msgs::msg::JointTrajectoryPoint>>();
-  
+
     return true;
   }
 };
 
-}
+}  // namespace YAML
 
-#endif // MESSAGE_SERIALIZATION_TRAJECTORY_MSGS_YAML
+#endif  // MESSAGE_SERIALIZATION_TRAJECTORY_MSGS_YAML

@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2018 Southwest Research Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,7 @@
 
 namespace YAML
 {
-
-template<>
+template <>
 struct convert<builtin_interfaces::msg::Time>
 {
   static Node encode(const builtin_interfaces::msg::Time& rhs)
@@ -36,7 +35,8 @@ struct convert<builtin_interfaces::msg::Time>
 
   static bool decode(const Node& node, builtin_interfaces::msg::Time& rhs)
   {
-    if (node.size() != 2) return false;
+    if (node.size() != 2)
+      return false;
 
     rhs.sec = node["sec"].as<uint32_t>();
     rhs.nanosec = node["nanosec"].as<uint32_t>();
@@ -45,7 +45,7 @@ struct convert<builtin_interfaces::msg::Time>
   }
 };
 
-template<>
+template <>
 struct convert<std_msgs::msg::Header>
 {
   static Node encode(const std_msgs::msg::Header& rhs)
@@ -58,7 +58,8 @@ struct convert<std_msgs::msg::Header>
 
   static bool decode(const Node& node, std_msgs::msg::Header& rhs)
   {
-    if (node.size() != 2) return false;
+    if (node.size() != 2)
+      return false;
 
     rhs.stamp = node["stamp"].as<builtin_interfaces::msg::Time>();
     rhs.frame_id = node["frame_id"].as<std::string>();
@@ -69,6 +70,6 @@ struct convert<std_msgs::msg::Header>
 
 // TODO: Duration
 
-}
+}  // namespace YAML
 
-#endif // MESSAGE_SERIALIZATION_STD_MSGS_YAML
+#endif  // MESSAGE_SERIALIZATION_STD_MSGS_YAML

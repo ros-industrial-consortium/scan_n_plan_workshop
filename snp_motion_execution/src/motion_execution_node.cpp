@@ -80,7 +80,8 @@ private:
         throw std::runtime_error("Action server not available after waiting");
       }
 
-      // Sleep to ensure that robot_enable actually did everything it had to. This is probably only necessary the first time that servos are enabled
+      // Sleep to ensure that robot_enable actually did everything it had to. This is probably only necessary the first
+      // time that servos are enabled
       rclcpp::sleep_for(std::chrono::seconds(1));
 
       // Send motion trajectory
@@ -91,7 +92,7 @@ private:
       {
         rclcpp::Time current_time = this->get_clock()->now();
         rclcpp::Duration joint_state_age = current_time - latest_joint_state_.header.stamp;
-        //set the threshold for how old a joint_state message can be to still be used (seconds, nanoseconds)
+        // set the threshold for how old a joint_state message can be to still be used (seconds, nanoseconds)
         rclcpp::Duration joint_state_age_thresh(0, 5e7);
 
         if (joint_state_age < joint_state_age_thresh)
