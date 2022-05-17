@@ -6,7 +6,7 @@
   <arg name="verbose" default="False"/>
 
   <!-- URDF, Rviz -->
-  <include file="$(find-pkg-share snp_support)/launch/test.launch.py">
+  <include file="$(find-pkg-share snp_support)/launch/test.launch.xml">
     <arg name="rviz_config" value="$(find-pkg-share snp_bringup_ros2)/config/app.rviz"/>
   </include>
 
@@ -35,7 +35,7 @@
   <node pkg="snp_tpp" exec="snp_tpp_node"/>
 
   <!-- Launch Motion Planning Node -->
-  <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.py">
+  <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.xml">
     <arg name="verbose" value="$(var verbose)"/>
   </include>
 
