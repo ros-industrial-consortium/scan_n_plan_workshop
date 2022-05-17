@@ -1,18 +1,12 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="robot_description" default="$(find-pkg-share snp_support)/urdf/workcell.xacro"/>
-  <arg name="robot_description_semantic" default="$(find-pkg-share snp_support)/config/workcell.srdf"/>
+  <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_support)/urdf/workcell.xacro')"/>
+  <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_support)/config/workcell.srdf')"/>
   <arg name="verbose" default="False"/>
 
-  <!-- Load universal robot description format (URDF) -->
-  <let name="_robot_description" value="$(command 'xacro $(var robot_description)')" />
-
-  <!-- The semantic description that corresponds to the URDF -->
-  <let name="_robot_description_semantic" value="$(command 'cat $(var robot_description_semantic)')" />
-
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node">
-    <param name="robot_description" value="$(var _robot_description)"/>
-    <param name="robot_description_semantic" value="$(var _robot_description_semantic)"/>
+    <param name="robot_description" value="$(var robot_description)"/>
+    <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <param name="verbose" value="$(var verbose)"/>
   </node>
 
