@@ -40,6 +40,8 @@ private:
   rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
 
+  trajectory_msgs::msg::JointTrajectory scan_traj_;
+
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
