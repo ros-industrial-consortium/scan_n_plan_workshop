@@ -3,6 +3,8 @@
   <xacro:include filename="$(find motoman_hc10_support)/urdf/hc10dt_macro.xacro" />
   <xacro:motoman_hc10dt prefix=""/>
 
+  <xacro:property name="dt_flange_width" value="0.040"/>
+
   <!-- Add World -->
   <material name="light_gray">
     <color rgba="0.7 0.7 0.7 1"/>
@@ -61,6 +63,14 @@
     <parent link="table"/>
     <child link="base_link"/>
     <origin xyz="-0.61 0 0.723" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Create a frame representing the robot tool flange (behind the teach tool and nominal tool0 frame) for IKFast -->
+  <link name="tool_flange"/>
+  <joint name="tool0_to_tool_flange" type="fixed">
+    <parent link="tool0"/>
+    <child link="tool_flange"/>
+    <origin xyz="0.0 0.0 ${-dt_flange_width}" rpy="0 0 0"/>
   </joint>
 
   <!-- Add End Effector Components -->
@@ -145,9 +155,9 @@
   <!-- Add TCP -->
   <link name="sand_tcp"/>
   <joint name="sand_tcp_joint" type="fixed">
-    <parent link="tool0"/>
+    <parent link="tool_flange"/>
     <child link="sand_tcp"/>
-    <origin xyz="-0.23261 0 0.08259" rpy="${radians(-90)} 0 ${radians(90)}"/>
+    <origin xyz="-0.23261 0 ${0.08259 + dt_flange_width}" rpy="${radians(-90)} 0 ${radians(90)}"/>
   </joint>
 
 </robot>
