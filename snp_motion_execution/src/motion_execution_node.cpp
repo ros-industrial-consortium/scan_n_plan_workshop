@@ -105,14 +105,8 @@ private:
         }
       }
 
-      RCLCPP_INFO(this->get_logger(), "going to send goal with %d points", goal_msg.trajectory.points.size());
-      RCLCPP_INFO(this->get_logger(), "multidof joint names size = %d", goal_msg.trajectory.joint_names.size());
-
       auto goal_handle_future = fjt_client_->async_send_goal(goal_msg);
-      RCLCPP_INFO(this->get_logger(), "Sending");
-
       goal_handle_future.wait();
-      RCLCPP_INFO(this->get_logger(), "Got future");
 
       using FJTGoalHandle = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>;
       FJTGoalHandle::SharedPtr goal_handle = goal_handle_future.get();
@@ -121,6 +115,7 @@ private:
       {
         case rclcpp_action::GoalStatus::STATUS_ACCEPTED:
         case rclcpp_action::GoalStatus::STATUS_SUCCEEDED:
+        case rclcpp_action::GoalStatus::STATUS_EXECUTING:
           break;
         default:
           throw std::runtime_error("Follow joint trajectory action goal was not accepted (code " +
