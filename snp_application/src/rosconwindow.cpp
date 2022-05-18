@@ -562,6 +562,7 @@ void ROSConWindow::planMotion()
     request->motion_group = motion_group_;
     request->tcp_frame = tcp_frame_;
     request->tool_paths = *tool_paths_;
+    request->mesh_filename = mesh_file_;
 
     // Call the service
     motion_planning_client_->async_send_request(
