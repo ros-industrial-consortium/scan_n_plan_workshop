@@ -6,14 +6,7 @@
 #include <QTextStream>
 #include <rclcpp_action/create_client.hpp>
 #include <tf2_eigen/tf2_eigen.h>
-#include <ament_index_cpp/get_package_share_directory.hpp>
-
-#include <trajectory_msgs/msg/joint_trajectory.h>
-
-// Serialization headers
 #include "serialize.h"
-
-// Datatype-specific serialization header
 #include "trajectory_msgs_yaml.h"
 
 static const std::string TOOL_PATH_TOPIC = "toolpath";
@@ -56,6 +49,7 @@ static const std::string REF_FRAME_PARAM = "reference_frame";
 static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
+static const std::string SCAN_TRAJ_FILE_PARAM = "scan_trajectory_file";
 
 namespace  // anonymous restricts visibility to this file
 {
@@ -78,6 +72,13 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   , ui_(new Ui::ROSConWindow)
   , node_(rclcpp::Node::make_shared("roscon_app_node"))
   , past_calibration_(false)
+  , mesh_file_(declareAndGet<std::string>(*node_, MESH_FILE_PARAM))
+  , motion_group_(declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM))
+  , reference_frame_(declareAndGet<std::string>(*node_, REF_FRAME_PARAM))
+  , tcp_frame_(declareAndGet<std::string>(*node_, TCP_FRAME_PARAM))
+  , camera_frame_(declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM))
+  , scan_traj_(message_serialization::deserialize<trajectory_msgs::msg::JointTrajectory>(
+        declareAndGet<std::string>(*node_, SCAN_TRAJ_FILE_PARAM)))
 {
   ui_->setupUi(this);
 
@@ -116,13 +117,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
   motion_planning_client_ = node_->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
-
-  // Get values from parameters
-  mesh_file_ = declareAndGet<std::string>(*node_, MESH_FILE_PARAM);
-  motion_group_ = declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM);
-  reference_frame_ = declareAndGet<std::string>(*node_, REF_FRAME_PARAM);
-  tcp_frame_ = declareAndGet<std::string>(*node_, TCP_FRAME_PARAM);
-  camera_frame_ = declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM);
 }
 
 void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
@@ -269,31 +263,6 @@ void ROSConWindow::reset_calibration()
 
 void ROSConWindow::scan()
 {
-  // Get Scan Trajectory from YAML
-  std::string scan_traj_filename = ament_index_cpp::get_package_share_directory("snp_support") + "/config/"
-                                                                                                 "scan_traj.yaml";
-
-  // De-serialize the message
-  if (!message_serialization::deserialize(scan_traj_filename, scan_traj_))
-    return;
-
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-
-  trajectory_msgs::msg::JointTrajectory traj;
-
-  std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
-
-  std::cout << "pushing points" << std::endl;
-  points.push_back(scan_traj_.points.at(0));  // first point in the trajectory is the home position
-
-  RCLCPP_INFO_STREAM(node_->get_logger(), "Sending a trajectory with " << points.size() << " points");
-
-  traj.joint_names = scan_traj_.joint_names;
-  traj.points = points;
-
-  request->use_tool = false;
-  request->motion_plan = traj;
-
   if (!motion_execution_client_->service_is_ready())
   {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
@@ -303,6 +272,13 @@ void ROSConWindow::scan()
   }
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan approach motion goal");
+
+  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+  request->use_tool = false;
+  request->motion_plan.header = scan_traj_.header;
+  request->motion_plan.joint_names = scan_traj_.joint_names;
+  request->motion_plan.points.push_back(scan_traj_.points.at(0));
+  request->motion_plan.points.push_back(scan_traj_.points.at(1));
 
   auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -372,25 +348,10 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-
-  // Yaml-loaded scan trajectory points
-  trajectory_msgs::msg::JointTrajectory traj;
-
-  std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
-
-  std::cout << "pushing points" << std::endl;
-  for (int i = 1; i < scan_traj_.points.size(); i++)
-  {
-    points.push_back(scan_traj_.points.at(i));  // all points except for the first one
-  }
-
-  RCLCPP_INFO_STREAM(node_->get_logger(), "Sending a trajectory with " << points.size() << " points");
-
-  traj.joint_names = scan_traj_.joint_names;
-  traj.points = points;
-
   request->use_tool = false;
-  request->motion_plan = traj;
+  request->motion_plan.header = scan_traj_.header;
+  request->motion_plan.joint_names = scan_traj_.joint_names;
+  std::copy(scan_traj_.points.begin() + 1, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points));
 
   auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -464,24 +425,13 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
                     STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
-  rclcpp::sleep_for(std::chrono::seconds(1));
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-
-  trajectory_msgs::msg::JointTrajectory traj;
-
-  std::vector<trajectory_msgs::msg::JointTrajectoryPoint> points;
-
-  std::cout << "pushing points" << std::endl;
-  points.push_back(scan_traj_.points.at(0));  // first point in the trajectory is the home position
-
-  RCLCPP_INFO_STREAM(node_->get_logger(), "Sending a trajectory with " << points.size() << " points");
-
-  traj.joint_names = scan_traj_.joint_names;
-  traj.points = points;
-
   request->use_tool = false;
-  request->motion_plan = traj;
+  request->motion_plan.header = scan_traj_.header;
+  request->motion_plan.joint_names = scan_traj_.joint_names;
+  request->motion_plan.points.push_back(scan_traj_.points.at(scan_traj_.points.size() - 1));
+  request->motion_plan.points.push_back(scan_traj_.points.at(0));
 
   auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
