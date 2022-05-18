@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MESSAGE_SERIALIZATION_STD_MSGS_YAML
-#define MESSAGE_SERIALIZATION_STD_MSGS_YAML
+#pragma once
 
 #include <std_msgs/msg/header.hpp>
 #include <yaml-cpp/yaml.h>
@@ -35,12 +34,8 @@ struct convert<builtin_interfaces::msg::Time>
 
   static bool decode(const Node& node, builtin_interfaces::msg::Time& rhs)
   {
-    if (node.size() != 2)
-      return false;
-
     rhs.sec = node["sec"].as<uint32_t>();
     rhs.nanosec = node["nanosec"].as<uint32_t>();
-
     return true;
   }
 };
@@ -58,12 +53,8 @@ struct convert<std_msgs::msg::Header>
 
   static bool decode(const Node& node, std_msgs::msg::Header& rhs)
   {
-    if (node.size() != 2)
-      return false;
-
     rhs.stamp = node["stamp"].as<builtin_interfaces::msg::Time>();
     rhs.frame_id = node["frame_id"].as<std::string>();
-
     return true;
   }
 };
@@ -71,5 +62,3 @@ struct convert<std_msgs::msg::Header>
 // TODO: Duration
 
 }  // namespace YAML
-
-#endif  // MESSAGE_SERIALIZATION_STD_MSGS_YAML

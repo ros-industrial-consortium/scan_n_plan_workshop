@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MESSAGE_SERIALIZATION_TRAJECTORY_MSGS_YAML
-#define MESSAGE_SERIALIZATION_TRAJECTORY_MSGS_YAML
+#pragma once
 
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include "std_msgs_yaml.h"
@@ -33,22 +32,17 @@ struct convert<trajectory_msgs::msg::JointTrajectoryPoint>
     node["effort"] = rhs.effort;
     node["time_from_start"]["sec"] = rhs.time_from_start.sec;
     node["time_from_start"]["nanosec"] = rhs.time_from_start.nanosec;
-
     return node;
   }
 
   static bool decode(const Node& node, trajectory_msgs::msg::JointTrajectoryPoint& rhs)
   {
-    if (node.size() != 5)
-      return false;
-
     rhs.positions = node["positions"].as<std::vector<double>>();
     rhs.velocities = node["velocities"].as<std::vector<double>>();
     rhs.accelerations = node["accelerations"].as<std::vector<double>>();
     rhs.effort = node["effort"].as<std::vector<double>>();
     rhs.time_from_start.sec = node["time_from_start"]["sec"].as<uint32_t>();
     rhs.time_from_start.nanosec = node["time_from_start"]["nanosec"].as<uint32_t>();
-
     return true;
   }
 };
@@ -67,17 +61,11 @@ struct convert<trajectory_msgs::msg::JointTrajectory>
 
   static bool decode(const Node& node, trajectory_msgs::msg::JointTrajectory& rhs)
   {
-    if (node.size() != 3)
-      return false;
-
     rhs.header = node["header"].as<std_msgs::msg::Header>();
     rhs.joint_names = node["joint_names"].as<std::vector<std::string>>();
     rhs.points = node["points"].as<std::vector<trajectory_msgs::msg::JointTrajectoryPoint>>();
-
     return true;
   }
 };
 
 }  // namespace YAML
-
-#endif  // MESSAGE_SERIALIZATION_TRAJECTORY_MSGS_YAML
