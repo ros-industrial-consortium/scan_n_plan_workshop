@@ -40,6 +40,13 @@ private:
   rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
 
+  const std::string mesh_file_;
+  const std::string motion_group_;
+  const std::string reference_frame_;
+  const std::string tcp_frame_;
+  const std::string camera_frame_;
+  const trajectory_msgs::msg::JointTrajectory scan_traj_;
+
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
@@ -67,11 +74,6 @@ private:
   void onUpdateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
                       QPushButton* next_button, unsigned step);
 
-  std::string mesh_file_;
-  std::string motion_group_;
-  std::string reference_frame_;
-  std::string tcp_frame_;
-  std::string camera_frame_;
   snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
   trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
 

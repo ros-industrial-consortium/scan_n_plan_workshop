@@ -1,12 +1,19 @@
 #include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
-static const std::string FJT_ACTION = "follow_joint_trajectory";
+static const std::string FJT_ACTION = "joint_trajectory_action";
 static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
 static const std::string ENABLE_SERVICE = "robot_enable";
+static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
+
+using FJT = control_msgs::action::FollowJointTrajectory;
+using FJT_Result = control_msgs::action::FollowJointTrajectory_Result;
+using FJT_Goal = control_msgs::action::FollowJointTrajectory_Goal;
 
 class MotionExecNode : public rclcpp::Node
 {
@@ -23,15 +30,25 @@ public:
         std::bind(&MotionExecNode::executeMotionPlan, this, std::placeholders::_1, std::placeholders::_2),
         rmw_qos_profile_services_default, cb_group_);
 
+    this->joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+        JOINT_STATES_TOPIC, 1, std::bind(&MotionExecNode::callbackJointState, this, std::placeholders::_1));
+
     RCLCPP_INFO(this->get_logger(), "Motion execution node started");
   }
 
 private:
   rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr fjt_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr enable_client_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
+  sensor_msgs::msg::JointState latest_joint_state_;
 
   rclcpp::Service<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr server_;
   rclcpp::CallbackGroup::SharedPtr cb_group_;
+
+  void callbackJointState(const sensor_msgs::msg::JointState::SharedPtr state)
+  {
+    latest_joint_state_ = *state;
+  }
 
   void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
                          const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Response> empResult)
@@ -40,8 +57,11 @@ private:
     {
       // enable robot
       {
+        RCLCPP_INFO(this->get_logger(), "Enabling Robot");
         if (!enable_client_->service_is_ready())
+        {
           throw std::runtime_error("Robot enable server is not available");
+        }
 
         auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
         auto future = enable_client_->async_send_request(request);
@@ -49,27 +69,53 @@ private:
 
         std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
         if (!response->success)
+        {
           throw std::runtime_error("Failed to enable robot: '" + response->message + "'");
+        }
       }
 
       // Check that the server exists
       if (!fjt_client_->action_server_is_ready())
+      {
         throw std::runtime_error("Action server not available after waiting");
+      }
+
+      // Sleep to ensure that robot_enable actually did everything it had to. This is probably only necessary the first
+      // time that servos are enabled
+      rclcpp::sleep_for(std::chrono::seconds(1));
 
       // Send motion trajectory
-      control_msgs::action::FollowJointTrajectory::Goal fjt;
-      fjt.trajectory = empRequest->motion_plan;
-      auto fjt_accepted_future = fjt_client_->async_send_goal(fjt);
+      control_msgs::action::FollowJointTrajectory::Goal goal_msg;
 
-      // Wait for the goal to be accepted
-      fjt_accepted_future.wait();
+      goal_msg.trajectory = empRequest->motion_plan;
+
+      {
+        rclcpp::Time current_time = this->get_clock()->now();
+        rclcpp::Duration joint_state_age = current_time - latest_joint_state_.header.stamp;
+        // set the threshold for how old a joint_state message can be to still be used (seconds, nanoseconds)
+        rclcpp::Duration joint_state_age_thresh(0, 5e7);
+
+        if (joint_state_age < joint_state_age_thresh)
+        {
+          trajectory_msgs::msg::JointTrajectoryPoint start_point;
+          start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
+          start_point.positions = latest_joint_state_.position;
+          start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
+          goal_msg.trajectory.points.insert(goal_msg.trajectory.points.begin(), start_point);
+        }
+      }
+
+      auto goal_handle_future = fjt_client_->async_send_goal(goal_msg);
+      goal_handle_future.wait();
+
       using FJTGoalHandle = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>;
-      FJTGoalHandle::SharedPtr goal_handle = fjt_accepted_future.get();
+      FJTGoalHandle::SharedPtr goal_handle = goal_handle_future.get();
       uint8_t status = goal_handle->get_status();
       switch (status)
       {
         case rclcpp_action::GoalStatus::STATUS_ACCEPTED:
         case rclcpp_action::GoalStatus::STATUS_SUCCEEDED:
+        case rclcpp_action::GoalStatus::STATUS_EXECUTING:
           break;
         default:
           throw std::runtime_error("Follow joint trajectory action goal was not accepted (code " +
@@ -122,5 +168,6 @@ int main(int argc, char** argv)
 
   executor.spin();
   rclcpp::shutdown();
+
   return 0;
 }

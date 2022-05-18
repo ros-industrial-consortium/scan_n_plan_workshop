@@ -6,8 +6,9 @@
 #include <QTextStream>
 #include <rclcpp_action/create_client.hpp>
 #include <tf2_eigen/tf2_eigen.h>
+#include "serialize.h"
+#include "trajectory_msgs_yaml.h"
 
-static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
 static const std::string TOOL_PATH_TOPIC = "toolpath";
 static const std::string MESH_TOPIC = "scan_mesh";
 
@@ -48,6 +49,7 @@ static const std::string REF_FRAME_PARAM = "reference_frame";
 static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
+static const std::string SCAN_TRAJ_FILE_PARAM = "scan_trajectory_file";
 
 namespace  // anonymous restricts visibility to this file
 {
@@ -57,7 +59,9 @@ T declareAndGet(rclcpp::Node& node, const std::string& key)
   T val;
   node.declare_parameter(key);
   if (!node.get_parameter(key, val))
+  {
     throw std::runtime_error("Failed to get '" + key + "' parameter");
+  }
   return val;
 }
 
@@ -68,6 +72,13 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   , ui_(new Ui::ROSConWindow)
   , node_(rclcpp::Node::make_shared("roscon_app_node"))
   , past_calibration_(false)
+  , mesh_file_(declareAndGet<std::string>(*node_, MESH_FILE_PARAM))
+  , motion_group_(declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM))
+  , reference_frame_(declareAndGet<std::string>(*node_, REF_FRAME_PARAM))
+  , tcp_frame_(declareAndGet<std::string>(*node_, TCP_FRAME_PARAM))
+  , camera_frame_(declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM))
+  , scan_traj_(message_serialization::deserialize<trajectory_msgs::msg::JointTrajectory>(
+        declareAndGet<std::string>(*node_, SCAN_TRAJ_FILE_PARAM)))
 {
   ui_->setupUi(this);
 
@@ -90,7 +101,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
 
   connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
 
-  joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>(JOINT_STATES_TOPIC, 10);
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
@@ -107,13 +117,6 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
   motion_planning_client_ = node_->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
-
-  // Get values from parameters
-  mesh_file_ = declareAndGet<std::string>(*node_, MESH_FILE_PARAM);
-  motion_group_ = declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM);
-  reference_frame_ = declareAndGet<std::string>(*node_, REF_FRAME_PARAM);
-  tcp_frame_ = declareAndGet<std::string>(*node_, TCP_FRAME_PARAM);
-  camera_frame_ = declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM);
 }
 
 void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
@@ -260,11 +263,6 @@ void ROSConWindow::reset_calibration()
 
 void ROSConWindow::scan()
 {
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  // TODO: fill out scan trajectory
-  //  request->motion_plan = ... ;
-  request->use_tool = false;
-
   if (!motion_execution_client_->service_is_ready())
   {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
@@ -274,6 +272,13 @@ void ROSConWindow::scan()
   }
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan approach motion goal");
+
+  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+  request->use_tool = false;
+  request->motion_plan.header = scan_traj_.header;
+  request->motion_plan.joint_names = scan_traj_.joint_names;
+  request->motion_plan.points.push_back(scan_traj_.points.at(0));
+  request->motion_plan.points.push_back(scan_traj_.points.at(1));
 
   auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -343,9 +348,10 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  // TODO: fill out trajectory
-  //  request->motion_plan = ... ;
   request->use_tool = false;
+  request->motion_plan.header = scan_traj_.header;
+  request->motion_plan.joint_names = scan_traj_.joint_names;
+  std::copy(scan_traj_.points.begin() + 1, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points));
 
   auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -421,9 +427,11 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  // TODO: fill out trajectory
-  //  request->motion_plan = ... ;
   request->use_tool = false;
+  request->motion_plan.header = scan_traj_.header;
+  request->motion_plan.joint_names = scan_traj_.joint_names;
+  request->motion_plan.points.push_back(scan_traj_.points.at(scan_traj_.points.size() - 1));
+  request->motion_plan.points.push_back(scan_traj_.points.at(0));
 
   auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -514,11 +522,15 @@ void ROSConWindow::planMotion()
     motion_plan_.reset();
 
     if (!motion_planning_client_->service_is_ready())
+    {
       throw std::runtime_error("Motion planning server is not available");
+    }
 
     // do motion planning things
     if (tool_paths_->paths.empty())
+    {
       throw std::runtime_error("Tool path is empty");
+    }
 
     // TODO: Fill a motion planning service request
     auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();

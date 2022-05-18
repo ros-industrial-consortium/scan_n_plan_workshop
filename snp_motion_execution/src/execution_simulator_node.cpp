@@ -15,7 +15,7 @@ public:
     using namespace std::placeholders;
 
     this->action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
-        this, "follow_joint_trajectory", std::bind(&ExecSimServer::handleGoal, this, _1, _2),
+        this, "joint_trajectory_action", std::bind(&ExecSimServer::handleGoal, this, _1, _2),
         std::bind(&ExecSimServer::handleCancel, this, _1), std::bind(&ExecSimServer::handleAccepted, this, _1));
 
     this->service_srv_ = this->create_service<std_srvs::srv::Trigger>(
