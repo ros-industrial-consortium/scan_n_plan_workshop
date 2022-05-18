@@ -35,6 +35,7 @@
 #include <noether_tpp/tool_path_planners/raster/direction_generators.h>
 #include <noether_tpp/tool_path_planners/raster/origin_generators.h>
 #include <noether_tpp/tool_path_planners/raster/plane_slicer_raster_planner.h>
+#include <noether_tpp/tool_path_modifiers/organization_modifiers.h>
 
 #include <snp_msgs/msg/tool_path.h>
 #include <snp_msgs/msg/tool_paths.h>
@@ -111,8 +112,11 @@ void TPPNode::callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths
     planner.setPointSpacing(request->point_spacing);
     planner.setSearchRadius(request->search_radius);
 
+    // Create a modifier to organize the tool path in a snake pattern
+    noether::SnakeOrganizationModifier mod;
+
     // Call the planner
-    noether::ToolPaths paths = planner.plan(pcl_mesh);
+    noether::ToolPaths paths = mod.modify(planner.plan(pcl_mesh));
 
     // Convert noether::ToolPaths to snp_msgs::msg::ToolPaths
     response->tool_paths = toMsg(paths);
