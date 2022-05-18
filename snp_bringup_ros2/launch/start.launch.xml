@@ -3,6 +3,7 @@
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
   <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
+  <arg name="scan_trajectory_file" default="$(find-pkg-share snp_support)/config/scan_traj.yaml"/>
   <arg name="verbose" default="False"/>
 
   <!-- URDF, Rviz -->
@@ -15,13 +16,13 @@
 
   <!-- Launch Open3d Interface Node -->
   <group unless="$(var sim_vision)">
-    <!--<node pkg="open3d_interface" exec="open3d_yak">
+    <node pkg="open3d_interface" exec="open3d_yak">
       <param name="depth_image_topic" value="/camera/aligned_depth_to_color/image_raw"/>
       <param name="color_image_topic" value="/camera/color/image_rect_color"/>
       <param name="camera_info_topic" value="/camera/color/camera_info"/>
       <param name="cache_count" value="10"/>
       <param name="slop" value="0.01"/>
-    </node>-->
+    </node>
     <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
       <arg name="align_depth" value="true"/>
       <arg name="enable_pointcloud" value="true"/>
@@ -60,6 +61,7 @@
     <param name="reference_frame" value="floor"/>
     <param name="tcp_frame" value="sand_tcp"/>
     <param name="camera_frame" value="camera_color_optical_frame"/>
+    <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
   </node>
 </launch>
 
