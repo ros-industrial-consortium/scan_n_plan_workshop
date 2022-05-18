@@ -40,14 +40,10 @@ private:
   rclcpp::Node::SharedPtr node_;
   bool past_calibration_;
 
-  sensor_msgs::msg::JointState latest_joint_state_;
-
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr scan_mesh_pub_;
-
-  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
   // service clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;
@@ -81,8 +77,6 @@ private:
   std::string camera_frame_;
   snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
   trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
-
-  void callbackJointState(const sensor_msgs::msg::JointState::SharedPtr state);
 
   void update_calibration_requirement();
   void observe();
