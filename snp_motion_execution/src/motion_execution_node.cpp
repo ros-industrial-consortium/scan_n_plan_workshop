@@ -1,4 +1,5 @@
 #include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -107,6 +108,8 @@ private:
         throw std::runtime_error("Action server not available after waiting");
       }
 
+      rclcpp::sleep_for(std::chrono::seconds(1));
+
       // Send motion trajectory
       control_msgs::action::FollowJointTrajectory::Goal goal_msg;
 
@@ -121,7 +124,13 @@ private:
         rclcpp::Duration joint_state_age_thresh(0, 5e7);
 
         if (joint_state_age < joint_state_age_thresh) {
-          goal_msg.trajectory.points.at(0).positions = latest_joint_state_.position;
+          trajectory_msgs::msg::JointTrajectoryPoint start_point;
+          start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
+          start_point.positions.resize(6);
+          start_point.positions = latest_joint_state_.position;
+          std::vector<double> zero_velocity(6, 0);
+          start_point.velocities = zero_velocity;
+          goal_msg.trajectory.points.insert(goal_msg.trajectory.points.begin(), start_point);
         }
         mtx.unlock();
       }
