@@ -10,6 +10,7 @@ static const std::string FJT_ACTION = "joint_trajectory_action";
 static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
 static const std::string ENABLE_SERVICE = "robot_enable";
 static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
+static const double JOINT_STATE_TIME_THRESHOLD = 0.1;  // seconds
 
 using FJT = control_msgs::action::FollowJointTrajectory;
 using FJT_Result = control_msgs::action::FollowJointTrajectory_Result;
@@ -44,10 +45,18 @@ private:
 
   rclcpp::Service<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr server_;
   rclcpp::CallbackGroup::SharedPtr cb_group_;
+  std::mutex mutex_;
 
   void callbackJointState(const sensor_msgs::msg::JointState::SharedPtr state)
   {
+    std::lock_guard<std::mutex> lock{ mutex_ };
     latest_joint_state_ = *state;
+  }
+
+  double getJointStateAge()
+  {
+    std::lock_guard<std::mutex> lock{ mutex_ };
+    return (get_clock()->now() - latest_joint_state_.header.stamp).seconds();
   }
 
   void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
@@ -55,6 +64,16 @@ private:
   {
     try
     {
+      // Check the last recieved joint state first
+      double js_age = getJointStateAge();
+      if (js_age > JOINT_STATE_TIME_THRESHOLD)
+      {
+        std::stringstream ss;
+        ss << "Last joint state was not received within threshold (" << js_age << " > " << JOINT_STATE_TIME_THRESHOLD
+           << ")";
+        throw std::runtime_error(ss.str());
+      }
+
       // enable robot
       {
         RCLCPP_INFO(this->get_logger(), "Enabling Robot");
@@ -77,7 +96,7 @@ private:
       // Check that the server exists
       if (!fjt_client_->action_server_is_ready())
       {
-        throw std::runtime_error("Action server not available after waiting");
+        throw std::runtime_error("Action server not available");
       }
 
       // Sleep to ensure that robot_enable actually did everything it had to. This is probably only necessary the first
@@ -86,23 +105,18 @@ private:
 
       // Send motion trajectory
       control_msgs::action::FollowJointTrajectory::Goal goal_msg;
-
       goal_msg.trajectory = empRequest->motion_plan;
 
+      // Add the current joint state as the first trajectory point
       {
-        rclcpp::Time current_time = this->get_clock()->now();
-        rclcpp::Duration joint_state_age = current_time - latest_joint_state_.header.stamp;
-        // set the threshold for how old a joint_state message can be to still be used (seconds, nanoseconds)
-        rclcpp::Duration joint_state_age_thresh(0, 5e7);
-
-        if (joint_state_age < joint_state_age_thresh)
+        trajectory_msgs::msg::JointTrajectoryPoint start_point;
+        start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
         {
-          trajectory_msgs::msg::JointTrajectoryPoint start_point;
-          start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
+          std::lock_guard<std::mutex> lock{ mutex_ };
           start_point.positions = latest_joint_state_.position;
-          start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
-          goal_msg.trajectory.points.insert(goal_msg.trajectory.points.begin(), start_point);
         }
+        start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
+        goal_msg.trajectory.points.insert(goal_msg.trajectory.points.begin(), start_point);
       }
 
       auto goal_handle_future = fjt_client_->async_send_goal(goal_msg);
