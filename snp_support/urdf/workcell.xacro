@@ -1,7 +1,9 @@
 <?xml version="1.0" ?>
 <robot name="motoman_hc10" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find motoman_hc10_support)/urdf/hc10_macro.xacro" />
-  <xacro:motoman_hc10 prefix=""/>
+  <xacro:include filename="$(find motoman_hc10_support)/urdf/hc10dt_macro.xacro" />
+  <xacro:motoman_hc10dt prefix=""/>
+
+  <xacro:property name="dt_flange_width" value="0.040"/>
 
   <!-- Add World -->
   <material name="light_gray">
@@ -63,6 +65,14 @@
     <origin xyz="-0.61 0 0.723" rpy="0 0 0"/>
   </joint>
 
+  <!-- Create a frame representing the robot tool flange (behind the teach tool and nominal tool0 frame) for IKFast -->
+  <link name="tool_flange"/>
+  <joint name="tool0_to_tool_flange" type="fixed">
+    <parent link="tool0"/>
+    <child link="tool_flange"/>
+    <origin xyz="0.0 0.0 ${-dt_flange_width}" rpy="0 0 0"/>
+  </joint>
+
   <!-- Add End Effector Components -->
   <link name="ee">
     <visual>
@@ -117,33 +127,37 @@
     <child link="ee"/>
   </joint>
 
-  <!-- Calibration -->
+  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_support)/config/camera_calibration.yaml')}" />
+
   <link name="camera_color_optical_frame"/>
-  <joint name="camera_cal_joint" type="fixed">
+  <joint name="tool0_to_camera" type="fixed">
     <parent link="tool0"/>
     <child link="camera_color_optical_frame"/>
-    <origin xyz="-0.150 0.140 0.08259" rpy="0 ${radians(-90)} 0"/>
+    <origin xyz="${camera_cal['camera_mount_to_camera_pos']['x']} ${camera_cal['camera_mount_to_camera_pos']['y']} ${camera_cal['camera_mount_to_camera_pos']['z']}"
+            rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
   </joint>
 
-  <link name="target_cal_frame">
+  <link name="cal_target_frame">
     <visual>
       <geometry>
         <mesh filename="package://snp_support/meshes/rosWorldCalib.dae"/>
       </geometry>
+      <origin xyz="0 0 0" rpy="${radians(90)} 0 0"/>
     </visual>
   </link>
-  <joint name="target_cal_joint" type="fixed">
-    <parent link="floor"/>
-    <child link="target_cal_frame"/>
-    <origin xyz="0.37565 0.2809875 0.723" rpy="${radians(90)} 0 ${radians(180)}"/>
+  <joint name="target_mount_to_target" type="fixed">
+    <parent link="base_link"/>
+    <child link="cal_target_frame"/>
+    <origin xyz="${camera_cal['target_mount_to_target_pos']['x']} ${camera_cal['target_mount_to_target_pos']['y']} ${camera_cal['target_mount_to_target_pos']['z']}"
+            rpy="${camera_cal['target_mount_to_target_rpy']['x']} ${camera_cal['target_mount_to_target_rpy']['y']} ${camera_cal['target_mount_to_target_rpy']['z']}" />
   </joint>
 
   <!-- Add TCP -->
   <link name="sand_tcp"/>
   <joint name="sand_tcp_joint" type="fixed">
-    <parent link="tool0"/>
+    <parent link="tool_flange"/>
     <child link="sand_tcp"/>
-    <origin xyz="-0.23261 0 0.08259" rpy="${radians(-90)} 0 ${radians(90)}"/>
+    <origin xyz="-0.23261 0 ${0.08259 + dt_flange_width}" rpy="${radians(-90)} 0 ${radians(90)}"/>
   </joint>
 
 </robot>
