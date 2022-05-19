@@ -13,6 +13,7 @@
 // Taskflow generators
 #include <tesseract_process_managers/taskflow_generators/graph_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
+#include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/core/default_process_planners.h>
 
 /**
@@ -119,6 +120,9 @@ tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
  */
 tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 {
-  return std::make_unique<tesseract_planning::RasterTaskflow>(createFreespaceTaskflow(), createTransitionTaskflow(),
-                                                              tesseract_planning::createCartesianGenerator());
+
+  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(tesseract_planning::createDescartesOnlyGenerator(),
+                                                                    createFreespaceTaskflow(), createTransitionTaskflow(),
+                                                                    tesseract_planning::createCartesianGenerator());
 }
+
