@@ -10,6 +10,7 @@
   <!-- URDF, Rviz -->
   <include file="$(find-pkg-share snp_support)/launch/test.launch.xml">
     <arg name="rviz_config" value="$(find-pkg-share snp_bringup_ros2)/config/app.rviz"/>
+    <arg name="use_gui" value="$(var sim_robot)"/>
   </include>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
