@@ -52,6 +52,12 @@
         <mesh filename="package://snp_support/meshes/collision/steel_table.ply"/>
       </geometry>
     </collision>
+    <collision>
+      <origin xyz="0 0 0.726" rpy="0 0 0"/>
+      <geometry>
+        <box size="1.9 0.95 0.05"/>
+      </geometry>
+    </collision>
   </link>
 
   <joint name="floor_to_table" type="fixed">
