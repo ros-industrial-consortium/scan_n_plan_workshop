@@ -22,6 +22,8 @@ static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
+static const std::string FIXED_FRAME = "world";
+static const std::string SCAN_LINK_NAME = "scan";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
@@ -191,6 +193,46 @@ private:
     return program;
   }
 
+  bool addScanToEnv(const std::string& filename)
+  {
+    std::vector<tesseract_geometry::ConvexMesh::Ptr> geometries =
+        tesseract_geometry::createMeshFromPath<tesseract_geometry::ConvexMesh>(filename);
+
+    tesseract_scene_graph::Link link("scan");
+    for (tesseract_geometry::ConvexMesh::Ptr geometry : geometries)
+    {
+      tesseract_scene_graph::Collision::Ptr collision = std::make_shared<tesseract_scene_graph::Collision>();
+      collision->geometry = geometry;
+      link.collision.push_back(collision);
+    }
+
+    tesseract_scene_graph::Joint joint("world_to_scan");
+    joint.type = tesseract_scene_graph::FIXED;
+    joint.parent_link_name = FIXED_FRAME;
+    joint.child_link_name = SCAN_LINK_NAME;
+
+    std::vector<tesseract_environment::Command::Ptr> cmds = {
+      std::make_shared<tesseract_environment::AddLinkCommand>(link, joint, true),
+      std::make_shared<tesseract_environment::AddAllowedCollisionCommand>("world", SCAN_LINK_NAME, "stationary"),
+      std::make_shared<tesseract_environment::AddAllowedCollisionCommand>("floor", SCAN_LINK_NAME, "stationary"),
+      std::make_shared<tesseract_environment::AddAllowedCollisionCommand>("table", SCAN_LINK_NAME, "stationary"),
+      std::make_shared<tesseract_environment::AddAllowedCollisionCommand>("base_link", SCAN_LINK_NAME, "stationary")
+    };
+    bool success = true;
+    for (auto cmd : cmds)
+    {
+      success &= env_->applyCommand(cmd);
+    }
+    return success;
+  }
+
+  bool removeScanFromEnv()
+  {
+    tesseract_environment::RemoveLinkCommand::ConstPtr cmd =
+        std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME);
+    return env_->applyCommand(cmd);
+  }
+
   tesseract_common::JointTrajectory tcpSpeedLimiter(const tesseract_common::JointTrajectory& input_trajectory,
                                                     const double max_speed, const std::string tcp)
   {
@@ -257,6 +299,9 @@ private:
       const std::string& base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
       tesseract_planning::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
+      // Add the scanned mesh to the environment state
+      addScanToEnv(req->mesh_filename);
+
       tesseract_planning::ProcessPlanningRequest plan_req;
       plan_req.name = RASTER_PLANNER;
       plan_req.instructions = createProgram(manip_info, fromMsg(req->tool_paths));
@@ -268,6 +313,9 @@ private:
 
       tesseract_planning::ProcessPlanningFuture plan_result = planning_server_->run(plan_req);
       plan_result.wait();
+
+      // Remove the scan from the environment as cleanup
+      removeScanFromEnv();
 
       // Reset the log level
       console_bridge::setLogLevel(log_level);
