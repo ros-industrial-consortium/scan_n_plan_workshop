@@ -137,13 +137,6 @@
             rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
   </joint>
 
-  <link name="camera_180"/>
-  <joint name="camera_180joint" type="fixed">
-    <parent link="camera_color_optical_frame"/>
-    <child link="camera_180"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 3.14"/>
-  </joint>
-
   <link name="cal_target_frame"/>
   <joint name="target_mount_to_target" type="fixed">
     <parent link="base_link"/>
