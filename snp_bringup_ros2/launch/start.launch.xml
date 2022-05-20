@@ -5,6 +5,7 @@
   <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_support)/config/scan_traj.yaml"/>
   <arg name="verbose" default="False"/>
+  <arg name="touch_links" default="[table, base_link, floor]"/>
 
   <!-- URDF, Rviz -->
   <include file="$(find-pkg-share snp_support)/launch/test.launch.xml">
@@ -42,6 +43,7 @@
   <!-- Launch Motion Planning Node -->
   <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.xml">
     <arg name="verbose" value="$(var verbose)"/>
+    <arg name="touch_links" value="$(var touch_links)"/>
   </include>
 
   <!-- Launch Motion Execution Node -->
