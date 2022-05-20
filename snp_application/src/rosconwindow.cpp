@@ -314,10 +314,17 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
 
   // TODO other params (currently set to recommended default)
   start_request->tsdf_params.voxel_length = 0.01f;
-  start_request->tsdf_params.sdf_trunc = 0.04f;
+  start_request->tsdf_params.sdf_trunc = 0.025f;
+
+  start_request->tsdf_params.min_box_values.x = -0.4;
+  start_request->tsdf_params.min_box_values.y = -0.45;
+  start_request->tsdf_params.min_box_values.z = 0.81;
+  start_request->tsdf_params.max_box_values.x = 0.9;
+  start_request->tsdf_params.max_box_values.y = 0.45;
+  start_request->tsdf_params.max_box_values.z = 1.25;
 
   start_request->rgbd_params.depth_scale = 1000.0;
-  start_request->rgbd_params.depth_trunc = 3.0;
+  start_request->rgbd_params.depth_trunc = 1.1;
   start_request->rgbd_params.convert_rgb_to_intensity = false;
 
   auto cb = std::bind(&ROSConWindow::onScanStartDone, this, std::placeholders::_1);
@@ -351,7 +358,14 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   request->use_tool = false;
   request->motion_plan.header = scan_traj_.header;
   request->motion_plan.joint_names = scan_traj_.joint_names;
-  std::copy(scan_traj_.points.begin() + 1, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points));
+
+  const auto start_pt = scan_traj_.points.begin() + 1;
+  std::transform(start_pt, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points),
+                 [&start_pt](trajectory_msgs::msg::JointTrajectoryPoint pt) {
+                   pt.time_from_start.sec -= start_pt->time_from_start.sec;
+                   pt.time_from_start.nanosec -= start_pt->time_from_start.nanosec;
+                   return pt;
+                 });
 
   auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -359,27 +373,30 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
 
 void ROSConWindow::onScanDone(FJTResult result)
 {
+  // call reconstruction stop (regardless of trajectory success)
+  auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
+  stop_request->archive_directory = "";
+  stop_request->mesh_filepath = mesh_file_;
+
+  // Define a callback to enter when the stop reconstruction service is finished
+  std::function<void(StopScanFuture)> cb;
+
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (response->success)
   {
     emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
                       STATES.at(STOP_RECONSTRUCTION_ST));
+    RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
+    cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
   }
   else
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
     emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
-    return;
+    cb = [](StopScanFuture) {};
   }
-  RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
 
-  // call reconstruction stop
-  auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
-  stop_request->archive_directory = "";
-  stop_request->mesh_filepath = mesh_file_;
-
-  auto cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
   stop_reconstruction_client_->async_send_request(stop_request, cb);
 }
 
@@ -390,7 +407,6 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
     RCLCPP_INFO(node_->get_logger(), "Failed to stop surface reconstruction");
     emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
-    return;
   }
 
   // Publish the mesh
@@ -430,8 +446,17 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   request->use_tool = false;
   request->motion_plan.header = scan_traj_.header;
   request->motion_plan.joint_names = scan_traj_.joint_names;
-  request->motion_plan.points.push_back(scan_traj_.points.at(scan_traj_.points.size() - 1));
-  request->motion_plan.points.push_back(scan_traj_.points.at(0));
+
+  trajectory_msgs::msg::JointTrajectoryPoint start_pt = scan_traj_.points.at(scan_traj_.points.size() - 1);
+  const trajectory_msgs::msg::JointTrajectoryPoint& prev_pt = scan_traj_.points.at(scan_traj_.points.size() - 2);
+  start_pt.time_from_start.sec -= prev_pt.time_from_start.sec;
+  start_pt.time_from_start.nanosec -= prev_pt.time_from_start.nanosec;
+  request->motion_plan.points.push_back(start_pt);
+
+  trajectory_msgs::msg::JointTrajectoryPoint end_pt = scan_traj_.points.at(0);
+  end_pt.time_from_start.sec += start_pt.time_from_start.sec;
+  end_pt.time_from_start.nanosec += start_pt.time_from_start.nanosec;
+  request->motion_plan.points.push_back(end_pt);
 
   auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);

@@ -76,7 +76,7 @@ private:
 
       // enable robot
       {
-        RCLCPP_INFO(this->get_logger(), "Enabling Robot");
+        RCLCPP_INFO(this->get_logger(), "Enabling robot");
         if (!enable_client_->service_is_ready())
         {
           throw std::runtime_error("Robot enable server is not available");
@@ -91,6 +91,7 @@ private:
         {
           throw std::runtime_error("Failed to enable robot: '" + response->message + "'");
         }
+        RCLCPP_INFO(this->get_logger(), "Robot enabled");
       }
 
       // Check that the server exists
@@ -107,7 +108,7 @@ private:
       control_msgs::action::FollowJointTrajectory::Goal goal_msg;
       goal_msg.trajectory = empRequest->motion_plan;
 
-      // Add the current joint state as the first trajectory point
+      // Replace the start state of the trajectory with the current joint state
       {
         trajectory_msgs::msg::JointTrajectoryPoint start_point;
         start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
@@ -116,15 +117,18 @@ private:
           start_point.positions = latest_joint_state_.position;
         }
         start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
-        goal_msg.trajectory.points.insert(goal_msg.trajectory.points.begin(), start_point);
+        start_point.accelerations = std::vector<double>(start_point.positions.size(), 0);
+        start_point.effort = std::vector<double>(start_point.positions.size(), 0);
+        goal_msg.trajectory.points[0] = start_point;
       }
 
+      RCLCPP_INFO(get_logger(), "Sending joint trajectory");
       auto goal_handle_future = fjt_client_->async_send_goal(goal_msg);
       goal_handle_future.wait();
 
       using FJTGoalHandle = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>;
       FJTGoalHandle::SharedPtr goal_handle = goal_handle_future.get();
-      uint8_t status = goal_handle->get_status();
+      int8_t status = goal_handle->get_status();
       switch (status)
       {
         case rclcpp_action::GoalStatus::STATUS_ACCEPTED:
@@ -138,7 +142,15 @@ private:
 
       // Wait for the trajectory to complete
       auto fjt_future = fjt_client_->async_get_result(goal_handle);
-      fjt_future.wait();
+      std::chrono::duration<double> timeout(static_cast<double>(goal_msg.trajectory.points.back().time_from_start.sec) *
+                                            1.5);
+      switch (fjt_future.wait_for(timeout))
+      {
+        case std::future_status::ready:
+          break;
+        default:
+          throw std::runtime_error("Timed out waiting for trajectory to finish");
+      }
 
       // Handle the action result code
       FJTGoalHandle::WrappedResult fjt_wrapper = fjt_future.get();
@@ -165,6 +177,9 @@ private:
     }
     catch (const std::exception& ex)
     {
+      // Cancel any goals in the case of a timeout
+      fjt_client_->async_cancel_all_goals();
+
       empResult->message = ex.what();
       empResult->success = false;
     }
