@@ -28,6 +28,9 @@
     <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
       <arg name="align_depth" value="true"/>
       <arg name="enable_pointcloud" value="true"/>
+      <arg name="color_width" value="640"/>
+      <arg name="color_height" value="360"/>
+      <arg name="color_fps" value="90.0"/>
     </include>
   </group>
 
@@ -61,7 +64,7 @@
   <node pkg="snp_application" exec="roscon_app">
     <param name="mesh_file" value="/tmp/results_mesh.ply"/>
     <param name="motion_group" value="manipulator"/>
-    <param name="reference_frame" value="floor"/>
+    <param name="reference_frame" value="base_link"/>
     <param name="tcp_frame" value="sand_tcp"/>
     <param name="camera_frame" value="camera_color_optical_frame"/>
     <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
