@@ -312,8 +312,7 @@ private:
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt =
           toJointTrajectory(plan_result.results->as<tesseract_planning::CompositeInstruction>());
-      tesseract_common::JointTrajectory tcp_velocity_scaled_jt =
-          tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
+      tesseract_common::JointTrajectory tcp_velocity_scaled_jt = tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
       plotter_->plotTrajectory(tcp_velocity_scaled_jt, *env_->getStateSolver());
       res->motion_plan = tesseract_rosutils::toMsg(tcp_velocity_scaled_jt, env_->getState());
 

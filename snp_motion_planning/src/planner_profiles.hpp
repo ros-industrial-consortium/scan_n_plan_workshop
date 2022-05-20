@@ -28,11 +28,11 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
         eval->evaluators.push_back(std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>());
 
         // Penalize wrist motion
-//        Eigen::Matrix<FloatType, Eigen::Dynamic, 1> wrist_mask(prob.manip->numJoints());
-//        FloatType weight = static_cast<FloatType>(5.0);
-//        wrist_mask << 0.0, 0.0, 0.0, weight, weight, weight;
-//        eval->evaluators.push_back(
-//            std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>(wrist_mask));
+        //        Eigen::Matrix<FloatType, Eigen::Dynamic, 1> wrist_mask(prob.manip->numJoints());
+        //        FloatType weight = static_cast<FloatType>(5.0);
+        //        wrist_mask << 0.0, 0.0, 0.0, weight, weight, weight;
+        //        eval->evaluators.push_back(
+        //            std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>(wrist_mask));
 
         return eval;
       };

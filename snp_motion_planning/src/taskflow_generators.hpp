@@ -120,9 +120,7 @@ tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
  */
 tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 {
-
-  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(tesseract_planning::createDescartesOnlyGenerator(),
-                                                                    createFreespaceTaskflow(), createTransitionTaskflow(),
-                                                                    tesseract_planning::createCartesianGenerator());
+  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
+      tesseract_planning::createDescartesOnlyGenerator(), createFreespaceTaskflow(), createTransitionTaskflow(),
+      tesseract_planning::createCartesianGenerator());
 }
-
