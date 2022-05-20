@@ -142,7 +142,8 @@ private:
 
       // Wait for the trajectory to complete
       auto fjt_future = fjt_client_->async_get_result(goal_handle);
-      std::chrono::duration<double> timeout(static_cast<double>(goal_msg.trajectory.points.back().time_from_start.sec) * 1.5);
+      std::chrono::duration<double> timeout(static_cast<double>(goal_msg.trajectory.points.back().time_from_start.sec) *
+                                            1.5);
       switch (fjt_future.wait_for(timeout))
       {
         case std::future_status::ready:

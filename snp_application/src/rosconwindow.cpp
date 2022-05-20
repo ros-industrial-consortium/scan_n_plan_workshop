@@ -360,11 +360,12 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   request->motion_plan.joint_names = scan_traj_.joint_names;
 
   const auto start_pt = scan_traj_.points.begin() + 1;
-  std::transform(start_pt, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points), [&start_pt](trajectory_msgs::msg::JointTrajectoryPoint pt){
-    pt.time_from_start.sec -= start_pt->time_from_start.sec;
-    pt.time_from_start.nanosec -= start_pt->time_from_start.nanosec;
-    return pt;
-  });
+  std::transform(start_pt, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points),
+                 [&start_pt](trajectory_msgs::msg::JointTrajectoryPoint pt) {
+                   pt.time_from_start.sec -= start_pt->time_from_start.sec;
+                   pt.time_from_start.nanosec -= start_pt->time_from_start.nanosec;
+                   return pt;
+                 });
 
   auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
@@ -393,7 +394,7 @@ void ROSConWindow::onScanDone(FJTResult result)
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
     emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
                       STATES.at(SCAN_APPROACH_ST));
-    cb = [](StopScanFuture){};
+    cb = [](StopScanFuture) {};
   }
 
   stop_reconstruction_client_->async_send_request(stop_request, cb);
@@ -448,8 +449,8 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
 
   trajectory_msgs::msg::JointTrajectoryPoint start_pt = scan_traj_.points.at(scan_traj_.points.size() - 1);
   const trajectory_msgs::msg::JointTrajectoryPoint& prev_pt = scan_traj_.points.at(scan_traj_.points.size() - 2);
-  start_pt.time_from_start.sec -= prev_pt .time_from_start.sec;
-  start_pt.time_from_start.nanosec -= prev_pt .time_from_start.nanosec;
+  start_pt.time_from_start.sec -= prev_pt.time_from_start.sec;
+  start_pt.time_from_start.nanosec -= prev_pt.time_from_start.nanosec;
   request->motion_plan.points.push_back(start_pt);
 
   trajectory_msgs::msg::JointTrajectoryPoint end_pt = scan_traj_.points.at(0);
