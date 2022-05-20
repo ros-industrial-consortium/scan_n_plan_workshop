@@ -52,6 +52,12 @@
         <mesh filename="package://snp_support/meshes/collision/steel_table.ply"/>
       </geometry>
     </collision>
+    <collision>
+      <origin xyz="0 0 0.726" rpy="0 0 0"/>
+      <geometry>
+        <box size="1.9 0.95 0.05"/>
+      </geometry>
+    </collision>
   </link>
 
   <joint name="floor_to_table" type="fixed">
@@ -137,14 +143,7 @@
             rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
   </joint>
 
-  <link name="cal_target_frame">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_support/meshes/rosWorldCalib.dae"/>
-      </geometry>
-      <origin xyz="0 0 0" rpy="${radians(90)} 0 0"/>
-    </visual>
-  </link>
+  <link name="cal_target_frame"/>
   <joint name="target_mount_to_target" type="fixed">
     <parent link="base_link"/>
     <child link="cal_target_frame"/>
@@ -157,7 +156,7 @@
   <joint name="sand_tcp_joint" type="fixed">
     <parent link="tool_flange"/>
     <child link="sand_tcp"/>
-    <origin xyz="-0.23261 0 ${0.08259 + dt_flange_width}" rpy="${radians(-90)} 0 ${radians(90)}"/>
+    <origin xyz="-0.26261 0 ${0.08259 + dt_flange_width}" rpy="${radians(-90)} 0 ${radians(90)}"/>
   </joint>
 
 </robot>

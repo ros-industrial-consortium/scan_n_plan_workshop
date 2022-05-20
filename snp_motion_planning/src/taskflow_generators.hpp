@@ -13,6 +13,7 @@
 // Taskflow generators
 #include <tesseract_process_managers/taskflow_generators/graph_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
+#include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/core/default_process_planners.h>
 
 /**
@@ -49,7 +50,7 @@ tesseract_planning::TaskflowGenerator::UPtr createTransitionTaskflow()
   graph->addEdges(check_input, { tesseract_planning::GraphTaskflow::ERROR_NODE, has_seed });
   graph->addEdges(has_seed, { simple, seed_min_length });
   graph->addEdges(seed_min_length, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
-  graph->addEdges(simple, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
+  graph->addEdges(simple, { tesseract_planning::GraphTaskflow::ERROR_NODE, seed_min_length });
   graph->addEdges(simple_collision, { trajopt, time_param });
   graph->addEdges(trajopt, { tesseract_planning::GraphTaskflow::ERROR_NODE, trajopt_collision });
   graph->addEdges(trajopt_collision, { tesseract_planning::GraphTaskflow::ERROR_NODE, time_param });
@@ -101,7 +102,7 @@ tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
   graph->addEdges(check_input, { tesseract_planning::GraphTaskflow::ERROR_NODE, has_seed });
   graph->addEdges(has_seed, { simple, seed_min_length });
   graph->addEdges(seed_min_length, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
-  graph->addEdges(simple, { tesseract_planning::GraphTaskflow::ERROR_NODE, simple_collision });
+  graph->addEdges(simple, { tesseract_planning::GraphTaskflow::ERROR_NODE, seed_min_length });
   graph->addEdges(simple_collision, { trajopt, time_param });
   graph->addEdges(trajopt, { ompl, trajopt_collision });
   graph->addEdges(trajopt_collision, { ompl, time_param });
@@ -119,6 +120,7 @@ tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
  */
 tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 {
-  return std::make_unique<tesseract_planning::RasterTaskflow>(createFreespaceTaskflow(), createTransitionTaskflow(),
-                                                              tesseract_planning::createCartesianGenerator());
+  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
+      tesseract_planning::createDescartesOnlyGenerator(), createFreespaceTaskflow(), createTransitionTaskflow(),
+      tesseract_planning::createCartesianGenerator());
 }

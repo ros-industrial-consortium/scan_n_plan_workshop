@@ -314,14 +314,14 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
 
   // TODO other params (currently set to recommended default)
   start_request->tsdf_params.voxel_length = 0.01f;
-  start_request->tsdf_params.sdf_trunc = 0.025f;
+  start_request->tsdf_params.sdf_trunc = 0.03f;
 
-  start_request->tsdf_params.min_box_values.x = -0.4;
+  start_request->tsdf_params.min_box_values.x = 0.21;
   start_request->tsdf_params.min_box_values.y = -0.45;
-  start_request->tsdf_params.min_box_values.z = 0.81;
-  start_request->tsdf_params.max_box_values.x = 0.9;
+  start_request->tsdf_params.min_box_values.z = 0.112;
+  start_request->tsdf_params.max_box_values.x = 1.51;
   start_request->tsdf_params.max_box_values.y = 0.45;
-  start_request->tsdf_params.max_box_values.z = 1.25;
+  start_request->tsdf_params.max_box_values.z = 0.527;
 
   start_request->rgbd_params.depth_scale = 1000.0;
   start_request->rgbd_params.depth_trunc = 1.1;
@@ -377,6 +377,13 @@ void ROSConWindow::onScanDone(FJTResult result)
   auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
   stop_request->archive_directory = "";
   stop_request->mesh_filepath = mesh_file_;
+  stop_request->min_num_faces = 1000;
+  open3d_interface_msgs::msg::NormalFilterParams norm_filt;
+  norm_filt.normal_direction.x = 0;
+  norm_filt.normal_direction.y = 0;
+  norm_filt.normal_direction.z = 1;
+  norm_filt.angle = 85;
+  stop_request->normal_filters.push_back(norm_filt);
 
   // Define a callback to enter when the stop reconstruction service is finished
   std::function<void(StopScanFuture)> cb;
@@ -495,11 +502,11 @@ void ROSConWindow::plan_tool_paths()
     // Fill out the service call
     auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
     request->mesh_filename = mesh_file_;
-    request->line_spacing = 0.1;
+    request->line_spacing = 0.0508;
     request->min_hole_size = 0.225;
     request->min_segment_length = 0.25;
     request->point_spacing = 0.05;
-    request->search_radius = 0.0125;
+    request->search_radius = 0.05;
 
     // Call the service
     auto future = tpp_client_->async_send_request(request);
@@ -516,6 +523,15 @@ void ROSConWindow::plan_tool_paths()
     else
     {
       tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+
+      // TEMPORARY ERASE FIRST AND LAST RASTER
+      tool_paths_->paths.erase(tool_paths_->paths.begin());
+      tool_paths_->paths.erase(tool_paths_->paths.end() - 1);
+      for (auto& path : tool_paths_->paths)
+      {
+        path.segments.front().poses.erase(path.segments.front().poses.begin());
+        path.segments.front().poses.erase(path.segments.front().poses.end() - 1);
+      }
 
       geometry_msgs::msg::PoseArray flat_toolpath_msg;
       flat_toolpath_msg.header.frame_id = reference_frame_;

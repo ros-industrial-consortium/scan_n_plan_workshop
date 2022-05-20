@@ -28,11 +28,11 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
         eval->evaluators.push_back(std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>());
 
         // Penalize wrist motion
-        Eigen::Matrix<FloatType, Eigen::Dynamic, 1> wrist_mask(prob.manip->numJoints());
-        FloatType weight = static_cast<FloatType>(5.0);
-        wrist_mask << 0.0, 0.0, 0.0, weight, weight, weight;
-        eval->evaluators.push_back(
-            std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>(wrist_mask));
+        //        Eigen::Matrix<FloatType, Eigen::Dynamic, 1> wrist_mask(prob.manip->numJoints());
+        //        FloatType weight = static_cast<FloatType>(5.0);
+        //        wrist_mask << 0.0, 0.0, 0.0, weight, weight, weight;
+        //        eval->evaluators.push_back(
+        //            std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>(wrist_mask));
 
         return eval;
       };
@@ -40,7 +40,7 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
   profile->vertex_evaluator = nullptr;
 
   profile->target_pose_sampler =
-      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 20.0 * M_PI / 180.0);
+      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 10.0 * M_PI / 180.0);
 
   return profile;
 }
@@ -80,10 +80,14 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
   profile->smooth_velocities = false;
 
+  profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
+  profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 20.0);
+
   profile->collision_cost_config.enabled = true;
   profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
   profile->collision_cost_config.safety_margin = 0.010;
   profile->collision_cost_config.safety_margin_buffer = 0.010;
+  profile->collision_cost_config.coeff = 10.0;
 
   profile->collision_constraint_config.enabled = false;
 
