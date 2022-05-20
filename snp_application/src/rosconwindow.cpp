@@ -314,11 +314,11 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
 
   // TODO other params (currently set to recommended default)
   start_request->tsdf_params.voxel_length = 0.01f;
-  start_request->tsdf_params.sdf_trunc = 0.025f;
+  start_request->tsdf_params.sdf_trunc = 0.03f;
 
   start_request->tsdf_params.min_box_values.x = -0.4;
   start_request->tsdf_params.min_box_values.y = -0.45;
-  start_request->tsdf_params.min_box_values.z = 0.81;
+  start_request->tsdf_params.min_box_values.z = 0.835;
   start_request->tsdf_params.max_box_values.x = 0.9;
   start_request->tsdf_params.max_box_values.y = 0.45;
   start_request->tsdf_params.max_box_values.z = 1.25;
