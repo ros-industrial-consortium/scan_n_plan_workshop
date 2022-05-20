@@ -1,5 +1,7 @@
 #include "planner_profiles.hpp"
 #include "taskflow_generators.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 #include <tesseract_process_managers/core/process_planning_server.h>
 #include <tesseract_motion_planners/default_planner_namespaces.h>
 #include <tesseract_process_managers/task_profiles/check_input_profile.h>
@@ -8,12 +10,11 @@
 #include <tesseract_monitoring/environment_monitor.h>
 #include <tesseract_monitoring/environment_monitor_interface.h>
 #include <tesseract_rosutils/plotting.h>
-
-#include <rclcpp/rclcpp.hpp>
-#include <snp_msgs/srv/generate_motion_plan.hpp>
+#include <tesseract_geometry/mesh_parser.h>
 #include <tesseract_command_language/command_language.h>
 #include <tesseract_command_language/utils/utils.h>
 #include <tesseract_rosutils/utils.h>
+#include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <tf2_eigen/tf2_eigen.h>
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
@@ -60,15 +61,47 @@ T get(rclcpp::Node::SharedPtr node, const std::string& key)
   return val;
 }
 
+static tesseract_environment::Commands createScanAdditionCommands(const std::string& filename,
+                                                                  const std::string& mesh_frame,
+                                                                  const std::vector<std::string>& touch_links)
+{
+  std::vector<tesseract_geometry::ConvexMesh::Ptr> geometries =
+      tesseract_geometry::createMeshFromPath<tesseract_geometry::ConvexMesh>(filename);
+
+  tesseract_scene_graph::Link link("scan");
+  for (tesseract_geometry::ConvexMesh::Ptr geometry : geometries)
+  {
+    tesseract_scene_graph::Collision::Ptr collision = std::make_shared<tesseract_scene_graph::Collision>();
+    collision->geometry = geometry;
+    link.collision.push_back(collision);
+  }
+
+  tesseract_scene_graph::Joint joint("world_to_scan");
+  joint.type = tesseract_scene_graph::JointType::FIXED;
+  joint.parent_link_name = mesh_frame;
+  joint.child_link_name = link.getName();
+
+  tesseract_environment::Commands cmds;
+  cmds.push_back(std::make_shared<tesseract_environment::AddLinkCommand>(link, joint, true));
+  std::transform(touch_links.begin(), touch_links.end(), std::back_inserter(cmds),
+                 [&link](const std::string& touch_link) {
+                   return std::make_shared<tesseract_environment::AddAllowedCollisionCommand>(
+                       touch_link, link.getName(), "USER_DEFINED");
+                 });
+
+  return cmds;
+}
+
 class PlanningServer
 {
 public:
   PlanningServer(rclcpp::Node::SharedPtr node)
-    : env_(std::make_shared<tesseract_environment::Environment>())
+    : node_(node)
+    , verbose_(get<bool>(node_, "verbose"))
+    , touch_links_(get<std::vector<std::string>>(node_, "touch_links"))
+    , env_(std::make_shared<tesseract_environment::Environment>())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
-    , node_(node)
   {
-    verbose_ = get<bool>(node_, "verbose");
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
       auto srdf_string = get<std::string>(node_, "robot_description_semantic");
@@ -261,6 +294,7 @@ private:
       plan_req.name = RASTER_PLANNER;
       plan_req.instructions = createProgram(manip_info, fromMsg(req->tool_paths));
       plan_req.env_state = env_->getState();
+      plan_req.commands = createScanAdditionCommands(req->mesh_filename, req->mesh_frame, touch_links_);
 
       auto log_level = console_bridge::getLogLevel();
       if (verbose_)
@@ -295,13 +329,14 @@ private:
     RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
   }
 
+  rclcpp::Node::SharedPtr node_;
+  const bool verbose_{ false };
+  const std::vector<std::string> touch_links_;
   tesseract_environment::Environment::Ptr env_;
   tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
   tesseract_monitoring::EnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlotting::Ptr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
-  bool verbose_{ false };
-  rclcpp::Node::SharedPtr node_;
 };
 
 int main(int argc, char** argv)
