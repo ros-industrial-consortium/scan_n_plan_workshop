@@ -156,7 +156,7 @@
   <joint name="sand_tcp_joint" type="fixed">
     <parent link="tool_flange"/>
     <child link="sand_tcp"/>
-    <origin xyz="-0.23261 0 ${0.08259 + dt_flange_width}" rpy="${radians(-90)} 0 ${radians(90)}"/>
+    <origin xyz="-0.26261 0 ${0.08259 + dt_flange_width}" rpy="${radians(-90)} 0 ${radians(90)}"/>
   </joint>
 
 </robot>
