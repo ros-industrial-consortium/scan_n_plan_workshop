@@ -140,10 +140,10 @@ void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushBu
       next_button->setEnabled(true);
     }
 
-    if (current_button != nullptr)
-    {
-      current_button->setEnabled(false);
-    }
+//    if (current_button != nullptr)
+//    {
+//      current_button->setEnabled(false);
+//    }
   }
   else
   {
@@ -476,6 +476,8 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
   {
     RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
     emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
+    ui_->motion_plan_button->setEnabled(false);
+    ui_->motion_execution_button->setEnabled(false);
   }
   else
   {
@@ -553,6 +555,7 @@ void ROSConWindow::plan_tool_paths()
 
   emit updateStatus(success, TPP_ST, ui_->tpp_button, MOTION_PLANNING_ST, ui_->motion_plan_button,
                     STATES.at(MOTION_PLANNING_ST));
+  ui_->motion_execution_button->setEnabled(false);
 }
 
 void ROSConWindow::planMotion()
@@ -654,7 +657,7 @@ void ROSConWindow::reset()
   ui_->run_calibration_button->setEnabled(false);
   ui_->get_correlation_button->setEnabled(false);
   ui_->install_calibration_button->setEnabled(false);
-  ui_->scan_button->setEnabled(false);
+  ui_->scan_button->setEnabled(true);
   ui_->tpp_button->setEnabled(false);
   ui_->motion_plan_button->setEnabled(false);
   ui_->motion_execution_button->setEnabled(false);
