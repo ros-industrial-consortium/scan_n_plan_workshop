@@ -119,8 +119,8 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 }
 
-void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushButton* current_button,
-                                  QString next_process, QPushButton* next_button, unsigned step)
+void ROSConWindow::onUpdateStatus(bool success, QString current_process, QString next_process, QPushButton* next_button,
+                                  unsigned step)
 {
   QString status;
   QTextStream status_stream(&status);
@@ -139,11 +139,6 @@ void ROSConWindow::onUpdateStatus(bool success, QString current_process, QPushBu
     {
       next_button->setEnabled(true);
     }
-
-//    if (current_button != nullptr)
-//    {
-//      current_button->setEnabled(false);
-//    }
   }
   else
   {
@@ -157,7 +152,7 @@ void ROSConWindow::update_calibration_requirement()
 {
   if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
   {
-    emit updateStatus(true, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(true, CALIBRATION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
   }
   else
   {
@@ -246,8 +241,7 @@ void ROSConWindow::install_calibration()
   std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
 
   past_calibration_ = response->success;
-  emit updateStatus(response->success, CALIBRATION_ST, nullptr, SCAN_APPROACH_ST, ui_->scan_button,
-                    STATES.at(SCAN_APPROACH_ST));
+  emit updateStatus(response->success, CALIBRATION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
 }
 
 void ROSConWindow::reset_calibration()
@@ -266,8 +260,7 @@ void ROSConWindow::scan()
   if (!motion_execution_client_->service_is_ready())
   {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
-    emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
@@ -289,14 +282,13 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (response->success)
   {
-    emit updateStatus(true, SCAN_APPROACH_ST, ui_->scan_button, START_RECONSTRUCTION_ST, ui_->scan_button,
+    emit updateStatus(true, SCAN_APPROACH_ST, START_RECONSTRUCTION_ST, ui_->scan_button,
                       STATES.at(START_RECONSTRUCTION_ST));
   }
   else
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan approach motion: '" << response->message << "'");
-    emit updateStatus(false, SCAN_APPROACH_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
@@ -336,21 +328,18 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
   if (!result.get()->success)
   {
     RCLCPP_ERROR(node_->get_logger(), "Failed to start surface reconstruction");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   if (!motion_execution_client_->service_is_ready())
   {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  emit updateStatus(true, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_EXECUTION_ST, ui_->scan_button,
-                    STATES.at(SCAN_EXECUTION_ST));
+  emit updateStatus(true, START_RECONSTRUCTION_ST, SCAN_EXECUTION_ST, ui_->scan_button, STATES.at(SCAN_EXECUTION_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
 
@@ -391,7 +380,7 @@ void ROSConWindow::onScanDone(FJTResult result)
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (response->success)
   {
-    emit updateStatus(true, SCAN_EXECUTION_ST, ui_->scan_button, STOP_RECONSTRUCTION_ST, ui_->scan_button,
+    emit updateStatus(true, SCAN_EXECUTION_ST, STOP_RECONSTRUCTION_ST, ui_->scan_button,
                       STATES.at(STOP_RECONSTRUCTION_ST));
     RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
     cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
@@ -399,8 +388,7 @@ void ROSConWindow::onScanDone(FJTResult result)
   else
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
-    emit updateStatus(false, SCAN_EXECUTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, SCAN_EXECUTION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     cb = [](StopScanFuture) {};
   }
 
@@ -412,8 +400,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   if (!stop_result.get()->success)
   {
     RCLCPP_INFO(node_->get_logger(), "Failed to stop surface reconstruction");
-    emit updateStatus(false, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, STOP_RECONSTRUCTION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
   }
 
   // Publish the mesh
@@ -439,13 +426,11 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   if (!motion_execution_client_->service_is_ready())
   {
     RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  emit updateStatus(true, STOP_RECONSTRUCTION_ST, ui_->scan_button, SCAN_DEPARTURE_ST, ui_->scan_button,
-                    STATES.at(SCAN_DEPARTURE_ST));
+  emit updateStatus(true, STOP_RECONSTRUCTION_ST, SCAN_DEPARTURE_ST, ui_->scan_button, STATES.at(SCAN_DEPARTURE_ST));
 
   RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
 
@@ -475,15 +460,14 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
   if (response->success)
   {
     RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
-    emit updateStatus(true, SCAN_DEPARTURE_ST, ui_->scan_button, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
+    emit updateStatus(true, SCAN_DEPARTURE_ST, TPP_ST, ui_->tpp_button, STATES.at(TPP_ST));
     ui_->motion_plan_button->setEnabled(false);
     ui_->motion_execution_button->setEnabled(false);
   }
   else
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion departure: '" << response->message << "'");
-    emit updateStatus(false, SCAN_DEPARTURE_ST, ui_->scan_button, SCAN_APPROACH_ST, ui_->scan_button,
-                      STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, SCAN_DEPARTURE_ST, SCAN_APPROACH_ST, ui_->scan_button, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 }
@@ -553,8 +537,7 @@ void ROSConWindow::plan_tool_paths()
     }
   }
 
-  emit updateStatus(success, TPP_ST, ui_->tpp_button, MOTION_PLANNING_ST, ui_->motion_plan_button,
-                    STATES.at(MOTION_PLANNING_ST));
+  emit updateStatus(success, TPP_ST, MOTION_PLANNING_ST, ui_->motion_plan_button, STATES.at(MOTION_PLANNING_ST));
   ui_->motion_execution_button->setEnabled(false);
 }
 
@@ -610,8 +593,8 @@ void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotion
     motion_plan_ = std::make_shared<trajectory_msgs::msg::JointTrajectory>(response->motion_plan);
   }
 
-  emit updateStatus(response->success, MOTION_PLANNING_ST, ui_->motion_plan_button, MOTION_EXECUTION_ST,
-                    ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
+  emit updateStatus(response->success, MOTION_PLANNING_ST, MOTION_EXECUTION_ST, ui_->motion_execution_button,
+                    STATES.at(MOTION_EXECUTION_ST));
 }
 
 void ROSConWindow::execute()
@@ -619,8 +602,8 @@ void ROSConWindow::execute()
   if (!motion_execution_client_->service_is_ready())
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution service is not available");
-    updateStatus(false, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
-                 ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
+    updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, ui_->motion_execution_button,
+                 STATES.at(MOTION_EXECUTION_ST));
     return;
   }
 
@@ -638,14 +621,13 @@ void ROSConWindow::execute()
   if (!response->success)
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution error: '" << response->message << "'");
-    updateStatus(response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, MOTION_EXECUTION_ST,
-                 ui_->motion_execution_button, STATES.at(MOTION_EXECUTION_ST));
+    updateStatus(response->success, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, ui_->motion_execution_button,
+                 STATES.at(MOTION_EXECUTION_ST));
     return;
   }
   else
   {
-    emit updateStatus(response->success, MOTION_EXECUTION_ST, ui_->motion_execution_button, "", nullptr,
-                      static_cast<unsigned>(STATES.size()));
+    emit updateStatus(response->success, MOTION_EXECUTION_ST, "", nullptr, static_cast<unsigned>(STATES.size()));
   }
 }
 
