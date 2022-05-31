@@ -71,11 +71,12 @@ private:
    * @details This method updates elements of the GUI and can only be called from the Qt thread, not in ROS callbacks.
    * To invoke this method from a ROS callback, emit the `updateStatus` signal
    */
-  void onUpdateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
-                      QPushButton* next_button, unsigned step);
+  void onUpdateStatus(bool success, QString current_process, QString next_process, unsigned step);
+  void onUpdateLog(const QString& message);
 
-  snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
-  trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
+  bool scan_complete_{ false };
+  snp_msgs::msg::ToolPaths::SharedPtr tool_paths_{ nullptr };
+  trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_{ nullptr };
 
   void update_calibration_requirement();
   void observe();
@@ -105,8 +106,8 @@ private:
   void reset();
 
 signals:
-  void updateStatus(bool success, QString current_process, QPushButton* current_button, QString next_process,
-                    QPushButton* next_button, unsigned step);
+  void log(const QString& message);
+  void updateStatus(bool success, QString current_process, QString next_process, unsigned step);
 };
 
 #endif  // ROSCONWINDOW_H
