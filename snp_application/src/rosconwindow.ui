@@ -115,7 +115,7 @@
        <item>
         <widget class="QPushButton" name="tpp_button">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>Generate Tool Path Plan</string>
@@ -125,7 +125,7 @@
        <item>
         <widget class="QPushButton" name="motion_plan_button">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>Generate Motion Plan</string>
@@ -135,7 +135,7 @@
        <item>
         <widget class="QPushButton" name="motion_execution_button">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>Execute Motion Plan</string>
