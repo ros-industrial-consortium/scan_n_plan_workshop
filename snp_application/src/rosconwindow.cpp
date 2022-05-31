@@ -100,6 +100,7 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   });
 
   connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
+  connect(this, &ROSConWindow::log, this, &ROSConWindow::onUpdateLog);
 
   toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
   scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
@@ -139,7 +140,12 @@ void ROSConWindow::onUpdateStatus(bool success, QString current_process, QString
     status_stream << current_process << " failed\nWaiting to attempt again...";
   }
 
-  ui_->text_edit_log->append(status);
+  onUpdateLog(status);
+}
+
+void ROSConWindow::onUpdateLog(const QString& message)
+{
+  ui_->text_edit_log->append(message);
 }
 
 void ROSConWindow::update_calibration_requirement()
@@ -158,7 +164,7 @@ void ROSConWindow::observe()
 {
   if (!observe_client_->service_is_ready())
   {
-    ui_->text_edit_log->append("Observation service is not available");
+    emit log("Observation service is not available");
     return;
   }
 
@@ -170,11 +176,11 @@ void ROSConWindow::observe()
   if (response->success)
   {
     ui_->run_calibration_button->setEnabled(true);
-    ui_->text_edit_log->append("Gathered observation.");
+    emit log("Gathered observation.");
   }
   else
   {
-    ui_->text_edit_log->append("Failed to get observation.");
+    emit log("Failed to get observation.");
   }
 }
 
@@ -193,11 +199,11 @@ void ROSConWindow::run_calibration()
   if (response->success)
   {
     ui_->install_calibration_button->setEnabled(true);
-    ui_->text_edit_log->append("Calibration run.");
+    emit log("Calibration run.");
   }
   else
   {
-    ui_->text_edit_log->append("Calibration attempt failed.");
+    emit log("Calibration attempt failed.");
   }
 }
 
@@ -214,11 +220,11 @@ void ROSConWindow::get_correlation()
 
   if (response->success)
   {
-    ui_->text_edit_log->append("Correlation written to file.");
+    emit log("Correlation written to file.");
   }
   else
   {
-    ui_->text_edit_log->append("Failed to write correlation to file.");
+    emit log("Failed to write correlation to file.");
   }
 }
 
@@ -253,12 +259,12 @@ void ROSConWindow::scan()
 {
   if (!motion_execution_client_->service_is_ready())
   {
-    RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
+    emit log("Motion execution service is not available");
     emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  RCLCPP_INFO(node_->get_logger(), "Sending scan approach motion goal");
+  emit log("Sending scan approach motion goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->use_tool = false;
@@ -269,6 +275,12 @@ void ROSConWindow::scan()
 
   auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
+
+  scan_complete_ = false;
+
+  // Reset any tool paths or motion plans based on a previous scan
+  tool_paths_.reset();
+  motion_plan_.reset();
 }
 
 void ROSConWindow::onScanApproachDone(FJTResult result)
@@ -277,15 +289,18 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
   if (response->success)
   {
     emit updateStatus(true, SCAN_APPROACH_ST, START_RECONSTRUCTION_ST, STATES.at(START_RECONSTRUCTION_ST));
+    emit log("Successfully executed scan approach motion");
   }
   else
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan approach motion: '" << response->message << "'");
+    QString message;
+    QTextStream ss(&message);
+    ss << "Failed to execute scan approach motion: '" << QString::fromStdString(response->message) << "'";
+    emit log(message);
     emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
-  RCLCPP_INFO(node_->get_logger(), "Successfully executed scan approach motion");
   // call reconstruction start
   auto start_request = std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
 
@@ -320,21 +335,20 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
 {
   if (!result.get()->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to start surface reconstruction");
+    emit log("Failed to start surface reconstruction");
     emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   if (!motion_execution_client_->service_is_ready())
   {
-    RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
+    emit log("Motion execution service is not available");
     emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   emit updateStatus(true, START_RECONSTRUCTION_ST, SCAN_EXECUTION_ST, STATES.at(SCAN_EXECUTION_ST));
-
-  RCLCPP_INFO(node_->get_logger(), "Sending scan trajectory goal");
+  emit log("Sending scan trajectory goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->use_tool = false;
@@ -374,12 +388,15 @@ void ROSConWindow::onScanDone(FJTResult result)
   if (response->success)
   {
     emit updateStatus(true, SCAN_EXECUTION_ST, STOP_RECONSTRUCTION_ST, STATES.at(STOP_RECONSTRUCTION_ST));
-    RCLCPP_INFO(node_->get_logger(), "Successfully executed scan motion");
+    emit log("Successfully executed scan motion");
     cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
   }
   else
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion: '" << response->message << "'");
+    QString message;
+    QTextStream ss(&message);
+    ss << "Failed to execute scan motion: '" << QString::fromStdString(response->message) << "'";
+    emit log(message);
     emit updateStatus(false, SCAN_EXECUTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     cb = [](StopScanFuture) {};
   }
@@ -391,7 +408,7 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
 {
   if (!stop_result.get()->success)
   {
-    RCLCPP_INFO(node_->get_logger(), "Failed to stop surface reconstruction");
+    emit log("Failed to stop surface reconstruction");
     emit updateStatus(false, STOP_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
   }
 
@@ -417,14 +434,13 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
 
   if (!motion_execution_client_->service_is_ready())
   {
-    RCLCPP_INFO(node_->get_logger(), "Motion execution service is not available");
+    emit log("Motion execution service is not available");
     emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   emit updateStatus(true, STOP_RECONSTRUCTION_ST, SCAN_DEPARTURE_ST, STATES.at(SCAN_DEPARTURE_ST));
-
-  RCLCPP_INFO(node_->get_logger(), "Sending scan departure motion goal");
+  emit log("Sending scan departure motion goal");
 
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->use_tool = false;
@@ -451,12 +467,16 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (response->success)
   {
-    RCLCPP_INFO(node_->get_logger(), "Successfully completed scan and surface reconstruction");
+    emit log("Successfully completed scan and surface reconstruction");
     emit updateStatus(true, SCAN_DEPARTURE_ST, TPP_ST, STATES.at(TPP_ST));
+    scan_complete_ = true;
   }
   else
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to execute scan motion departure: '" << response->message << "'");
+    QString message;
+    QTextStream ss(&message);
+    ss << "Failed to execute scan motion departure: '" << QString::fromStdString(response->message) << "'";
+    emit log(message);
     emit updateStatus(false, SCAN_DEPARTURE_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
@@ -464,26 +484,19 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
 
 void ROSConWindow::plan_tool_paths()
 {
-  bool success = true;
-  tool_paths_.reset();
+  try
+  {
+    if (!scan_complete_)
+      throw std::runtime_error("Scan has not been completed");
 
-  // check that a mesh file has been defined
-  if (mesh_file_.empty())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "No mesh file has been defined");
-    updateStatus(false, TPP_ST, TPP_ST, STATES.at(TPP_ST));
-    return;
-  }
+    if (!tpp_client_->service_is_ready())
+      throw std::runtime_error("Tool path planning server is not available");
 
-  // do tpp things
-  if (!tpp_client_->service_is_ready())
-  {
-    RCLCPP_ERROR(node_->get_logger(), "Could not find TPP server");
-    updateStatus(false, TPP_ST, TPP_ST, STATES.at(TPP_ST));
-    success = false;
-  }
-  else
-  {
+    tool_paths_.reset();
+
+    // Reset any motion plan computed on a previous tool path
+    motion_plan_.reset();
+
     // Fill out the service call
     auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
     request->mesh_filename = mesh_file_;
@@ -501,15 +514,12 @@ void ROSConWindow::plan_tool_paths()
 
     snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = future.get();
     if (!response->success)
-    {
-      RCLCPP_ERROR_STREAM(node_->get_logger(), "TPP Error: '" << response->message << "'");
-      success = false;
-    }
-    else
-    {
-      tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+      throw std::runtime_error("TPP Error: " + response->message);
 
-      // TEMPORARY ERASE FIRST AND LAST RASTER
+    tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+
+    // TEMPORARY ERASE FIRST AND LAST RASTER
+    {
       tool_paths_->paths.erase(tool_paths_->paths.begin());
       tool_paths_->paths.erase(tool_paths_->paths.end() - 1);
       for (auto& path : tool_paths_->paths)
@@ -517,7 +527,10 @@ void ROSConWindow::plan_tool_paths()
         path.segments.front().poses.erase(path.segments.front().poses.begin());
         path.segments.front().poses.erase(path.segments.front().poses.end() - 1);
       }
+    }
 
+    // Publish a message to display the tool path
+    {
       geometry_msgs::msg::PoseArray flat_toolpath_msg;
       flat_toolpath_msg.header.frame_id = reference_frame_;
       for (auto& toolpath : tool_paths_->paths)
@@ -534,39 +547,28 @@ void ROSConWindow::plan_tool_paths()
 
       toolpath_pub_->publish(flat_toolpath_msg);
     }
-  }
 
-  emit updateStatus(success, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
+    emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
+  }
+  catch (const std::exception& ex)
+  {
+    emit log(QString(ex.what()));
+    emit updateStatus(false, TPP_ST, TPP_ST, STATES.at(TPP_ST));
+  }
 }
 
 void ROSConWindow::planMotion()
 {
   try
   {
-    // Reset the internal motion plan container
-    motion_plan_.reset();
+    if (!tool_paths_ || tool_paths_->paths.empty())
+      throw std::runtime_error("No tool paths have been defined");
 
     if (!motion_planning_client_->service_is_ready())
-    {
-      RCLCPP_ERROR(node_->get_logger(), "Motion planning server is not available");
-      updateStatus(false, MOTION_PLANNING_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
-      return;
-    }
+      throw std::runtime_error("Motion planning server is not available");
 
-    // do motion planning things
-    if (!tool_paths_)
-    {
-      RCLCPP_ERROR(node_->get_logger(), "Tool path is empty, can not plan motion");
-      updateStatus(false, MOTION_PLANNING_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
-      return;
-    }
-
-    if (tool_paths_->paths.empty())
-    {
-      RCLCPP_ERROR(node_->get_logger(), "Tool path is empty, can not plan motion");
-      updateStatus(false, MOTION_PLANNING_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
-      return;
-    }
+    // Reset the internal motion plan container
+    motion_plan_.reset();
 
     // TODO: Fill a motion planning service request
     auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();
@@ -584,7 +586,8 @@ void ROSConWindow::planMotion()
   }
   catch (const std::exception& ex)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), ex.what());
+    emit log(ex.what());
+    emit updateStatus(false, MOTION_PLANNING_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
   }
 }
 
@@ -594,7 +597,7 @@ void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotion
   snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    emit log(QString::fromStdString(response->message));
   }
   else
   {
@@ -609,15 +612,15 @@ void ROSConWindow::execute()
 {
   if (!motion_plan_)
   {
-    RCLCPP_ERROR(node_->get_logger(), "Motion plan is empty, can not execute");
-    updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
+    emit log("Motion plan is empty, can not execute");
+    emit updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
     return;
   }
 
   if (!motion_execution_client_->service_is_ready())
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution service is not available");
-    updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
+    emit log("Motion execution service is not available");
+    emit updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
     return;
   }
 
@@ -634,8 +637,11 @@ void ROSConWindow::execute()
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = future.get();
   if (!response->success)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Motion execution error: '" << response->message << "'");
-    updateStatus(response->success, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
+    QString message;
+    QTextStream ss(&message);
+    ss << "Motion execution error: '" << QString::fromStdString(response->message) << "'";
+    emit log(message);
+    emit updateStatus(response->success, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
     return;
   }
   else
@@ -658,4 +664,9 @@ void ROSConWindow::reset()
   ui_->motion_execution_button->setEnabled(true);
 
   ui_->progress_bar->setValue(0);
+
+  // Clear the internal variables
+  scan_complete_ = false;
+  tool_paths_.reset();
+  motion_plan_.reset();
 }

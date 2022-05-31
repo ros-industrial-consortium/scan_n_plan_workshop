@@ -72,9 +72,11 @@ private:
    * To invoke this method from a ROS callback, emit the `updateStatus` signal
    */
   void onUpdateStatus(bool success, QString current_process, QString next_process, unsigned step);
+  void onUpdateLog(const QString& message);
 
-  snp_msgs::msg::ToolPaths::SharedPtr tool_paths_;
-  trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_;
+  bool scan_complete_{ false };
+  snp_msgs::msg::ToolPaths::SharedPtr tool_paths_{ nullptr };
+  trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_{ nullptr };
 
   void update_calibration_requirement();
   void observe();
@@ -104,6 +106,7 @@ private:
   void reset();
 
 signals:
+  void log(const QString& message);
   void updateStatus(bool success, QString current_process, QString next_process, unsigned step);
 };
 
