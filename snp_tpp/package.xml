@@ -17,6 +17,8 @@
   <build_depend>ros_industrial_cmake_boilerplate</build_depend>
   <depend>geometry_msgs</depend>
   <depend>noether_tpp</depend>
+  <depend>noether_gui</depend>
+  <depend>noether_filtering</depend>
   <depend>rclcpp</depend>
   <depend>snp_msgs</depend>
   <depend>tf2_eigen</depend>
