@@ -518,17 +518,6 @@ void ROSConWindow::plan_tool_paths()
 
     tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
 
-    // TEMPORARY ERASE FIRST AND LAST RASTER
-    {
-      tool_paths_->paths.erase(tool_paths_->paths.begin());
-      tool_paths_->paths.erase(tool_paths_->paths.end() - 1);
-      for (auto& path : tool_paths_->paths)
-      {
-        path.segments.front().poses.erase(path.segments.front().poses.begin());
-        path.segments.front().poses.erase(path.segments.front().poses.end() - 1);
-      }
-    }
-
     // Publish a message to display the tool path
     {
       geometry_msgs::msg::PoseArray flat_toolpath_msg;
