@@ -20,6 +20,7 @@ find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(noether_tpp REQUIRED)
 find_package(noether_gui REQUIRED)
 find_package(noether_filtering REQUIRED)
+find_package(plugin_loader REQUIRED)
 find_package(PCL REQUIRED)
 
 find_package(ament_cmake REQUIRED)
@@ -63,11 +64,15 @@ target_include_directories(${PROJECT_NAME}_mesh_modifier PUBLIC
 target_link_libraries(${PROJECT_NAME}_mesh_modifier noether::noether_tpp noether::noether_filtering noether::noether_gui)
 ament_target_dependencies(${PROJECT_NAME}_mesh_modifier geometry_msgs snp_msgs rviz_polygon_selection_tool rclcpp tf2_eigen std_srvs)
 
+# Noether plugin library
+add_library(${PROJECT_NAME}_plugins SHARED src/plugins.cpp)
+target_link_libraries(${PROJECT_NAME}_plugins ${PROJECT_NAME}_mesh_modifier)
+
 # Install the executables
 install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test DESTINATION lib/${PROJECT_NAME})
 
 # Install the library(ies)
-install(TARGETS ${PROJECT_NAME}_mesh_modifier EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PROJECT_NAME}_mesh_modifier ${PROJECT_NAME}_plugins EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
