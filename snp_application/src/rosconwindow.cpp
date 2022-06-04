@@ -1,5 +1,5 @@
 #include "rosconwindow.h"
-#include "ui_rosconwindow.h"
+#include "ui_snp_widget.h"
 
 #include <QMessageBox>
 #include <QScrollBar>
@@ -67,18 +67,17 @@ T declareAndGet(rclcpp::Node& node, const std::string& key)
 
 }  // namespace
 
-ROSConWindow::ROSConWindow(QWidget* parent)
-  : QMainWindow(parent)
-  , ui_(new Ui::ROSConWindow)
-  , node_(rclcpp::Node::make_shared("roscon_app_node"))
+ROSConWindow::ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent)
+  : QWidget(parent)
+  , ui_(new Ui::SNPWidget)
   , past_calibration_(false)
-  , mesh_file_(declareAndGet<std::string>(*node_, MESH_FILE_PARAM))
-  , motion_group_(declareAndGet<std::string>(*node_, MOTION_GROUP_PARAM))
-  , reference_frame_(declareAndGet<std::string>(*node_, REF_FRAME_PARAM))
-  , tcp_frame_(declareAndGet<std::string>(*node_, TCP_FRAME_PARAM))
-  , camera_frame_(declareAndGet<std::string>(*node_, CAMERA_FRAME_PARAM))
+  , mesh_file_(declareAndGet<std::string>(*node, MESH_FILE_PARAM))
+  , motion_group_(declareAndGet<std::string>(*node, MOTION_GROUP_PARAM))
+  , reference_frame_(declareAndGet<std::string>(*node, REF_FRAME_PARAM))
+  , tcp_frame_(declareAndGet<std::string>(*node, TCP_FRAME_PARAM))
+  , camera_frame_(declareAndGet<std::string>(*node, CAMERA_FRAME_PARAM))
   , scan_traj_(message_serialization::deserialize<trajectory_msgs::msg::JointTrajectory>(
-        declareAndGet<std::string>(*node_, SCAN_TRAJ_FILE_PARAM)))
+        declareAndGet<std::string>(*node, SCAN_TRAJ_FILE_PARAM)))
 {
   ui_->setupUi(this);
 
@@ -102,22 +101,22 @@ ROSConWindow::ROSConWindow(QWidget* parent)
   connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
   connect(this, &ROSConWindow::log, this, &ROSConWindow::onUpdateLog);
 
-  toolpath_pub_ = node_->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
-  scan_mesh_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
+  toolpath_pub_ = node->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
+  scan_mesh_pub_ = node->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
   // TODO register all service/action clients
-  observe_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
-  run_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_RUN_SERVICE);
-  get_correlation_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_CORRELATION_SERVICE);
-  install_calibration_client_ = node_->create_client<std_srvs::srv::Trigger>(CALIBRATION_INSTALL_SERVICE);
+  observe_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
+  run_calibration_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_RUN_SERVICE);
+  get_correlation_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_CORRELATION_SERVICE);
+  install_calibration_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_INSTALL_SERVICE);
 
   start_reconstruction_client_ =
-      node_->create_client<open3d_interface_msgs::srv::StartYakReconstruction>(START_RECONSTRUCTION_SERVICE);
+      node->create_client<open3d_interface_msgs::srv::StartYakReconstruction>(START_RECONSTRUCTION_SERVICE);
   stop_reconstruction_client_ =
-      node_->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(STOP_RECONSTRUCTION_SERVICE);
-  tpp_client_ = node_->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
-  motion_planning_client_ = node_->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
-  motion_execution_client_ = node_->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
+      node->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(STOP_RECONSTRUCTION_SERVICE);
+  tpp_client_ = node->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
+  motion_planning_client_ = node->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
+  motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 }
 
 void ROSConWindow::onUpdateStatus(bool success, QString current_process, QString next_process, unsigned step)

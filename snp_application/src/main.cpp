@@ -20,11 +20,12 @@ int main(int argc, char* argv[])
     signal(SIGINT, handleSignal);
     signal(SIGTERM, handleSignal);
 
-    ROSConWindow w;
+    auto node = std::make_shared<rclcpp::Node>("snp_application");
+    ROSConWindow w(node);
     w.show();
 
     // Move the ROS spinning into a separate thread since the call to `spin` is synchronous
-    std::thread t{ [&w]() { rclcpp::spin(w.getNode()); } };
+    std::thread t{ [node]() { rclcpp::spin(node); } };
 
     // Run the Qt application, which is also sychronous
     auto ret = app.exec();

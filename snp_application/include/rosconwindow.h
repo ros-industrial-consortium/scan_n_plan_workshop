@@ -1,7 +1,7 @@
 #ifndef ROSCONWINDOW_H
 #define ROSCONWINDOW_H
 
-#include <QMainWindow>
+#include <QWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
 // Messages
@@ -18,26 +18,20 @@
 
 namespace Ui
 {
-class ROSConWindow;
+class SNPWidget;
 }
 
 class QPushButton;
 
-class ROSConWindow : public QMainWindow
+class ROSConWindow : public QWidget
 {
   Q_OBJECT
 
 public:
-  explicit ROSConWindow(QWidget* parent = nullptr);
-
-  rclcpp::Node::SharedPtr getNode() const
-  {
-    return node_;
-  }
+  explicit ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
 
 private:
-  Ui::ROSConWindow* ui_;
-  rclcpp::Node::SharedPtr node_;
+  Ui::SNPWidget* ui_;
   bool past_calibration_;
 
   const std::string mesh_file_;
