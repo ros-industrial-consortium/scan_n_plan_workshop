@@ -88,7 +88,7 @@ ROSConWindow::ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent)
   connect(ui_->install_calibration_button, &QPushButton::clicked, this, &ROSConWindow::install_calibration);
   connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &ROSConWindow::reset_calibration);
   connect(ui_->scan_button, &QPushButton::clicked, this, &ROSConWindow::scan);
-  connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::plan_tool_paths);
+  connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::planToolPaths);
   connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::planMotion);
   connect(ui_->motion_execution_button, &QPushButton::clicked, this, &ROSConWindow::execute);
   connect(ui_->reset_button, &QPushButton::clicked, this, &ROSConWindow::reset);
@@ -481,7 +481,7 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
   }
 }
 
-void ROSConWindow::plan_tool_paths()
+void ROSConWindow::planToolPaths()
 {
   try
   {
@@ -506,43 +506,47 @@ void ROSConWindow::plan_tool_paths()
     request->search_radius = 0.05;
 
     // Call the service
-    auto future = tpp_client_->async_send_request(request);
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    future.wait();
-    QApplication::restoreOverrideCursor();
-
-    snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = future.get();
-    if (!response->success)
-      throw std::runtime_error("TPP Error: " + response->message);
-
-    tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
-
-    // Publish a message to display the tool path
-    {
-      geometry_msgs::msg::PoseArray flat_toolpath_msg;
-      flat_toolpath_msg.header.frame_id = reference_frame_;
-      for (auto& toolpath : tool_paths_->paths)
-      {
-        for (auto& segment : toolpath.segments)
-        {
-          // Update the reference frame
-          segment.header.frame_id = reference_frame_;
-
-          // Insert the waypoints into the flattened structure
-          flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
-        }
-      }
-
-      toolpath_pub_->publish(flat_toolpath_msg);
-    }
-
-    emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
+    auto future = tpp_client_->async_send_request(request, std::bind(&ROSConWindow::onPlanToolPathsDone, this, std::placeholders::_1));
   }
   catch (const std::exception& ex)
   {
     emit log(QString(ex.what()));
     emit updateStatus(false, TPP_ST, TPP_ST, STATES.at(TPP_ST));
   }
+}
+
+void ROSConWindow::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedFuture result)
+{
+  snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = result.get();
+  if (!response->success)
+  {
+    emit log(QString::fromStdString(response->message));
+    emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
+    return;
+  }
+
+  tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+
+  // Publish a message to display the tool path
+  {
+    geometry_msgs::msg::PoseArray flat_toolpath_msg;
+    flat_toolpath_msg.header.frame_id = reference_frame_;
+    for (auto& toolpath : tool_paths_->paths)
+    {
+      for (auto& segment : toolpath.segments)
+      {
+        // Update the reference frame
+        segment.header.frame_id = reference_frame_;
+
+        // Insert the waypoints into the flattened structure
+        flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
+      }
+    }
+
+    toolpath_pub_->publish(flat_toolpath_msg);
+  }
+
+  emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
 }
 
 void ROSConWindow::planMotion()

@@ -90,7 +90,8 @@ private:
   void onScanStopDone(StopScanFuture result);
   void onScanDepartureDone(FJTResult result);
 
-  void plan_tool_paths();
+  void planToolPaths();
+  void onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedFuture result);
 
   void planMotion();
   void onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture result);
