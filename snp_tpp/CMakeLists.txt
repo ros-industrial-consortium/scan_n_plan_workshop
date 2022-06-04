@@ -68,11 +68,20 @@ ament_target_dependencies(${PROJECT_NAME}_mesh_modifier geometry_msgs snp_msgs r
 add_library(${PROJECT_NAME}_plugins SHARED src/plugins.cpp)
 target_link_libraries(${PROJECT_NAME}_plugins ${PROJECT_NAME}_mesh_modifier)
 
+# Custom TPP widget
+qt5_wrap_cpp(${PROJECT_NAME}_widget_mocs src/tpp_widget.h)
+add_library(${PROJECT_NAME}_widget SHARED
+  src/tpp_widget.cpp
+  ${${PROJECT_NAME}_widget_mocs})
+target_link_libraries(${PROJECT_NAME}_widget noether::noether_gui plugin_loader::plugin_loader ${PCL_LIBRARIES})
+ament_target_dependencies(${PROJECT_NAME}_widget snp_msgs tf2_eigen)
+target_compile_definitions(${PROJECT_NAME}_widget PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDING_LIBRARY" SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
+
 # Install the executables
 install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test DESTINATION lib/${PROJECT_NAME})
 
 # Install the library(ies)
-install(TARGETS ${PROJECT_NAME}_mesh_modifier ${PROJECT_NAME}_plugins EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PROJECT_NAME}_mesh_modifier ${PROJECT_NAME}_plugins ${PROJECT_NAME}_widget EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
