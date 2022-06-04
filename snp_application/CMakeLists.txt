@@ -35,6 +35,8 @@ find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(trajectory_msgs REQUIRED)
+find_package(rviz_common REQUIRED)
+find_package(pluginlib REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
@@ -59,14 +61,19 @@ ament_target_dependencies(${PROJECT_NAME}_widget
   tf2_eigen
   trajectory_msgs)
 
+add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
+target_link_libraries(${PROJECT_NAME}_panel ${PROJECT_NAME}_widget)
+ament_target_dependencies(${PROJECT_NAME}_panel rviz_common pluginlib)
+
 add_executable(roscon_app src/main.cpp)
 target_link_libraries(roscon_app Qt5::Widgets ${PROJECT_NAME}_widget)
 ament_target_dependencies(roscon_app rclcpp)
 
 # Install the library(ies)
-install(TARGETS ${PROJECT_NAME}_widget EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PROJECT_NAME}_widget ${PROJECT_NAME}_panel EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
 
+pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
 ament_package()
