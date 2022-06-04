@@ -1,4 +1,4 @@
-#include "rosconwindow.h"
+#include "snp_widget.h"
 
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -15,7 +15,7 @@ public:
       auto node = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
       auto layout = new QVBoxLayout();
-      layout->addWidget(new ROSConWindow(node, this));
+      layout->addWidget(new SNPWidget(node, this));
       setLayout(layout);
     }
     catch (const std::exception& ex)

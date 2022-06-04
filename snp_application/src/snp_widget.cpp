@@ -1,4 +1,4 @@
-#include "rosconwindow.h"
+#include "snp_widget.h"
 #include "ui_snp_widget.h"
 
 #include <QMessageBox>
@@ -67,7 +67,7 @@ T declareAndGet(rclcpp::Node& node, const std::string& key)
 
 }  // namespace
 
-ROSConWindow::ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent)
+SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   : QWidget(parent)
   , ui_(new Ui::SNPWidget)
   , past_calibration_(false)
@@ -81,25 +81,25 @@ ROSConWindow::ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent)
 {
   ui_->setupUi(this);
 
-  connect(ui_->calibration_group_box, &QGroupBox::clicked, this, &ROSConWindow::update_calibration_requirement);
-  connect(ui_->observe_button, &QPushButton::clicked, this, &ROSConWindow::observe);
-  connect(ui_->run_calibration_button, &QPushButton::clicked, this, &ROSConWindow::run_calibration);
-  connect(ui_->get_correlation_button, &QPushButton::clicked, this, &ROSConWindow::get_correlation);
-  connect(ui_->install_calibration_button, &QPushButton::clicked, this, &ROSConWindow::install_calibration);
-  connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &ROSConWindow::reset_calibration);
-  connect(ui_->scan_button, &QPushButton::clicked, this, &ROSConWindow::scan);
-  connect(ui_->tpp_button, &QPushButton::clicked, this, &ROSConWindow::planToolPaths);
-  connect(ui_->motion_plan_button, &QPushButton::clicked, this, &ROSConWindow::planMotion);
-  connect(ui_->motion_execution_button, &QPushButton::clicked, this, &ROSConWindow::execute);
-  connect(ui_->reset_button, &QPushButton::clicked, this, &ROSConWindow::reset);
+  connect(ui_->calibration_group_box, &QGroupBox::clicked, this, &SNPWidget::update_calibration_requirement);
+  connect(ui_->observe_button, &QPushButton::clicked, this, &SNPWidget::observe);
+  connect(ui_->run_calibration_button, &QPushButton::clicked, this, &SNPWidget::run_calibration);
+  connect(ui_->get_correlation_button, &QPushButton::clicked, this, &SNPWidget::get_correlation);
+  connect(ui_->install_calibration_button, &QPushButton::clicked, this, &SNPWidget::install_calibration);
+  connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &SNPWidget::reset_calibration);
+  connect(ui_->scan_button, &QPushButton::clicked, this, &SNPWidget::scan);
+  connect(ui_->tpp_button, &QPushButton::clicked, this, &SNPWidget::planToolPaths);
+  connect(ui_->motion_plan_button, &QPushButton::clicked, this, &SNPWidget::planMotion);
+  connect(ui_->motion_execution_button, &QPushButton::clicked, this, &SNPWidget::execute);
+  connect(ui_->reset_button, &QPushButton::clicked, this, &SNPWidget::reset);
 
   // Move the text edit scroll bar to the maximum limit whenever it is resized
   connect(ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
     ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
   });
 
-  connect(this, &ROSConWindow::updateStatus, this, &ROSConWindow::onUpdateStatus);
-  connect(this, &ROSConWindow::log, this, &ROSConWindow::onUpdateLog);
+  connect(this, &SNPWidget::updateStatus, this, &SNPWidget::onUpdateStatus);
+  connect(this, &SNPWidget::log, this, &SNPWidget::onUpdateLog);
 
   toolpath_pub_ = node->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
   scan_mesh_pub_ = node->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
@@ -119,7 +119,7 @@ ROSConWindow::ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent)
   motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 }
 
-void ROSConWindow::onUpdateStatus(bool success, QString current_process, QString next_process, unsigned step)
+void SNPWidget::onUpdateStatus(bool success, QString current_process, QString next_process, unsigned step)
 {
   QString status;
   QTextStream status_stream(&status);
@@ -142,12 +142,12 @@ void ROSConWindow::onUpdateStatus(bool success, QString current_process, QString
   onUpdateLog(status);
 }
 
-void ROSConWindow::onUpdateLog(const QString& message)
+void SNPWidget::onUpdateLog(const QString& message)
 {
   ui_->text_edit_log->append(message);
 }
 
-void ROSConWindow::update_calibration_requirement()
+void SNPWidget::update_calibration_requirement()
 {
   if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
   {
@@ -159,7 +159,7 @@ void ROSConWindow::update_calibration_requirement()
   }
 }
 
-void ROSConWindow::observe()
+void SNPWidget::observe()
 {
   if (!observe_client_->service_is_ready())
   {
@@ -183,7 +183,7 @@ void ROSConWindow::observe()
   }
 }
 
-void ROSConWindow::run_calibration()
+void SNPWidget::run_calibration()
 {
   if (!run_calibration_client_->service_is_ready())
   {
@@ -206,7 +206,7 @@ void ROSConWindow::run_calibration()
   }
 }
 
-void ROSConWindow::get_correlation()
+void SNPWidget::get_correlation()
 {
   if (!get_correlation_client_->service_is_ready())
   {
@@ -227,7 +227,7 @@ void ROSConWindow::get_correlation()
   }
 }
 
-void ROSConWindow::install_calibration()
+void SNPWidget::install_calibration()
 {
   if (!install_calibration_client_->service_is_ready())
   {
@@ -243,7 +243,7 @@ void ROSConWindow::install_calibration()
   emit updateStatus(response->success, CALIBRATION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
 }
 
-void ROSConWindow::reset_calibration()
+void SNPWidget::reset_calibration()
 {
   past_calibration_ = false;
 
@@ -254,7 +254,7 @@ void ROSConWindow::reset_calibration()
   ui_->reset_calibration_button->setEnabled(false);
 }
 
-void ROSConWindow::scan()
+void SNPWidget::scan()
 {
   if (!motion_execution_client_->service_is_ready())
   {
@@ -272,7 +272,7 @@ void ROSConWindow::scan()
   request->motion_plan.points.push_back(scan_traj_.points.at(0));
   request->motion_plan.points.push_back(scan_traj_.points.at(1));
 
-  auto cb = std::bind(&ROSConWindow::onScanApproachDone, this, std::placeholders::_1);
+  auto cb = std::bind(&SNPWidget::onScanApproachDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
 
   scan_complete_ = false;
@@ -282,7 +282,7 @@ void ROSConWindow::scan()
   motion_plan_.reset();
 }
 
-void ROSConWindow::onScanApproachDone(FJTResult result)
+void SNPWidget::onScanApproachDone(FJTResult result)
 {
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (response->success)
@@ -326,11 +326,11 @@ void ROSConWindow::onScanApproachDone(FJTResult result)
   start_request->rgbd_params.depth_trunc = 1.1;
   start_request->rgbd_params.convert_rgb_to_intensity = false;
 
-  auto cb = std::bind(&ROSConWindow::onScanStartDone, this, std::placeholders::_1);
+  auto cb = std::bind(&SNPWidget::onScanStartDone, this, std::placeholders::_1);
   start_reconstruction_client_->async_send_request(start_request, cb);
 }
 
-void ROSConWindow::onScanStartDone(StartScanFuture result)
+void SNPWidget::onScanStartDone(StartScanFuture result)
 {
   if (!result.get()->success)
   {
@@ -362,11 +362,11 @@ void ROSConWindow::onScanStartDone(StartScanFuture result)
                    return pt;
                  });
 
-  auto cb = std::bind(&ROSConWindow::onScanDone, this, std::placeholders::_1);
+  auto cb = std::bind(&SNPWidget::onScanDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
 }
 
-void ROSConWindow::onScanDone(FJTResult result)
+void SNPWidget::onScanDone(FJTResult result)
 {
   // call reconstruction stop (regardless of trajectory success)
   auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
@@ -388,7 +388,7 @@ void ROSConWindow::onScanDone(FJTResult result)
   {
     emit updateStatus(true, SCAN_EXECUTION_ST, STOP_RECONSTRUCTION_ST, STATES.at(STOP_RECONSTRUCTION_ST));
     emit log("Successfully executed scan motion");
-    cb = std::bind(&ROSConWindow::onScanStopDone, this, std::placeholders::_1);
+    cb = std::bind(&SNPWidget::onScanStopDone, this, std::placeholders::_1);
   }
   else
   {
@@ -403,7 +403,7 @@ void ROSConWindow::onScanDone(FJTResult result)
   stop_reconstruction_client_->async_send_request(stop_request, cb);
 }
 
-void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
+void SNPWidget::onScanStopDone(StopScanFuture stop_result)
 {
   if (!stop_result.get()->success)
   {
@@ -457,11 +457,11 @@ void ROSConWindow::onScanStopDone(StopScanFuture stop_result)
   end_pt.time_from_start.nanosec += start_pt.time_from_start.nanosec;
   request->motion_plan.points.push_back(end_pt);
 
-  auto cb = std::bind(&ROSConWindow::onScanDepartureDone, this, std::placeholders::_1);
+  auto cb = std::bind(&SNPWidget::onScanDepartureDone, this, std::placeholders::_1);
   motion_execution_client_->async_send_request(request, cb);
 }
 
-void ROSConWindow::onScanDepartureDone(FJTResult result)
+void SNPWidget::onScanDepartureDone(FJTResult result)
 {
   snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (response->success)
@@ -481,7 +481,7 @@ void ROSConWindow::onScanDepartureDone(FJTResult result)
   }
 }
 
-void ROSConWindow::planToolPaths()
+void SNPWidget::planToolPaths()
 {
   try
   {
@@ -506,7 +506,7 @@ void ROSConWindow::planToolPaths()
     request->search_radius = 0.05;
 
     // Call the service
-    auto future = tpp_client_->async_send_request(request, std::bind(&ROSConWindow::onPlanToolPathsDone, this, std::placeholders::_1));
+    auto future = tpp_client_->async_send_request(request, std::bind(&SNPWidget::onPlanToolPathsDone, this, std::placeholders::_1));
   }
   catch (const std::exception& ex)
   {
@@ -515,7 +515,7 @@ void ROSConWindow::planToolPaths()
   }
 }
 
-void ROSConWindow::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedFuture result)
+void SNPWidget::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedFuture result)
 {
   snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = result.get();
   if (!response->success)
@@ -549,7 +549,7 @@ void ROSConWindow::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToo
   emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
 }
 
-void ROSConWindow::planMotion()
+void SNPWidget::planMotion()
 {
   try
   {
@@ -572,7 +572,7 @@ void ROSConWindow::planMotion()
 
     // Call the service
     motion_planning_client_->async_send_request(
-        request, std::bind(&ROSConWindow::onPlanMotionDone, this, std::placeholders::_1));
+        request, std::bind(&SNPWidget::onPlanMotionDone, this, std::placeholders::_1));
 
     QApplication::setOverrideCursor(Qt::BusyCursor);
   }
@@ -583,7 +583,7 @@ void ROSConWindow::planMotion()
   }
 }
 
-void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
+void SNPWidget::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
 {
   QApplication::restoreOverrideCursor();
   snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();
@@ -600,7 +600,7 @@ void ROSConWindow::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotion
   emit updateStatus(response->success, MOTION_PLANNING_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
 }
 
-void ROSConWindow::execute()
+void SNPWidget::execute()
 {
   if (!motion_plan_)
   {
@@ -642,7 +642,7 @@ void ROSConWindow::execute()
   }
 }
 
-void ROSConWindow::reset()
+void SNPWidget::reset()
 {
   ui_->text_edit_log->setText("Waiting to calibrate...");
 

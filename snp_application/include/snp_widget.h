@@ -21,14 +21,12 @@ namespace Ui
 class SNPWidget;
 }
 
-class QPushButton;
-
-class ROSConWindow : public QWidget
+class SNPWidget : public QWidget
 {
   Q_OBJECT
 
 public:
-  explicit ROSConWindow(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
+  explicit SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
 
 private:
   Ui::SNPWidget* ui_;
