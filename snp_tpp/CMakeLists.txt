@@ -77,8 +77,13 @@ target_link_libraries(${PROJECT_NAME}_widget noether::noether_gui plugin_loader:
 ament_target_dependencies(${PROJECT_NAME}_widget snp_msgs tf2_eigen)
 target_compile_definitions(${PROJECT_NAME}_widget PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDING_LIBRARY" SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
 
+# TPP GUI application
+add_executable(${PROJECT_NAME}_app src/tpp_app.cpp)
+target_link_libraries(${PROJECT_NAME}_app ${PROJECT_NAME}_widget)
+ament_target_dependencies(${PROJECT_NAME}_app rclcpp)
+
 # Install the executables
-install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test DESTINATION lib/${PROJECT_NAME})
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test ${PROJECT_NAME}_app DESTINATION lib/${PROJECT_NAME})
 
 # Install the library(ies)
 install(TARGETS ${PROJECT_NAME}_mesh_modifier ${PROJECT_NAME}_plugins ${PROJECT_NAME}_widget EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
