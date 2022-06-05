@@ -2,7 +2,6 @@
 
 #include <noether_gui/widgets/tpp_pipeline_widget.h>
 #include <pcl/io/vtk_lib_io.h>
-#include <pcl_ros/transforms.hpp>
 #include <plugin_loader/plugin_loader.h>
 #include <QVBoxLayout>
 #include <QScrollArea>
