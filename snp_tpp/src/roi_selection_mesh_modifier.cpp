@@ -6,21 +6,41 @@
 #include <noether_filtering/submesh_extraction/extruded_polygon_mesh_extractor.h>
 #include <noether_gui/plugin_interface.h>
 #include <tf2_eigen/tf2_eigen.h>
+#include <tf2/time.h>
 
 namespace snp_tpp
 {
-ROISelectionMeshModifier::ROISelectionMeshModifier(noether::ExtrudedPolygonSubMeshExtractor extractor, const Eigen::MatrixX3d& boundary)
-  : boundary_(boundary)
+ROISelectionMeshModifier::ROISelectionMeshModifier(rclcpp::Node::SharedPtr node, noether::ExtrudedPolygonSubMeshExtractor extractor,
+                                                   std::vector<geometry_msgs::msg::PointStamped> boundary)
+  : boundary_(std::move(boundary))
   , extractor_(std::move(extractor))
+  , buffer_(node->get_clock())
+  , listener_(buffer_)
 {
 }
 
 std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::PolygonMesh& mesh) const
 {
-  if (boundary_.rows() < 3)
+  if (boundary_.size() < 3)
+  {
     return { mesh };
+  }
   else
-    return { extractor_.extract(mesh, boundary_) };
+  {
+    Eigen::MatrixX3d boundary(boundary_.size(), 3);
+    for (Eigen::Index i = 0; i < boundary.rows(); ++i)
+    {
+      // Lookup transform between mesh header and
+      Eigen::Isometry3d transform = tf2::transformToEigen(
+          buffer_.lookupTransform(mesh.header.frame_id, boundary_[i].header.frame_id, tf2::TimePointZero, std::chrono::milliseconds(50)));
+
+      Eigen::Vector3d v;
+      tf2::fromMsg(boundary_[i].point, v);
+      boundary.row(i) = transform * v;
+    }
+
+    return { extractor_.extract(mesh, boundary) };
+  }
 }
 
 ROISelectionMeshModifierWidget::ROISelectionMeshModifierWidget(QWidget* parent)
@@ -28,8 +48,21 @@ ROISelectionMeshModifierWidget::ROISelectionMeshModifierWidget(QWidget* parent)
   , ui_(new Ui::ROISelectionMeshModifier())
   , node_(std::make_shared<rclcpp::Node>("roi_selection_mesh_modifier"))
   , client_(node_->create_client<rviz_polygon_selection_tool::srv::GetSelection>("get_selection"))
+  , thread_(std::bind(&ROISelectionMeshModifierWidget::spin, this))
 {
   ui_->setupUi(this);
+}
+
+ROISelectionMeshModifierWidget::~ROISelectionMeshModifierWidget()
+{
+  executor_.cancel();
+  thread_.join();
+}
+
+void ROISelectionMeshModifierWidget::spin()
+{
+  executor_.add_node(node_);
+  executor_.spin();
 }
 
 noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
@@ -45,12 +78,11 @@ noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
 
   auto request = std::make_shared<rviz_polygon_selection_tool::srv::GetSelection::Request>();
   auto future = client_->async_send_request(request);
-  rclcpp::FutureReturnCode ret = rclcpp::spin_until_future_complete(node_, future, std::chrono::seconds(3));
-  switch (ret)
+  switch (future.wait_for(std::chrono::seconds(3)))
   {
-    case rclcpp::FutureReturnCode::SUCCESS:
+    case std::future_status::ready:
       break;
-    case rclcpp::FutureReturnCode::TIMEOUT:
+    case std::future_status::timeout:
       throw std::runtime_error("Service call to '" + std::string(client_->get_service_name()) + "' timed out");
     default:
       throw std::runtime_error("Service call to '" + std::string(client_->get_service_name()) + "' failed");
@@ -58,15 +90,7 @@ noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
 
   rviz_polygon_selection_tool::srv::GetSelection::Response::SharedPtr response = future.get();
 
-  Eigen::MatrixX3d boundary(response->selection.size(), 3);
-  for (Eigen::Index i = 0; i < boundary.rows(); ++i)
-  {
-    Eigen::Vector3d v;
-    tf2::fromMsg(response->selection[i].point, v);
-    boundary.row(i) = v;
-  }
-
-  return std::make_unique<ROISelectionMeshModifier>(extractor, boundary);
+  return std::make_unique<ROISelectionMeshModifier>(node_, extractor, response->selection);
 }
 
 } // namespace snp_tpp

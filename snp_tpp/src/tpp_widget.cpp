@@ -2,6 +2,7 @@
 
 #include <noether_gui/widgets/tpp_pipeline_widget.h>
 #include <pcl/io/vtk_lib_io.h>
+#include <pcl_ros/transforms.hpp>
 #include <plugin_loader/plugin_loader.h>
 #include <QVBoxLayout>
 #include <QScrollArea>
@@ -86,6 +87,7 @@ void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::Shared
     pcl::PolygonMesh mesh;
     if (pcl::io::loadPolygonFile(req->mesh_filename, mesh) < 1)
       throw std::runtime_error("Failed to load mesh");
+    mesh.header.frame_id = req->mesh_frame;
 
     // Plan the tool paths
     std::vector<noether::ToolPaths> tool_paths = pipeline.plan(mesh);
