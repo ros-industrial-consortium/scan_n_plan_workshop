@@ -441,6 +441,9 @@ Visualization Manager:
         Value: /clicked_point
     - Class: rviz_polygon_selection_tool/PolygonSelectionTool
       Lasso mode: true
+      Line Color: 0; 0; 0
+      Point Color: 255; 255; 255
+      Point Size: 5
   Transformation:
     Current:
       Class: rviz_default_plugins/TF
@@ -448,25 +451,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.5771467685699463
+      Distance: 2.9625701904296875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.12253059446811676
-        Y: -0.06639374047517776
-        Z: 0.8957986235618591
+        X: -0.1114489808678627
+        Y: -0.01787150651216507
+        Z: 0.9365828037261963
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5303983092308044
+      Pitch: 0.4903982877731323
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.4804003238677979
+      Yaw: 1.2053996324539185
     Saved: ~
 Window Geometry:
   Displays:
