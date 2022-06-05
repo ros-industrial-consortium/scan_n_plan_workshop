@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     signal(SIGTERM, handleSignal);
 
     auto node = std::make_shared<rclcpp::Node>("snp_tpp_app");
-    snp::TPPWidget w(node);
+    snp_tpp::TPPWidget w(node);
     w.show();
 
     // Move the ROS spinning into a separate thread since the call to `spin` is synchronous

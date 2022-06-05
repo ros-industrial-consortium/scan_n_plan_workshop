@@ -10,7 +10,7 @@ namespace noether
 class TPPPipelineWidget;
 }
 
-namespace snp
+namespace snp_tpp
 {
 class TPPWidget : public QWidget
 {

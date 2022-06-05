@@ -46,7 +46,7 @@ snp_msgs::msg::ToolPaths toMsg(const noether::ToolPaths& paths)
 
 }  // namespace
 
-namespace snp
+namespace snp_tpp
 {
 TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, QWidget* parent) : QWidget(parent)
 {
