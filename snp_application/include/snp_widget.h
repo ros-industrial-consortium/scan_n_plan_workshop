@@ -95,6 +95,7 @@ private:
   void onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture result);
 
   void execute();
+  void onExecuteDone(rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture result);
 
   void reset();
 

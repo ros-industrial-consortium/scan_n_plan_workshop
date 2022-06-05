@@ -547,6 +547,7 @@ void SNPWidget::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPa
 
 void SNPWidget::planMotion()
 {
+  emit log("Attempting motion planning");
   try
   {
     if (!tool_paths_ || tool_paths_->paths.empty())
@@ -567,8 +568,8 @@ void SNPWidget::planMotion()
     request->mesh_frame = reference_frame_;
 
     // Call the service
-    motion_planning_client_->async_send_request(
-        request, std::bind(&SNPWidget::onPlanMotionDone, this, std::placeholders::_1));
+    motion_planning_client_->async_send_request(request,
+                                                std::bind(&SNPWidget::onPlanMotionDone, this, std::placeholders::_1));
 
     QApplication::setOverrideCursor(Qt::BusyCursor);
   }
@@ -617,12 +618,13 @@ void SNPWidget::execute()
   request->motion_plan = *motion_plan_;
   request->use_tool = true;
 
-  auto future = motion_execution_client_->async_send_request(request);
-  QApplication::setOverrideCursor(Qt::WaitCursor);
-  future.wait();
-  QApplication::restoreOverrideCursor();
+  motion_execution_client_->async_send_request(request,
+                                               std::bind(&SNPWidget::onExecuteDone, this, std::placeholders::_1));
+}
 
-  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = future.get();
+void SNPWidget::onExecuteDone(rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture result)
+{
+  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
   if (!response->success)
   {
     QString message;
