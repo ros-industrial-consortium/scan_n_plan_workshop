@@ -119,8 +119,10 @@ public:
     tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
 
     // Register custom process planners
-    planning_server_->registerProcessPlanner(TRANSITION_PLANNER, createTransitionTaskflow());
-    planning_server_->registerProcessPlanner(FREESPACE_PLANNER, createFreespaceTaskflow());
+    planning_server_->registerProcessPlanner(TRANSITION_PLANNER,
+                                             tesseract_planning::createFreespaceTrajOptFirstGenerator());
+    planning_server_->registerProcessPlanner(FREESPACE_PLANNER,
+                                             tesseract_planning::createFreespaceTrajOptFirstGenerator());
     planning_server_->registerProcessPlanner(RASTER_PLANNER, createRasterTaskflow());
 
     // Add custom profiles
