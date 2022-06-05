@@ -33,7 +33,6 @@ find_package(std_srvs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/snp_tpp_node.cpp)
-target_include_directories(${PROJECT_NAME}_node PRIVATE include ${PCL_INCLUDE_DIRS})
 ament_target_dependencies(
   ${PROJECT_NAME}_node
   geometry_msgs
