@@ -1,4 +1,4 @@
-# Scan And Plan Demo
+# Scan 'N Plan Workshop
 
 ## Install
 
