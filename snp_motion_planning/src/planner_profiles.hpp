@@ -40,7 +40,7 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
   profile->vertex_evaluator = nullptr;
 
   profile->target_pose_sampler =
-      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 10.0 * M_PI / 180.0);
+      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 30.0 * M_PI / 180.0);
 
   return profile;
 }
@@ -78,10 +78,13 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 {
   // TrajOpt profiles
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
-  profile->smooth_velocities = false;
+  profile->smooth_velocities = true;
+  profile->velocity_coeff = Eigen::VectorXd::Constant(6, 1, 5.0);
+  profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 25.0);
+  profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 50.0);
 
-  profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
-  profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 20.0);
+  //  profile->avoid_singularity = true;
+  //  profile->avoid_singularity_coeff = 5.0;
 
   profile->collision_cost_config.enabled = true;
   profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
@@ -96,5 +99,10 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 
 std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
 {
-  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 5);
+  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>();
+}
+
+std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createTransitionSimplePlannerProfile()
+{
+  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(1 * M_PI / 180, 0.005, 1 * M_PI / 180, 5);
 }

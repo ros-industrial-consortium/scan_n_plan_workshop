@@ -3,6 +3,7 @@
 #include <tesseract_motion_planners/trajopt/trajopt_motion_planner.h>
 #include <tesseract_motion_planners/simple/simple_motion_planner.h>
 #include <tesseract_motion_planners/ompl/ompl_motion_planner.h>
+#include <tesseract_motion_planners/descartes/descartes_motion_planner.h>
 // Task Generators
 #include <tesseract_process_managers/task_generators/check_input_task_generator.h>
 #include <tesseract_process_managers/task_generators/has_seed_task_generator.h>
@@ -116,6 +117,24 @@
 //  return graph;
 //}
 
+// tesseract_planning::TaskflowGenerator::UPtr createDescartesOnlyGenerator()
+//{
+//  using namespace tesseract_planning;
+//  auto tf = std::make_unique<GraphTaskflow>("SNPDescartesTaskflow");
+
+//  int check_input_task{ std::numeric_limits<int>::min() };
+//  check_input_task = tf->addNode(std::make_unique<CheckInputTaskGenerator>(), true);
+
+//  // Setup Descartes
+//  auto motion_planner = std::make_shared<DescartesMotionPlannerF>();
+//  int motion_planner_task = tf->addNode(std::make_unique<MotionPlannerTaskGenerator>(motion_planner), true);
+
+//  tf->addEdges(check_input_task, { GraphTaskflow::ERROR_NODE, motion_planner_task });
+//  tf->addEdges(motion_planner_task, { GraphTaskflow::ERROR_NODE, GraphTaskflow::DONE_NODE });
+
+//  return tf;
+//}
+
 /**
  * @brief Creates a raster taskflow using the custom-defined freespace and transition planning taskflows
  */
@@ -123,5 +142,5 @@ tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 {
   return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
       tesseract_planning::createDescartesOnlyGenerator(), tesseract_planning::createFreespaceTrajOptFirstGenerator(),
-      tesseract_planning::createFreespaceTrajOptFirstGenerator(), tesseract_planning::createCartesianGenerator());
+      tesseract_planning::createFreespaceTrajOptFirstGenerator(), tesseract_planning::createTrajOptGenerator());
 }

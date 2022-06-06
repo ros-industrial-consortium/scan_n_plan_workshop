@@ -21,6 +21,7 @@ static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
+static const std::string TRANSITION_PROFILE = "SNPD_TRANSITION";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
@@ -126,28 +127,34 @@ public:
     planning_server_->registerProcessPlanner(RASTER_PLANNER, createRasterTaskflow());
 
     // Add custom profiles
+    auto pd = planning_server_->getProfiles();
+    std::vector<std::string> profiles = { PROFILE, TRANSITION_PROFILE };
+    for (const std::string& profile : profiles)
     {
-      auto pd = planning_server_->getProfiles();
-      pd->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
-          tesseract_planning::profile_ns::SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
       pd->addProfile<tesseract_planning::OMPLPlanProfile>(tesseract_planning::profile_ns::OMPL_DEFAULT_NAMESPACE,
-                                                          PROFILE, createOMPLProfile());
+                                                          profile, createOMPLProfile());
       pd->addProfile<tesseract_planning::TrajOptPlanProfile>(tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE,
-                                                             PROFILE, createTrajOptToolZFreePlanProfile());
+                                                             profile, createTrajOptToolZFreePlanProfile());
       pd->addProfile<tesseract_planning::TrajOptCompositeProfile>(
-          tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
+          tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE, profile, createTrajOptProfile());
       pd->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
-          tesseract_planning::profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
+          tesseract_planning::profile_ns::DESCARTES_DEFAULT_NAMESPACE, profile, createDescartesPlanProfile<float>());
       pd->addProfile<tesseract_planning::CheckInputProfile>(
-          tesseract_planning::profile_ns::CHECK_INPUT_DEFAULT_NAMESPACE, PROFILE,
+          tesseract_planning::profile_ns::CHECK_INPUT_DEFAULT_NAMESPACE, profile,
           std::make_shared<tesseract_planning::CheckInputProfile>());
       pd->addProfile<tesseract_planning::SeedMinLengthProfile>(
-          tesseract_planning::profile_ns::SEED_MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
+          tesseract_planning::profile_ns::SEED_MIN_LENGTH_DEFAULT_NAMESPACE, profile,
           std::make_shared<tesseract_planning::SeedMinLengthProfile>(5));
       pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-          tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
+          tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, profile,
           std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
     }
+
+    pd->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
+        tesseract_planning::profile_ns::SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
+    pd->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
+        tesseract_planning::profile_ns::SIMPLE_DEFAULT_NAMESPACE, TRANSITION_PROFILE,
+        createTransitionSimplePlannerProfile());
 
     // Advertise the ROS2 service
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
@@ -202,10 +209,10 @@ private:
         tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
 
         tesseract_planning::PlanInstruction transition_instruction1(
-            twp, tesseract_planning::PlanInstructionType::FREESPACE, PROFILE);
+            twp, tesseract_planning::PlanInstructionType::FREESPACE, TRANSITION_PROFILE);
         transition_instruction1.setDescription("Transition #" + std::to_string(rs + 1));
 
-        tesseract_planning::CompositeInstruction transition(PROFILE);
+        tesseract_planning::CompositeInstruction transition(TRANSITION_PROFILE);
         transition.setDescription("Transition #" + std::to_string(rs + 1));
         transition.push_back(transition_instruction1);
 
