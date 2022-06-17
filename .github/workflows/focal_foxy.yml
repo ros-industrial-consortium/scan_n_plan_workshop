@@ -32,7 +32,7 @@ jobs:
           OS_CODE_NAME: focal
           ROS_REPO: main
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ghcr.io/ros-industrial-consortium/scan_n_plan_workshop:latest
+          DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}:ci
           GIT_SUBMODULE_STRATEGY: normal
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
