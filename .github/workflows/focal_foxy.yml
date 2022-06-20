@@ -9,7 +9,7 @@ on:
     - cron: '0 5 * * *'
 
 env:
-  REGISTRY: gchr.io
+  REGISTRY: ghcr.io
   ROS_DISTRO: foxy
 
 jobs:
