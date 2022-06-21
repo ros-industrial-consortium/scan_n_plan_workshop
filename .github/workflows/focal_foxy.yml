@@ -9,7 +9,7 @@ on:
     - cron: '0 5 * * *'
 
 env:
-  REGISTRY: gchr.io
+  REGISTRY: ghcr.io
   ROS_DISTRO: foxy
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v1
       - name: Login to Github Packages
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -32,7 +32,7 @@ jobs:
           OS_CODE_NAME: focal
           ROS_REPO: main
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ghcr.io/ros-industrial-consortium/scan_n_plan_workshop:latest
+          DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}:ci
           GIT_SUBMODULE_STRATEGY: normal
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
@@ -40,3 +40,4 @@ jobs:
           UPSTREAM_WORKSPACE: dependencies.rosinstall
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash'
           ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
+          AFTER_SCRIPT: ''
