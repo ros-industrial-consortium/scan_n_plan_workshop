@@ -40,7 +40,8 @@ find_package(pluginlib REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME}_widget SHARED
+add_library(
+  ${PROJECT_NAME}_widget SHARED
   src/snp_widget.ui
   include/std_msgs_yaml.h
   include/trajectory_msgs_yaml.h
@@ -48,7 +49,8 @@ add_library(${PROJECT_NAME}_widget SHARED
   include/snp_widget.h
   src/snp_widget.cpp)
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
-ament_target_dependencies(${PROJECT_NAME}_widget
+ament_target_dependencies(
+  ${PROJECT_NAME}_widget
   open3d_interface_msgs
   rclcpp_action
   rclcpp_components
