@@ -1,7 +1,7 @@
 #ifndef ROSCONWINDOW_H
 #define ROSCONWINDOW_H
 
-#include <QMainWindow>
+#include <QWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
 // Messages
@@ -18,26 +18,18 @@
 
 namespace Ui
 {
-class ROSConWindow;
+class SNPWidget;
 }
 
-class QPushButton;
-
-class ROSConWindow : public QMainWindow
+class SNPWidget : public QWidget
 {
   Q_OBJECT
 
 public:
-  explicit ROSConWindow(QWidget* parent = nullptr);
-
-  rclcpp::Node::SharedPtr getNode() const
-  {
-    return node_;
-  }
+  explicit SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
 
 private:
-  Ui::ROSConWindow* ui_;
-  rclcpp::Node::SharedPtr node_;
+  Ui::SNPWidget* ui_;
   bool past_calibration_;
 
   const std::string mesh_file_;
@@ -96,12 +88,14 @@ private:
   void onScanStopDone(StopScanFuture result);
   void onScanDepartureDone(FJTResult result);
 
-  void plan_tool_paths();
+  void planToolPaths();
+  void onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedFuture result);
 
   void planMotion();
   void onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture result);
 
   void execute();
+  void onExecuteDone(rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture result);
 
   void reset();
 

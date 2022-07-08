@@ -15,33 +15,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <snp_tpp/snp_tpp.h>
-
+#include <memory>      // std::make_shared(), std::shared_ptr
+#include <string>      // std::string
 #include <functional>  // std::bind(), std::placeholders
 
-#include <pcl/conversions.h>
-#include <pcl/io/vtk_lib_io.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/PolygonMesh.h>
-#include <pcl/Vertices.h>
-
-#include <geometry_msgs/msg/pose.h>
-#include <geometry_msgs/msg/pose_array.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <snp_msgs/srv/generate_tool_paths.hpp>
 
 #include <noether_tpp/core/types.h>
 #include <noether_tpp/tool_path_planners/raster/direction_generators.h>
 #include <noether_tpp/tool_path_planners/raster/origin_generators.h>
 #include <noether_tpp/tool_path_planners/raster/plane_slicer_raster_planner.h>
 #include <noether_tpp/tool_path_modifiers/organization_modifiers.h>
-
-#include <snp_msgs/msg/tool_path.h>
-#include <snp_msgs/msg/tool_paths.h>
+#include <pcl/conversions.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/PolygonMesh.h>
+#include <pcl/Vertices.h>
+#include <rclcpp/rclcpp.hpp>
+#include <tf2_eigen/tf2_eigen.h>
 
 namespace
 {
+template <typename T>
+T declareAndGet(rclcpp::Node* node, const std::string& key)
+{
+  T val;
+  node->declare_parameter(key);
+  if (!node->get_parameter(key, val))
+  {
+    throw std::runtime_error("Failed to get '" + key + "' parameter");
+  }
+  return val;
+}
+
 geometry_msgs::msg::PoseArray toMsg(const noether::ToolPathSegment& segment)
 {
   geometry_msgs::msg::PoseArray pose_array;
@@ -80,56 +87,74 @@ snp_msgs::msg::ToolPaths toMsg(const noether::ToolPaths& paths)
 
 namespace snp_tpp
 {
-TPPNode::TPPNode(const std::string& name) : rclcpp::Node(name)
+class TPPNode : public rclcpp::Node
 {
-  srvr_ = this->create_service<snp_msgs::srv::GenerateToolPaths>(
-      "generate_tool_paths", std::bind(&TPPNode::callPlanner, this, std::placeholders::_1, std::placeholders::_2));
-  return;
-}
-
-void TPPNode::callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request,
-                          const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Response> response)
-{
-  response->success = true;
-
-  // Convert shape_msgs::Mesh to pcl::PolygonMesh
-  pcl::PolygonMesh pcl_mesh;
-  if (pcl::io::loadPolygonFile(request->mesh_filename, pcl_mesh) == 0)
+public:
+  TPPNode(const std::string& name)
+    : rclcpp::Node(name)
+    , line_spacing_(declareAndGet<double>(this, "line_spacing"))
+    , point_spacing_(declareAndGet<double>(this, "point_spacing"))
+    , min_segment_size_(declareAndGet<double>(this, "min_segment_size"))
+    , min_hole_size_(declareAndGet<double>(this, "min_hole_size"))
+    , search_radius_(declareAndGet<double>(this, "search_radius"))
   {
-    response->success = false;
-    response->message = "Could not open mesh file `" + request->mesh_filename + "`";
+    srvr_ = this->create_service<snp_msgs::srv::GenerateToolPaths>(
+        "generate_tool_paths", std::bind(&TPPNode::callPlanner, this, std::placeholders::_1, std::placeholders::_2));
+    return;
   }
-  else
+
+  void callPlanner(const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request,
+                   const std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Response> response)
   {
-    // Create a planner
-    noether::PlaneSlicerRasterPlanner planner(std::make_unique<noether::PrincipalAxisDirectionGenerator>(),
-                                              std::make_unique<noether::FixedOriginGenerator>());
+    response->success = true;
 
-    // Configure the planner
-    planner.setLineSpacing(request->line_spacing);
-    planner.setMinHoleSize(request->min_hole_size);
-    planner.setMinSegmentSize(request->min_segment_length);
-    planner.setPointSpacing(request->point_spacing);
-    planner.setSearchRadius(request->search_radius);
-
-    // Create a modifier to organize the tool path in a snake pattern
-    noether::SnakeOrganizationModifier mod;
-
-    // Call the planner
-    noether::ToolPaths paths = mod.modify(planner.plan(pcl_mesh));
-
-    // Convert noether::ToolPaths to snp_msgs::msg::ToolPaths
-    response->tool_paths = toMsg(paths);
-
-    if (paths.empty())
+    // Convert shape_msgs::Mesh to pcl::PolygonMesh
+    pcl::PolygonMesh pcl_mesh;
+    if (pcl::io::loadPolygonFile(request->mesh_filename, pcl_mesh) == 0)
     {
       response->success = false;
-      response->message = "Path generation failed";
+      response->message = "Could not open mesh file `" + request->mesh_filename + "`";
     }
+    else
+    {
+      // Create a planner
+      noether::PlaneSlicerRasterPlanner planner(std::make_unique<noether::PrincipalAxisDirectionGenerator>(),
+                                                std::make_unique<noether::FixedOriginGenerator>());
+
+      // Configure the planner
+      planner.setLineSpacing(line_spacing_);
+      planner.setMinHoleSize(min_hole_size_);
+      planner.setMinSegmentSize(min_segment_size_);
+      planner.setPointSpacing(point_spacing_);
+      planner.setSearchRadius(search_radius_);
+
+      // Create a modifier to organize the tool path in a snake pattern
+      noether::SnakeOrganizationModifier mod;
+
+      // Call the planner
+      noether::ToolPaths paths = mod.modify(planner.plan(pcl_mesh));
+
+      // Convert noether::ToolPaths to snp_msgs::msg::ToolPaths
+      response->tool_paths = toMsg(paths);
+
+      if (paths.empty())
+      {
+        response->success = false;
+        response->message = "Path generation failed";
+      }
+    }
+
+    return;
   }
 
-  return;
-}
+private:
+  rclcpp::Service<snp_msgs::srv::GenerateToolPaths>::SharedPtr srvr_;
+  const double line_spacing_;
+  const double point_spacing_;
+  const double min_segment_size_;
+  const double min_hole_size_;
+  const double search_radius_;
+};  // class TPPNode
 
 }  // namespace snp_tpp
 

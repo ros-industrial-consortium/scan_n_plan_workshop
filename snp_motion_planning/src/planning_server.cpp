@@ -201,10 +201,10 @@ private:
 
         tesseract_planning::PlanInstruction transition_instruction1(
             twp, tesseract_planning::PlanInstructionType::FREESPACE, PROFILE);
-        transition_instruction1.setDescription("transition_from_end_plan");
+        transition_instruction1.setDescription("Transition #" + std::to_string(rs + 1));
 
         tesseract_planning::CompositeInstruction transition(PROFILE);
-        transition.setDescription("transition_from_end");
+        transition.setDescription("Transition #" + std::to_string(rs + 1));
         transition.push_back(transition_instruction1);
 
         program.push_back(transition);

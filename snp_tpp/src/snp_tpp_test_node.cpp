@@ -73,11 +73,7 @@ int main(int argc, char** argv)
   std::shared_ptr<snp_msgs::srv::GenerateToolPaths::Request> request =
       std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
   request->mesh_filename = "/home/dmerz/Documents/sphere_cap/layer_4.ply";
-  request->line_spacing = 0.1;
-  request->min_hole_size = 0.225;
-  request->min_segment_length = 0.75;
-  request->point_spacing = 0.05;
-  request->search_radius = 0.0125;
+  request->mesh_frame = "world";
 
   // Call the service
   auto result = client->async_send_request(request);
