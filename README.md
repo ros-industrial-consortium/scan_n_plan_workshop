@@ -28,8 +28,9 @@
     ```bash
     git clone -b action_bridge https://github.com/ipa-hsd/ros1_bridge.git
     ```
-    - Source the ROS1 installation
+    - Source the both ROS distros
     ```bash
+    source /opt/ros/foxy/setup.bash
     source /opt/ros/noetic/setup.bash
     ```
     - Build the bridge
