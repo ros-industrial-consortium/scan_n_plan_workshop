@@ -2,7 +2,6 @@
 
 #include <noether_gui/widgets/tpp_pipeline_widget.h>
 #include <pcl/io/vtk_lib_io.h>
-#include <plugin_loader/plugin_loader.h>
 #include <QVBoxLayout>
 #include <QScrollArea>
 #include <tf2_eigen/tf2_eigen.h>
@@ -52,7 +51,7 @@ TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, QWidget* parent) : QWidget(pa
   server_ = node->create_service<snp_msgs::srv::GenerateToolPaths>(
       "/generate_tool_paths", std::bind(&TPPWidget::callback, this, std::placeholders::_1, std::placeholders::_2));
 
-  plugin_loader::PluginLoader loader;
+  boost_plugin_loader::PluginLoader loader;
   loader.search_libraries.insert(NOETHER_GUI_PLUGINS);
   loader.search_libraries.insert(SNP_TPP_GUI_PLUGINS);
 

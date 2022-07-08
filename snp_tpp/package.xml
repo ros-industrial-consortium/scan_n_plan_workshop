@@ -22,7 +22,7 @@
   <depend>rclcpp</depend>
   <depend>snp_msgs</depend>
   <depend>tf2_eigen</depend>
-  <depend>plugin_loader</depend>
+  <depend>boost_plugin_loader</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <!-- TODO: replace with more targeted set of linters
