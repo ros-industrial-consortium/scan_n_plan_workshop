@@ -26,3 +26,7 @@
     local-name: ifopt
     uri: https://github.com/ethz-adrl/ifopt.git
     version: 2.1.2
+- git:
+    local-name: tesseract_ros2
+    uri: https://github.com/marip8/tesseract_ros2.git
+    version: 1a13eba605cee2be7dd33de235d5b7e06e2f15c0
