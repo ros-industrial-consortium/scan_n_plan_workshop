@@ -101,4 +101,4 @@ void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::Shared
   }
 }
 
-} // namespace snp
+}  // namespace snp_tpp

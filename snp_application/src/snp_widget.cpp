@@ -502,7 +502,8 @@ void SNPWidget::planToolPaths()
     request->mesh_frame = reference_frame_;
 
     // Call the service
-    auto future = tpp_client_->async_send_request(request, std::bind(&SNPWidget::onPlanToolPathsDone, this, std::placeholders::_1));
+    auto future = tpp_client_->async_send_request(
+        request, std::bind(&SNPWidget::onPlanToolPathsDone, this, std::placeholders::_1));
   }
   catch (const std::exception& ex)
   {

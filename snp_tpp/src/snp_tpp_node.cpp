@@ -15,8 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>  // std::make_shared(), std::shared_ptr
-#include <string>  // std::string
+#include <memory>      // std::make_shared(), std::shared_ptr
+#include <string>      // std::string
 #include <functional>  // std::bind(), std::placeholders
 
 #include <snp_msgs/srv/generate_tool_paths.hpp>
@@ -90,7 +90,8 @@ namespace snp_tpp
 class TPPNode : public rclcpp::Node
 {
 public:
-  TPPNode(const std::string& name) : rclcpp::Node(name)
+  TPPNode(const std::string& name)
+    : rclcpp::Node(name)
     , line_spacing_(declareAndGet<double>(this, "line_spacing"))
     , point_spacing_(declareAndGet<double>(this, "point_spacing"))
     , min_segment_size_(declareAndGet<double>(this, "min_segment_size"))

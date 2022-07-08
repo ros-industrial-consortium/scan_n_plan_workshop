@@ -4,7 +4,6 @@
 
 namespace snp_tpp
 {
-
 struct ROISelectionMeshModifierWidgetPlugin : public noether::MeshModifierWidgetPlugin
 {
   QWidget* create(QWidget* parent) const override
@@ -13,6 +12,6 @@ struct ROISelectionMeshModifierWidgetPlugin : public noether::MeshModifierWidget
   }
 };
 
-} // namespace snp_tpp
+}  // namespace snp_tpp
 
 EXPORT_MESH_MODIFIER_WIDGET_PLUGIN(snp_tpp::ROISelectionMeshModifierWidgetPlugin, ROISelectionMeshModifier)

@@ -51,4 +51,4 @@ private:
   std::thread thread_;
 };
 
-} // namespace snp_tpp
+}  // namespace snp_tpp
