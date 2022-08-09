@@ -6,8 +6,8 @@
 #include <rclcpp_action/client.hpp>
 // Messages
 #include <geometry_msgs/msg/pose_array.hpp>
-#include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
-#include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
+#include <industrial_reconstruction_msgs/srv/start_reconstruction.hpp>
+#include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
@@ -50,8 +50,8 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr get_correlation_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr install_calibration_client_;
 
-  rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr start_reconstruction_client_;
-  rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_reconstruction_client_;
+  rclcpp::Client<industrial_reconstruction_msgs::srv::StartReconstruction>::SharedPtr start_reconstruction_client_;
+  rclcpp::Client<industrial_reconstruction_msgs::srv::StopReconstruction>::SharedPtr stop_reconstruction_client_;
 
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
   rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedPtr motion_planning_client_;
@@ -79,8 +79,8 @@ private:
 
   // Scan motion and reconstruction
   using FJTResult = rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture;
-  using StartScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StartYakReconstruction>::SharedFuture;
-  using StopScanFuture = rclcpp::Client<open3d_interface_msgs::srv::StopYakReconstruction>::SharedFuture;
+  using StartScanFuture = rclcpp::Client<industrial_reconstruction_msgs::srv::StartReconstruction>::SharedFuture;
+  using StopScanFuture = rclcpp::Client<industrial_reconstruction_msgs::srv::StopReconstruction>::SharedFuture;
   void scan();
   void onScanApproachDone(FJTResult result);
   void onScanStartDone(StartScanFuture result);

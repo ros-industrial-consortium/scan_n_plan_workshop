@@ -111,9 +111,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   install_calibration_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_INSTALL_SERVICE);
 
   start_reconstruction_client_ =
-      node->create_client<open3d_interface_msgs::srv::StartYakReconstruction>(START_RECONSTRUCTION_SERVICE);
+      node->create_client<industrial_reconstruction_msgs::srv::StartReconstruction>(START_RECONSTRUCTION_SERVICE);
   stop_reconstruction_client_ =
-      node->create_client<open3d_interface_msgs::srv::StopYakReconstruction>(STOP_RECONSTRUCTION_SERVICE);
+      node->create_client<industrial_reconstruction_msgs::srv::StopReconstruction>(STOP_RECONSTRUCTION_SERVICE);
   tpp_client_ = node->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
   motion_planning_client_ = node->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
   motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
@@ -301,7 +301,7 @@ void SNPWidget::onScanApproachDone(FJTResult result)
   }
 
   // call reconstruction start
-  auto start_request = std::make_shared<open3d_interface_msgs::srv::StartYakReconstruction::Request>();
+  auto start_request = std::make_shared<industrial_reconstruction_msgs::srv::StartReconstruction::Request>();
 
   start_request->tracking_frame = camera_frame_;
   start_request->relative_frame = reference_frame_;
@@ -369,11 +369,11 @@ void SNPWidget::onScanStartDone(StartScanFuture result)
 void SNPWidget::onScanDone(FJTResult result)
 {
   // call reconstruction stop (regardless of trajectory success)
-  auto stop_request = std::make_shared<open3d_interface_msgs::srv::StopYakReconstruction::Request>();
+  auto stop_request = std::make_shared<industrial_reconstruction_msgs::srv::StopReconstruction::Request>();
   stop_request->archive_directory = "";
   stop_request->mesh_filepath = mesh_file_;
   stop_request->min_num_faces = 1000;
-  open3d_interface_msgs::msg::NormalFilterParams norm_filt;
+  industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
   norm_filt.normal_direction.x = 0;
   norm_filt.normal_direction.y = 0;
   norm_filt.normal_direction.z = 1;

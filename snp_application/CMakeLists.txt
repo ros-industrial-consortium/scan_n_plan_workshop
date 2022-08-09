@@ -23,7 +23,7 @@ find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 find_package(ament_cmake REQUIRED)
-find_package(open3d_interface_msgs REQUIRED)
+find_package(industrial_reconstruction_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -51,7 +51,7 @@ add_library(
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
-  open3d_interface_msgs
+  industrial_reconstruction_msgs
   rclcpp_action
   rclcpp_components
   control_msgs

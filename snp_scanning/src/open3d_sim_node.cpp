@@ -1,7 +1,7 @@
 #include <boost/filesystem.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <open3d_interface_msgs/srv/start_yak_reconstruction.hpp>
-#include <open3d_interface_msgs/srv/stop_yak_reconstruction.hpp>
+#include <industrial_reconstruction_msgs/srv/start_reconstruction.hpp>
+#include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 
 static const std::string MESH_FILE_PARAMETER = "mesh_file";
 
@@ -13,25 +13,25 @@ public:
   {
     using namespace std::placeholders;
 
-    start_yak_srv_ = create_service<open3d_interface_msgs::srv::StartYakReconstruction>(
-        "start_reconstruction", std::bind(&Open3dSimServer::startYakCB, this, _1, _2));
+    start_srv_ = create_service<industrial_reconstruction_msgs::srv::StartReconstruction>(
+        "start_reconstruction", std::bind(&Open3dSimServer::startCB, this, _1, _2));
 
-    stop_yak_srv_ = create_service<open3d_interface_msgs::srv::StopYakReconstruction>(
-        "stop_reconstruction", std::bind(&Open3dSimServer::stopYakCB, this, _1, _2));
+    stop_srv_ = create_service<industrial_reconstruction_msgs::srv::StopReconstruction>(
+        "stop_reconstruction", std::bind(&Open3dSimServer::stopCB, this, _1, _2));
 
     declare_parameter<std::string>(MESH_FILE_PARAMETER, "");
   }
 
 private:
-  void startYakCB(const std::shared_ptr<open3d_interface_msgs::srv::StartYakReconstruction::Request> /*request*/,
-                  std::shared_ptr<open3d_interface_msgs::srv::StartYakReconstruction::Response> response)
+  void startCB(const std::shared_ptr<industrial_reconstruction_msgs::srv::StartReconstruction::Request> /*request*/,
+               std::shared_ptr<industrial_reconstruction_msgs::srv::StartReconstruction::Response> response)
   {
     response->success = true;
-    RCLCPP_INFO(get_logger(), "Yak Sim Started");
+    RCLCPP_INFO(get_logger(), " Sim Started");
   }
 
-  void stopYakCB(const std::shared_ptr<open3d_interface_msgs::srv::StopYakReconstruction::Request> request,
-                 std::shared_ptr<open3d_interface_msgs::srv::StopYakReconstruction::Response> response)
+  void stopCB(const std::shared_ptr<industrial_reconstruction_msgs::srv::StopReconstruction::Request> request,
+              std::shared_ptr<industrial_reconstruction_msgs::srv::StopReconstruction::Response> response)
   {
     try
     {
@@ -45,17 +45,18 @@ private:
       boost::filesystem::copy_file(mesh_source_path, mesh_target_path,
                                    boost::filesystem::copy_option::overwrite_if_exists);
       response->success = true;
-      RCLCPP_INFO_STREAM(get_logger(), "Yak simulation complete; mesh saved to '" << request->mesh_filepath << "'");
+      RCLCPP_INFO_STREAM(get_logger(),
+                         "Scanning simulation complete; mesh saved to '" << request->mesh_filepath << "'");
     }
     catch (const std::exception& ex)
     {
       response->success = false;
-      RCLCPP_ERROR_STREAM(get_logger(), "Yak simulation failed: '" << ex.what() << "'");
+      RCLCPP_ERROR_STREAM(get_logger(), "Scanning simulation failed: '" << ex.what() << "'");
     }
   }
 
-  rclcpp::Service<open3d_interface_msgs::srv::StartYakReconstruction>::SharedPtr start_yak_srv_;
-  rclcpp::Service<open3d_interface_msgs::srv::StopYakReconstruction>::SharedPtr stop_yak_srv_;
+  rclcpp::Service<industrial_reconstruction_msgs::srv::StartReconstruction>::SharedPtr start_srv_;
+  rclcpp::Service<industrial_reconstruction_msgs::srv::StopReconstruction>::SharedPtr stop_srv_;
 };
 
 int main(int argc, char** argv)

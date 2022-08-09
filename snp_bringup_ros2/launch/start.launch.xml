@@ -33,7 +33,7 @@
 
   <!-- Launch Open3d Interface Node -->
   <group unless="$(var sim_vision)">
-    <node pkg="open3d_interface" exec="open3d_yak">
+    <node pkg="industrial_reconstruction" exec="industrial_reconstruction">
       <param name="depth_image_topic" value="/camera/aligned_depth_to_color/image_raw"/>
       <param name="color_image_topic" value="/camera/color/image_raw"/>
       <param name="camera_info_topic" value="/camera/color/camera_info"/>

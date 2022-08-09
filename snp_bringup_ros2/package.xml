@@ -15,7 +15,7 @@
   <exec_depend>snp_support</exec_depend>
   <exec_depend>snp_msgs</exec_depend>
   <exec_depend>snp_application</exec_depend>
-  <exec_depend>open3d_interface</exec_depend>
+  <exec_depend>industrial_reconstruction</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
