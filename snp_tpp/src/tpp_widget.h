@@ -27,4 +27,4 @@ private:
   rclcpp::Service<snp_msgs::srv::GenerateToolPaths>::SharedPtr server_{ nullptr };
 };
 
-} // namespace snp
+}  // namespace snp_tpp
