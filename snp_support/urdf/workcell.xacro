@@ -126,6 +126,12 @@
         <mesh filename="package://snp_support/meshes/collision/bracket2.ply"/>
       </geometry>
     </collision>
+    <collision name="tcp">
+      <geometry>
+        <cylinder radius="${1.5 * 0.0254}" length="${2.0 * 0.0254}"/>
+      </geometry>
+      <origin xyz="${-0.263 + 1.5 * 0.0254} 0.0 0.083" rpy="0 ${radians(-90)} 0"/>
+    </collision>
   </link>
 
   <joint name="tool0_to_ee" type="fixed">

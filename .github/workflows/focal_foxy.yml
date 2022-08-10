@@ -36,8 +36,9 @@ jobs:
           GIT_SUBMODULE_STRATEGY: normal
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
+          ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
           UNDERLAY: /root/tesseract-robotics/tesseract_planning_target_ws/install
-          UPSTREAM_WORKSPACE: dependencies.rosinstall
+          UPSTREAM_WORKSPACE: dependencies.repos
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash'
           ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
           AFTER_SCRIPT: ''

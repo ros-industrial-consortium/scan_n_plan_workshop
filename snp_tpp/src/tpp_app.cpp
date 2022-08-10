@@ -1,7 +1,8 @@
-#include "snp_widget.h"
-#include <QApplication>
+#include "tpp_widget.h"
 
+#include <QApplication>
 #include <rclcpp/rclcpp.hpp>
+#include <signal.h>
 
 void handleSignal(int)
 {
@@ -20,8 +21,8 @@ int main(int argc, char* argv[])
     signal(SIGINT, handleSignal);
     signal(SIGTERM, handleSignal);
 
-    auto node = std::make_shared<rclcpp::Node>("snp_application");
-    SNPWidget w(node);
+    auto node = std::make_shared<rclcpp::Node>("snp_tpp_app");
+    snp_tpp::TPPWidget w(node);
     w.show();
 
     // Move the ROS spinning into a separate thread since the call to `spin` is synchronous

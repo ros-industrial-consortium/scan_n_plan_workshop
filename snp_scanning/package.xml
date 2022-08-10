@@ -9,7 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>open3d_interface_msgs</depend>
+  <depend>industrial_reconstruction_msgs</depend>
   <depend>std_srvs</depend>
   <depend>rclcpp</depend>
   <depend>ros_industrial_cmake_boilerplate</depend>
