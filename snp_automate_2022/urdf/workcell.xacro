@@ -43,13 +43,13 @@
   <link name="table">
     <visual>
       <geometry>
-        <mesh filename="package://snp_support/meshes/visual/steel_table.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/visual/steel_table.ply"/>
       </geometry>
       <material name="dark_gray"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/steel_table.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/steel_table.ply"/>
       </geometry>
     </collision>
     <collision>
@@ -83,47 +83,47 @@
   <link name="ee">
     <visual>
       <geometry>
-        <mesh filename="package://snp_support/meshes/visual/end_effector.stl"/>
+        <mesh filename="package://snp_automate_2022/meshes/visual/end_effector.stl"/>
       </geometry>
     </visual>
     <collision name="compliance">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/afd310.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/afd310.ply"/>
       </geometry>
     </collision>
     <collision name="spindle">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/rps100.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/rps100.ply"/>
       </geometry>
     </collision>
     <collision name="backplate">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/backplate.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/backplate.ply"/>
       </geometry>
     </collision>
     <collision name="frontplate">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/front.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/front.ply"/>
       </geometry>
     </collision>
     <collision name="camera1">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/camera1.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/camera1.ply"/>
       </geometry>
     </collision>
     <collision name="camera2">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/camera2.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/camera2.ply"/>
       </geometry>
     </collision>
     <collision name="sidebracket1">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/bracket1.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/bracket1.ply"/>
       </geometry>
     </collision>
     <collision name="sidebracket2">
       <geometry>
-        <mesh filename="package://snp_support/meshes/collision/bracket2.ply"/>
+        <mesh filename="package://snp_automate_2022/meshes/collision/bracket2.ply"/>
       </geometry>
     </collision>
     <collision name="tcp">
@@ -139,7 +139,7 @@
     <child link="ee"/>
   </joint>
 
-  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_support)/config/camera_calibration.yaml')}" />
+  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_automate_2022)/config/camera_calibration.yaml')}" />
 
   <link name="camera_color_optical_frame"/>
   <joint name="tool0_to_camera" type="fixed">

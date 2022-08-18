@@ -9,10 +9,10 @@
     </group>
 
     <!--Groups kinematic plugins -->
-    <kinematics_plugin_config filename="package://snp_support/config/workcell_plugins.yaml"/>
+    <kinematics_plugin_config filename="package://snp_automate_2022/config/workcell_plugins.yaml"/>
 
     <!-- Contact manager plugins -->
-    <contact_managers_plugin_config filename="package://snp_support/config/workcell_plugins.yaml"/>
+    <contact_managers_plugin_config filename="package://snp_automate_2022/config/workcell_plugins.yaml"/>
 
     <disable_collisions link1="tool0" link2="ee" reason="Adjacent"/>
     <disable_collisions link1="link_1_s" link2="link_6_t" reason="Never"/>
