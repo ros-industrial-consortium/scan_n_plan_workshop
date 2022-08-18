@@ -309,18 +309,18 @@ void SNPWidget::onScanApproachDone(FJTResult result)
   // TODO parameters
   start_request->translation_distance = 0;
   start_request->rotational_distance = 0;
-  start_request->live = true;
+  start_request->live = false;  // change from true since computer is dropping frames
 
   // TODO other params (currently set to recommended default)
   start_request->tsdf_params.voxel_length = 0.01f;
-  start_request->tsdf_params.sdf_trunc = 0.03f;
+  start_request->tsdf_params.sdf_trunc = 0.015f;
 
-  start_request->tsdf_params.min_box_values.x = 0.21;
+  start_request->tsdf_params.min_box_values.x = -0.33;
   start_request->tsdf_params.min_box_values.y = -0.45;
-  start_request->tsdf_params.min_box_values.z = 0.112;
-  start_request->tsdf_params.max_box_values.x = 1.51;
-  start_request->tsdf_params.max_box_values.y = 0.45;
-  start_request->tsdf_params.max_box_values.z = 0.527;
+  start_request->tsdf_params.min_box_values.z = 0.01;
+  start_request->tsdf_params.max_box_values.x = 0.45;
+  start_request->tsdf_params.max_box_values.y = 0.36;
+  start_request->tsdf_params.max_box_values.z = 0.12;
 
   start_request->rgbd_params.depth_scale = 1000.0;
   start_request->rgbd_params.depth_trunc = 1.1;
@@ -370,7 +370,7 @@ void SNPWidget::onScanDone(FJTResult result)
 {
   // call reconstruction stop (regardless of trajectory success)
   auto stop_request = std::make_shared<industrial_reconstruction_msgs::srv::StopReconstruction::Request>();
-  stop_request->archive_directory = "";
+  stop_request->archive_directory = "/tmp/reconstruction_data";
   stop_request->mesh_filepath = mesh_file_;
   stop_request->min_num_faces = 1000;
   industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
@@ -500,6 +500,11 @@ void SNPWidget::planToolPaths()
     auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
     request->mesh_filename = mesh_file_;
     request->mesh_frame = reference_frame_;
+    request->line_spacing = 0.01;
+    request->min_hole_size = 0.225;
+    request->min_segment_length = 0.03;
+    request->point_spacing = 0.01;
+    request->search_radius = 0.05;
 
     // Call the service
     auto future = tpp_client_->async_send_request(
