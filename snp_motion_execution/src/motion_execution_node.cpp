@@ -75,24 +75,24 @@ private:
       }
 
       // enable robot
-      {
-        RCLCPP_INFO(this->get_logger(), "Enabling robot");
-        if (!enable_client_->service_is_ready())
-        {
-          throw std::runtime_error("Robot enable server is not available");
-        }
+      //      {
+      //        RCLCPP_INFO(this->get_logger(), "Enabling robot");
+      //        if (!enable_client_->service_is_ready())
+      //        {
+      //          throw std::runtime_error("Robot enable server is not available");
+      //        }
 
-        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-        auto future = enable_client_->async_send_request(request);
-        future.wait();
+      //        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+      //        auto future = enable_client_->async_send_request(request);
+      //        future.wait();
 
-        std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-        if (!response->success)
-        {
-          throw std::runtime_error("Failed to enable robot: '" + response->message + "'");
-        }
-        RCLCPP_INFO(this->get_logger(), "Robot enabled");
-      }
+      //        std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
+      //        if (!response->success)
+      //        {
+      //          throw std::runtime_error("Failed to enable robot: '" + response->message + "'");
+      //        }
+      //        RCLCPP_INFO(this->get_logger(), "Robot enabled");
+      //      }
 
       // Check that the server exists
       if (!fjt_client_->action_server_is_ready())
@@ -126,8 +126,15 @@ private:
       auto goal_handle_future = fjt_client_->async_send_goal(goal_msg);
       goal_handle_future.wait();
 
+      if (!goal_handle_future.valid())
+        throw std::runtime_error("Goal handle is invalid");
+
       using FJTGoalHandle = rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>;
       FJTGoalHandle::SharedPtr goal_handle = goal_handle_future.get();
+
+      if (!goal_handle)
+        throw std::runtime_error("Goal handle is a nullptr; goal was rejected");
+
       int8_t status = goal_handle->get_status();
       switch (status)
       {
@@ -159,7 +166,8 @@ private:
         case rclcpp_action::ResultCode::SUCCEEDED:
           break;
         default:
-          throw std::runtime_error("Follow joint trajectory action call did not succeed");
+          throw std::runtime_error(
+              "Follow joint trajectory action call did not succeed: " + fjt_wrapper.result->error_string + "'");
       }
 
       // Handle the FJT error code
