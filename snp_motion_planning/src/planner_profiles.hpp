@@ -6,7 +6,8 @@
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
-#include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
+//#include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
+#include <tesseract_motion_planners/simple/profile/simple_planner_fixed_size_plan_profile.h>
 
 template <typename FloatType>
 typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createDescartesPlanProfile()
@@ -40,7 +41,7 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
   profile->vertex_evaluator = nullptr;
 
   profile->target_pose_sampler =
-      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 10.0 * M_PI / 180.0);
+      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 30.0 * M_PI / 180.0);
 
   return profile;
 }
@@ -83,7 +84,7 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
   profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 20.0);
 
-  profile->collision_cost_config.enabled = true;
+  profile->collision_cost_config.enabled = false;
   profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
   profile->collision_cost_config.safety_margin = 0.010;
   profile->collision_cost_config.safety_margin_buffer = 0.010;
@@ -94,7 +95,7 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   return profile;
 }
 
-std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
+std::shared_ptr<tesseract_planning::SimplePlannerPlanProfile> createSimplePlannerProfile()
 {
-  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 5);
+  return std::make_shared<tesseract_planning::SimplePlannerFixedSizePlanProfile>(1, 1);
 }
