@@ -4,7 +4,7 @@
   <arg name="sim_robot" default="True"/>
   <arg name="mesh_file" default="$(find-pkg-share snp_automate_2022)/meshes/part_scan.ply"/>
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_automate_2022)/config/scan_traj.yaml"/>
-  <arg name="verbose" default="False"/>
+  <arg name="verbose" default="True"/>
   <arg name="touch_links" default="[table, base_link, floor]"/>
   <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_automate_2022)/urdf/workcell.xacro')"/>
   <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_automate_2022)/config/workcell.srdf')"/>
