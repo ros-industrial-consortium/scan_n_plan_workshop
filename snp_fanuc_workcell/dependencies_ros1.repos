@@ -1,0 +1,12 @@
+- git:
+    local-name: fanuc
+    uri: https://github.com/DavidSpielman/fanuc.git'
+    version: 9f188c5286ee0aa204028b494dd90dfb5eec9cc5
+- git:
+    local-name: industrial_core
+    uri: 'https://github.com/Yolnan/industrial_core.git'
+    version: 0177a7353b636ba33f597cbd77f5ba3dab65a150
+- git:
+    local-name: ee_motor_io
+    uri: 'https://github.com/Yolnan/fanuc_demo_motor_io.git'
+    version: 38b5cf9fe916f7be0f0c92c62bddb8b302614071

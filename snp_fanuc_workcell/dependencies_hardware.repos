@@ -1,0 +1,12 @@
+- git:
+    local-name: fanuc
+    uri: 'https://github.com/Yolnan/fanuc.git'
+    version: 1564f67bf8cfc2a7e87e23a4fceacb425543db7e
+- git:
+    local-name: realsense-ros
+    uri: 'https://github.com/IntelRealSense/realsense-ros.git'
+    version: 442d6d9a19149cb9cb40ffb351593c3fa8b9eb9f
+- git:
+    local-name: industrial_reconstruction
+    uri: 'https://github.com/Yolnan/open3d_interface.git'
+    version: 52565fb6794a4e75e8d2170a5d05098574661224

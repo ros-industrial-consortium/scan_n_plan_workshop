@@ -1,0 +1,75 @@
+header: {stamp: {sec: 0, nanosec: 0}, frame_id: ""}
+joint_names: ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6']
+points:
+# Simple 4 point square shape
+  - positions: [-1.57, 2.234, 2.234, 0.0, 1.57, 3.019]
+    velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    time_from_start:
+      sec: 0
+      nanosec: 0
+# front left point
+  - positions: [-2.174, 1.916, 2.234, 0.0765, 1.595, 3.019]
+    velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    time_from_start:
+      sec: 5
+      nanosec: 0
+# front right point
+  - positions: [-1.205, 1.552, 1.552, -0.325, 1.936, 3.388]
+    velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    time_from_start:
+      sec: 10
+      nanosec: 0
+# Back point
+  - positions: [-1.420, 2.096, 3.156, -0.029, 0.299, 1.533]
+    velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    time_from_start:
+      sec: 20
+      nanosec: 0
+
+
+
+# # Simple 4 point square shape
+#   - positions: [-1.57, 2.234, 2.234, 0.0, 1.57, 3.019]
+#     velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     time_from_start:
+#       sec: 0
+#       nanosec: 0
+
+# # front right point
+#   - positions: [-1.205, 1.552, 1.552, -0.325, 1.936, 3.388]
+#     velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     time_from_start:
+#       sec: 5
+#       nanosec: 0
+
+# # front left point
+#   - positions: [-2.174, 1.916, 2.234, 0.0765, 1.595, 3.019]
+#     velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     time_from_start:
+#       sec: 15
+#       nanosec: 0
+
+# # Back point
+#   - positions: [-1.420, 2.096, 3.156, -0.029, 0.299, 1.533]
+#     velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     accelerations: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#     time_from_start:
+#       sec: 25
+#       nanosec: 0
+
+

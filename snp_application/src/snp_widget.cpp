@@ -500,11 +500,6 @@ void SNPWidget::planToolPaths()
     auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
     request->mesh_filename = mesh_file_;
     request->mesh_frame = reference_frame_;
-    request->line_spacing = 0.01;
-    request->min_hole_size = 0.225;
-    request->min_segment_length = 0.03;
-    request->point_spacing = 0.01;
-    request->search_radius = 0.05;
 
     // Call the service
     auto future = tpp_client_->async_send_request(

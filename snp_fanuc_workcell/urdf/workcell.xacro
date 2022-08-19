@@ -1,0 +1,303 @@
+<?xml version="1.0" ?>
+<robot name="snp_workcell" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find fanuc_lrmate200ic_support)/urdf/lrmate200ic_macro.xacro" />
+  <xacro:fanuc_lrmate200ic prefix=""/>
+
+  <xacro:property name="dt_flange_width" value="0.040"/>
+
+    <!-- Add World -->
+  <material name="light_gray">
+    <color rgba="0.7 0.7 0.7 0.5"/>
+  </material>
+
+  <material name="dark_gray">
+    <color rgba="0.3 0.3 0.3 1"/>
+  </material>
+  <material name="blue">
+    <color rgba="0 0 1 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+
+
+  <link name="world"/>
+
+  <!-- Add Floor -->
+  <xacro:property name="length" value="1.171575"/>
+  <xacro:property name="width" value="0.936625"/>
+  <link name="floor">
+    <visual>
+      <origin xyz="0 -${0/10} 0.001" rpy="0 0 0"/>
+      <geometry>
+        <box size="${length} ${width} 0.001"/>
+      </geometry>
+      <material name="light_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -${0/10} 0.001" rpy="0 0 0"/>
+      <geometry>
+        <box size="${length} ${width} 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="world_to_floor" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="floor"/>
+  </joint>
+
+    <!-- Add Walls for Collision -->
+    <xacro:property name="lengthw" value="1.171575"/>
+    <xacro:property name="widthw" value="1.11125"/>
+
+    <!-- Right Wall -->
+    <link name="wall_right">
+      <visual>
+        <origin xyz="0.0508 -${width/2+0.01905} ${0.001+widthw/2}" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <box size="${lengthw-0.0508} ${widthw} 0.001"/>
+        </geometry>
+        <material name="light_gray"/>
+      </visual>
+      <collision>
+        <origin xyz="0.0508 -${width/2+0.01905} ${0.001+widthw/2}" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <box size="${lengthw-0.0508} ${widthw} 0.001"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="floor_to_wall_right" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="floor"/>
+      <child link="wall_right"/>
+    </joint>
+
+    <!-- Back Wall -->
+    <link name="wall_back">
+      <visual>
+        <origin xyz="${length/2+0.009525} 0 ${0.001+widthw/2}" rpy="${pi/2} 0 ${pi/2}"/>
+        <geometry>
+          <box size="${width} ${widthw} 0.001"/>
+        </geometry>
+        <material name="light_gray"/>
+      </visual>
+      <collision>
+        <origin xyz="${length/2+0.009525} 0 ${0.001+widthw/2}" rpy="${pi/2} 0 ${pi/2}"/>
+        <geometry>
+          <box size="${width} ${widthw} 0.001"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="floor_to_wall_back" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="floor"/>
+      <child link="wall_back"/>
+    </joint>
+
+
+    <!-- Front Wall -->
+    <link name="wall_front">
+      <visual>
+        <origin xyz="-${length/2-0.0762} 0 ${0.001+widthw/2}" rpy="${pi/2} 0 ${pi/2}"/>
+        <geometry>
+          <box size="${width} ${widthw} 0.001"/>
+        </geometry>
+        <material name="light_gray"/>
+      </visual>
+      <collision>
+      <origin xyz="-${length/2-0.0762} 0 ${0.001+widthw/2}" rpy="${pi/2} 0 ${pi/2}"/>
+        <geometry>
+          <box size="${width} ${widthw} 0.001"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="floor_to_wall_front" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="floor"/>
+      <child link="wall_front"/>
+    </joint>
+  <!-- Add Acryllic-->
+    <xacro:property name="lengtha" value="0.923925"/>
+    <xacro:property name="widtha" value="0.8763"/>black
+    <xacro:property name="thicknessa_plus_p" value="${0.01+0.0047625}"/>
+    <link name="acryllic">
+      <visual>
+        <origin xyz="0 0 ${0.001+thicknessa_plus_p/2}"/>
+        <geometry>
+          <box size="${lengtha} ${widtha} ${thicknessa_plus_p}"/>
+        </geometry>
+        <material name="blue"/>
+      </visual>
+      <collision>
+        <origin xyz="0 -${0/10} 0.001" rpy="0 0 0"/>
+        <geometry>
+          <box size="${lengtha} ${widtha} ${0.001+thicknessa_plus_p/2}"/>
+        </geometry>
+      </collision>
+    </link>
+    <joint name="floor_to_acryllic" type="fixed">
+      <origin xyz="-0.02225 0.004775 0" rpy="0 0 0"/>
+      <parent link="floor"/>
+      <child link="acryllic"/>
+    </joint>
+
+  <!-- Add ceiling -->
+  <link name="ceiling">
+    <visual>
+      <origin xyz="0.0508 -${0/10} 0.001" rpy="0 0 0"/>
+      <geometry>3.3125+7.375/2
+        <box size="${length-0.0508} ${width} 0.001"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -${0/10} 0.001" rpy="0 0 0"/>
+      <geometry>
+        <box size="${length} ${width} 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="floor_to_ceiling" type="fixed">
+    <parent link="floor"/>
+    <child link="ceiling"/>
+    <origin xyz="0 0 1.11125" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="ceiling_to_base" type="fixed">
+    <parent link="ceiling"/>
+    <child link="base_link"/>
+    <origin xyz="-${length/2-2*0.0508-0.1778} -0.169135 0" rpy="0 -3.14 1.5708"/>
+  </joint>
+
+  <!-- Create a frame representing the robot tool flange (behind the teach tool and nominal tool0 frame) for IKFast -->
+  <link name="tool_flange"/>
+  <joint name="tool0_to_tool_flange" type="fixed">
+    <parent link="tool0"/>
+    <child link="tool_flange"/>
+    <origin xyz="0.0 0.0 ${-dt_flange_width}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Add End Effector Components -->
+  <xacro:property name="ee_length" value="0.254"/> <!--10 in converted to m -->
+  <xacro:property name="ee_radius" value="0.035"/> <!--70mm is diameter of joint 6 from fanuc specs-->
+  <link name="ee">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/visual/end_effector_viz.ply"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/ee_camera_mount.ply"/>
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/ee_motor_mount.ply"/>
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/camera.ply"/>
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/ee_plate.ply"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tool0_to_ee" type="fixed">
+    <parent link="tool0"/>
+    <child link="ee"/>
+    <origin xyz="0 0 0" rpy="1.5708 3.14 1.5708"/>
+  </joint>
+
+<!--<link name="ee">
+    <visual>
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/visual/end_effector.stl"/>
+      </geometry>
+    </visual>
+    <collision name="compliance">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/afd310.ply"/>
+      </geometry>
+    </collision>
+    <collision name="spindle">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/rps100.ply"/>
+      </geometry>
+    </collision>
+    <collision name="backplate">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/backplate.ply"/>
+      </geometry>
+    </collision>
+    <collision name="frontplate">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/front.ply"/>
+      </geometry>
+    </collision>
+    <collision name="camera1">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/camera1.ply"/>
+      </geometry>
+    </collision>
+    <collision name="camera2">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/camera2.ply"/>
+      </geometry>
+    </collision>
+    <collision name="sidebracket1">
+      <geometry>
+        <mesh filename="package://snp_fanuc_workcell/meshes/collision/bracket1.ply"/>
+      </geometry>
+    </collision>
+    <collision name="sidebracket2">
+      <geometry>
+        <mesh filename="package://snpsupport/meshes/collision/bracket2.ply"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tool0_to_ee" type="fixed">
+    <parent link="tool0"/>
+    <child link="ee"/>
+  </joint>-->
+
+ <xacro:property name="camera_cal" value="${load_yaml('$(find snp_fanuc_workcell)/config/camera_calibration.yaml')}" />
+
+  <link name="camera_color_optical_frame"/>
+  <joint name="tool0_to_camera" type="fixed">
+    <parent link="tool0"/>
+    <child link="camera_color_optical_frame"/>
+    <origin xyz="${camera_cal['camera_mount_to_camera_pos']['x']} ${camera_cal['camera_mount_to_camera_pos']['y']} ${camera_cal['camera_mount_to_camera_pos']['z']}"
+            rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
+  </joint>
+
+  <!-- <link name="cal_target_frame"/>
+  <joint name="target_mount_to_target" type="fixed">
+    <parent link="base_link"/>
+    <child link="cal_target_frame"/>
+    <origin xyz="${camera_cal['target_mount_to_target_pos']['x']} ${camera_cal['target_mount_to_target_pos']['y']} ${camera_cal['target_mount_to_target_pos']['z']}"
+            rpy="${camera_cal['target_mount_to_target_rpy']['x']} ${camera_cal['target_mount_to_target_rpy']['y']} ${camera_cal['target_mount_to_target_rpy']['z']}" />
+  </joint>-->
+
+  <!-- Add TCP -->
+  <link name="sand_tcp"/>
+  <joint name="sand_tcp_1_joint" type="fixed">
+    <parent link="tool0"/>
+    <child link="sand_tcp"/>
+    <origin xyz="0 0 ${ee_length}" rpy="0 0 0"/>
+  </joint>
+
+</robot>
+
