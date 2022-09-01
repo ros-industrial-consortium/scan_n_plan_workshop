@@ -2,29 +2,27 @@
 
 This demo uses a Motoman HC10 mounted on a table with an Intel RealSense camera to reconstruct the surface of an arbitrary part and generate motion plans for polishing the part in a raster pattern
 
-## Installation
+## Build Setup
 
-1. Install the prerequisite packages:
-    - `taskflow` (from the ROS-I PPA)
-      ```bash
-      sudo add-apt-repository ppa:ros-industrial/ppa
-      sudo apt-get update
-      sudo apt-get install taskflow
-      ```
+1. Follow the [build setup instructions](../README.md) for the main repository
 
-1. Install the ROS2 dependencies
-    ```bash
+1. Clone the application-specific ROS2 dependencies into the same workspace
+    ```
     cd <snpd_workspace>
-    vcs import < src/scan_n_plan_workshop/dependencies_tesseract.repos
-    vcs import < src/scan_n_plan_workshop/dependencies.repos
-    vcs import < src/scan_n_plan_workshop/snp_automate_2022/dependencies_hardware.repos
-    rosdep install --from-paths src --ignore-src -r -y
+    vcs import src < snp_automate_2022/dependencies.repos
     ```
 
-1. Build
-    ```bash
-    colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF
-    ```
+## Build
+
+```
+colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF
+```
+
+## ROS1 Hardware Interface Software Installation
+
+Install the requisite ROS1 driver software to run the application on hardware
+
+> Note: this step is not required to run the application in simulation only
 
 1. Build the ros1_bridge
     - Create a new workspace, clone this branch of the ros1_bridge repo
@@ -66,9 +64,8 @@ ros2 launch snp_automate_2022 start.launch.xml
     ```bash
     roslaunch motoman_hc10_support robot_interface_streaming_hc10.launch robot_ip:=192.168.1.31 controller:=yrc1000
     ```
-1. Source both ROS distros and run the bridge
+1. Run the bridge
     ```bash
-    source /opt/ros/noetic/setup.bash
     source install/setup.bash
     ros2 run ros1_bridge dynamic_bridge --bridge-all-1to2-topics
     ```
