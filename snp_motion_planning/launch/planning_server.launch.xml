@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_support)/urdf/workcell.xacro')"/>
-  <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_support)/config/workcell.srdf')"/>
+  <arg name="robot_description"/>
+  <arg name="robot_description_semantic"/>
   <arg name="verbose" default="False"/>
   <arg name="touch_links" default="[]"/>
 

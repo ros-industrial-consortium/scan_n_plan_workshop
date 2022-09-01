@@ -2,22 +2,22 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
-  <arg name="mesh_file" default="$(find-pkg-share snp_support)/meshes/part_scan.ply"/>
-  <arg name="scan_trajectory_file" default="$(find-pkg-share snp_support)/config/scan_traj.yaml"/>
-  <arg name="verbose" default="False"/>
+  <arg name="mesh_file" default="$(find-pkg-share snp_automate_2022)/meshes/part_scan.ply"/>
+  <arg name="scan_trajectory_file" default="$(find-pkg-share snp_automate_2022)/config/scan_traj.yaml"/>
+  <arg name="verbose" default="True"/>
   <arg name="touch_links" default="[table, base_link, floor]"/>
-  <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_support)/urdf/workcell.xacro')"/>
-  <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_support)/config/workcell.srdf')"/>
+  <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_automate_2022)/urdf/workcell.xacro')"/>
+  <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_automate_2022)/config/workcell.srdf')"/>
 
   <!-- URDF, Rviz -->
-  <include file="$(find-pkg-share snp_support)/launch/test.launch.xml">
+  <include file="$(find-pkg-share snp_automate_2022)/launch/test.launch.xml">
     <arg name="robot_description" value="$(var robot_description)"/>
     <arg name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <arg name="rviz" value="False"/>
     <arg name="use_gui" value="$(var sim_robot)"/>
   </include>
 
-  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_bringup_ros2)/config/app.rviz">
+  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_automate_2022)/config/app.rviz">
     <param name="mesh_file" value="/tmp/results_mesh.ply"/>
     <param name="motion_group" value="manipulator"/>
     <param name="reference_frame" value="base_link"/>
@@ -61,6 +61,8 @@
 
   <!-- Launch Motion Planning Node -->
   <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.xml">
+    <arg name="robot_description" value="$(var robot_description)"/>
+    <arg name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <arg name="verbose" value="$(var verbose)"/>
     <arg name="touch_links" value="$(var touch_links)"/>
   </include>
