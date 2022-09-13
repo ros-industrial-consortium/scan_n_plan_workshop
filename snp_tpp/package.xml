@@ -23,6 +23,7 @@
   <depend>snp_msgs</depend>
   <depend>tf2_eigen</depend>
   <depend>boost_plugin_loader</depend>
+  <depend>rviz_polygon_selection_tool</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <!-- TODO: replace with more targeted set of linters
