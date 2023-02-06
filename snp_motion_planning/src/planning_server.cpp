@@ -106,7 +106,6 @@ class PlanningServer
 public:
   PlanningServer(rclcpp::Node::SharedPtr node)
     : node_(node)
-    , internal_node_(std::make_shared<rclcpp::Node>(std::string(node->get_name()) + "_internal"))
     , verbose_(get<bool>(node_, "verbose"))
     , touch_links_(get<std::vector<std::string>>(node_, "touch_links"))
     , env_(std::make_shared<tesseract_environment::Environment>())
@@ -123,7 +122,7 @@ public:
     plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
 
     // Create the environment monitor
-    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(internal_node_, env_,
+    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(node_, env_,
                                                                                        TESSERACT_MONITOR_NAMESPACE);
     tesseract_monitor_->setEnvironmentPublishingFrequency(30.0);
     tesseract_monitor_->startPublishingEnvironment();
@@ -134,7 +133,6 @@ public:
     //    planning_server_->registerProcessPlanner(FREESPACE_PLANNER, createFreespaceTaskflow());
     //    planning_server_->registerProcessPlanner(RASTER_PLANNER, createRasterTaskflow());
 
-    // TODO: PLANNING SEEMS TO FAIL
     profile_dict_ = std::make_shared<tesseract_planning::ProfileDictionary>();
     // Add custom profiles
     {
@@ -160,11 +158,6 @@ public:
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
     RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
-  }
-
-  rclcpp::Node::SharedPtr getInternalNode()
-  {
-    return internal_node_;
   }
 
 private:
@@ -372,8 +365,6 @@ private:
   }
 
   rclcpp::Node::SharedPtr node_;
-  // Internal second ROS node that is used for the Tesseract monitor
-  rclcpp::Node::SharedPtr internal_node_;
 
   const bool verbose_{ false };
   const std::vector<std::string> touch_links_;
@@ -391,7 +382,6 @@ int main(int argc, char** argv)
   auto server = std::make_shared<PlanningServer>(node);
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
-  executor.add_node(server->getInternalNode());
   executor.spin();
   rclcpp::shutdown();
 }
