@@ -148,7 +148,7 @@ public:
     plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
 
     // Create the environment monitor
-    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(internal_node_, env_,
+    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(node_, env_,
                                                                                        TESSERACT_MONITOR_NAMESPACE);
     tesseract_monitor_->setEnvironmentPublishingFrequency(30.0);
     tesseract_monitor_->startPublishingEnvironment();
@@ -159,7 +159,6 @@ public:
     //    planning_server_->registerProcessPlanner(FREESPACE_PLANNER, createFreespaceTaskflow());
     //    planning_server_->registerProcessPlanner(RASTER_PLANNER, createRasterTaskflow());
 
-    // TODO: PLANNING SEEMS TO FAIL
     profile_dict_ = std::make_shared<tesseract_planning::ProfileDictionary>();
     // Add custom profiles
     {
@@ -185,11 +184,6 @@ public:
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
     RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
-  }
-
-  rclcpp::Node::SharedPtr getInternalNode()
-  {
-    return internal_node_;
   }
 
 private:
@@ -446,7 +440,6 @@ int main(int argc, char** argv)
   auto server = std::make_shared<PlanningServer>(node);
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
-  executor.add_node(server->getInternalNode());
   executor.spin();
   rclcpp::shutdown();
 }
