@@ -52,7 +52,7 @@ jobs:
           ROS_DISTRO: ${{ matrix.distro }}
           ROS_REPO: main
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}:ci
+          DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}:0.14.0
           GIT_SUBMODULE_STRATEGY: normal
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
