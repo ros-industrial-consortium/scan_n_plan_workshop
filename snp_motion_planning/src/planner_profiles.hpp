@@ -8,6 +8,10 @@
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
 
+#include <tesseract_task_composer/profiles/contact_check_profile.h>
+#include <tesseract_task_composer/profiles/min_length_profile.h>
+#include <tesseract_task_composer/profiles/interative_spline_parameterization_profile.h>
+
 template <typename FloatType>
 typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createDescartesPlanProfile()
 {
