@@ -25,17 +25,12 @@
 #include <tesseract_task_composer/taskflow/taskflow_task_composer_executor.h>
 #include <tesseract_task_composer/profiles/contact_check_profile.h>
 
-
-
-
-
-
 ///**
 // * @brief Creates a task flow graph for planning transition moves using a simple planner and TrajOpt with time
 // * parameterization
 // * @return
 // */
-//tesseract_planning::TaskflowGenerator::UPtr createTransitionTaskflow()
+// tesseract_planning::TaskflowGenerator::UPtr createTransitionTaskflow()
 //{
 //  // Create the graph task flow
 //  auto graph = std::make_unique<tesseract_planning::GraphTaskflow>();
@@ -53,8 +48,8 @@
 
 //  // TrajOpt with post-collision check
 //  auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
-//  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner), true);
-//  int trajopt_collision =
+//  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner),
+//  true); int trajopt_collision =
 //      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
 //  // Time parameterization
@@ -75,11 +70,12 @@
 //}
 
 ///**
-// * @brief Creates a task flow graph for planning freespace motions using a simple planner, TrajOpt, and OMPL smoothed by
+// * @brief Creates a task flow graph for planning freespace motions using a simple planner, TrajOpt, and OMPL smoothed
+// by
 // * TrajOpt, with time parameterization
 // * @return
 // */
-//tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
+// tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
 //{
 //  // Create the graph task flow
 //  auto graph = std::make_unique<tesseract_planning::GraphTaskflow>();
@@ -97,8 +93,8 @@
 
 //  // TrajOpt with post-collision check
 //  auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
-//  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner), true);
-//  int trajopt_collision =
+//  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner),
+//  true); int trajopt_collision =
 //      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
 
 //  // OMPL smoothed by TrajOpt with post-plan collision check
@@ -107,7 +103,8 @@
 //  auto ompl_trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
 //  int ompl_trajopt =
 //      graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(ompl_trajopt_planner), true);
-//  int ompl_collision = graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
+//  int ompl_collision = graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(),
+//  true);
 
 //  // Time parameterization
 //  int time_param =
@@ -132,7 +129,7 @@
 ///**
 // * @brief Creates a raster taskflow using the custom-defined freespace and transition planning taskflows
 // */
-//tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
+// tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 //{
 //  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
 //      tesseract_planning::createDescartesOnlyGenerator(), createFreespaceTaskflow(), createTransitionTaskflow(),
