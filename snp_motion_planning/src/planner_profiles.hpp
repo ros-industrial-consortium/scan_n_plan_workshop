@@ -8,10 +8,6 @@
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
 
-#include <tesseract_task_composer/profiles/contact_check_profile.h>
-#include <tesseract_task_composer/profiles/min_length_profile.h>
-#include <tesseract_task_composer/profiles/interative_spline_parameterization_profile.h>
-
 template <typename FloatType>
 typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createDescartesPlanProfile()
 {
@@ -84,6 +80,8 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
   profile->smooth_velocities = false;
 
+  profile->smooth_accelerations = false;
+  profile->smooth_jerks = false;
   profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
   profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 20.0);
 
@@ -100,5 +98,5 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 
 std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
 {
-  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 5);
+  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 10);
 }

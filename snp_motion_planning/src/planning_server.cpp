@@ -21,13 +21,18 @@
 #include <tesseract_command_language/profile_dictionary.h>
 #include <tesseract_command_language/utils.h>
 
+#include <tesseract_task_composer/profiles/min_length_profile.h>
+#include <tesseract_task_composer/profiles/interative_spline_parameterization_profile.h>
+
 // TODO: Replace with custom
 #include <tesseract_task_composer/nodes/raster_ct_global_pipeline_task.h>
+#include <tesseract_task_composer/nodes/raster_ct_motion_task.h>
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
+static const std::string PROFILE2 = "SNPD_FREESPACE";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
@@ -148,7 +153,10 @@ public:
           tesseract_planning::profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
       profile_dict_->addProfile<tesseract_planning::MinLengthProfile>(
           tesseract_planning::node_names::MIN_LENGTH_TASK_NAME, PROFILE,
-          std::make_shared<tesseract_planning::MinLengthProfile>(5));
+          std::make_shared<tesseract_planning::MinLengthProfile>(10));
+//      profile_dict_->addProfile<tesseract_planning::MinLengthProfile>(
+//          tesseract_planning::node_names::MIN_LENGTH_TASK_NAME, PROFILE,
+//          std::make_shared<tesseract_planning::MinLengthProfile>(1));
       profile_dict_->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
           tesseract_planning::node_names::ITERATIVE_SPLINE_PARAMETERIZATION_TASK_NAME, PROFILE,
           std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
@@ -175,9 +183,12 @@ private:
     // Create object needed for move instruction
     tesseract_planning::StateWaypointPoly swp1_poly{ swp1 };
 
-    tesseract_planning::MoveInstruction start_instruction(swp1_poly, tesseract_planning::MoveInstructionType::START,
+    tesseract_planning::MoveInstruction start_instruction(swp1_poly, tesseract_planning::MoveInstructionType::FREESPACE,
                                                           PROFILE, info);
-    program.setStartInstruction(start_instruction);
+//    tesseract_planning::CompositeInstruction start_inst(PROFILE);
+//    start_inst.appendMoveInstruction(start_instruction);
+//    start_inst.setDescription("test_fs");
+//    program.push_back(start_inst);
 
     for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
     {
@@ -191,8 +202,9 @@ private:
         move_f0.setDescription("from_start_plan");
         tesseract_planning::CompositeInstruction from_start(PROFILE);
         from_start.setDescription("from_start");
-        from_start.appendMoveInstruction(move_f0);
-        program.appendInstruction(from_start);
+        from_start.appendMoveInstruction(start_instruction);
+//        from_start.appendMoveInstruction(move_f0);
+        program.push_back(from_start);
       }
 
       // Define raster
@@ -206,7 +218,7 @@ private:
         raster_segment.appendMoveInstruction(tesseract_planning::MoveInstruction(
             wp_poly, tesseract_planning::MoveInstructionType::LINEAR, PROFILE, info));
       }
-      program.appendInstruction(raster_segment);
+      program.push_back(raster_segment);
 
       if (rs < raster_strips.size() - 1)
       {
@@ -222,7 +234,7 @@ private:
         transition.setDescription("Transition #" + std::to_string(rs + 1));
         transition.appendMoveInstruction(transition_instruction1);
 
-        program.appendInstruction(transition);
+        program.push_back(transition);
       }
       else
       {
@@ -233,7 +245,7 @@ private:
         tesseract_planning::CompositeInstruction to_end(PROFILE);
         to_end.setDescription("to_end");
         to_end.appendMoveInstruction(plan_f2);
-        program.appendInstruction(to_end);
+        program.push_back(to_end);
       }
     }
 
@@ -321,7 +333,7 @@ private:
       auto executor = std::make_unique<tesseract_planning::TaskflowTaskComposerExecutor>();
 
       // Using predefined raster cartesian pipeline
-      tesseract_planning::RasterCtGlobalPipelineTask task("input_program", "output_program");
+      tesseract_planning::RasterCtMotionTask task("input_program", "output_program");
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
