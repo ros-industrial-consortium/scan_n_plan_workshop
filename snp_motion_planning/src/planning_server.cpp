@@ -153,10 +153,7 @@ public:
           tesseract_planning::profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
       profile_dict_->addProfile<tesseract_planning::MinLengthProfile>(
           tesseract_planning::node_names::MIN_LENGTH_TASK_NAME, PROFILE,
-          std::make_shared<tesseract_planning::MinLengthProfile>(10));
-//      profile_dict_->addProfile<tesseract_planning::MinLengthProfile>(
-//          tesseract_planning::node_names::MIN_LENGTH_TASK_NAME, PROFILE,
-//          std::make_shared<tesseract_planning::MinLengthProfile>(1));
+          std::make_shared<tesseract_planning::MinLengthProfile>(5));
       profile_dict_->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
           tesseract_planning::node_names::ITERATIVE_SPLINE_PARAMETERIZATION_TASK_NAME, PROFILE,
           std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
@@ -185,10 +182,6 @@ private:
 
     tesseract_planning::MoveInstruction start_instruction(swp1_poly, tesseract_planning::MoveInstructionType::FREESPACE,
                                                           PROFILE, info);
-//    tesseract_planning::CompositeInstruction start_inst(PROFILE);
-//    start_inst.appendMoveInstruction(start_instruction);
-//    start_inst.setDescription("test_fs");
-//    program.push_back(start_inst);
 
     for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
     {
@@ -203,7 +196,7 @@ private:
         tesseract_planning::CompositeInstruction from_start(PROFILE);
         from_start.setDescription("from_start");
         from_start.appendMoveInstruction(start_instruction);
-//        from_start.appendMoveInstruction(move_f0);
+        from_start.appendMoveInstruction(move_f0);
         program.push_back(from_start);
       }
 
@@ -333,7 +326,7 @@ private:
       auto executor = std::make_unique<tesseract_planning::TaskflowTaskComposerExecutor>();
 
       // Using predefined raster cartesian pipeline
-      tesseract_planning::RasterCtMotionTask task("input_program", "output_program");
+      tesseract_planning::RasterCtGlobalPipelineTask task("input_program", "output_program");
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
