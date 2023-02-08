@@ -153,8 +153,8 @@ public:
     plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
 
     // Create the environment monitor
-    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(node_, env_,
-                                                                                       TESSERACT_MONITOR_NAMESPACE);
+    tesseract_monitor_ =
+        std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
     tesseract_monitor_->setEnvironmentPublishingFrequency(30.0);
     tesseract_monitor_->startPublishingEnvironment();
     tesseract_monitor_->startStateMonitor("/robot_joint_states", true);
