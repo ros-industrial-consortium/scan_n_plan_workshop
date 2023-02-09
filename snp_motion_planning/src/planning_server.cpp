@@ -27,6 +27,9 @@
 // TODO: Replace with custom
 #include <tesseract_task_composer/nodes/raster_ct_global_pipeline_task.h>
 #include <tesseract_task_composer/nodes/raster_ct_motion_task.h>
+#include <tesseract_task_composer/nodes/descartes_global_motion_pipeline_task.h>
+#include "raster_task/snp_raster_motion_task.h"
+#include "raster_task/snp_raster_global_motion_task.h"
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
@@ -325,8 +328,20 @@ private:
       tesseract_planning::TaskComposerInput input(problem, profile_dict_);
       auto executor = std::make_unique<tesseract_planning::TaskflowTaskComposerExecutor>();
 
-      // Using predefined raster cartesian pipeline
-      tesseract_planning::RasterCtGlobalPipelineTask task("input_program", "output_program");
+      auto fs_task_gen = [](std::string description){ return std::make_unique<snp_planning::FreespaceMotionPipelineTask>(description);};
+      auto trans_task_gen = [](std::string description){ return std::make_unique<snp_planning::TransitionMotionPipelineTask>(description);};
+      auto raster_task_gen = [](std::string description){ return std::make_unique<snp_planning::CartesianMotionPipelineTask>(description);};
+      auto global_task_gen = [](std::string input_key, std::string output_key)
+      {
+        return std::make_unique<tesseract_planning::DescartesGlobalMotionPipelineTask>(input_key, output_key);
+      };
+      auto rasters_task_gen = [fs_task_gen, trans_task_gen, raster_task_gen](std::string input_key, std::string output_key)
+      {
+        return std::make_unique<snp_planning::RasterFtMotionTask>(input_key, output_key, fs_task_gen, trans_task_gen, raster_task_gen);
+      };
+
+      // Use custom pipeline
+      snp_planning::RasterFtGlobalPipelineTask::UPtr task = createGlobalRasterPipeline();
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
@@ -334,7 +349,7 @@ private:
         console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
       // Run problem
-      tesseract_planning::TaskComposerFuture::UPtr exec_fut = executor->run(task, input);
+      tesseract_planning::TaskComposerFuture::UPtr exec_fut = executor->run(*task, input);
       exec_fut->wait();
 
       // Reset the log level
