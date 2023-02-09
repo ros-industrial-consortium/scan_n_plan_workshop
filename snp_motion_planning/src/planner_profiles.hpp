@@ -59,7 +59,7 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile()
   profile->planners.reserve(static_cast<std::size_t>(n));
   for (Eigen::Index i = 0; i < n; ++i)
   {
-    auto rrt = std::make_shared<tesseract_planning::RRTConfigurator>();
+    auto rrt = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
     rrt->range = range(i);
     profile->planners.push_back(rrt);
   }
@@ -99,5 +99,5 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 
 std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
 {
-  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 10);
+  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 5);
 }
