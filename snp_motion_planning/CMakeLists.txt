@@ -27,19 +27,16 @@ find_package(tesseract_kinematics REQUIRED)
 find_package(LAPACK REQUIRED) # Requried for ikfast
 
 # Custom TaskComposer
-add_library(${PROJECT_NAME}_task
-  src/raster_task/snp_raster_motion_task.cpp
-  src/raster_task/snp_raster_global_motion_task.cpp)
-target_link_libraries(
-  ${PROJECT_NAME}_task
-  PUBLIC tesseract::tesseract_task_composer )
+add_library(${PROJECT_NAME}_task src/raster_task/snp_raster_motion_task.cpp
+                                 src/raster_task/snp_raster_global_motion_task.cpp)
+target_link_libraries(${PROJECT_NAME}_task PUBLIC tesseract::tesseract_task_composer)
 target_compile_options(${PROJECT_NAME}_task PRIVATE ${TESSERACT_COMPILE_OPTIONS_PRIVATE})
 target_compile_options(${PROJECT_NAME}_task PUBLIC ${TESSERACT_COMPILE_OPTIONS_PUBLIC})
 target_compile_definitions(${PROJECT_NAME}_task PUBLIC ${TESSERACT_COMPILE_DEFINITIONS})
 target_compile_definitions(${PROJECT_NAME}_task
-                          PRIVATE TESSERACT_TASK_COMPOSER_PLUGIN_PATH="${TESSERACT_TASK_COMPOSER_PLUGIN_PATH}")
+                           PRIVATE TESSERACT_TASK_COMPOSER_PLUGIN_PATH="${TESSERACT_TASK_COMPOSER_PLUGIN_PATH}")
 target_include_directories(${PROJECT_NAME}_task PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                                 "$<INSTALL_INTERFACE:include>")
+                                                       "$<INSTALL_INTERFACE:include>")
 
 # Planning server
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
