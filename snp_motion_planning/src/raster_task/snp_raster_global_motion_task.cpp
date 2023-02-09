@@ -3,24 +3,22 @@
 
 namespace snp_planning
 {
-RasterFtGlobalPipelineTask::RasterFtGlobalPipelineTask(std::string input_key,
-                                                       std::string output_key,
-                                                       std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> global_task_gen,
-                                                       std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> rasters_task_gen,
-                                                       std::string name)
+RasterFtGlobalPipelineTask::RasterFtGlobalPipelineTask(
+    std::string input_key, std::string output_key,
+    std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> global_task_gen,
+    std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> rasters_task_gen,
+    std::string name)
   : TaskComposerGraph(std::move(name))
 {
   if (global_task_gen == nullptr)
   {
-    global_task_gen = [](std::string input_key, std::string output_key)
-    {
+    global_task_gen = [](std::string input_key, std::string output_key) {
       return std::make_unique<tesseract_planning::DescartesGlobalMotionPipelineTask>(input_key, output_key);
     };
   }
   if (rasters_task_gen == nullptr)
   {
-    rasters_task_gen = [](std::string input_key, std::string output_key)
-    {
+    rasters_task_gen = [](std::string input_key, std::string output_key) {
       return std::make_unique<tesseract_planning::RasterFtMotionTask>(input_key, output_key);
     };
   }
@@ -50,7 +48,10 @@ bool RasterFtGlobalPipelineTask::operator==(const RasterFtGlobalPipelineTask& rh
   equal &= TaskComposerGraph::operator==(rhs);
   return equal;
 }
-bool RasterFtGlobalPipelineTask::operator!=(const RasterFtGlobalPipelineTask& rhs) const { return !operator==(rhs); }
+bool RasterFtGlobalPipelineTask::operator!=(const RasterFtGlobalPipelineTask& rhs) const
+{
+  return !operator==(rhs);
+}
 
 template <class Archive>
 void RasterFtGlobalPipelineTask::serialize(Archive& ar, const unsigned int /*version*/)

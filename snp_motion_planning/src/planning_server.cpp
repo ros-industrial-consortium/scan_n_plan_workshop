@@ -328,16 +328,22 @@ private:
       tesseract_planning::TaskComposerInput input(problem, profile_dict_);
       auto executor = std::make_unique<tesseract_planning::TaskflowTaskComposerExecutor>();
 
-      auto fs_task_gen = [](std::string description){ return std::make_unique<snp_planning::FreespaceMotionPipelineTask>(description);};
-      auto trans_task_gen = [](std::string description){ return std::make_unique<snp_planning::TransitionMotionPipelineTask>(description);};
-      auto raster_task_gen = [](std::string description){ return std::make_unique<snp_planning::CartesianMotionPipelineTask>(description);};
-      auto global_task_gen = [](std::string input_key, std::string output_key)
-      {
+      auto fs_task_gen = [](std::string description) {
+        return std::make_unique<snp_planning::FreespaceMotionPipelineTask>(description);
+      };
+      auto trans_task_gen = [](std::string description) {
+        return std::make_unique<snp_planning::TransitionMotionPipelineTask>(description);
+      };
+      auto raster_task_gen = [](std::string description) {
+        return std::make_unique<snp_planning::CartesianMotionPipelineTask>(description);
+      };
+      auto global_task_gen = [](std::string input_key, std::string output_key) {
         return std::make_unique<tesseract_planning::DescartesGlobalMotionPipelineTask>(input_key, output_key);
       };
-      auto rasters_task_gen = [fs_task_gen, trans_task_gen, raster_task_gen](std::string input_key, std::string output_key)
-      {
-        return std::make_unique<snp_planning::RasterFtMotionTask>(input_key, output_key, fs_task_gen, trans_task_gen, raster_task_gen);
+      auto rasters_task_gen = [fs_task_gen, trans_task_gen, raster_task_gen](std::string input_key,
+                                                                             std::string output_key) {
+        return std::make_unique<snp_planning::RasterFtMotionTask>(input_key, output_key, fs_task_gen, trans_task_gen,
+                                                                  raster_task_gen);
       };
 
       // Use custom pipeline
