@@ -1,46 +1,7 @@
-/**
- * @file raster_ft_motion_task.cpp
- * @brief Raster motion planning task with freespace transitions
- *
- * @author Levi Armstrong
- * @date July 29. 2022
- * @version TODO
- * @bug No known bugs
- *
- * @copyright Copyright (c) 2022, Levi Armstrong
- *
- * @par License
- * Software License Agreement (Apache License)
- * @par
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * @par
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 #include "snp_raster_motion_task.h"
 
 namespace snp_planning
 {
-//  RasterFtMotionTask::RasterFtMotionTask(std::string input_key,
-//                                         std::string output_key,
-//                                         bool is_conditional,
-//                                         std::string name)
-//    : tesseract_planning::TaskComposerTask(is_conditional, std::move(name))
-//  {
-//    auto freespace_task_gen = [](std::string description){ return
-//    std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>(description);}; auto transition_task_gen =
-//    [](std::string description){ return
-//    std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>(description);}; auto raster_task_gen =
-//    [](std::string description){ return
-//    std::make_unique<tesseract_planning::CartesianMotionPipelineTask>(description);}; ctor(input_key, output_key,
-//    freespace_task_gen, transition_task_gen, raster_task_gen);
-//  }
 
 RasterFtMotionTask::RasterFtMotionTask(
     std::string input_key, std::string output_key,
@@ -73,48 +34,7 @@ RasterFtMotionTask::RasterFtMotionTask(
   freespace_gen_ = freespace_task_gen;
   transition_gen_ = transition_task_gen;
   raster_gen_ = raster_task_gen;
-  //    ctor(input_key, output_key, freespace_task_gen, transition_task_gen, raster_task_gen);
 }
-
-//  RasterFtMotionTask::RasterFtMotionTask(bool is_conditional,
-//                                         std::string name)
-//    : tesseract_planning::TaskComposerTask(is_conditional, std::move(name))
-//  {
-//    auto freespace_task_gen = [](std::string description){ return
-//    std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>(description);}; auto transition_task_gen =
-//    [](std::string description){ return
-//    std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>(description);}; auto raster_task_gen =
-//    [](std::string description){ return
-//    std::make_unique<tesseract_planning::CartesianMotionPipelineTask>(description);}; ctor(uuid_str_, uuid_str_,
-//    freespace_task_gen, transition_task_gen, raster_task_gen);
-//  }
-
-//  RasterFtMotionTask::RasterFtMotionTask(std::function<tesseract_planning::TaskComposerGraph::UPtr(std::string)>
-//  freespace_task_gen,
-//                                         std::function<tesseract_planning::TaskComposerGraph::UPtr(std::string)>
-//                                         transition_task_gen,
-//                                         std::function<tesseract_planning::TaskComposerGraph::UPtr(std::string)>
-//                                         raster_task_gen, bool is_conditional, std::string name)
-//    : tesseract_planning::TaskComposerTask(is_conditional, std::move(name))
-//  {
-//    ctor(uuid_str_, uuid_str_, freespace_task_gen, transition_task_gen, raster_task_gen);
-//  }
-
-//  void RasterFtMotionTask::ctor(std::string input_key,
-//                                std::string output_key,
-//                                std::function<tesseract_planning::TaskComposerGraph::UPtr(std::string)>
-//                                freespace_task_gen,
-//                                std::function<tesseract_planning::TaskComposerGraph::UPtr(std::string)>
-//                                transition_task_gen,
-//                                std::function<tesseract_planning::TaskComposerGraph::UPtr(std::string)>
-//                                raster_task_gen)
-//  {
-//    input_keys_.push_back(std::move(input_key));
-//    output_keys_.push_back(std::move(output_key));
-//    freespace_gen_ = freespace_task_gen;
-//    transition_gen_ = transition_task_gen;
-//    raster_gen_ = raster_task_gen;
-//  }
 
 tesseract_planning::TaskComposerNodeInfo::UPtr
 RasterFtMotionTask::runImpl(tesseract_planning::TaskComposerInput& input,

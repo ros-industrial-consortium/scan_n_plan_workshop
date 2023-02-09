@@ -1,5 +1,4 @@
 #include "snp_raster_global_motion_task.h"
-//#include "snp_raster_motion_task.h"
 
 namespace snp_planning
 {
