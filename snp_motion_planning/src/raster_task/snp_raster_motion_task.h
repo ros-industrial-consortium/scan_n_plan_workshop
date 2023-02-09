@@ -26,56 +26,51 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 namespace snp_planning
 {
+class RasterFtMotionTask : public tesseract_planning::TaskComposerTask
+{
+public:
+  using Ptr = std::shared_ptr<RasterFtMotionTask>;
+  using ConstPtr = std::shared_ptr<const RasterFtMotionTask>;
+  using UPtr = std::unique_ptr<RasterFtMotionTask>;
+  using ConstUPtr = std::unique_ptr<const RasterFtMotionTask>;
 
-  class RasterFtMotionTask : public tesseract_planning::TaskComposerTask
+  RasterFtMotionTask() = default;  // Required for serialization
+  ~RasterFtMotionTask() override = default;
+  RasterFtMotionTask(const RasterFtMotionTask&) = delete;
+  RasterFtMotionTask& operator=(const RasterFtMotionTask&) = delete;
+  RasterFtMotionTask(RasterFtMotionTask&&) = delete;
+  RasterFtMotionTask& operator=(RasterFtMotionTask&&) = delete;
+
+  RasterFtMotionTask(
+      std::string input_key, std::string output_key,
+      std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> freespace_task_gen = nullptr,
+      std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> transition_task_gen = nullptr,
+      std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> raster_task_gen = nullptr,
+      bool is_conditional = true, std::string name = "SNPRasterFtMotionTask");
+
+  tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerInput& input,
+                                                         OptionalTaskComposerExecutor executor) const;
+
+  bool operator==(const RasterFtMotionTask& rhs) const;
+  bool operator!=(const RasterFtMotionTask& rhs) const;
+
+protected:
+  friend class tesseract_common::Serialization;
+  friend class boost::serialization::access;
+
+  static void checkTaskInput(const tesseract_common::AnyPoly& input);
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int /*version*/)
   {
+    ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(tesseract_planning::TaskComposerTask);
+  }
 
-  public:
-    using Ptr = std::shared_ptr<RasterFtMotionTask>;
-    using ConstPtr = std::shared_ptr<const RasterFtMotionTask>;
-    using UPtr = std::unique_ptr<RasterFtMotionTask>;
-    using ConstUPtr = std::unique_ptr<const RasterFtMotionTask>;
+  std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> freespace_gen_{ nullptr };
+  std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> transition_gen_{ nullptr };
+  std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> raster_gen_{ nullptr };
+};
 
-    RasterFtMotionTask() = default;  // Required for serialization
-    ~RasterFtMotionTask() override = default;
-    RasterFtMotionTask(const RasterFtMotionTask&) = delete;
-    RasterFtMotionTask& operator=(const RasterFtMotionTask&) = delete;
-    RasterFtMotionTask(RasterFtMotionTask&&) = delete;
-    RasterFtMotionTask& operator=(RasterFtMotionTask&&) = delete;
-
-    RasterFtMotionTask(std::string input_key,
-                       std::string output_key,
-                       std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> freespace_task_gen = nullptr,
-                       std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> transition_task_gen = nullptr,
-                       std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> raster_task_gen = nullptr,
-                       bool is_conditional = true,
-                       std::string name = "SNPRasterFtMotionTask");
-
-    tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerInput& input,
-                                                           OptionalTaskComposerExecutor executor) const;
-
-    bool operator==(const RasterFtMotionTask& rhs) const;
-    bool operator!=(const RasterFtMotionTask& rhs) const;
-
-
-  protected:
-    friend class tesseract_common::Serialization;
-    friend class boost::serialization::access;
-
-    static void checkTaskInput(const tesseract_common::AnyPoly& input);
-    template <class Archive>
-    void serialize(Archive& ar, const unsigned int /*version*/)
-    {
-      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(tesseract_planning::TaskComposerTask);
-    }
-
-    std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> freespace_gen_{ nullptr };
-    std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> transition_gen_{ nullptr };
-    std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> raster_gen_{ nullptr };
-
-  };
-
-} // namespace snp_planning
+}  // namespace snp_planning
 
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/tracking.hpp>

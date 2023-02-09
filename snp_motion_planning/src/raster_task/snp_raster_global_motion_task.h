@@ -44,11 +44,11 @@ public:
   using ConstUPtr = std::unique_ptr<const RasterFtGlobalPipelineTask>;
 
   RasterFtGlobalPipelineTask() = default;  // Required for serialization
-  RasterFtGlobalPipelineTask(std::string input_key,
-                             std::string output_key,
-                             std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> global_task_gen = nullptr,
-                             std::function<tesseract_planning::TaskComposerNode::UPtr (std::string, std::string)> rasters_task_gen = nullptr,
-                             std::string name = tesseract_planning::node_names::RASTER_FT_G_PIPELINE_NAME);
+  RasterFtGlobalPipelineTask(
+      std::string input_key, std::string output_key,
+      std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> global_task_gen = nullptr,
+      std::function<tesseract_planning::TaskComposerNode::UPtr(std::string, std::string)> rasters_task_gen = nullptr,
+      std::string name = tesseract_planning::node_names::RASTER_FT_G_PIPELINE_NAME);
   ~RasterFtGlobalPipelineTask() override = default;
   RasterFtGlobalPipelineTask(const RasterFtGlobalPipelineTask&) = delete;
   RasterFtGlobalPipelineTask& operator=(const RasterFtGlobalPipelineTask&) = delete;

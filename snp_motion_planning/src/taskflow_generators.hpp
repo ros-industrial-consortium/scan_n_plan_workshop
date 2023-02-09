@@ -30,7 +30,6 @@
 #include "raster_task/snp_raster_motion_task.h"
 #include "raster_task/snp_raster_global_motion_task.h"
 
-
 namespace snp_planning
 {
 class FreespaceMotionPipelineTask : public tesseract_planning::TaskComposerGraph
@@ -46,13 +45,13 @@ public:
    * @details This will use the uuid as the input and output key
    * @param name The name give to the task
    */
-  FreespaceMotionPipelineTask(std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME) : tesseract_planning::TaskComposerGraph(std::move(name))
+  FreespaceMotionPipelineTask(std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
+    : tesseract_planning::TaskComposerGraph(std::move(name))
   {
     ctor(uuid_str_, uuid_str_);
   }
 
-  FreespaceMotionPipelineTask(std::string input_key,
-                              std::string output_key,
+  FreespaceMotionPipelineTask(std::string input_key, std::string output_key,
                               std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
     : tesseract_planning::TaskComposerGraph(std::move(name))
   {
@@ -72,7 +71,10 @@ public:
     return equal;
   }
 
-  bool operator!=(const FreespaceMotionPipelineTask& rhs) const { return !operator==(rhs); }
+  bool operator!=(const FreespaceMotionPipelineTask& rhs) const
+  {
+    return !operator==(rhs);
+  }
 
 protected:
   friend class tesseract_common::Serialization;
@@ -95,25 +97,26 @@ protected:
     // Setup Min Length Process Generator
     // This is required because trajopt requires a minimum length trajectory.
     // This is used to correct the input if it is to short.
-    boost::uuids::uuid min_length_task = addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
+    boost::uuids::uuid min_length_task =
+        addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
 
     // Setup OMPL
     auto ompl_planner = std::make_shared<tesseract_planning::OMPLMotionPlanner>();
-    boost::uuids::uuid ompl_planner_task =
-        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(ompl_planner, output_keys_[0], output_keys_[0]));
+    boost::uuids::uuid ompl_planner_task = addNode(
+        std::make_unique<tesseract_planning::MotionPlannerTask>(ompl_planner, output_keys_[0], output_keys_[0]));
 
     // Setup TrajOpt
     auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
-    boost::uuids::uuid trajopt_planner_task =
-        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(trajopt_planner, output_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid trajopt_planner_task = addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(
+        trajopt_planner, output_keys_[0], output_keys_[0], false));
 
     // Setup post collision check
-    boost::uuids::uuid contact_check_task = addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTask>(output_keys_[0]));
+    boost::uuids::uuid contact_check_task =
+        addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTask>(output_keys_[0]));
 
     // Setup time parameterization
-    boost::uuids::uuid time_parameterization_task =
-        addNode(std::make_unique<tesseract_planning::IterativeSplineParameterizationTask>(output_keys_[0], output_keys_[0]));
-
+    boost::uuids::uuid time_parameterization_task = addNode(
+        std::make_unique<tesseract_planning::IterativeSplineParameterizationTask>(output_keys_[0], output_keys_[0]));
 
     // Add edges
     addEdges(min_length_task, { ompl_planner_task });
@@ -137,14 +140,14 @@ public:
    * @details This will use the uuid as the input and output key
    * @param name The name give to the task
    */
-  TransitionMotionPipelineTask(std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME) : tesseract_planning::TaskComposerGraph(std::move(name))
+  TransitionMotionPipelineTask(std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
+    : tesseract_planning::TaskComposerGraph(std::move(name))
   {
     ctor(uuid_str_, uuid_str_);
   }
 
-  TransitionMotionPipelineTask(std::string input_key,
-                              std::string output_key,
-                              std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
+  TransitionMotionPipelineTask(std::string input_key, std::string output_key,
+                               std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
     : tesseract_planning::TaskComposerGraph(std::move(name))
   {
     ctor(std::move(input_key), std::move(output_key));
@@ -163,7 +166,10 @@ public:
     return equal;
   }
 
-  bool operator!=(const TransitionMotionPipelineTask& rhs) const { return !operator==(rhs); }
+  bool operator!=(const TransitionMotionPipelineTask& rhs) const
+  {
+    return !operator==(rhs);
+  }
 
 protected:
   friend class tesseract_common::Serialization;
@@ -186,24 +192,25 @@ protected:
     // Setup Min Length Process Generator
     // This is required because trajopt requires a minimum length trajectory.
     // This is used to correct the input if it is to short.
-    boost::uuids::uuid min_length_task = addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
+    boost::uuids::uuid min_length_task =
+        addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
 
     auto simple_planner = std::make_shared<tesseract_planning::SimpleMotionPlanner>();
-    boost::uuids::uuid simple_task =
-        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(simple_planner, input_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid simple_task = addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(
+        simple_planner, input_keys_[0], output_keys_[0], false));
 
     // Setup TrajOpt
     auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
-    boost::uuids::uuid trajopt_planner_task =
-        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(trajopt_planner, output_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid trajopt_planner_task = addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(
+        trajopt_planner, output_keys_[0], output_keys_[0], false));
 
     // Setup post collision check
-    boost::uuids::uuid contact_check_task = addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTask>(output_keys_[0]));
+    boost::uuids::uuid contact_check_task =
+        addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTask>(output_keys_[0]));
 
     // Setup time parameterization
-    boost::uuids::uuid time_parameterization_task =
-        addNode(std::make_unique<tesseract_planning::IterativeSplineParameterizationTask>(output_keys_[0], output_keys_[0]));
-
+    boost::uuids::uuid time_parameterization_task = addNode(
+        std::make_unique<tesseract_planning::IterativeSplineParameterizationTask>(output_keys_[0], output_keys_[0]));
 
     // Add edges
     addEdges(simple_task, { min_length_task });
@@ -213,7 +220,6 @@ protected:
     addEdges(time_parameterization_task, { error_task, done_task });
   }
 };
-
 
 class CartesianMotionPipelineTask : public tesseract_planning::TaskComposerGraph
 {
@@ -228,13 +234,13 @@ public:
    * @details This will use the uuid as the input and output key
    * @param name The name give to the task
    */
-  CartesianMotionPipelineTask(std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME) : tesseract_planning::TaskComposerGraph(std::move(name))
+  CartesianMotionPipelineTask(std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
+    : tesseract_planning::TaskComposerGraph(std::move(name))
   {
     ctor(uuid_str_, uuid_str_);
   }
 
-  CartesianMotionPipelineTask(std::string input_key,
-                              std::string output_key,
+  CartesianMotionPipelineTask(std::string input_key, std::string output_key,
                               std::string name = tesseract_planning::node_names::FREESPACE_PIPELINE_NAME)
     : tesseract_planning::TaskComposerGraph(std::move(name))
   {
@@ -254,7 +260,10 @@ public:
     return equal;
   }
 
-  bool operator!=(const CartesianMotionPipelineTask& rhs) const { return !operator==(rhs); }
+  bool operator!=(const CartesianMotionPipelineTask& rhs) const
+  {
+    return !operator==(rhs);
+  }
 
 protected:
   friend class tesseract_common::Serialization;
@@ -277,53 +286,62 @@ protected:
     // Setup Min Length Process Generator
     // This is required because trajopt requires a minimum length trajectory.
     // This is used to correct the input if it is to short.
-    boost::uuids::uuid min_length_task = addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
+    boost::uuids::uuid min_length_task =
+        addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
 
     // Setup Descartes
-//    auto descartes_planner = std::make_shared<tesseract_planning::DescartesMotionPlannerF>();
-//    boost::uuids::uuid descartes_planner_task =
-//        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(descartes_planner, output_keys_[0], output_keys_[0]));
+    //    auto descartes_planner = std::make_shared<tesseract_planning::DescartesMotionPlannerF>();
+    //    boost::uuids::uuid descartes_planner_task =
+    //        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(descartes_planner, output_keys_[0],
+    //        output_keys_[0]));
 
     // Setup TrajOpt
     auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
-    boost::uuids::uuid trajopt_planner_task =
-        addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(trajopt_planner, output_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid trajopt_planner_task = addNode(std::make_unique<tesseract_planning::MotionPlannerTask>(
+        trajopt_planner, output_keys_[0], output_keys_[0], false));
 
     // Setup post collision check
-    boost::uuids::uuid contact_check_task = addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTask>(output_keys_[0]));
+    boost::uuids::uuid contact_check_task =
+        addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTask>(output_keys_[0]));
 
     // Setup time parameterization
-    boost::uuids::uuid time_parameterization_task =
-        addNode(std::make_unique<tesseract_planning::IterativeSplineParameterizationTask>(output_keys_[0], output_keys_[0]));
+    boost::uuids::uuid time_parameterization_task = addNode(
+        std::make_unique<tesseract_planning::IterativeSplineParameterizationTask>(output_keys_[0], output_keys_[0]));
 
     // Add edges
     addEdges(min_length_task, { trajopt_planner_task });
-//    addEdges(min_length_task, { descartes_planner_task });
-//    addEdges(descartes_planner_task, { error_task, trajopt_planner_task });
+    //    addEdges(min_length_task, { descartes_planner_task });
+    //    addEdges(descartes_planner_task, { error_task, trajopt_planner_task });
     addEdges(trajopt_planner_task, { error_task, contact_check_task });
     addEdges(contact_check_task, { error_task, time_parameterization_task });
     addEdges(time_parameterization_task, { error_task, done_task });
   }
 };
 
-}
+}  // namespace snp_planning
 
 snp_planning::RasterFtGlobalPipelineTask::UPtr createGlobalRasterPipeline()
 {
-  auto fs_task_gen = [](std::string description){ return std::make_unique<snp_planning::FreespaceMotionPipelineTask>(description);};
-  auto trans_task_gen = [](std::string description){ return std::make_unique<snp_planning::TransitionMotionPipelineTask>(description);};
-  auto raster_task_gen = [](std::string description){ return std::make_unique<snp_planning::CartesianMotionPipelineTask>(description);};
-  auto global_task_gen = [](std::string input_key, std::string output_key)
-  {
+  auto fs_task_gen = [](std::string description) {
+    return std::make_unique<snp_planning::FreespaceMotionPipelineTask>(description);
+  };
+  auto trans_task_gen = [](std::string description) {
+    return std::make_unique<snp_planning::TransitionMotionPipelineTask>(description);
+  };
+  auto raster_task_gen = [](std::string description) {
+    return std::make_unique<snp_planning::CartesianMotionPipelineTask>(description);
+  };
+  auto global_task_gen = [](std::string input_key, std::string output_key) {
     return std::make_unique<tesseract_planning::DescartesGlobalMotionPipelineTask>(input_key, output_key);
   };
-  auto rasters_task_gen = [fs_task_gen, trans_task_gen, raster_task_gen](std::string input_key, std::string output_key)
-  {
-    return std::make_unique<snp_planning::RasterFtMotionTask>(input_key, output_key, fs_task_gen, trans_task_gen, raster_task_gen);
+  auto rasters_task_gen = [fs_task_gen, trans_task_gen, raster_task_gen](std::string input_key,
+                                                                         std::string output_key) {
+    return std::make_unique<snp_planning::RasterFtMotionTask>(input_key, output_key, fs_task_gen, trans_task_gen,
+                                                              raster_task_gen);
   };
 
-  snp_planning::RasterFtGlobalPipelineTask::UPtr task =
-      std::make_unique<snp_planning::RasterFtGlobalPipelineTask>("input_program", "output_program", global_task_gen, rasters_task_gen);
+  snp_planning::RasterFtGlobalPipelineTask::UPtr task = std::make_unique<snp_planning::RasterFtGlobalPipelineTask>(
+      "input_program", "output_program", global_task_gen, rasters_task_gen);
 
   return task;
 }
