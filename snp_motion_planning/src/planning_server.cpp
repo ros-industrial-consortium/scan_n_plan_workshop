@@ -136,11 +136,6 @@ public:
     tesseract_monitor_->startPublishingEnvironment();
     tesseract_monitor_->startStateMonitor("/robot_joint_states", true);
 
-    //    // Register custom process planners
-    //    planning_server_->registerProcessPlanner(TRANSITION_PLANNER, createTransitionTaskflow());
-    //    planning_server_->registerProcessPlanner(FREESPACE_PLANNER, createFreespaceTaskflow());
-    //    planning_server_->registerProcessPlanner(RASTER_PLANNER, createRasterTaskflow());
-
     profile_dict_ = std::make_shared<tesseract_planning::ProfileDictionary>();
     // Add custom profiles
     {
