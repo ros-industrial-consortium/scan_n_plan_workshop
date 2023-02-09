@@ -2,7 +2,6 @@
 
 namespace snp_planning
 {
-
 RasterFtMotionTask::RasterFtMotionTask(
     std::string input_key, std::string output_key,
     std::function<tesseract_planning::TaskComposerNode::UPtr(std::string)> freespace_task_gen,
@@ -101,8 +100,6 @@ RasterFtMotionTask::runImpl(tesseract_planning::TaskComposerInput& input,
 
     auto raster_pipeline_task =
         raster_gen_("Raster #" + std::to_string(raster_idx + 1) + ": " + raster_input.getDescription());
-    // std::make_unique<tesseract_planning::CartesianMotionPipelineTask>(
-    //"Raster #" + std::to_string(raster_idx + 1) + ": " + raster_input.getDescription());
     std::string raster_pipeline_key = raster_pipeline_task->getUUIDString();
     auto raster_pipeline_uuid = task_graph.addNode(std::move(raster_pipeline_task));
     raster_tasks.emplace_back(raster_pipeline_uuid, raster_pipeline_key);
@@ -135,8 +132,6 @@ RasterFtMotionTask::runImpl(tesseract_planning::TaskComposerInput& input,
 
     auto transition_pipeline_task =
         transition_gen_("Transition #" + std::to_string(transition_idx + 1) + ": " + transition_input.getDescription());
-    // std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>(
-    //"Transition #" + std::to_string(transition_idx + 1) + ": " + transition_input.getDescription());
     std::string transition_pipeline_key = transition_pipeline_task->getUUIDString();
     auto transition_pipeline_uuid = task_graph.addNode(std::move(transition_pipeline_task));
     transition_keys.push_back(transition_pipeline_key);
@@ -161,9 +156,7 @@ RasterFtMotionTask::runImpl(tesseract_planning::TaskComposerInput& input,
   auto from_start_input = program[0].as<tesseract_planning::CompositeInstruction>();
   from_start_input.setManipulatorInfo(from_start_input.getManipulatorInfo().getCombined(program_manip_info));
 
-  auto from_start_pipeline_task = freespace_gen_("From Start: " + from_start_input.getDescription());  //
-  // std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>("From Start: " +
-  // from_start_input.getDescription());
+  auto from_start_pipeline_task = freespace_gen_("From Start: " + from_start_input.getDescription());
   std::string from_start_pipeline_key = from_start_pipeline_task->getUUIDString();
   auto from_start_pipeline_uuid = task_graph.addNode(std::move(from_start_pipeline_task));
 
@@ -190,9 +183,7 @@ RasterFtMotionTask::runImpl(tesseract_planning::TaskComposerInput& input,
   assert(li != nullptr);
   to_end_input.insertMoveInstruction(to_end_input.begin(), *li);
 
-  auto to_end_pipeline_task =
-      freespace_gen_("To End: " + to_end_input.getDescription());  // std::make_unique<tesseract_planning::FreespaceMotionPipelineTask>("To
-                                                                   // End: " + to_end_input.getDescription());
+  auto to_end_pipeline_task = freespace_gen_("To End: " + to_end_input.getDescription());
   std::string to_end_pipeline_key = to_end_pipeline_task->getUUIDString();
   auto to_end_pipeline_uuid = task_graph.addNode(std::move(to_end_pipeline_task));
 
