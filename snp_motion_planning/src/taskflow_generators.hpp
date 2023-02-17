@@ -103,8 +103,8 @@ protected:
         addNode(std::make_unique<tesseract_planning::OMPLMotionPlannerTask>(output_keys_[0], output_keys_[0]));
 
     // Setup TrajOpt
-    boost::uuids::uuid trajopt_planner_task =
-        addNode(std::make_unique<tesseract_planning::TrajOptMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid trajopt_planner_task = addNode(
+        std::make_unique<tesseract_planning::TrajOptMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
 
     // Setup post collision check
     boost::uuids::uuid contact_check_task =
@@ -192,11 +192,12 @@ protected:
         addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
 
     // Simple planner
-    boost::uuids::uuid simple_task = addNode(std::make_unique<tesseract_planning::SimpleMotionPlannerTask>(input_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid simple_task =
+        addNode(std::make_unique<tesseract_planning::SimpleMotionPlannerTask>(input_keys_[0], output_keys_[0], false));
 
     // Setup TrajOpt
-    boost::uuids::uuid trajopt_planner_task =
-        addNode(std::make_unique<tesseract_planning::TrajOptMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid trajopt_planner_task = addNode(
+        std::make_unique<tesseract_planning::TrajOptMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
 
     // Setup post collision check
     boost::uuids::uuid contact_check_task =
@@ -283,13 +284,14 @@ protected:
     boost::uuids::uuid min_length_task =
         addNode(std::make_unique<tesseract_planning::MinLengthTask>(input_keys_[0], output_keys_[0]));
 
-//    // Setup Descartes
-//    boost::uuids::uuid descartes_planner_task =
-//        addNode(std::make_unique<tesseract_planning::DescartesMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
+    //    // Setup Descartes
+    //    boost::uuids::uuid descartes_planner_task =
+    //        addNode(std::make_unique<tesseract_planning::DescartesMotionPlannerTask>(output_keys_[0], output_keys_[0],
+    //        false));
 
     // Setup TrajOpt
-    boost::uuids::uuid trajopt_planner_task =
-        addNode(std::make_unique<tesseract_planning::TrajOptMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
+    boost::uuids::uuid trajopt_planner_task = addNode(
+        std::make_unique<tesseract_planning::TrajOptMotionPlannerTask>(output_keys_[0], output_keys_[0], false));
 
     // Setup post collision check
     boost::uuids::uuid contact_check_task =
@@ -302,8 +304,8 @@ protected:
     // Add edges
     addEdges(min_length_task, { trajopt_planner_task });
 
-//    addEdges(min_length_task, { descartes_planner_task });
-//    addEdges(descartes_planner_task, { error_task, trajopt_planner_task });
+    //    addEdges(min_length_task, { descartes_planner_task });
+    //    addEdges(descartes_planner_task, { error_task, trajopt_planner_task });
 
     addEdges(trajopt_planner_task, { error_task, contact_check_task });
     addEdges(contact_check_task, { error_task, time_parameterization_task });
@@ -313,17 +315,18 @@ protected:
 
 }  // namespace snp_planning
 
-
 using CustomRasterPipeline = tesseract_planning::RasterMotionTask<snp_planning::FreespaceMotionPipelineTask,
                                                                   snp_planning::CartesianMotionPipelineTask,
                                                                   snp_planning::TransitionMotionPipelineTask>;
-using CustomGlobalRasterGlobalPipeline = tesseract_planning::RasterGlobalPipelineTask<tesseract_planning::SimpleMotionPipelineTask,
-                                                                                      tesseract_planning::DescartesGlobalMotionPipelineTask,
-                                                                                      CustomRasterPipeline>;
+using CustomGlobalRasterGlobalPipeline =
+    tesseract_planning::RasterGlobalPipelineTask<tesseract_planning::SimpleMotionPipelineTask,
+                                                 tesseract_planning::DescartesGlobalMotionPipelineTask,
+                                                 CustomRasterPipeline>;
 
 CustomGlobalRasterGlobalPipeline::UPtr createGlobalRasterPipeline()
 {
-  CustomGlobalRasterGlobalPipeline::UPtr task = std::make_unique<CustomGlobalRasterGlobalPipeline>("input_program", "output_program", "custom_global_pipeline");
+  CustomGlobalRasterGlobalPipeline::UPtr task =
+      std::make_unique<CustomGlobalRasterGlobalPipeline>("input_program", "output_program", "custom_global_pipeline");
 
   // Write the graph to the tmp directory for debugging
   std::ofstream tc_out_data;
