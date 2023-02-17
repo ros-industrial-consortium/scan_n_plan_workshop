@@ -24,13 +24,6 @@
 #include <tesseract_task_composer/profiles/min_length_profile.h>
 #include <tesseract_task_composer/profiles/interative_spline_parameterization_profile.h>
 
-// TODO: Replace with custom
-#include <tesseract_task_composer/nodes/raster_ct_global_pipeline_task.h>
-#include <tesseract_task_composer/nodes/raster_ct_motion_task.h>
-#include <tesseract_task_composer/nodes/descartes_global_motion_pipeline_task.h>
-#include "raster_task/snp_raster_motion_task.h"
-#include "raster_task/snp_raster_global_motion_task.h"
-
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";

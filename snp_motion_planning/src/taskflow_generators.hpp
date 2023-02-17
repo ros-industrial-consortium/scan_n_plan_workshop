@@ -23,8 +23,10 @@
 #include <tesseract_task_composer/nodes/simple_motion_planner_task.h>
 #include <tesseract_task_composer/nodes/descartes_motion_planner_task.h>
 
-#include "raster_task/snp_raster_motion_task.h"
-#include "raster_task/snp_raster_global_motion_task.h"
+#include <tesseract_task_composer/nodes/descartes_global_motion_pipeline_task.h>
+#include <tesseract_task_composer/nodes/simple_motion_pipeline_task.h>
+#include <tesseract_task_composer/nodes/raster_motion_task.hpp>
+#include <tesseract_task_composer/nodes/raster_global_pipeline_task.hpp>
 
 namespace snp_planning
 {
