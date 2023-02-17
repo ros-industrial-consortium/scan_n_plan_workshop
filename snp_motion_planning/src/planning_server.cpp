@@ -384,7 +384,7 @@ private:
       auto executor = std::make_unique<tesseract_planning::TaskflowTaskComposerExecutor>();
 
       // Use custom pipeline
-      snp_planning::RasterFtGlobalPipelineTask::UPtr task = createGlobalRasterPipeline();
+      auto task = createGlobalRasterPipeline();
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
