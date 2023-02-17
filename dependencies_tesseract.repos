@@ -16,8 +16,8 @@
     version: 0.3.1
 - git:
     local-name: tesseract_planning
-    uri: https://github.com/ros-industrial-consortium/tesseract_planning.git
-    version: 46df97ecb19f89d10ed20901042d38374344130c
+    uri: https://github.com/marrts/tesseract_planning.git
+    version: 5ea869d089af18b515a01f5fa76434c03b6b4ece
 - git:
     local-name: tesseract_qt
     uri: https://github.com/tesseract-robotics/tesseract_qt.git
