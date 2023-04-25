@@ -1,0 +1,34 @@
+kinematic_plugins:
+  search_libraries:
+    - snp_motion_planning_plugins
+  inv_kin_plugins:
+    manipulator:
+      default: KDLInvKinChainLMA
+      plugins:
+        KDLInvKinChainLMA:
+          class: KDLInvKinChainLMAFactory
+          config:
+            base_link: base_link
+            tip_link: tool0
+contact_manager_plugins:
+  search_paths:
+    - /usr/local/lib
+  search_libraries:
+    - tesseract_collision_bullet_factories
+    - tesseract_collision_fcl_factories
+  discrete_plugins:
+    default: BulletDiscreteBVHManager
+    plugins:
+      BulletDiscreteBVHManager:
+        class: BulletDiscreteBVHManagerFactory
+      BulletDiscreteSimpleManager:
+        class: BulletDiscreteSimpleManagerFactory
+      FCLDiscreteBVHManager:
+        class: FCLDiscreteBVHManagerFactory
+  continuous_plugins:
+    default: BulletCastBVHManager
+    plugins:
+      BulletCastBVHManager:
+        class: BulletCastBVHManagerFactory
+      BulletCastSimpleManager:
+        class: BulletCastSimpleManagerFactory
