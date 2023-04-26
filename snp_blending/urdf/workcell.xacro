@@ -1,7 +1,8 @@
 <?xml version="1.0" ?>
 <robot name="motoman_mh_180_120" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find snp_blending)/urdf/mh180_120.xacro"/>
+<xacro:include filename="$(find snp_blending)/urdf/mh180_120_macro.xacro"/>
+<xacro:motoman_mh180_120 prefix=""/>
 
   <material name="light_gray">
     <color rgba="0.7 0.7 0.7 1"/>
@@ -69,20 +70,24 @@
     <axis xyz="0 0 0"/>
   </joint>-->
 
+<xacro:property name="camera_cal" value="${load_yaml('$(find snp_automate_2022)/config/camera_calibration.yaml')}" />
+
   <link name="camera_color_optical_frame"/>
-  <link name="target_cal_frame"/>
-
-  <joint name="camera_cal_joint" type="fixed">
-    <parent link="camera_link"/>
+  <joint name="tool0_to_camera" type="fixed">
+    <parent link="tool0"/>
     <child link="camera_color_optical_frame"/>
-    <origin xyz="0.085549560652492 -0.1732631672558103 0.1329373703855808" wxyz="0.5118596229748543 -0.5074314040915237 0.4900425218487801 -0.4902768843111336"/>
+    <origin xyz="${camera_cal['camera_mount_to_camera_pos']['x']} ${camera_cal['camera_mount_to_camera_pos']['y']} ${camera_cal['camera_mount_to_camera_pos']['z']}"
+            rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
   </joint>
 
-  <joint name="target_cal_joint" type="fixed">
-    <parent link="floor"/>
-    <child link="target_cal_frame"/>
-    <origin xyz="0.555641489380775 0.05956001933889868 0.1229851433910979" wxyz="0.6869783604862724 -0.001114251051880176 -0.003909064875724348 -0.7266665052690842"/>
+  <link name="cal_target_frame"/>
+  <joint name="target_mount_to_target" type="fixed">
+    <parent link="base_link"/>
+    <child link="cal_target_frame"/>
+    <origin xyz="${camera_cal['target_mount_to_target_pos']['x']} ${camera_cal['target_mount_to_target_pos']['y']} ${camera_cal['target_mount_to_target_pos']['z']}"
+            rpy="${camera_cal['target_mount_to_target_rpy']['x']} ${camera_cal['target_mount_to_target_rpy']['y']} ${camera_cal['target_mount_to_target_rpy']['z']}" />
   </joint>
+
 
   <!-- TODO do we care about effort and velocity limits?-->
   <joint name="pushcorp_actuator" type="prismatic">
