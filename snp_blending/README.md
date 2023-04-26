@@ -1,6 +1,6 @@
-# SNP Implementation at Automate 2022
+# SNP Implementation for Robotic Blending Milesone 5
 
-This demo uses a Motoman HC10 mounted on a table with an Intel RealSense camera to reconstruct the surface of an arbitrary part and generate motion plans for polishing the part in a raster pattern
+This demo uses a Motoman MH180 with an Intel RealSense camera to reconstruct the surface of an arbitrary part and generate motion plans for grinding the part in a raster pattern
 
 ## Build Setup
 
@@ -56,7 +56,7 @@ Install the requisite ROS1 driver software to run the application on hardware
 ## Running the system
 ### Simulation
 ```bash
-ros2 launch snp_automate_2022 start.launch.xml
+ros2 launch snp_blending start.launch.xml
 ```
 
 ### On Hardware
@@ -76,5 +76,5 @@ ros2 launch snp_automate_2022 start.launch.xml
     ```bash
     cd <snp_workspace>
     source install/setup.bash
-    ros2 launch snp_automate_2022 start.launch.xml sim_robot:=false sim_vision:=false
+    ros2 launch snp_blending start.launch.xml sim_robot:=false sim_vision:=false
     ```
