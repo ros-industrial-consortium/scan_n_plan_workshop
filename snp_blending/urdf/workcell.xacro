@@ -109,11 +109,17 @@
   <xacro:property name="control_boxes_height" value="${60*0.0254}"/>
   <xacro:property name="control_boxes_width" value="${38*0.0254}"/>
   <xacro:property name="control_boxes_length" value="${130*0.0254}"/>
-  <xacro:property name="table_height" value="${33.875*0.0254}"/>
-  <xacro:property name="table_width" value="${48*0.0254}"/>
-  <xacro:property name="table_length" value="${30*0.0254}"/>
+  <xacro:property name="table_height" value="${37*0.0254}"/>
+  <xacro:property name="table_width" value="${60*0.0254}"/>
+  <xacro:property name="table_length" value="${36*0.0254}"/>
 
   <link name="floor"/>
+
+  <link name="table_temp_link">
+    <geometry>
+      <mesh filename="package://snp_blending/meshes/pushcorp/pushcorp_base.dae"/>
+    </geometry>
+  </link>
 
   <link name="platform">
     <visual>
@@ -246,6 +252,36 @@
     <parent link="floor"/>
     <child link="pushcorp_box"/>
     <origin xyz="-${robot_mount_width/2 + 2*0.0254 + pushcorp_box_length/2} ${robot_mount_width/2 + 17*0.0254 + pushcorp_box_width/2} ${14*0.0254 + pushcorp_box_height/2}" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:property name="table_cal" value="${load_yaml('$(find snp_blending)/config/table_calibration.yaml')}" />
+
+  <link name="table">  
+    <visual>
+      <geometry>
+           <box size = "${table_length} ${table_width} ${table_height}"/>
+      </geometry>
+      <material name="light_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+           <box size = "${table_length} ${table_width} ${table_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="floor_to_table" type="fixed">
+    <parent link="floor"/>
+    <child link="table"/>
+    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x']} ${table_cal['platform_to_pushcorp_base_pos']['y']} ${table_cal['platform_to_pushcorp_base_pos']['z']/2}"
+            rpy="0 0 0" />
+  </joint>
+
+  <joint name="platform_to_pushcorp_base" type="fixed">
+    <parent link="platform"/>
+    <child link="table_temp_link"/>
+    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x']} ${table_cal['platform_to_pushcorp_base_pos']['y']} ${table_cal['platform_to_pushcorp_base_pos']['z']/2}"
+            rpy="0 0 0" />
   </joint>
 
 </robot>
