@@ -11,11 +11,6 @@
     <!-- Contact manager plugins -->
     <contact_managers_plugin_config filename="package://snp_blending/config/workcell_plugins.yaml"/>
 
-    <group_opw group="manipulator"
-    a1="0.325" a2="-0.3" b="0" c1="0.65" c2="1.15" c3="1.590" c4="0.225"
-    offsets="0.0 0.0 -1.570796 0.0 0.0 0.0"
-    sign_corrections="1 1 -1 -1 -1 -1"/>
-
     <disable_collisions link1="link_s" link2="link_t" reason="Never"/>
     <disable_collisions link1="link_l" link2="link_t" reason="Never"/>
     <disable_collisions link1="link_l" link2="pushcorp_box_support_2" reason="Never"/>

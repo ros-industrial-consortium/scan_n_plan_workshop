@@ -70,7 +70,7 @@
     <axis xyz="0 0 0"/>
   </joint>-->
 
-  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_automate_2022)/config/camera_calibration.yaml')}" />
+  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/camera_calibration.yaml')}" />
 
   <link name="camera_color_optical_frame"/>
   <joint name="tool0_to_camera" type="fixed">
@@ -112,6 +112,8 @@
   <xacro:property name="table_height" value="${37*0.0254}"/>
   <xacro:property name="table_width" value="${60*0.0254}"/>
   <xacro:property name="table_length" value="${36*0.0254}"/>
+  <xacro:property name="table_correction" value="${5*0.0254}"/>
+
 
   <link name="floor"/>
 
@@ -273,14 +275,14 @@
   <joint name="floor_to_table" type="fixed">
     <parent link="floor"/>
     <child link="table"/>
-    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x']} ${table_cal['platform_to_pushcorp_base_pos']['y']} ${table_cal['platform_to_pushcorp_base_pos']['z']/2}"
+    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x'] + table_width/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['y'] + table_length/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['z'] - table_height/2 - platform_height + table_correction}"
             rpy="0 0 0" />
   </joint>
 
   <joint name="platform_to_pushcorp_base" type="fixed">
     <parent link="platform"/>
     <child link="table_temp_link"/>
-    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x']} ${table_cal['platform_to_pushcorp_base_pos']['y']} ${table_cal['platform_to_pushcorp_base_pos']['z']/2}"
+    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x'] + table_width/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['y'] + table_length/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['z'] - table_height/2 - platform_height + table_correction}"
             rpy="0 0 0" />
   </joint>
 
