@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 #include <noether_tpp/core/mesh_modifier.h>
-#include <noether_filtering/submesh_extraction/extruded_polygon_mesh_extractor.h>
+#include <noether_filtering/subset_extraction/extruded_polygon_subset_extractor.h>
 #include <noether_gui/widgets.h>
 #include <QWidget>
 #include <rclcpp/node.hpp>

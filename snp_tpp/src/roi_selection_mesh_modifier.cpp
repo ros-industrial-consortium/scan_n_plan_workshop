@@ -3,7 +3,7 @@
 
 #include <geometry_msgs/msg/point_stamped.hpp>
 #include <noether_tpp/core/mesh_modifier.h>
-#include <noether_filtering/submesh_extraction/extruded_polygon_mesh_extractor.h>
+#include <noether_filtering/subset_extraction/extruded_polygon_subset_extractor.h>
 #include <noether_gui/plugin_interface.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2/time.h>
@@ -66,10 +66,10 @@ void ROISelectionMeshModifierWidget::spin()
 noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
 {
   noether::ExtrudedPolygonSubMeshExtractor extractor;
-  extractor.params.max_cluster_size = ui_->max_cluster_size->value();
-  extractor.params.min_cluster_size = ui_->min_cluster_size->value();
-  extractor.params.cluster_tolerance = ui_->cluster_tolerance->value();
-  extractor.params.plane_distance_threshold = ui_->plane_distance_threshold->value();
+  extractor.extractor.params.max_cluster_size = ui_->max_cluster_size->value();
+  extractor.extractor.params.min_cluster_size = ui_->min_cluster_size->value();
+  extractor.extractor.params.cluster_tolerance = ui_->cluster_tolerance->value();
+  extractor.extractor.params.plane_distance_threshold = ui_->plane_distance_threshold->value();
 
   if (!client_->service_is_ready())
     throw std::runtime_error("Service is not available");
