@@ -1,19 +1,10 @@
 #pragma once
 
-#include <Eigen/Dense>
+#include <geometry_msgs/msg/point_stamped.hpp>
 #include <noether_tpp/core/mesh_modifier.h>
 #include <noether_filtering/subset_extraction/extruded_polygon_subset_extractor.h>
-#include <noether_gui/widgets.h>
-#include <QWidget>
 #include <rclcpp/node.hpp>
-#include <rclcpp/client.hpp>
-#include <rviz_polygon_selection_tool/srv/get_selection.hpp>
 #include <tf2_ros/transform_listener.h>
-
-namespace Ui
-{
-class ROISelectionMeshModifier;
-}
 
 namespace snp_tpp
 {
@@ -30,25 +21,6 @@ private:
   const noether::ExtrudedPolygonSubMeshExtractor extractor_;
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
-};
-
-class ROISelectionMeshModifierWidget : public noether::MeshModifierWidget
-{
-  Q_OBJECT
-public:
-  ROISelectionMeshModifierWidget(QWidget* parent = nullptr);
-  virtual ~ROISelectionMeshModifierWidget();
-
-  noether::MeshModifier::ConstPtr create() const override;
-
-private:
-  void spin();
-
-  Ui::ROISelectionMeshModifier* ui_;
-  rclcpp::Node::SharedPtr node_;
-  rclcpp::Client<rviz_polygon_selection_tool::srv::GetSelection>::SharedPtr client_;
-  rclcpp::executors::SingleThreadedExecutor executor_;
-  std::thread thread_;
 };
 
 }  // namespace snp_tpp
