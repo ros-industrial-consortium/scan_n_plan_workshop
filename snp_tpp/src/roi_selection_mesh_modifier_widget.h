@@ -24,6 +24,9 @@ public:
 
   noether::MeshModifier::ConstPtr create() const override;
 
+  void configure(const YAML::Node& config) override;
+  void save(YAML::Node& config) const override;
+
 private:
   void spin();
 

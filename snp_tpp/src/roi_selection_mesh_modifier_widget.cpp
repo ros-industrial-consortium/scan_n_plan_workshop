@@ -1,7 +1,14 @@
 #include "roi_selection_mesh_modifier_widget.h"
 #include "roi_selection_mesh_modifier.h"
 #include "ui_roi_selection_mesh_modifier_widget.h"
+
 #include <noether_gui/plugin_interface.h>
+#include <noether_gui/utils.h>
+
+static const std::string MAX_CLUSTER_SIZE_KEY = "max_cluster_size";
+static const std::string MIN_CLUSTER_SIZE_KEY = "min_cluster_size";
+static const std::string CLUSTER_TOLERANCE_KEY = "cluster_tolerance";
+static const std::string PLANE_DISTANCE_THRESHOLD_KEY = "plane_distance_threshold";
 
 namespace snp_tpp
 {
@@ -53,6 +60,22 @@ noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
   rviz_polygon_selection_tool::srv::GetSelection::Response::SharedPtr response = future.get();
 
   return std::make_unique<ROISelectionMeshModifier>(node_, extractor, response->selection);
+}
+
+void ROISelectionMeshModifierWidget::configure(const YAML::Node& config)
+{
+  ui_->max_cluster_size->setValue(noether::getEntry<int>(config, MAX_CLUSTER_SIZE_KEY));
+  ui_->min_cluster_size->setValue(noether::getEntry<int>(config, MIN_CLUSTER_SIZE_KEY));
+  ui_->cluster_tolerance->setValue(noether::getEntry<double>(config, CLUSTER_TOLERANCE_KEY));
+  ui_->plane_distance_threshold->setValue(noether::getEntry<double>(config, PLANE_DISTANCE_THRESHOLD_KEY));
+}
+
+void ROISelectionMeshModifierWidget::save(YAML::Node& config) const
+{
+  config[MAX_CLUSTER_SIZE_KEY] = ui_->max_cluster_size->value();
+  config[MIN_CLUSTER_SIZE_KEY] = ui_->min_cluster_size->value();
+  config[CLUSTER_TOLERANCE_KEY] = ui_->cluster_tolerance->value();
+  config[PLANE_DISTANCE_THRESHOLD_KEY] = ui_->plane_distance_threshold->value();
 }
 
 }  // namespace snp_tpp
