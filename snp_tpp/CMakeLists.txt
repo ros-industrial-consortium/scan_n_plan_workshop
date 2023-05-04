@@ -80,7 +80,12 @@ target_link_libraries(${PROJECT_NAME}_plugins ${PROJECT_NAME}_mesh_modifier)
 
 # Custom TPP widget
 qt5_wrap_cpp(${PROJECT_NAME}_widget_mocs src/tpp_widget.h)
-add_library(${PROJECT_NAME}_widget SHARED src/tpp_widget.cpp ${${PROJECT_NAME}_widget_mocs})
+qt5_wrap_ui(${PROJECT_NAME}_widget_ui_mocs src/tpp_widget.ui)
+add_library(${PROJECT_NAME}_widget SHARED src/tpp_widget.cpp ${${PROJECT_NAME}_widget_mocs}
+                                          ${${PROJECT_NAME}_widget_ui_mocs})
+target_include_directories(
+  ${PROJECT_NAME}_widget PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+                                "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" "$<INSTALL_INTERFACE:include>")
 target_link_libraries(
   ${PROJECT_NAME}_widget
   noether::noether_gui
