@@ -32,22 +32,6 @@ find_package(snp_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 
-add_executable(${PROJECT_NAME}_node src/snp_tpp_node.cpp)
-ament_target_dependencies(
-  ${PROJECT_NAME}_node
-  geometry_msgs
-  rclcpp
-  snp_msgs
-  tf2_eigen)
-target_link_libraries(${PROJECT_NAME}_node ${PCL_LIBRARIES} noether::noether_tpp)
-
-add_executable(${PROJECT_NAME}_test src/snp_tpp_test_node.cpp)
-ament_target_dependencies(
-  ${PROJECT_NAME}_test
-  geometry_msgs
-  rclcpp
-  snp_msgs)
-
 # Custom mesh modifier
 qt5_wrap_ui(${PROJECT_NAME}_ui_mocs src/roi_selection_mesh_modifier_widget.ui)
 qt5_wrap_cpp(${PROJECT_NAME}_mocs src/roi_selection_mesh_modifier_widget.h)
@@ -101,7 +85,7 @@ target_link_libraries(${PROJECT_NAME}_app ${PROJECT_NAME}_widget)
 ament_target_dependencies(${PROJECT_NAME}_app rclcpp)
 
 # Install the executables
-install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_test ${PROJECT_NAME}_app DESTINATION lib/${PROJECT_NAME})
+install(TARGETS ${PROJECT_NAME}_app DESTINATION lib/${PROJECT_NAME})
 
 # Install the library(ies)
 install(TARGETS ${PROJECT_NAME}_mesh_modifier ${PROJECT_NAME}_plugins ${PROJECT_NAME}_widget
