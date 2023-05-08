@@ -2,7 +2,7 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
-  <arg name="mesh_file" default="$(find-pkg-share snp_blending)/meshes/grinding_plate.ply"/>
+  <arg name="mesh_file" default="$(find-pkg-share snp_blending)/meshes/part_scan.ply"/>
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_blending)/config/scan_traj.yaml"/>
   <arg name="verbose" default="True"/>
   <arg name="touch_links" default="[table, base_link, floor]"/>
