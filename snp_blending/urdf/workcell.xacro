@@ -1,8 +1,34 @@
 <?xml version="1.0" ?>
 <robot name="motoman_mh_180_120" xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <xacro:macro name="cuboid" params="name l w h material offset=False">
+    <link name="${name}">
+      <visual>
+        <xacro:if value="${offset}" >
+          <origin xyz="${l / 2.0} ${w / 2.0} ${-h / 2.0}" />
+        </xacro:if>
+        <geometry>
+          <box size="${l} ${w} ${h}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <xacro:if value="${offset}" >
+          <origin xyz="${l / 2.0} ${w / 2.0} ${-h / 2.0}" />
+        </xacro:if>
+        <geometry>
+          <box size="${l} ${w} ${h}"/>
+        </geometry>
+        <material name="${material}"/>
+      </collision>
+    </link>
+  </xacro:macro>
+
   <xacro:include filename="$(find snp_blending)/urdf/mh180_120/mh180_120_macro.xacro"/>
   <xacro:motoman_mh180_120 prefix=""/>
+
+  <xacro:include filename="$(find snp_blending)/urdf/pushcorp.xacro"/>
+  <xacro:pushcorp prefix="pushcorp_"/>
 
   <material name="light_gray">
     <color rgba="0.7 0.7 0.7 1"/>
@@ -12,218 +38,31 @@
     <color rgba="0.3 0.3 0.3 1"/>
   </material>
 
-  <link name="pushcorp_base">
-    <visual>
-      <geometry>
-        <mesh filename="package://snp_blending/meshes/pushcorp/pushcorp_base.dae"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://snp_blending/meshes/pushcorp/pushcorp_base.dae"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <link name="pushcorp_compliance">
-    <visual>
-      <origin xyz="0 0.059 0" rpy="${pi} 0 0"/>
-      <geometry>
-        <mesh filename="package://snp_blending/meshes/pushcorp/pushcorp_spindle.dae"/>
-      </geometry>
-      <material name="light_gray"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0.059 0" rpy="${pi} 0 0"/>
-      <geometry>
-        <mesh filename="package://snp_blending/meshes/pushcorp/pushcorp_spindle.dae"/>
-      </geometry>
-    </collision>
-    <visual>
-      <origin xyz="0.200 ${0.19-0.01635} 0" rpy="0 ${pi/2} 0"/>
-      <geometry>
-        <cylinder radius="0.1" length="0.005"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0.200 ${0.19-0.01635} 0" rpy="0 ${pi/2} 0"/>
-      <geometry>
-        <cylinder radius="0.1" length="0.005"/>
-      </geometry>
-    </collision>
-  </link>
-  <link name="camera_link"/>
-  <!--<link name="target_base_link">
-    <visual>
-      <origin xyz="0.37565 0.2809875 0" rpy="${pi/2} 0 ${pi}"/>
-      <geometry>
-        <mesh filename="package://snp_blending/meshes/rosWorldCalib.dae"/>
-      </geometry>
-    </visual>
-  </link>-->
-
-  <joint name="tool0_to_pushcorp_base" type="fixed">
-    <parent link="tool0"/>
-    <child link="pushcorp_base"/>
-    <origin xyz="0 0 0.01635" rpy="${pi/2} 0 0"/>
-  </joint>
-
-  <joint name="robot_to_camera_joint" type="fixed">
-    <parent link="tool0"/>
-    <child link="camera_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-    <axis xyz="0 0 0"/>
-  </joint>
-
-<!--  <joint name="world_to_target_joint" type="fixed">
-    <parent link="floor"/>
-    <child link="target_base_link"/>
-    <origin xyz="0.555 0.061 0.126" rpy="0.004 -0.004 -1.628"/>
-    <axis xyz="0 0 0"/>
-  </joint>-->
-
-  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/camera_calibration.yaml')}" />
-
-  <link name="camera_color_optical_frame"/>
-  <joint name="tool0_to_camera" type="fixed">
-    <parent link="tool0"/>
-    <child link="camera_color_optical_frame"/>
-    <origin xyz="${camera_cal['camera_mount_to_camera_pos']['x']} ${camera_cal['camera_mount_to_camera_pos']['y']} ${camera_cal['camera_mount_to_camera_pos']['z']}"
-            rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
-  </joint>
-
-  <link name="cal_target_frame"/>
-  <joint name="target_mount_to_target" type="fixed">
-    <parent link="base_link"/>
-    <child link="cal_target_frame"/>
-    <origin xyz="${camera_cal['target_mount_to_target_pos']['x']} ${camera_cal['target_mount_to_target_pos']['y']} ${camera_cal['target_mount_to_target_pos']['z']}"
-            rpy="${camera_cal['target_mount_to_target_rpy']['x']} ${camera_cal['target_mount_to_target_rpy']['y']} ${camera_cal['target_mount_to_target_rpy']['z']}" />
-  </joint>
-
-
-  <!-- TODO do we care about effort and velocity limits?-->
-  <joint name="pushcorp_actuator" type="prismatic">
-    <parent link="pushcorp_base"/>
-    <child link="pushcorp_compliance"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-    <axis xyz="-1 0 0"/>
-    <limit upper="0.01778" lower="-0.01778" effort="0" velocity="0"/>
-  </joint>
-
-
-
-  <xacro:property name="platform_height" value="${5*0.0254}"/>
-  <xacro:property name="robot_mount_height" value="${19.6*0.0254}"/>
-  <xacro:property name="robot_mount_width" value="${28.5*0.0254}"/>
-  <xacro:property name="pushcorp_box_height" value="${30*0.0254}"/>
-  <xacro:property name="pushcorp_box_width" value="${17*0.0254}"/>
-  <xacro:property name="pushcorp_box_length" value="${28*0.0254}"/>
-  <xacro:property name="control_boxes_height" value="${60*0.0254}"/>
-  <xacro:property name="control_boxes_width" value="${38*0.0254}"/>
-  <xacro:property name="control_boxes_length" value="${130*0.0254}"/>
-  <xacro:property name="table_height" value="${37*0.0254}"/>
-  <xacro:property name="table_width" value="${60*0.0254}"/>
-  <xacro:property name="table_length" value="${36*0.0254}"/>
-  <xacro:property name="table_correction" value="${5*0.0254}"/>
-
-
   <link name="floor"/>
 
-  <link name="table_temp_link">
-    <geometry>
-      <mesh filename="package://snp_blending/meshes/pushcorp/pushcorp_base.dae"/>
-    </geometry>
-  </link>
+  <xacro:property name="platform_length" value="${96 * 0.0254}"/>
+  <xacro:property name="platform_width" value="${72 * 0.0254}"/>
+  <xacro:property name="platform_height" value="${5 * 0.0254}"/>
+  <xacro:cuboid name="platform" l="${platform_length}" w="${platform_width}" h="${platform_height}" material="dark_gray"/>
 
-  <link name="platform">
-    <visual>
-      <geometry>
-        <box size="${96*0.0254} ${72*0.0254} ${platform_height}"/>
-      </geometry>
-      <material name="dark_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${96*0.0254} ${72*0.0254} ${platform_height}"/>
-      </geometry>
-    </collision>
-  </link>
+  <xacro:property name="robot_mount_width" value="${28.5 * 0.0254}"/>
+  <xacro:property name="robot_mount_height" value="${19.6 * 0.0254}"/>
+  <xacro:cuboid name="robot_mount" l="${robot_mount_width}" w="${robot_mount_width}" h="${robot_mount_height}" material="dark_gray"/>
 
-  <link name="robot_mount">
-    <visual>
-      <geometry>
-        <box size="${robot_mount_width} ${robot_mount_width} ${robot_mount_height}"/>
-      </geometry>
-      <material name="dark_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${robot_mount_width} ${robot_mount_width} ${robot_mount_height}"/>
-      </geometry>
-    </collision>
-  </link>
+  <xacro:property name="pushcorp_box_support_width" value="${1.5 * 0.0254}"/>
+  <xacro:property name="pushcorp_box_support_height" value="${40.5 * 0.0254}"/>
+  <xacro:cuboid name="pushcorp_box_support_1" l="${pushcorp_box_support_width}" w="${pushcorp_box_support_width}" h="${pushcorp_box_support_height}" material="light_gray"/>
+  <xacro:cuboid name="pushcorp_box_support_2" l="${pushcorp_box_support_width}" w="${pushcorp_box_support_width}" h="${pushcorp_box_support_height}" material="light_gray"/>
 
-  <link name="pushcorp_box_support_1">
-    <visual>
-      <geometry>
-        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
-      </geometry>
-      <material name="dark_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
-      </geometry>
-    </collision>
-  </link>
-
-  <link name="pushcorp_box_support_2">
-    <visual>
-      <geometry>
-        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
-      </geometry>
-      <material name="dark_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${1.5*0.0254} ${1.5*0.0254} ${40.5*0.0254}" />
-      </geometry>
-    </collision>
-  </link>
-
-  <link name="pushcorp_box">
-    <visual>
-      <geometry>
-        <box size="${pushcorp_box_length} ${pushcorp_box_width} ${pushcorp_box_height}"/>
-      </geometry>
-      <material name="light_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${pushcorp_box_length} ${pushcorp_box_width} ${pushcorp_box_height}"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <link name="control_boxes">
-   <visual>
-      <geometry>
-        <box size="${control_boxes_length} ${control_boxes_width} ${control_boxes_height}"/>
-      </geometry>
-      <material name="light_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${control_boxes_length} ${control_boxes_width} ${control_boxes_height}"/>
-      </geometry>
-    </collision>
-  </link>
+  <xacro:property name="pushcorp_box_length" value="${28 * 0.0254}"/>
+  <xacro:property name="pushcorp_box_width" value="${17 * 0.0254}"/>
+  <xacro:property name="pushcorp_box_height" value="${30 * 0.0254}"/>
+  <xacro:cuboid name="pushcorp_box" l="${pushcorp_box_length}" w="${pushcorp_box_width}" h="${pushcorp_box_height}" material="light_gray"/>
 
   <link name="buffy_tcp" />
   <joint name="buffy_tcp_joint" type="fixed">
     <parent link="tool0"/>
     <child link="buffy_tcp"/>
-<!--    <origin xyz="0.292 0 0.19" rpy="0 ${pi/2} 0"/>-->
     <origin xyz="0.210 0 0.19" rpy="0 ${pi/2} 0"/>
   </joint>
 
@@ -237,18 +76,6 @@
     <parent link="platform"/>
     <child link="robot_mount"/>
     <origin xyz="0 0 ${platform_height/2 + robot_mount_height/2}" rpy="0 0 0"/>
-  </joint>
-
-  <joint name="floor_to_control_boxes" type="fixed">
-    <parent link="floor"/>
-    <child link="control_boxes"/>
-    <origin xyz="${4*0.0254 + control_boxes_length/2} -${56*0.0254 + control_boxes_width/2} ${control_boxes_height/2}" rpy="0 0 0"/>
-  </joint>
-
-  <joint name="mount_to_base" type="fixed">
-    <parent link="robot_mount"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 ${robot_mount_height/2}" rpy="0 0 0"/>
   </joint>
 
   <joint name="floor_to_pushcorp_support_1" type="fixed">
@@ -269,34 +96,49 @@
     <origin xyz="-${robot_mount_width/2 + 2*0.0254 + pushcorp_box_length/2} ${robot_mount_width/2 + 17*0.0254 + pushcorp_box_width/2} ${14*0.0254 + pushcorp_box_height/2}" rpy="0 0 0"/>
   </joint>
 
+  <!-- Robot to mount -->
+  <joint name="mount_to_base" type="fixed">
+    <parent link="robot_mount"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${robot_mount_height/2}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Pushcorp to robot -->
+  <joint name="tool0_to_pushcorp_base" type="fixed">
+    <parent link="tool0"/>
+    <child link="pushcorp_base"/>
+  </joint>
+
+  <!-- Camera Calibration-->
+  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/camera_calibration.yaml')}" />
+
+  <link name="camera_color_optical_frame"/>
+  <joint name="tool0_to_camera" type="fixed">
+    <parent link="tool0"/>
+    <child link="camera_color_optical_frame"/>
+    <origin xyz="${camera_cal['camera_mount_to_camera_pos']['x']} ${camera_cal['camera_mount_to_camera_pos']['y']} ${camera_cal['camera_mount_to_camera_pos']['z']}"
+            rpy="${camera_cal['camera_mount_to_camera_rpy']['x']} ${camera_cal['camera_mount_to_camera_rpy']['y']} ${camera_cal['camera_mount_to_camera_rpy']['z']}" />
+  </joint>
+
+  <link name="cal_target_frame"/>
+  <joint name="target_mount_to_target" type="fixed">
+    <parent link="base_link"/>
+    <child link="cal_target_frame"/>
+    <origin xyz="${camera_cal['target_mount_to_target_pos']['x']} ${camera_cal['target_mount_to_target_pos']['y']} ${camera_cal['target_mount_to_target_pos']['z']}"
+            rpy="${camera_cal['target_mount_to_target_rpy']['x']} ${camera_cal['target_mount_to_target_rpy']['y']} ${camera_cal['target_mount_to_target_rpy']['z']}" />
+  </joint>
+
+  <!-- Table -->
+  <xacro:property name="table_height" value="${37*0.0254}"/>
+  <xacro:property name="table_width" value="${60*0.0254}"/>
+  <xacro:property name="table_length" value="${36*0.0254}"/>
   <xacro:property name="table_cal" value="${load_yaml('$(find snp_blending)/config/table_calibration.yaml')}" />
 
-  <link name="table">  
-    <visual>
-      <geometry>
-           <box size = "${table_length} ${table_width} ${table_height}"/>
-      </geometry>
-      <material name="light_gray"/>
-    </visual>
-    <collision>
-      <geometry>
-           <box size = "${table_length} ${table_width} ${table_height}"/>
-      </geometry>
-    </collision>
-  </link>
+  <xacro:cuboid name="table" l="${table_length}" w="${table_width}" h="${table_height}" material="light_gray" offset="True"/>
 
   <joint name="floor_to_table" type="fixed">
     <parent link="floor"/>
     <child link="table"/>
-    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x'] + table_width/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['y'] + table_length/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['z'] - table_height/2 - platform_height + table_correction}"
-            rpy="0 0 0" />
+    <origin xyz="${table_cal['x']} ${table_cal['y']} ${table_cal['z']}" rpy="${table_cal['roll']} ${table_cal['pitch']} ${table_cal['yaw']}" />
   </joint>
-
-  <joint name="platform_to_pushcorp_base" type="fixed">
-    <parent link="platform"/>
-    <child link="table_temp_link"/>
-    <origin xyz="${table_cal['platform_to_pushcorp_base_pos']['x'] + table_width/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['y'] + table_length/2 - table_correction} ${table_cal['platform_to_pushcorp_base_pos']['z'] - table_height/2 - platform_height + table_correction}"
-            rpy="0 0 0" />
-  </joint>
-
 </robot>

@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<robot name="pushcorp" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="pushcorp" params="prefix">
+    <xacro:property name="static_thickness" value="0.0785"/>
+
+    <link name="${prefix}base">
+      <visual>
+        <geometry>
+          <mesh filename="package://snp_blending/meshes/pushcorp/compliance_static.ply"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://snp_blending/meshes/pushcorp/compliance_static.ply"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}compliance">
+      <visual>
+        <geometry>
+          <mesh filename="package://snp_blending/meshes/pushcorp/visual/spindle.ply"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://snp_blending/meshes/pushcorp/collision/compliance_slide.ply"/>
+        </geometry>
+      </collision>
+      <collision>
+        <geometry>
+          <mesh filename="package://snp_blending/meshes/pushcorp/collision/spindle.ply"/>
+        </geometry>
+      </collision>
+      <collision>
+        <geometry>
+          <mesh filename="package://snp_blending/meshes/pushcorp/collision/spindle_bracket.ply"/>
+        </geometry>
+      </collision>
+      <!-- Grinding media -->
+      <visual>
+        <origin xyz="0.200 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
+        <geometry>
+          <cylinder radius="0.1" length="0.005"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.200 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
+        <geometry>
+          <cylinder radius="0.1" length="0.005"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}actuator" type="prismatic">
+      <parent link="${prefix}base"/>
+      <child link="${prefix}compliance"/>
+      <origin xyz="0 0 0.0785" rpy="0 0 0"/>
+      <axis xyz="-1 0 0"/>
+      <limit upper="${1.4 * 0.0254 / 2}" lower="${-1.4 * 0.0254 /2}" effort="0" velocity="0"/>
+    </joint>
+  </xacro:macro>
+</robot>
