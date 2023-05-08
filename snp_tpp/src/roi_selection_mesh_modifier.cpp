@@ -1,4 +1,4 @@
-#include "roi_selection_mesh_modifier.h"
+#include <snp_tpp/roi_selection_mesh_modifier.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2/time.h>
 

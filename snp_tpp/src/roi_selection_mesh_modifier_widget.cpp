@@ -1,5 +1,5 @@
-#include "roi_selection_mesh_modifier_widget.h"
-#include "roi_selection_mesh_modifier.h"
+#include <snp_tpp/roi_selection_mesh_modifier_widget.h>
+#include <snp_tpp/roi_selection_mesh_modifier.h>
 #include "ui_roi_selection_mesh_modifier_widget.h"
 
 #include <noether_gui/plugin_interface.h>

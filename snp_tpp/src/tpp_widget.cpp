@@ -1,4 +1,4 @@
-#include "tpp_widget.h"
+#include <snp_tpp/tpp_widget.h>
 #include "ui_tpp_widget.h"
 
 #include <noether_gui/widgets/tpp_pipeline_widget.h>

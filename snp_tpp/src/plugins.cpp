@@ -1,4 +1,4 @@
-#include "roi_selection_mesh_modifier_widget.h"
+#include <snp_tpp/roi_selection_mesh_modifier_widget.h>
 
 #include <noether_gui/plugin_interface.h>
 
