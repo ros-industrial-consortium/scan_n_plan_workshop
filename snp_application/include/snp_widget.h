@@ -38,6 +38,7 @@ private:
   const std::string tcp_frame_;
   const std::string camera_frame_;
   const trajectory_msgs::msg::JointTrajectory scan_traj_;
+  industrial_reconstruction_msgs::srv::StartReconstruction::Request::SharedPtr start_scan_request_;
 
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
