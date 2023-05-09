@@ -110,7 +110,7 @@
   </joint>
 
   <!-- Camera Calibration-->
-  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/camera_calibration.yaml')}" />
+  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/calibration.yaml')}" />
 
   <link name="camera_color_optical_frame"/>
   <joint name="tool0_to_camera" type="fixed">
