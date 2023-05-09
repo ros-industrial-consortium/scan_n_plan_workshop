@@ -4,9 +4,9 @@
   <version>0.1.0</version>
   <description>This is the bringup package for launch the ros2 components of the workshop</description>
 
-  <maintainer email="levi.armstrong@swri.org">Levi Armstrong</maintainer>
+  <maintainer email="michael.ripperger@swri.org">Michael Ripperger</maintainer>
+  <author email="david.spielman@swri.org">David Spielman</author>
   <license>Apache 2.0</license>
-  <author>Levi Armstrong</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>ros_industrial_cmake_boilerplate</build_depend>
