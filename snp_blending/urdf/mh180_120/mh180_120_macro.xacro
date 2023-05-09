@@ -6,7 +6,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/visual/base_link.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/base_link.stl"/>
         </geometry>
         <material name="blue">
           <color rgba="0 0 1 1"/>
@@ -14,7 +14,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/collision/base_link.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/base_link.stl"/>
         </geometry>
         <material name="yellow">
           <color rgba="0 1 1 1"/>
@@ -25,14 +25,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/visual/link_s.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/link_s.stl"/>
         </geometry>
         <material name="blue"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/collision/link_s.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/link_s.stl"/>
         </geometry>
         <material name="yellow"/>
       </collision>
@@ -41,14 +41,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/visual/link_l.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/link_l.stl"/>
         </geometry>
         <material name="blue"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/collision/link_l.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/link_l.stl"/>
         </geometry>
         <material name="yellow"/>
       </collision>
@@ -57,14 +57,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180_120/visual/link_u.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/link_u.stl"/>
         </geometry>
         <material name="blue"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180_120/collision/link_u.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/link_u.stl"/>
         </geometry>
         <material name="yellow"/>
       </collision>
@@ -73,14 +73,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180_120/visual/link_r.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/link_r.stl"/>
         </geometry>
         <material name="blue"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180_120/collision/link_r.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/link_r.stl"/>
         </geometry>
         <material name="yellow"/>
       </collision>
@@ -89,14 +89,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/visual/link_b.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/link_b.stl"/>
         </geometry>
         <material name="blue"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/collision/link_b.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/link_b.stl"/>
         </geometry>
         <material name="yellow"/>
       </collision>
@@ -105,7 +105,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/visual/link_t.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/visual/link_t.stl"/>
         </geometry>
         <material name="black">
           <color rgba="0 0 0 1"/>
@@ -114,7 +114,7 @@
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://snp_blending/meshes/mh180/collision/link_t.stl"/>
+          <mesh filename="package://snp_blending/urdf/mh180_120/collision/link_t.stl"/>
         </geometry>
         <material name="black"/>
       </collision>
