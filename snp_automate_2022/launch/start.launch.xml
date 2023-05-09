@@ -26,6 +26,13 @@
     <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
     <param name="robot_description" value="$(var robot_description)"/>
     <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
+    <!-- TSDF parameters -->
+    <param name="tsdf.min.x" value="0.21"/>
+    <param name="tsdf.min.y" value="-0.45"/>
+    <param name="tsdf.min.z" value="0.112"/>
+    <param name="tsdf.max.x" value="1.51"/>
+    <param name="tsdf.max.y" value="0.45"/>
+    <param name="tsdf.max.z" value="0.527"/>
   </node>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
