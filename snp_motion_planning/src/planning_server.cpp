@@ -1,5 +1,5 @@
 #include "planner_profiles.hpp"
-#include "taskflow_generators.hpp"
+//#include "taskflow_generators.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tesseract_time_parameterization/iterative_spline_parameterization.h>
@@ -24,6 +24,10 @@
 
 #include <tesseract_task_composer/profiles/min_length_profile.h>
 #include <tesseract_task_composer/profiles/interative_spline_parameterization_profile.h>
+
+#include <tesseract_task_composer/task_composer_problem.h>
+#include <tesseract_task_composer/task_composer_input.h>
+#include <tesseract_task_composer/task_composer_plugin_factory.h>
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
@@ -159,20 +163,20 @@ public:
     // Add custom profiles
     {
       profile_dict_->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
-          tesseract_planning::profile_ns::SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
+          SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
       profile_dict_->addProfile<tesseract_planning::OMPLPlanProfile>(
-          tesseract_planning::profile_ns::OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
+          OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
       profile_dict_->addProfile<tesseract_planning::TrajOptPlanProfile>(
-          tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile());
+          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile());
       profile_dict_->addProfile<tesseract_planning::TrajOptCompositeProfile>(
-          tesseract_planning::profile_ns::TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
+          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
       profile_dict_->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
-          tesseract_planning::profile_ns::DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
+          DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
       profile_dict_->addProfile<tesseract_planning::MinLengthProfile>(
-          tesseract_planning::node_names::MIN_LENGTH_TASK_NAME, PROFILE,
+          MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
           std::make_shared<tesseract_planning::MinLengthProfile>(5));
       profile_dict_->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-          tesseract_planning::node_names::ITERATIVE_SPLINE_PARAMETERIZATION_TASK_NAME, PROFILE,
+          ISP_DEFAULT_NAMESPACE, PROFILE,
           std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
     }
 
@@ -370,19 +374,41 @@ private:
       planner_env->applyCommands(env_cmds);
 
       // Set up task composer problem
+      std::string config_path = ament_index_cpp::get_package_share_directory("snp_motion_planning");
+      config_path += "/config/task_composer_plugins.yaml";
+      tesseract_planning::TaskComposerPluginFactory factory(YAML::LoadFile(config_path));
+      std::string task_pipeline = "SNPPipeline";
+      auto executor = factory.createTaskComposerExecutor("TaskflowExecutor");
+      tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_pipeline);
+      // Save dot graph
+      std::ofstream tc_out_data;
+      tc_out_data.open(tesseract_common::getTempPath() + "ScanNPlanPipeline.dot");
+      task->dump(tc_out_data);
+      const std::string input_key = task->getInputKeys().front();
+      const std::string output_key = task->getOutputKeys().front();
       tesseract_planning::TaskComposerDataStorage input_data;
-      input_data.setData("input_program", program);
-      tesseract_planning::TaskComposerProblem problem(planner_env, input_data);
+      input_data.setData(input_key, program);
+      tesseract_planning::TaskComposerProblem problem(env_, input_data);
       tesseract_planning::TaskComposerInput input(problem, profile_dict_);
-      auto executor = std::make_unique<tesseract_planning::TaskflowTaskComposerExecutor>();
-
-      // Use custom pipeline
-      auto task = createGlobalRasterPipeline();
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
       if (get<bool>(node_, VERBOSE_PARAM))
+      {
         console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
+        // Create a dump dotgraphs of each task for reference
+        std::ofstream cartesian_pipeline_out_data;
+        cartesian_pipeline_out_data.open(tesseract_common::getTempPath() + "SNPCartesianPipeline.dot");
+        factory.createTaskComposerNode("SNPCartesianPipeline")->dump(cartesian_pipeline_out_data);
+
+        std::ofstream freespace_pipeline_out_data;
+        freespace_pipeline_out_data.open(tesseract_common::getTempPath() + "SNPFreespacePipeline.dot");
+        factory.createTaskComposerNode("SNPFreespacePipeline")->dump(freespace_pipeline_out_data);
+
+        std::ofstream transition_pipeline_out_data;
+        transition_pipeline_out_data.open(tesseract_common::getTempPath() + "SNPTransitionPipeline.dot");
+        factory.createTaskComposerNode("SNPTransitionPipeline")->dump(transition_pipeline_out_data);
+      }
 
       // Run problem
       tesseract_planning::TaskComposerFuture::UPtr exec_fut = executor->run(*task, input);
@@ -397,14 +423,14 @@ private:
 
       // Get results of successful plan
       tesseract_planning::CompositeInstruction program_results =
-          input.data_storage.getData("output_program").as<tesseract_planning::CompositeInstruction>();
+          input.data_storage.getData(output_key).as<tesseract_planning::CompositeInstruction>();
 
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt = toJointTrajectory(program_results);
       tesseract_common::JointTrajectory tcp_velocity_scaled_jt = tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
 
       // Send joint trajectory to Tesseract plotter widget
-      plotter_->plotTrajectory(tcp_velocity_scaled_jt, *env_->getStateSolver());
+      plotter_->plotTrajectory(jt, *env_->getStateSolver());
 
       // Return results
       res->motion_plan = tesseract_rosutils::toMsg(tcp_velocity_scaled_jt, env_->getState());

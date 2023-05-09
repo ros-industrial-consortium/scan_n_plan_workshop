@@ -8,6 +8,14 @@
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
 
+static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
+static const std::string OMPL_DEFAULT_NAMESPACE = "OMPLMotionPlannerTask";
+static const std::string DESCARTES_DEFAULT_NAMESPACE = "DescartesMotionPlannerTask";
+static const std::string SIMPLE_DEFAULT_NAMESPACE = "SimpleMotionPlannerTask";
+static const std::string MIN_LENGTH_DEFAULT_NAMESPACE = "MinLengthTask";
+static const std::string CONTACT_CHECK_DEFAULT_NAMESPACE = "DiscreteContactCheckTask";
+static const std::string ISP_DEFAULT_NAMESPACE = "IterativeSplineParameterizationTask";
+
 template <typename FloatType>
 typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createDescartesPlanProfile()
 {

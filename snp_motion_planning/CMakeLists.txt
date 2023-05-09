@@ -33,6 +33,12 @@ target_link_libraries(
   ${PROJECT_NAME}_node
   tesseract::tesseract_command_language
   tesseract::tesseract_task_composer
+  tesseract::tesseract_motion_planners_core
+  tesseract::tesseract_motion_planners_simple
+  tesseract::tesseract_motion_planners_ompl
+  tesseract::tesseract_motion_planners_trajopt
+  tesseract::tesseract_motion_planners_descartes
+  tesseract::tesseract_time_parameterization_isp
   tesseract::tesseract_kinematics_kdl)
 
 # Plugin Library
@@ -56,4 +62,4 @@ ament_export_dependencies(${ROS2_DEPS})
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 ament_package()
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME}/)
