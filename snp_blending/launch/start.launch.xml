@@ -57,7 +57,9 @@
   </group>
 
   <!-- Launch Toolpath Planning Node -->
-  <node pkg="snp_tpp" exec="snp_tpp_app"/>
+  <node pkg="snp_tpp" exec="snp_tpp_app">
+    <param name="config_file" value="$(find-pkg-share snp_blending)/config/tpp.yaml"/>
+  </node>
 
   <!-- Launch Motion Planning Node -->
   <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.xml">
