@@ -29,7 +29,7 @@
     <!-- TSDF parameters -->
     <param name="tsdf.min.x" value="0.0"/>
     <param name="tsdf.min.y" value="0.0"/>
-    <param name="tsdf.min.z" value="0.025"/>
+    <param name="tsdf.min.z" value="0.05"/>
     <param name="tsdf.max.x" value="0.9144"/>
     <param name="tsdf.max.y" value="1.524"/>
     <param name="tsdf.max.z" value="0.5"/>
@@ -48,8 +48,8 @@
       <param name="slop" value="0.05"/>
     </node>
     <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
-      <arg name="align_depth" value="true"/>
-      <arg name="enable_pointcloud" value="true"/>
+      <arg name="align_depth.enable" value="true"/>
+      <arg name="pointcloud.enable" value="true"/>
       <arg name="color_width" value="640"/>
       <arg name="color_height" value="360"/>
       <arg name="color_fps" value="90.0"/>
