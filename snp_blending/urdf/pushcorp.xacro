@@ -2,6 +2,9 @@
 <robot name="pushcorp" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:macro name="pushcorp" params="prefix">
     <xacro:property name="static_thickness" value="0.0785"/>
+    <xacro:property name="media_radius" value="${2 * 0.0254}"/>
+    <xacro:property name="chuck_length" value="0.055"/>
+    <xacro:property name="chuck_radius" value="${1.0 * 0.0254}}"/>
 
     <link name="${prefix}base">
       <visual>
@@ -39,15 +42,28 @@
       </collision>
       <!-- Grinding media -->
       <visual>
-        <origin xyz="0.200 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
+        <origin xyz="${0.200 + chuck_length / 2} 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
         <geometry>
-          <cylinder radius="0.1" length="0.005"/>
+          <cylinder radius="${chuck_radius}" length="${chuck_length}"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0.200 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
+        <origin xyz="${0.200 + chuck_length / 2} 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
         <geometry>
-          <cylinder radius="0.1" length="0.005"/>
+          <cylinder radius="${chuck_radius}" length="${chuck_length}"/>
+        </geometry>
+      </collision>
+      <!-- Grinding media -->
+      <visual>
+        <origin xyz="${0.200 + chuck_length} 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
+        <geometry>
+          <cylinder radius="${media_radius}" length="0.005"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${0.200 + chuck_length} 0 ${0.190 - static_thickness}" rpy="0 ${radians(90)} 0"/>
+        <geometry>
+          <cylinder radius="${media_radius}" length="0.005"/>
         </geometry>
       </collision>
     </link>
