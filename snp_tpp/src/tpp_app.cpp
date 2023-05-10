@@ -1,4 +1,4 @@
-#include "tpp_widget.h"
+#include <snp_tpp/tpp_widget.h>
 
 #include <QApplication>
 #include <rclcpp/rclcpp.hpp>
