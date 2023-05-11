@@ -5,6 +5,7 @@
 #include <noether_filtering/subset_extraction/extruded_polygon_subset_extractor.h>
 #include <rclcpp/node.hpp>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 namespace snp_tpp
 {
