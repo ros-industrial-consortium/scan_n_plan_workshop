@@ -10,6 +10,8 @@
     <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <param name="verbose" value="$(var verbose)"/>
     <param name="touch_links" value="$(var touch_links)"/>
+    <param name="max_translational_vel" value="0.25"/>
+    <param name="max_translational_acc" value="0.005"/>
   </node>
 
 </launch>

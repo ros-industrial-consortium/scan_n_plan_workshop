@@ -16,6 +16,8 @@
 #include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/core/default_process_planners.h>
 
+#include "cartesian_time_parameterization.hpp"
+
 /**
  * @brief Creates a task flow graph for planning transition moves using a simple planner and TrajOpt with time
  * parameterization

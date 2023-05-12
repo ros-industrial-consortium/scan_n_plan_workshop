@@ -18,6 +18,8 @@
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <tf2_eigen/tf2_eigen.h>
 
+#include <tesseract_time_parameterization/instructions_trajectory.h>
+
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
@@ -100,6 +102,8 @@ public:
     : node_(node)
     , verbose_(get<bool>(node_, "verbose"))
     , touch_links_(get<std::vector<std::string>>(node_, "touch_links"))
+    , max_translational_vel_(get<double>(node_, "max_translational_vel"))
+    , max_translational_acc_(get<double>(node_, "max_translational_acc"))
     , env_(std::make_shared<tesseract_environment::Environment>())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
   {
@@ -310,12 +314,21 @@ private:
       if (!plan_result.interface->isSuccessful())
         throw std::runtime_error("Failed to create motion plan");
 
+      auto ci = plan_result.results->as<tesseract_planning::CompositeInstruction>();
+      tesseract_planning::TrajectoryContainer::Ptr container =
+          std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
+      snp_motion_planning::CartesianTimeParameterization time_param(
+          env_->getJointGroup(req->motion_group), req->tcp_frame, max_translational_vel_, max_translational_acc_);
+      if (!time_param.compute(*container))
+        throw std::runtime_error("Failed cartesian time parameterization");
+
       // Convert to joint trajectory
-      tesseract_common::JointTrajectory jt =
-          toJointTrajectory(plan_result.results->as<tesseract_planning::CompositeInstruction>());
-      tesseract_common::JointTrajectory tcp_velocity_scaled_jt = tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
-      plotter_->plotTrajectory(tcp_velocity_scaled_jt, *env_->getStateSolver());
-      res->motion_plan = tesseract_rosutils::toMsg(tcp_velocity_scaled_jt, env_->getState());
+      tesseract_common::JointTrajectory jt = toJointTrajectory(ci);
+
+      //      tesseract_common::JointTrajectory tcp_velocity_scaled_jt = tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
+
+      plotter_->plotTrajectory(jt, *env_->getStateSolver());
+      res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
 
       res->message = "Succesfully planned motion";
       res->success = true;
@@ -332,6 +345,9 @@ private:
   rclcpp::Node::SharedPtr node_;
   const bool verbose_{ false };
   const std::vector<std::string> touch_links_;
+  const double max_translational_vel_;
+  const double max_translational_acc_;
+
   tesseract_environment::Environment::Ptr env_;
   tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
   tesseract_monitoring::EnvironmentMonitor::Ptr tesseract_monitor_;
