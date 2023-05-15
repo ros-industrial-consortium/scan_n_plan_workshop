@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kdl/chainjnttojacdotsolver.hpp>
 #include <kdl/path_line.hpp>
 #include <kdl/path_composite.hpp>
 #include <kdl/rotational_interpolation_sa.hpp>
@@ -8,7 +9,9 @@
 #include <kdl/velocityprofile_traphalf.hpp>
 #include <kdl/utilities/error.h>
 #include <tesseract_kinematics/core/joint_group.h>
+#include <tesseract_kinematics/kdl/kdl_utils.h>
 #include <tesseract_time_parameterization/trajectory_container.h>
+#include <tesseract_environment/environment.h>
 
 /** @details Adapted from http://docs.ros.org/en/indigo/api/eigen_conversions/html/eigen__kdl_8cpp_source.html#l00090 */
 template <typename T>
@@ -39,13 +42,19 @@ public:
   using Ptr = std::shared_ptr<CartesianTimeParameterization>;
   using ConstPtr = std::shared_ptr<const CartesianTimeParameterization>;
 
-  CartesianTimeParameterization(tesseract_kinematics::JointGroup::UPtr motion_group, const std::string& tcp,
+  CartesianTimeParameterization(tesseract_environment::Environment::ConstPtr env, const std::string& group, const std::string& tcp,
                                 const double max_translational_vel, const double max_translational_acc)
-    : motion_group(std::move(motion_group))
+    : motion_group(env->getJointGroup(group))
     , tcp(tcp)
     , max_translational_vel(max_translational_vel)
     , max_translational_acc(max_translational_acc)
   {
+    // Construct the KDL chain
+    tesseract_kinematics::KDLChainData data;
+    if (!tesseract_kinematics::parseSceneGraph(data, *env->getSceneGraph(), motion_group->getBaseLinkName(), tcp))
+      throw std::runtime_error("Failed to construct KDL chain");
+
+    kdl_chain_ = data.robot_chain;
   }
 
   bool compute(tesseract_planning::TrajectoryContainer& trajectory, double max_velocity_scaling_factor = 1.0,
@@ -106,10 +115,7 @@ public:
       KDL::Twist vel = traj.Vel(dt);
       KDL::Twist acc = traj.Acc(dt);
       const Eigen::VectorXd joint_vel = computeJointVelocity(fromKDL(vel), joints);
-      //      const Eigen::VectorXd joint_acc = computeJointAcceleration(fromKDL(acc), joints);
-      //      const Eigen::VectorXd joint_vel = (end_joints - start_joints) / dt;
-      const Eigen::VectorXd joint_acc = (joint_vel - prev_joint_vel) / dt;
-      prev_joint_vel = joint_vel;
+      const Eigen::VectorXd joint_acc = computeJointAcceleration(fromKDL(acc), joints, joint_vel);
 
       // Check for joint velocity/acceleration limit violations
       Eigen::Array<bool, Eigen::Dynamic, 1> vel_limit_violations =
@@ -169,17 +175,38 @@ private:
   Eigen::VectorXd computeJointVelocity(const Eigen::VectorXd& twist, const Eigen::VectorXd& joint_state) const
   {
     Eigen::MatrixXd jac = motion_group->calcJacobian(joint_state, tcp);
+    // TODO: Use pseudo inverse if DOF != 6
     return jac.colPivHouseholderQr().solve(twist);
   }
 
-  Eigen::VectorXd computeJointAcceleration(const Eigen::VectorXd& twist, const Eigen::VectorXd& joint_state) const
+  Eigen::VectorXd computeJointAcceleration(const Eigen::VectorXd& twist, const Eigen::VectorXd& joint_position, const Eigen::VectorXd& joint_velocity) const
   {
-    Eigen::MatrixXd jac = motion_group->calcJacobian(joint_state, tcp);
-    auto ret = jac.transpose() * twist;
-    return ret;
+    // Create a Jacobian derivative solver
+    // Use the default hybrid representation because the input twist is for the end effector frame but relative to the base frame
+    KDL::ChainJntToJacDotSolver solver(kdl_chain_);
+
+    // Compute the derivative of the Jacobian
+    KDL::JntArrayVel q;
+    q.q.data = joint_position;
+    q.qdot.data = joint_velocity;
+    KDL::Twist jac_dot_q_dot;
+    int error = solver.JntToJacDot(q, jac_dot_q_dot);
+    if (error != 0)
+      throw std::runtime_error(solver.strError(error));
+
+    // Compute the jacbian
+    Eigen::MatrixXd jac = motion_group->calcJacobian(joint_position, tcp);
+
+    // Compute the joint accelerations
+    // d/dt(x_dot) = d/dt(J * q_dot)
+    // x_dot_dot = J_dot * q_dot + J * q_dot_dot
+    // qdotdot = J^(-1) * (x_dot_dot - J_dot_q_dot)
+    // TODO: use pseudo-inverse if DOF != 6
+    return jac.colPivHouseholderQr().solve(twist - fromKDL(jac_dot_q_dot));
   }
 
   tesseract_kinematics::JointGroup::UPtr motion_group;
+  KDL::Chain kdl_chain_;
   const std::string tcp;
   const double max_translational_vel;
   const double max_translational_acc;

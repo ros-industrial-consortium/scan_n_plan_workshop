@@ -49,7 +49,7 @@ public:
 
     auto& ci = input_results->as<tesseract_planning::CompositeInstruction>();
     const tesseract_planning::ManipulatorInfo& manip_info = ci.getManipulatorInfo();
-    CartesianTimeParameterization solver(input.env->getJointGroup(manip_info.manipulator), manip_info.tcp_frame, 0.25, 0.25);
+    CartesianTimeParameterization solver(input.env, manip_info.manipulator, manip_info.tcp_frame, 0.25, 0.25);
 
     // Get Composite Profile
     std::string profile = ci.getProfile();

@@ -29,7 +29,7 @@ find_package(LAPACK REQUIRED) # Requried for ikfast
 # Planning server
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
-target_link_libraries(${PROJECT_NAME}_node tesseract::tesseract_command_language tesseract::tesseract_process_managers)
+target_link_libraries(${PROJECT_NAME}_node tesseract::tesseract_command_language tesseract::tesseract_process_managers tesseract::tesseract_kinematics_kdl)
 
 # Plugin Library
 add_library(${PROJECT_NAME}_plugins SHARED src/motoman_hc10_ikfast_plugin.cpp)
