@@ -1,6 +1,7 @@
 #pragma once
 
-#include <kdl/path_roundedcomposite.hpp>
+#include <kdl/path_line.hpp>
+#include <kdl/path_composite.hpp>
 #include <kdl/rotational_interpolation_sa.hpp>
 #include <kdl/trajectory_segment.hpp>
 #include <kdl/velocityprofile_trap.hpp>
@@ -51,26 +52,26 @@ public:
                double max_acceleration_scaling_factor = 1.0) const
   {
     const double eq_radius = 1.0;  // max_translational_velocity / max_rotational_velocity;
-    KDL::RotationalInterpolation* rot_interp = new KDL::RotationalInterpolation_SingleAxis();
-    auto path = new KDL::Path_RoundedComposite(0.001, eq_radius, rot_interp);
+    auto path = new KDL::Path_Composite();
 
     std::vector<double> times;
     times.reserve(trajectory.size());
-    for (Eigen::Index i = 0; i < trajectory.size(); ++i)
+    times.push_back(0.0);
+
+    for (Eigen::Index i = 1; i < trajectory.size() - 1; ++i)
     {
-      // Perform FK to get Cartesian pose
-      const KDL::Frame pose = toKDL(motion_group->calcFwdKin(trajectory.getPosition(i)).at(tcp));
-      try
-      {
-        path->Add(pose);
-      }
-      catch (KDL::Error& ex)
-      {
-        std::stringstream ss;
-        ss << "KDL Exception #" << ex.GetType() << ": " << ex.Description();
-        CONSOLE_BRIDGE_logError(ss.str().c_str());
-        return false;
-      }
+      const Eigen::VectorXd& start_joints = trajectory.getPosition(i - 1);
+      const Eigen::VectorXd& end_joints = trajectory.getPosition(i);
+
+      // Perform FK to get Cartesian poses
+      const KDL::Frame start = toKDL(motion_group->calcFwdKin(start_joints).at(tcp));
+      const KDL::Frame end = toKDL(motion_group->calcFwdKin(end_joints).at(tcp));
+
+      // Convert to KDL::Path
+      KDL::RotationalInterpolation* rot_interp = new KDL::RotationalInterpolation_SingleAxis();
+      KDL::Path* segment = new KDL::Path_Line(start, end, rot_interp, eq_radius);
+
+      path->Add(segment);
 
       // Estimate the time to this waypoint with half-trapezoid velocity profile
       KDL::VelocityProfile_TrapHalf prof(max_velocity_scaling_factor * max_translational_vel,
@@ -91,9 +92,10 @@ public:
     const double duration = prof->Duration();
 
     // Add the last time with the duration from a double ended trapezoidal velocity profile
-    times.back() = duration;
+    times.push_back(duration);
 
     // Update the trajectory
+    Eigen::VectorXd prev_joint_vel = Eigen::VectorXd::Zero(trajectory.dof());
     for (Eigen::Index i = 0; i < trajectory.size(); ++i)
     {
       const Eigen::VectorXd& joints = trajectory.getPosition(i);
@@ -104,9 +106,10 @@ public:
       KDL::Twist vel = traj.Vel(dt);
       KDL::Twist acc = traj.Acc(dt);
       const Eigen::VectorXd joint_vel = computeJointVelocity(fromKDL(vel), joints);
-      const Eigen::VectorXd joint_acc = computeJointAcceleration(fromKDL(acc), joints);
+      //      const Eigen::VectorXd joint_acc = computeJointAcceleration(fromKDL(acc), joints);
       //      const Eigen::VectorXd joint_vel = (end_joints - start_joints) / dt;
-      //      const Eigen::VectorXd joint_acc = (joint_vel - trajectory.getVelocity(i - 1)) / dt;
+      const Eigen::VectorXd joint_acc = (joint_vel - prev_joint_vel) / dt;
+      prev_joint_vel = joint_vel;
 
       // Check for joint velocity/acceleration limit violations
       Eigen::Array<bool, Eigen::Dynamic, 1> vel_limit_violations =
