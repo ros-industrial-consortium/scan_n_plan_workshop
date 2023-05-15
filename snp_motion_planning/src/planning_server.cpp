@@ -315,12 +315,16 @@ private:
         throw std::runtime_error("Failed to create motion plan");
 
       auto ci = plan_result.results->as<tesseract_planning::CompositeInstruction>();
-      tesseract_planning::TrajectoryContainer::Ptr container =
-          std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
-      snp_motion_planning::CartesianTimeParameterization time_param(
-          env_->getJointGroup(req->motion_group), req->tcp_frame, max_translational_vel_, max_translational_acc_);
-      if (!time_param.compute(*container))
-        throw std::runtime_error("Failed cartesian time parameterization");
+
+      // Run Cartesian time parameterization
+      {
+//        tesseract_planning::TrajectoryContainer::Ptr container =
+//            std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
+//        snp_motion_planning::CartesianTimeParameterization time_param(
+//            env_->getJointGroup(req->motion_group), req->tcp_frame, max_translational_vel_, max_translational_acc_);
+//        if (!time_param.compute(*container))
+//          throw std::runtime_error("Failed cartesian time parameterization");
+      }
 
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt = toJointTrajectory(ci);
