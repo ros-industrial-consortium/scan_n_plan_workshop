@@ -18,7 +18,7 @@ namespace snp_motion_planning
 class CartesianTimeParameterizationTaskGenerator : public tesseract_planning::TaskGenerator
 {
 public:
-  CartesianTimeParameterizationTaskGenerator(std::string name = "Cartesian Time Parameterization")
+  CartesianTimeParameterizationTaskGenerator(std::string name = "CARTESIAN_TIME_PARAMETERIZATION")
     : tesseract_planning::TaskGenerator(std::move(name))
   {
   }
