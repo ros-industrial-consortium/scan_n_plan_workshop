@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cartesian_time_parameterization_task_generator.hpp"
+
 #include <tesseract_motion_planners/trajopt/trajopt_motion_planner.h>
 #include <tesseract_motion_planners/simple/simple_motion_planner.h>
 #include <tesseract_motion_planners/ompl/ompl_motion_planner.h>
@@ -15,8 +17,6 @@
 #include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/core/default_process_planners.h>
-
-#include "cartesian_time_parameterization_task_generator.hpp"
 
 /**
  * @brief Creates a task flow graph for planning transition moves using a simple planner and TrajOpt with time
