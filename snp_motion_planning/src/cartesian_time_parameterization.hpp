@@ -10,6 +10,7 @@
 #include <kdl/utilities/error.h>
 #include <tesseract_kinematics/core/joint_group.h>
 #include <tesseract_kinematics/kdl/kdl_utils.h>
+#include <tesseract_kinematics/core/utils.h>
 #include <tesseract_time_parameterization/trajectory_container.h>
 #include <tesseract_environment/environment.h>
 
@@ -63,148 +64,208 @@ public:
   bool compute(tesseract_planning::TrajectoryContainer& trajectory, double max_velocity_scaling_factor = 1.0,
                double max_acceleration_scaling_factor = 1.0) const
   {
-    auto path = new KDL::Path_Composite();
-
-    std::vector<double> times;
-    times.reserve(trajectory.size());
-    times.push_back(0.0);
-
-    for (Eigen::Index i = 1; i < trajectory.size() - 1; ++i)
+    try
     {
-      const Eigen::VectorXd& start_joints = trajectory.getPosition(i - 1);
-      const Eigen::VectorXd& end_joints = trajectory.getPosition(i);
+      auto path = new KDL::Path_Composite();
 
-      // Perform FK to get Cartesian poses
-      const KDL::Frame start = toKDL(motion_group->calcFwdKin(start_joints).at(tcp));
-      const KDL::Frame end = toKDL(motion_group->calcFwdKin(end_joints).at(tcp));
+      // Create a container for the times of each waypoint in the newly parameterized trajectory
+      std::vector<double> times;
+      times.reserve(trajectory.size());
+      times.push_back(0.0);
 
-      // Convert to KDL::Path
-      KDL::RotationalInterpolation* rot_interp = new KDL::RotationalInterpolation_SingleAxis();
-      KDL::Path* segment = new KDL::Path_Line(start, end, rot_interp, eq_radius_);
+      const double max_vel = max_velocity_scaling_factor * max_translational_vel;
+      const double max_acc = max_acceleration_scaling_factor * max_translational_acc;
+      KDL::VelocityProfile_TrapHalf v_trap_half(max_vel, max_acc, true);
+      auto v_trap = new KDL::VelocityProfile_Trap(max_vel, max_acc);
 
-      path->Add(segment);
+      for (Eigen::Index i = 1; i < trajectory.size(); ++i)
+      {
+        const Eigen::VectorXd& start_joints = trajectory.getPosition(i - 1);
+        const Eigen::VectorXd& end_joints = trajectory.getPosition(i);
 
-      // Estimate the time to this waypoint with half-trapezoid velocity profile
-      KDL::VelocityProfile_TrapHalf prof(max_velocity_scaling_factor * max_translational_vel,
-                                         max_acceleration_scaling_factor * max_translational_acc, true);
-      double path_length = path->PathLength() > std::numeric_limits<double>::epsilon() ?
-                               path->PathLength() :
-                               std::numeric_limits<double>::epsilon();
+        // Perform FK to get Cartesian poses
+        const KDL::Frame start = toKDL(motion_group->calcFwdKin(start_joints).at(tcp));
+        const KDL::Frame end = toKDL(motion_group->calcFwdKin(end_joints).at(tcp));
 
-      prof.SetProfile(0.0, path_length);
-      times.push_back(prof.Duration());
+        // Convert to KDL::Path
+        KDL::RotationalInterpolation* rot_interp = new KDL::RotationalInterpolation_SingleAxis();
+        KDL::Path* segment = new KDL::Path_Line(start, end, rot_interp, eq_radius_);
+
+        // Add the segment to the full path
+        path->Add(segment);
+
+        double path_length = path->PathLength() > std::numeric_limits<double>::epsilon() ?
+                                 path->PathLength() :
+                                 std::numeric_limits<double>::epsilon();
+
+        /* KDL does not provide the ability to determine the time at which a particular waypoint occurs in velocity
+         * profile parameterized trajectory. Therefore, we need to estimate the time to each waypoint. We can do this by
+         * applying a half-trapezoid (front) velocity profile to the path constructed so far and calculating the
+         * duration.
+         */
+        v_trap_half.SetProfile(0.0, path_length);
+        times.push_back(v_trap_half.Duration());
+      }
+
+      // Apply a double-ended trapezoidal velocity profile to the full path
+      double path_length = path->PathLength();
+      v_trap->SetProfile(0.0, path_length);
+      const double duration = v_trap->Duration();
+
+      // Add the last time with the duration from a double ended trapezoidal velocity profile
+      times.back() = duration;
+
+      /* In some cases, the deceleration may not occur completely in the last path segment, so estimating the time to a
+       * waypoint using the forward half-trapezoidal velocity profile can be incorrect. Instead we need to work
+       * backwards from the end of the trajectory to each waypoint until we reach the halfway point or until we reach a
+       * waypoint that is at full speed
+       */
+      {
+        // Construct a reverse path
+        KDL::Path_Composite reverse_path;
+        int n_segments = path->GetNrOfSegments();
+        int middle_segment = n_segments / 2;
+
+        // Iterate in reverse through the path until we hit a point whose velocity is
+        for (int i = path->GetNrOfSegments(); i-- > middle_segment;)
+        {
+          reverse_path.Add(path->GetSegment(i), false);
+
+          double reverse_path_length = reverse_path.PathLength() > std::numeric_limits<double>::epsilon() ?
+                                           reverse_path.PathLength() :
+                                           std::numeric_limits<double>::epsilon();
+          v_trap_half.SetProfile(0.0, reverse_path_length);
+          double reverse_path_duration = v_trap_half.Duration();
+          double vel = v_trap_half.Vel(reverse_path_duration);
+
+          if (std::abs(vel - max_vel) > std::numeric_limits<double>::epsilon())
+          {
+            times[i] = duration - reverse_path_duration;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+
+      // Update the trajectory
+      for (Eigen::Index i = 0; i < trajectory.size(); ++i)
+      {
+        const Eigen::VectorXd& joints = trajectory.getPosition(i);
+        double t = times[i];
+
+        // Compute the joint velocity and acceleration
+        KDL::Trajectory_Segment traj(path, v_trap, false);
+        KDL::Twist vel = traj.Vel(t);
+        KDL::Twist acc = traj.Acc(t);
+        const Eigen::VectorXd joint_vel = computeJointVelocity(vel, joints);
+        const Eigen::VectorXd joint_acc = computeJointAcceleration(acc, joints, joint_vel);
+
+        // Check for joint velocity limit violations
+        Eigen::Array<bool, Eigen::Dynamic, 1> vel_limit_violations =
+            motion_group->getLimits().velocity_limits.array() < joint_vel.array().abs();
+        if (vel_limit_violations.any())
+        {
+          Eigen::ArrayXd capacity = 100.0 * joint_vel.array().abs() / motion_group->getLimits().velocity_limits.array();
+          std::stringstream ss;
+          ss << "Joint velocity limit violations at waypoint " << i << ": "
+             << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
+          throw std::runtime_error(ss.str());
+        }
+
+        // Check for joint velocity acceleration limit violations
+        Eigen::Array<bool, Eigen::Dynamic, 1> acc_limit_violations =
+            motion_group->getLimits().acceleration_limits.array() < joint_acc.array().abs();
+        if (acc_limit_violations.any())
+        {
+          Eigen::ArrayXd capacity =
+              100.0 * joint_acc.array().abs() / motion_group->getLimits().acceleration_limits.array();
+          std::stringstream ss;
+          ss << "Joint acceleration limit violations at waypoint " << i << ": "
+             << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
+          throw std::runtime_error(ss.str());
+        }
+
+        // Update the trajectory container
+        trajectory.setData(i, joint_vel, joint_acc, t);
+      }
     }
-
-    //
-    double path_length = path->PathLength();
-    auto prof = new KDL::VelocityProfile_Trap(max_velocity_scaling_factor * max_translational_vel,
-                                              max_acceleration_scaling_factor * max_translational_acc);
-    prof->SetProfile(0.0, path_length);
-    const double duration = prof->Duration();
-
-    // Add the last time with the duration from a double ended trapezoidal velocity profile
-    times.push_back(duration);
-
-    // Update the trajectory
-    Eigen::VectorXd prev_joint_vel = Eigen::VectorXd::Zero(trajectory.dof());
-    for (Eigen::Index i = 0; i < trajectory.size(); ++i)
+    catch (KDL::Error& e)
     {
-      const Eigen::VectorXd& joints = trajectory.getPosition(i);
-      double dt = times[i];
-
-      // Compute the joint velocity and acceleration
-      KDL::Trajectory_Segment traj(path, prof, false);
-      KDL::Twist vel = traj.Vel(dt);
-      KDL::Twist acc = traj.Acc(dt);
-      const Eigen::VectorXd joint_vel = computeJointVelocity(fromKDL(vel), joints);
-      const Eigen::VectorXd joint_acc = computeJointAcceleration(fromKDL(acc), joints, joint_vel);
-
-      // Check for joint velocity/acceleration limit violations
-      Eigen::Array<bool, Eigen::Dynamic, 1> vel_limit_violations =
-          motion_group->getLimits().velocity_limits.array() < joint_vel.array().abs();
-      if (vel_limit_violations.any())
-      {
-        std::stringstream ss;
-        ss << "Joint velocity limit violations: "
-           << vel_limit_violations.cast<int>().transpose().format(Eigen::IOFormat(1, 0, " ", "\n", "[", "]"));
-        CONSOLE_BRIDGE_logError(ss.str().c_str());
-        return false;
-      }
-
-      Eigen::Array<bool, Eigen::Dynamic, 1> acc_limit_violations =
-          motion_group->getLimits().acceleration_limits.array() < joint_acc.array().abs();
-      if (acc_limit_violations.any())
-      {
-        std::stringstream ss;
-        ss << "Joint acceleration limit violations: "
-           << acc_limit_violations.cast<int>().transpose().format(Eigen::IOFormat(1, 0, " ", "\n", "[", "]"));
-        CONSOLE_BRIDGE_logError(ss.str().c_str());
-        return false;
-      }
-
-      // Update the trajectory container
-      trajectory.setData(i, joint_vel, joint_acc, dt);
+      std::stringstream ss;
+      ss << "KDL Error #" << e.GetType() << ": " << e.Description();
+      CONSOLE_BRIDGE_logError(ss.str().c_str());
+      return false;
+    }
+    catch (const std::exception& ex)
+    {
+      CONSOLE_BRIDGE_logError(ex.what());
+      return false;
     }
 
     return true;
   }
 
-  //  bool compute(tesseract_planning::TrajectoryContainer& trajectory, const std::vector<double>& max_velocity,
-  //               const std::vector<double>& max_acceleration, double max_velocity_scaling_factor = 1.0,
-  //               double max_acceleration_scaling_factor = 1.0) const
-  //  {
-  //    return false;
-  //  }
-
-  //  bool compute(tesseract_planning::TrajectoryContainer& trajectory,
-  //               const Eigen::Ref<const Eigen::VectorXd>& max_velocity,
-  //               const Eigen::Ref<const Eigen::VectorXd>& max_acceleration, double max_velocity_scaling_factor = 1.0,
-  //               double max_acceleration_scaling_factor = 1.0) const
-  //  {
-  //    return false;
-  //  }
-
-  //  bool compute(tesseract_planning::TrajectoryContainer& trajectory,
-  //               const Eigen::Ref<const Eigen::VectorXd>& max_velocity,
-  //               const Eigen::Ref<const Eigen::VectorXd>& max_acceleration,
-  //               const Eigen::Ref<const Eigen::VectorXd>& max_velocity_scaling_factors,
-  //               const Eigen::Ref<const Eigen::VectorXd>& max_acceleration_scaling_factors) const
-  //  {
-  //    return false;
-  //  }
-
 private:
-  Eigen::VectorXd computeJointVelocity(const Eigen::VectorXd& twist, const Eigen::VectorXd& joint_state) const
+  Eigen::VectorXd computeJointVelocity(const KDL::Twist& x_dot, const Eigen::VectorXd& q) const
   {
-    Eigen::MatrixXd jac = motion_group->calcJacobian(joint_state, tcp);
-    // TODO: Use pseudo inverse if DOF != 6
-    return jac.colPivHouseholderQr().solve(twist);
+    Eigen::MatrixXd jac = motion_group->calcJacobian(q, tcp);
+
+    Eigen::Index dof = q.size();
+    Eigen::VectorXd q_dot(dof);
+    if (dof == 6)
+    {
+      q_dot = jac.colPivHouseholderQr().solve(fromKDL(x_dot));
+    }
+    else
+    {
+      if (!tesseract_kinematics::solvePInv(jac, fromKDL(x_dot), q_dot))
+        throw std::runtime_error("Failed to solve pseudo-inverse for joint velocity calculation");
+    }
+
+    return q_dot;
   }
 
-  Eigen::VectorXd computeJointAcceleration(const Eigen::VectorXd& twist, const Eigen::VectorXd& joint_position, const Eigen::VectorXd& joint_velocity) const
+  Eigen::VectorXd computeJointAcceleration(const KDL::Twist& x_dot_dot, const Eigen::VectorXd& q,
+                                           const Eigen::VectorXd& q_dot) const
   {
     // Create a Jacobian derivative solver
-    // Use the default hybrid representation because the input twist is for the end effector frame but relative to the base frame
     KDL::ChainJntToJacDotSolver solver(kdl_chain_);
 
     // Compute the derivative of the Jacobian
-    KDL::JntArrayVel q;
-    q.q.data = joint_position;
-    q.qdot.data = joint_velocity;
+    KDL::JntArrayVel jnt_array;
+    jnt_array.q.data = q;
+    jnt_array.qdot.data = q_dot;
     KDL::Twist jac_dot_q_dot;
-    int error = solver.JntToJacDot(q, jac_dot_q_dot);
-    if (error != 0)
-      throw std::runtime_error(solver.strError(error));
+    {
+      int error = solver.JntToJacDot(jnt_array, jac_dot_q_dot);
+      if (error != 0)
+        throw std::runtime_error(solver.strError(error));
+    }
 
     // Compute the jacbian
-    Eigen::MatrixXd jac = motion_group->calcJacobian(joint_position, tcp);
+    Eigen::MatrixXd jac = motion_group->calcJacobian(q, tcp);
 
     // Compute the joint accelerations
     // d/dt(x_dot) = d/dt(J * q_dot)
     // x_dot_dot = J_dot * q_dot + J * q_dot_dot
     // qdotdot = J^(-1) * (x_dot_dot - J_dot_q_dot)
-    // TODO: use pseudo-inverse if DOF != 6
-    return jac.colPivHouseholderQr().solve(twist - fromKDL(jac_dot_q_dot));
+    Eigen::VectorXd twist = fromKDL(x_dot_dot - jac_dot_q_dot);
+
+    Eigen::Index dof = q.size();
+    Eigen::VectorXd q_dot_dot(dof);
+    if (dof == 6)
+    {
+      q_dot_dot = jac.colPivHouseholderQr().solve(twist);
+    }
+    else
+    {
+      if (!tesseract_kinematics::solvePInv(jac, twist, q_dot_dot))
+        throw std::runtime_error("Failed to solve pseudo-inverse for acceleration calculation");
+    }
+
+    return q_dot_dot;
   }
 
   tesseract_kinematics::JointGroup::UPtr motion_group;
