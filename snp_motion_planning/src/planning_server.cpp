@@ -102,8 +102,6 @@ public:
     : node_(node)
     , verbose_(get<bool>(node_, "verbose"))
     , touch_links_(get<std::vector<std::string>>(node_, "touch_links"))
-    , max_translational_vel_(get<double>(node_, "max_translational_vel"))
-    , max_translational_acc_(get<double>(node_, "max_translational_acc"))
     , env_(std::make_shared<tesseract_environment::Environment>())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
   {
@@ -150,6 +148,17 @@ public:
       pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
           tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
           std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
+
+      {
+        auto vel_trans = get<double>(node_, "max_translational_vel");
+        auto vel_rot = get<double>(node_, "max_rotational_vel");
+        auto acc_trans = get<double>(node_, "max_translational_acc");
+        auto acc_rot = get<double>(node_, "max_rotational_acc");
+        auto cart_time_param_profile = std::make_shared<snp_motion_planning::CartesianTimeParameterizationProfile>(
+            vel_trans, vel_rot, acc_trans, acc_rot);
+        pd->addProfile<snp_motion_planning::CartesianTimeParameterizationProfile>("CARTESIAN_TIME_PARAMETERIZATION",
+                                                                                  PROFILE, cart_time_param_profile);
+      }
     }
 
     // Advertise the ROS2 service
@@ -316,21 +325,8 @@ private:
 
       auto ci = plan_result.results->as<tesseract_planning::CompositeInstruction>();
 
-      // Run Cartesian time parameterization
-      {
-//        tesseract_planning::TrajectoryContainer::Ptr container =
-//            std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
-//        snp_motion_planning::CartesianTimeParameterization time_param(
-//            env_->getJointGroup(req->motion_group), req->tcp_frame, max_translational_vel_, max_translational_acc_);
-//        if (!time_param.compute(*container))
-//          throw std::runtime_error("Failed cartesian time parameterization");
-      }
-
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt = toJointTrajectory(ci);
-
-      //      tesseract_common::JointTrajectory tcp_velocity_scaled_jt = tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
-
       plotter_->plotTrajectory(jt, *env_->getStateSolver());
       res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
 
@@ -349,8 +345,6 @@ private:
   rclcpp::Node::SharedPtr node_;
   const bool verbose_{ false };
   const std::vector<std::string> touch_links_;
-  const double max_translational_vel_;
-  const double max_translational_acc_;
 
   tesseract_environment::Environment::Ptr env_;
   tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
