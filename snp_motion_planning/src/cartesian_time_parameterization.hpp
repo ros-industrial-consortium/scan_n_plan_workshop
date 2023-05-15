@@ -42,12 +42,15 @@ public:
   using Ptr = std::shared_ptr<CartesianTimeParameterization>;
   using ConstPtr = std::shared_ptr<const CartesianTimeParameterization>;
 
-  CartesianTimeParameterization(tesseract_environment::Environment::ConstPtr env, const std::string& group, const std::string& tcp,
-                                const double max_translational_vel, const double max_translational_acc)
+  CartesianTimeParameterization(tesseract_environment::Environment::ConstPtr env, const std::string& group,
+                                const std::string& tcp, const double max_translational_vel,
+                                const double max_rotational_vel, const double max_translational_acc,
+                                const double max_rotational_acc)
     : motion_group(env->getJointGroup(group))
     , tcp(tcp)
     , max_translational_vel(max_translational_vel)
     , max_translational_acc(max_translational_acc)
+    , eq_radius_(std::max((max_translational_vel / max_rotational_vel), (max_translational_acc / max_rotational_acc)))
   {
     // Construct the KDL chain
     tesseract_kinematics::KDLChainData data;
@@ -60,7 +63,6 @@ public:
   bool compute(tesseract_planning::TrajectoryContainer& trajectory, double max_velocity_scaling_factor = 1.0,
                double max_acceleration_scaling_factor = 1.0) const
   {
-    const double eq_radius = 1.0;  // max_translational_velocity / max_rotational_velocity;
     auto path = new KDL::Path_Composite();
 
     std::vector<double> times;
@@ -78,7 +80,7 @@ public:
 
       // Convert to KDL::Path
       KDL::RotationalInterpolation* rot_interp = new KDL::RotationalInterpolation_SingleAxis();
-      KDL::Path* segment = new KDL::Path_Line(start, end, rot_interp, eq_radius);
+      KDL::Path* segment = new KDL::Path_Line(start, end, rot_interp, eq_radius_);
 
       path->Add(segment);
 
@@ -210,6 +212,7 @@ private:
   const std::string tcp;
   const double max_translational_vel;
   const double max_translational_acc;
+  const double eq_radius_;
 };
 
 }  // namespace snp_motion_planning
