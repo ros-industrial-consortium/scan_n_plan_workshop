@@ -16,7 +16,7 @@
 #include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/core/default_process_planners.h>
 
-#include "cartesian_time_parameterization.hpp"
+#include "cartesian_time_parameterization_task_generator.hpp"
 
 /**
  * @brief Creates a task flow graph for planning transition moves using a simple planner and TrajOpt with time
@@ -118,11 +118,47 @@ tesseract_planning::TaskflowGenerator::UPtr createFreespaceTaskflow()
 }
 
 /**
+ * @brief Creates a task flow graph for planning transition moves using a simple planner and TrajOpt with time
+ * parameterization
+ * @return
+ */
+tesseract_planning::TaskflowGenerator::UPtr createSNPRasterTaskflow()
+{
+  // Create the graph task flow
+  auto graph = std::make_unique<tesseract_planning::GraphTaskflow>();
+
+  // Input/seed checks
+  auto check_input = graph->addNode(std::make_unique<tesseract_planning::CheckInputTaskGenerator>(), true);
+  int has_seed = graph->addNode(std::make_unique<tesseract_planning::HasSeedTaskGenerator>(), true);
+  int seed_min_length = graph->addNode(std::make_unique<tesseract_planning::SeedMinLengthTaskGenerator>(), true);
+
+  // TrajOpt with post-collision check
+  auto trajopt_planner = std::make_shared<tesseract_planning::TrajOptMotionPlanner>();
+  int trajopt = graph->addNode(std::make_unique<tesseract_planning::MotionPlannerTaskGenerator>(trajopt_planner), true);
+  int trajopt_collision =
+      graph->addNode(std::make_unique<tesseract_planning::DiscreteContactCheckTaskGenerator>(), true);
+
+  // Time parameterization
+  int time_param =
+      graph->addNode(std::make_unique<snp_motion_planning::CartesianTimeParameterizationTaskGenerator>(), true);
+
+  graph->addEdges(check_input, { tesseract_planning::GraphTaskflow::ERROR_NODE, has_seed });
+  graph->addEdges(has_seed, { tesseract_planning::GraphTaskflow::ERROR_NODE, seed_min_length });
+  graph->addEdges(seed_min_length, { tesseract_planning::GraphTaskflow::ERROR_NODE, trajopt });
+  graph->addEdges(trajopt, { tesseract_planning::GraphTaskflow::ERROR_NODE, trajopt_collision });
+  graph->addEdges(trajopt_collision, { tesseract_planning::GraphTaskflow::ERROR_NODE, time_param });
+  graph->addEdges(time_param,
+                  { tesseract_planning::GraphTaskflow::ERROR_NODE, tesseract_planning::GraphTaskflow::DONE_NODE });
+
+  return graph;
+}
+
+/**
  * @brief Creates a raster taskflow using the custom-defined freespace and transition planning taskflows
  */
 tesseract_planning::TaskflowGenerator::UPtr createRasterTaskflow()
 {
   return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
       tesseract_planning::createDescartesOnlyGenerator(), createFreespaceTaskflow(), createTransitionTaskflow(),
-      tesseract_planning::createTrajOptGenerator());
+      createSNPRasterTaskflow());
 }
