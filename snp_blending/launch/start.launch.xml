@@ -2,6 +2,7 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
+  <arg name="sim_execution" default="True" if="$(var sim_robot)"/>
   <arg name="mesh_file" default="$(find-pkg-share snp_blending)/meshes/part_scan.ply"/>
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_blending)/config/scan_traj.yaml"/>
   <arg name="verbose" default="True"/>
@@ -9,14 +10,14 @@
   <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_blending)/urdf/workcell.xacro')"/>
   <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_blending)/config/workcell.srdf')"/>
   <arg name="reference_frame" default="table"/>
-  <arg name="follow_joint_trajectory_action" default="joint_trajectory_action"/>
+  <arg name="follow_joint_trajectory_action" default="joint_trajectory_position_controller/follow_joint_trajectory"/>
 
   <!-- URDF, Rviz -->
   <include file="$(find-pkg-share snp_blending)/launch/test.launch.xml">
     <arg name="robot_description" value="$(var robot_description)"/>
     <arg name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <arg name="rviz" value="False"/>
-    <arg name="use_gui" value="$(var sim_robot)"/>
+    <arg name="use_gui" value="$(var sim_execution)"/>
   </include>
 
   <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_blending)/config/app.rviz">
@@ -89,10 +90,15 @@
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
   <group if="$(var sim_robot)">
-    <node pkg="snp_motion_execution" exec="execution_simulator">
-      <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
-    </node>
-    <node pkg="snp_motion_execution" exec="robot_enable_simulator"/>
+    <node pkg="snp_motion_execution" exec="robot_enable_simulator" />
+    <group if="$(var sim_execution)">
+      <node pkg="snp_motion_execution" exec="execution_simulator" >
+        <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
+      </node>
+    </group>
+    <group unless="$(var sim_execution)">
+      <include file="$(find-pkg-share snp_blending)/launch/ros2_control.launch.py"/>
+    </group>
   </group>
 </launch>
 
