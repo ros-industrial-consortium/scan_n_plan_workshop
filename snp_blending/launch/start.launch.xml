@@ -8,6 +8,7 @@
   <arg name="touch_links" default="[table, base_link, floor]"/>
   <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_blending)/urdf/workcell.xacro')"/>
   <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_blending)/config/workcell.srdf')"/>
+  <arg name="follow_joint_trajectory_action" default="joint_trajectory_action"/>
 
   <!-- URDF, Rviz -->
   <include file="$(find-pkg-share snp_blending)/launch/test.launch.xml">
@@ -77,13 +78,18 @@
   </include>
 
   <!-- Launch Motion Execution Node -->
-  <node pkg="snp_motion_execution" exec="snp_motion_execution_node"/>
+  <node pkg="snp_motion_execution" exec="snp_motion_execution_node">
+    <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
+  </node>
 
   <group unless="$(var sim_robot)">
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
   <group if="$(var sim_robot)">
-    <node pkg="snp_motion_execution" exec="snp_motion_execution_simulator_node"/>
+    <node pkg="snp_motion_execution" exec="execution_simulator">
+      <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
+    </node>
+    <node pkg="snp_motion_execution" exec="robot_enable_simulator"/>
   </group>
 </launch>
 

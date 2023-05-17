@@ -6,7 +6,6 @@
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
-static const std::string FJT_ACTION = "joint_trajectory_action";
 static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
 static const std::string ENABLE_SERVICE = "robot_enable";
 static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
@@ -16,25 +15,36 @@ using FJT = control_msgs::action::FollowJointTrajectory;
 using FJT_Result = control_msgs::action::FollowJointTrajectory_Result;
 using FJT_Goal = control_msgs::action::FollowJointTrajectory_Goal;
 
+template <typename T>
+T get(rclcpp::Node* node, const std::string& key)
+{
+  node->declare_parameter(key);
+  T val;
+  if (!node->get_parameter(key, val))
+    throw std::runtime_error("Failed to get '" + key + "' parameter");
+  return val;
+}
+
 class MotionExecNode : public rclcpp::Node
 {
 public:
   explicit MotionExecNode()
-    : Node("motion_execution_node"), cb_group_(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant))
+    : Node("motion_execution_node"), cb_group_(create_callback_group(rclcpp::CallbackGroupType::Reentrant))
   {
-    this->fjt_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, FJT_ACTION);
+    const std::string fjt_action = get<std::string>(this, "follow_joint_trajectory_action");
+    fjt_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, fjt_action);
 
-    this->enable_client_ = this->create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);
+    enable_client_ = create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);
 
-    this->server_ = this->create_service<snp_msgs::srv::ExecuteMotionPlan>(
+    server_ = create_service<snp_msgs::srv::ExecuteMotionPlan>(
         MOTION_EXEC_SERVICE,
         std::bind(&MotionExecNode::executeMotionPlan, this, std::placeholders::_1, std::placeholders::_2),
         rmw_qos_profile_services_default, cb_group_);
 
-    this->joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+    joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>(
         JOINT_STATES_TOPIC, 1, std::bind(&MotionExecNode::callbackJointState, this, std::placeholders::_1));
 
-    RCLCPP_INFO(this->get_logger(), "Motion execution node started");
+    RCLCPP_INFO(get_logger(), "Motion execution node started");
   }
 
 private:
@@ -76,7 +86,7 @@ private:
 
       // enable robot
       {
-        RCLCPP_INFO(this->get_logger(), "Enabling robot");
+        RCLCPP_INFO(get_logger(), "Enabling robot");
         if (!enable_client_->service_is_ready())
         {
           throw std::runtime_error("Robot enable server is not available");
@@ -91,7 +101,7 @@ private:
         {
           throw std::runtime_error("Failed to enable robot: '" + response->message + "'");
         }
-        RCLCPP_INFO(this->get_logger(), "Robot enabled");
+        RCLCPP_INFO(get_logger(), "Robot enabled");
       }
 
       // Check that the server exists
