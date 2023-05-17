@@ -8,7 +8,7 @@
 
 static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
 static const std::string ENABLE_SERVICE = "robot_enable";
-static const std::string JOINT_STATES_TOPIC = "robot_joint_states";
+static const std::string JOINT_STATES_TOPIC = "joint_states";
 static const double JOINT_STATE_TIME_THRESHOLD = 0.1;  // seconds
 
 using FJT = control_msgs::action::FollowJointTrajectory;
@@ -69,8 +69,8 @@ private:
     return (get_clock()->now() - latest_joint_state_.header.stamp).seconds();
   }
 
-  void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> empRequest,
-                         const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Response> empResult)
+  void executeMotionPlan(const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Request> request,
+                         const std::shared_ptr<snp_msgs::srv::ExecuteMotionPlan::Response> result)
   {
     try
     {
@@ -116,19 +116,31 @@ private:
 
       // Send motion trajectory
       control_msgs::action::FollowJointTrajectory::Goal goal_msg;
-      goal_msg.trajectory = empRequest->motion_plan;
+      goal_msg.trajectory = request->motion_plan;
 
       // Replace the start state of the trajectory with the current joint state
       {
         trajectory_msgs::msg::JointTrajectoryPoint start_point;
-        start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
-        {
-          std::lock_guard<std::mutex> lock{ mutex_ };
-          start_point.positions = latest_joint_state_.position;
-        }
+        start_point.positions.resize(goal_msg.trajectory.joint_names.size());
         start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
         start_point.accelerations = std::vector<double>(start_point.positions.size(), 0);
         start_point.effort = std::vector<double>(start_point.positions.size(), 0);
+        start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
+
+        // Find the index of the trajectory joint in the latest joint state message
+        for (std::size_t i = 0; i < goal_msg.trajectory.joint_names.size(); ++i)
+        {
+          std::lock_guard<std::mutex> lock{ mutex_ };
+
+          const std::string& name = goal_msg.trajectory.joint_names[i];
+          auto it = std::find(latest_joint_state_.name.begin(), latest_joint_state_.name.end(), name);
+          if (it == latest_joint_state_.name.end())
+            throw std::runtime_error("Failed to find joint '" + name + "' in latest joint state message");
+
+          auto idx = std::distance(latest_joint_state_.name.begin(), it);
+          start_point.positions[i] = latest_joint_state_.position[idx];
+        }
+
         goal_msg.trajectory.points[0] = start_point;
       }
 
@@ -183,15 +195,15 @@ private:
       }
 
       // Communicate success
-      empResult->success = true;
+      result->success = true;
     }
     catch (const std::exception& ex)
     {
       // Cancel any goals in the case of a timeout
       fjt_client_->async_cancel_all_goals();
 
-      empResult->message = ex.what();
-      empResult->success = false;
+      result->message = ex.what();
+      result->success = false;
     }
   }
 };
