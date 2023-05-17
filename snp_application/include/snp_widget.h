@@ -14,7 +14,6 @@
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
-#include <visualization_msgs/msg/marker.hpp>
 
 namespace Ui
 {
@@ -43,7 +42,6 @@ private:
   // joint state publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr toolpath_pub_;
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr scan_mesh_pub_;
 
   // service clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr observe_client_;

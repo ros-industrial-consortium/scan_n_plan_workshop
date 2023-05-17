@@ -10,7 +10,6 @@
 #include "trajectory_msgs_yaml.h"
 
 static const std::string TOOL_PATH_TOPIC = "toolpath";
-static const std::string MESH_TOPIC = "scan_mesh";
 
 static const std::string CALIBRATION_OBSERVE_SERVICE = "observe";
 static const std::string CALIBRATION_RUN_SERVICE = "run";
@@ -112,7 +111,6 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   connect(this, &SNPWidget::log, this, &SNPWidget::onUpdateLog);
 
   toolpath_pub_ = node->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
-  scan_mesh_pub_ = node->create_publisher<visualization_msgs::msg::Marker>(MESH_TOPIC, 10);
 
   // TODO register all service/action clients
   observe_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
@@ -412,26 +410,6 @@ void SNPWidget::onScanStopDone(StopScanFuture stop_result)
   {
     emit log("Failed to stop surface reconstruction");
     emit updateStatus(false, STOP_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-  }
-
-  // Publish the mesh
-  {
-    visualization_msgs::msg::Marker mesh_marker;
-    mesh_marker.header.frame_id = reference_frame_;
-
-    mesh_marker.color.r = 200;
-    mesh_marker.color.g = 200;
-    mesh_marker.color.b = 0;
-    mesh_marker.color.a = 1;
-
-    mesh_marker.scale.x = 1;
-    mesh_marker.scale.y = 1;
-    mesh_marker.scale.z = 1;
-
-    mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-    mesh_marker.mesh_resource = "file://" + mesh_file_;
-
-    scan_mesh_pub_->publish(mesh_marker);
   }
 
   if (!motion_execution_client_->service_is_ready())
