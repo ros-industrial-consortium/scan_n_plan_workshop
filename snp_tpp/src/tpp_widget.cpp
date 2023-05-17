@@ -57,7 +57,7 @@ TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, boost_plugin_loader::PluginLo
   ui_->setupUi(this);
 
   pipeline_widget_ = new noether::TPPPipelineWidget(std::move(loader), this);
-  ui_->scroll_area->setWidget(pipeline_widget_);
+  ui_->verticalLayout->addWidget(pipeline_widget_);
 
   connect(ui_->push_button_load_configuration, &QPushButton::clicked, this, &TPPWidget::onLoadConfiguration);
   connect(ui_->push_button_save_configuration, &QPushButton::clicked, this, &TPPWidget::onSaveConfiguration);
