@@ -7,7 +7,8 @@
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_automate_2022)/config/scan_traj.yaml"/>
   <arg name="verbose" default="True"/>
   <arg name="touch_links" default="[table, base_link, floor]"/>
-  <arg name="robot_description" default="$(command 'xacro $(find-pkg-share snp_automate_2022)/urdf/workcell.xacro')"/>
+  <arg name="robot_description_file" default="$(find-pkg-share snp_automate_2022)/urdf/workcell.xacro"/>
+  <arg name="robot_description" default="$(command 'xacro $(var robot_description_file)')"/>
   <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_automate_2022)/config/workcell.srdf')"/>
   <arg name="reference_frame" default="base_link"/>
   <arg name="follow_joint_trajectory_action" default="joint_trajectory_position_controller/follow_joint_trajectory"/>
@@ -90,10 +91,18 @@
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
   <group if="$(var sim_robot)">
-    <node pkg="snp_motion_execution" exec="execution_simulator">
-      <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
-    </node>
-    <node pkg="snp_motion_execution" exec="robot_enable_simulator"/>
+    <node pkg="snp_motion_execution" exec="robot_enable_simulator" />
+    <group if="$(var sim_execution)">
+      <node pkg="snp_motion_execution" exec="execution_simulator" >
+        <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
+      </node>
+    </group>
+    <group unless="$(var sim_execution)">
+      <include file="$(find-pkg-share snp_automate_2022)/launch/ros2_control.launch.py">
+        <arg name="robot_description_file" value="$(var robot_description_file)"/>
+        <arg name="controllers_file" value="$(find-pkg-share snp_automate_2022)/config/controllers.yaml"/>
+      </include>
+    </group>
   </group>
 </launch>
 

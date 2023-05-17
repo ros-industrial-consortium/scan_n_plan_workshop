@@ -1,41 +1,31 @@
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler
+from launch.actions import RegisterEventHandler, DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
+parameters = [
+    {'name': 'robot_description_file', 'description': 'Path to the URDF/xacro file',                  'default': PathJoinSubstitution([FindPackageShare("snp_blending"), "urdf", "workcell.xacro",])},
+    {'name': 'controllers_file',       'description': 'Path to the ros2_control configuration file',  'default': PathJoinSubstitution([FindPackageShare("snp_blending"), "config", "controllers.yaml",])},
+]
+
+
+def declare_launch_arguments():
+    return [DeclareLaunchArgument(entry['name'], description=entry['description'], default_value=entry['default']) for entry in parameters]
+
+
 def generate_launch_description():
     # Get URDF via xacro
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("snp_blending"),
-                    "urdf",
-                    "workcell.xacro",
-                ]
-            ),
-        ]
-    )
+    robot_description_content = Command([PathJoinSubstitution([FindExecutable(name="xacro")]), " ", LaunchConfiguration('robot_description_file'),])
     robot_description = {"robot_description": robot_description_content}
-
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare("snp_blending"),
-            "config",
-            "controllers.yaml",
-        ]
-    )
 
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[robot_description, robot_controllers],
+        parameters=[robot_description, LaunchConfiguration('controllers_file')],
         output="both",
         remappings=[
             ('joint_trajectory_position_controller/follow_joint_trajectory', '/joint_trajectory_action')
@@ -71,4 +61,4 @@ def generate_launch_description():
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
     ]
 
-    return LaunchDescription(nodes)
+    return LaunchDescription(declare_launch_arguments() + nodes)
