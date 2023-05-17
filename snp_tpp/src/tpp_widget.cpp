@@ -50,14 +50,11 @@ snp_msgs::msg::ToolPaths toMsg(const noether::ToolPaths& paths)
 
 namespace snp_tpp
 {
-TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, QWidget* parent) : QWidget(parent), ui_(new Ui::TPPWidget())
+TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, boost_plugin_loader::PluginLoader&& loader, QWidget* parent)
+  : QWidget(parent), ui_(new Ui::TPPWidget())
 {
   // Configure the UI
   ui_->setupUi(this);
-
-  boost_plugin_loader::PluginLoader loader;
-  loader.search_libraries.insert(NOETHER_GUI_PLUGINS);
-  loader.search_libraries.insert(SNP_TPP_GUI_PLUGINS);
 
   pipeline_widget_ = new noether::TPPPipelineWidget(std::move(loader), this);
   ui_->scroll_area->setWidget(pipeline_widget_);
