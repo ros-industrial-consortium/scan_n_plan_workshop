@@ -20,12 +20,19 @@
   <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_blending)/config/app.rviz">
     <param name="mesh_file" value="/tmp/results_mesh.ply"/>
     <param name="motion_group" value="manipulator"/>
-    <param name="reference_frame" value="base_link"/>
+    <param name="reference_frame" value="table"/>
     <param name="tcp_frame" value="buffy_tcp"/>
     <param name="camera_frame" value="camera_color_optical_frame"/>
     <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
     <param name="robot_description" value="$(var robot_description)"/>
     <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
+    <!-- TSDF parameters -->
+    <param name="tsdf.min.x" value="0.0"/>
+    <param name="tsdf.min.y" value="0.0"/>
+    <param name="tsdf.min.z" value="0.05"/>
+    <param name="tsdf.max.x" value="0.9144"/>
+    <param name="tsdf.max.y" value="1.524"/>
+    <param name="tsdf.max.z" value="0.5"/>
   </node>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
@@ -41,8 +48,8 @@
       <param name="slop" value="0.05"/>
     </node>
     <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
-      <arg name="align_depth" value="true"/>
-      <arg name="enable_pointcloud" value="true"/>
+      <arg name="align_depth.enable" value="true"/>
+      <arg name="pointcloud.enable" value="true"/>
       <arg name="color_width" value="640"/>
       <arg name="color_height" value="360"/>
       <arg name="color_fps" value="90.0"/>
@@ -57,7 +64,9 @@
   </group>
 
   <!-- Launch Toolpath Planning Node -->
-  <node pkg="snp_tpp" exec="snp_tpp_app"/>
+  <node pkg="snp_tpp" exec="snp_tpp_app">
+    <param name="config_file" value="$(find-pkg-share snp_blending)/config/tpp.yaml"/>
+  </node>
 
   <!-- Launch Motion Planning Node -->
   <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.xml">
