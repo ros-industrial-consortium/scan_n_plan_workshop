@@ -8,7 +8,7 @@ Panels:
         - /Status1
         - /TesseractTrajectory1/Environment1
       Splitter Ratio: 0.5
-    Tree Height: 687
+    Tree Height: 714
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -73,6 +73,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        buffy_tcp:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         cal_target_frame:
           Alpha: 1
           Show Axes: false
@@ -81,64 +85,81 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        ee:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         floor:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        link_1_s:
+        link_b:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_2_l:
+        link_l:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_3_u:
+        link_r:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_4_r:
+        link_s:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_5_b:
+        link_t:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_6_t:
+        link_u:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        sand_tcp:
+        platform:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
+        pushcorp_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_box:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_box_support_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_box_support_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_compliance:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         table:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         tool0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        tool_flange:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        world:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -151,87 +172,91 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
         base:
-          Value: true
+          Value: false
         base_link:
+          Value: false
+        buffy_tcp:
           Value: true
         cal_target_frame:
-          Value: true
+          Value: false
         camera_color_optical_frame:
-          Value: true
-        ee:
-          Value: true
+          Value: false
         floor:
-          Value: true
-        link_1_s:
-          Value: true
-        link_2_l:
-          Value: true
-        link_3_u:
-          Value: true
-        link_4_r:
-          Value: true
-        link_5_b:
-          Value: true
-        link_6_t:
-          Value: true
-        sand_tcp:
-          Value: true
+          Value: false
+        link_b:
+          Value: false
+        link_l:
+          Value: false
+        link_r:
+          Value: false
+        link_s:
+          Value: false
+        link_t:
+          Value: false
+        link_u:
+          Value: false
+        platform:
+          Value: false
+        pushcorp_base:
+          Value: false
+        pushcorp_box:
+          Value: false
+        pushcorp_box_support_1:
+          Value: false
+        pushcorp_box_support_2:
+          Value: false
+        pushcorp_compliance:
+          Value: false
+        robot_mount:
+          Value: false
         table:
-          Value: true
+          Value: false
         tool0:
-          Value: true
-        tool_flange:
-          Value: true
-        world:
-          Value: true
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          floor:
-            table:
+        floor:
+          platform:
+            robot_mount:
               base_link:
                 base:
                   {}
                 cal_target_frame:
                   {}
-                link_1_s:
-                  link_2_l:
-                    link_3_u:
-                      link_4_r:
-                        link_5_b:
-                          link_6_t:
+                link_s:
+                  link_l:
+                    link_u:
+                      link_r:
+                        link_b:
+                          link_t:
                             tool0:
+                              buffy_tcp:
+                                {}
                               camera_color_optical_frame:
                                 {}
-                              ee:
-                                {}
-                              tool_flange:
-                                sand_tcp:
+                              pushcorp_base:
+                                pushcorp_compliance:
                                   {}
+          pushcorp_box:
+            {}
+          pushcorp_box_support_1:
+            {}
+          pushcorp_box_support_2:
+            {}
+          table:
+            {}
       Update Interval: 0
-      Value: true
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: Marker
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /scan_mesh
       Value: true
     - Alpha: 1
       Arrow Length: 0.30000001192092896
-      Axes Length: 0.10000000149011612
-      Axes Radius: 0.009999999776482582
+      Axes Length: 0.019999999552965164
+      Axes Radius: 0.0020000000949949026
       Class: rviz_default_plugins/PoseArray
       Color: 255; 25; 0
       Enabled: true
@@ -278,6 +303,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        buffy_tcp:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         cal_target_frame:
           Alpha: 1
           Show Axes: false
@@ -286,64 +315,81 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        ee:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         floor:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        link_1_s:
+        link_b:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_2_l:
+        link_l:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_3_u:
+        link_r:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_4_r:
+        link_s:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_5_b:
+        link_t:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link_6_t:
+        link_u:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        sand_tcp:
+        platform:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
+        pushcorp_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_box:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_box_support_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_box_support_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_compliance:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         table:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         tool0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        tool_flange:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        world:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -440,6 +486,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /clicked_point
     - Class: rviz_polygon_selection_tool/PolygonSelectionTool
+      Close loop: true
       Lasso mode: true
       Line Color: 0; 0; 0
       Point Color: 255; 255; 255
@@ -451,33 +498,33 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.9625701904296875
+      Distance: 5.847589015960693
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.1114489808678627
-        Y: -0.01787150651216507
-        Z: 0.9365828037261963
+        X: 0.376462459564209
+        Y: -0.3603994846343994
+        Z: 0.9257211685180664
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4903982877731323
+      Pitch: 0.3153983950614929
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.2053996324539185
+      Yaw: 0.9203998446464539
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1016
+  Height: 1043
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd0000000400000000000001d700000357fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc0000003d00000357000001ed0100001cfa000000000100000002fb0000001c0053004e0050004100700070006c00690063006100740069006f006e0100000000ffffffff0000017100fffffffb000000100044006900730070006c0061007900730100000000000001710000015600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003b9fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003b9000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000041fc0100000004fb00000038005400650073007300650072006100630074005400720061006a006500630074006f007200790020002d00200053006c00690064006500720100000000000007380000012100fffffffb000000120020002d00200053006c00690064006500720100000000000007380000000000000000fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d006501000000000000045000000000000000000000055b0000035700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d700000372fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc0000003d00000372000001ed0100001cfa000000000100000002fb0000001c0053004e0050004100700070006c00690063006100740069006f006e0100000000ffffffff0000017100fffffffb000000100044006900730070006c0061007900730100000000000001710000015600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003b9fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003b9000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000041fc0100000004fb00000038005400650073007300650072006100630074005400720061006a006500630074006f007200790020002d00200053006c00690064006500720100000000000007800000012100fffffffb000000120020002d00200053006c00690064006500720100000000000007380000000000000000fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000005a30000037200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   SNPApplication:
     collapsed: false
   Selection:
@@ -488,6 +535,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1848
-  X: 72
-  Y: 27
+  Width: 1920
+  X: 0
+  Y: 0
