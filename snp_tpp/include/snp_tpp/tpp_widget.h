@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost_plugin_loader/plugin_loader.h>
 #include <QWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp/service.hpp>
@@ -22,7 +23,7 @@ class TPPWidget : public QWidget
   Q_OBJECT
 
 public:
-  TPPWidget(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
+  TPPWidget(rclcpp::Node::SharedPtr node, boost_plugin_loader::PluginLoader&& loader, QWidget* parent = nullptr);
 
 private:
   void callback(const snp_msgs::srv::GenerateToolPaths::Request::SharedPtr req,

@@ -75,8 +75,8 @@ target_link_libraries(
   boost_plugin_loader::boost_plugin_loader
   ${PCL_LIBRARIES})
 ament_target_dependencies(${PROJECT_NAME}_widget snp_msgs tf2_eigen)
-target_compile_definitions(${PROJECT_NAME}_widget PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDING_LIBRARY"
-                                                          SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
+target_compile_definitions(${PROJECT_NAME}_widget PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDING_LIBRARY")
+target_compile_definitions(${PROJECT_NAME}_widget PUBLIC SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
 
 # TPP GUI application
 add_executable(${PROJECT_NAME}_app src/tpp_app.cpp)
