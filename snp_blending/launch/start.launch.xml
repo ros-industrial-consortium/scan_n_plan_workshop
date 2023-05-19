@@ -98,7 +98,7 @@
       </node>
     </group>
     <group unless="$(var sim_execution)">
-      <include file="$(find-pkg-share snp_blending)/launch/ros2_control.launch.py">
+      <include file="$(find-pkg-share snp_motion_execution)/launch/ros2_control.launch.py">
         <arg name="robot_description_file" value="$(var robot_description_file)"/>
         <arg name="controllers_file" value="$(find-pkg-share snp_blending)/config/controllers.yaml"/>
       </include>

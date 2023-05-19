@@ -40,6 +40,7 @@ add_executable(robot_enable_simulator src/robot_enable_simulator_node.cpp)
 ament_target_dependencies(robot_enable_simulator rclcpp std_srvs)
 
 install(TARGETS ${PROJECT_NAME}_node execution_simulator robot_enable_simulator DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
