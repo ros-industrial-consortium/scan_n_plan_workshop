@@ -1,6 +1,6 @@
 #pragma once
-#include "cartesian_time_parameterization.hpp"
-#include "cartesian_time_parameterization_profile.hpp"
+#include "constant_tcp_speed_time_parameterization.hpp"
+#include "constant_tcp_speed_time_parameterization_profile.hpp"
 
 #include <tesseract_common/timer.h>
 #include <tesseract_motion_planners/planner_utils.h>
@@ -14,22 +14,23 @@
 
 namespace snp_motion_planning
 {
-class CartesianTimeParameterizationTaskInfo : public tesseract_planning::TaskInfo
+class ConstantTCPSpeedTimeParameterizationTaskInfo : public tesseract_planning::TaskInfo
 {
 public:
-  using Ptr = std::shared_ptr<CartesianTimeParameterizationTaskInfo>;
-  using ConstPtr = std::shared_ptr<const CartesianTimeParameterizationTaskInfo>;
+  using Ptr = std::shared_ptr<ConstantTCPSpeedTimeParameterizationTaskInfo>;
+  using ConstPtr = std::shared_ptr<const ConstantTCPSpeedTimeParameterizationTaskInfo>;
 
-  CartesianTimeParameterizationTaskInfo(std::size_t unique_id, std::string name = "CARTESIAN_TIME_PARAMETERIZATION")
+  ConstantTCPSpeedTimeParameterizationTaskInfo(std::size_t unique_id, std::string name = "CARTESIAN_TIME_"
+                                                                                         "PARAMETERIZATION")
     : TaskInfo(unique_id, std::move(name))
   {
   }
 };
 
-class CartesianTimeParameterizationTaskGenerator : public tesseract_planning::TaskGenerator
+class ConstantTCPSpeedTimeParameterizationTaskGenerator : public tesseract_planning::TaskGenerator
 {
 public:
-  CartesianTimeParameterizationTaskGenerator(std::string name = "CARTESIAN_TIME_PARAMETERIZATION")
+  ConstantTCPSpeedTimeParameterizationTaskGenerator(std::string name = "CARTESIAN_TIME_PARAMETERIZATION")
     : tesseract_planning::TaskGenerator(std::move(name))
   {
   }
@@ -39,7 +40,7 @@ public:
     if (input.isAborted())
       return 0;
 
-    auto info = std::make_shared<CartesianTimeParameterizationTaskInfo>(unique_id, name_);
+    auto info = std::make_shared<ConstantTCPSpeedTimeParameterizationTaskInfo>(unique_id, name_);
     info->return_value = 0;
     input.addTaskInfo(info);
     tesseract_common::Timer timer;
@@ -66,12 +67,12 @@ public:
     const double acc_trans = vel_trans;
     const double acc_rot = vel_rot;
     auto default_profile =
-        std::make_shared<CartesianTimeParameterizationProfile>(vel_trans, vel_rot, acc_trans, acc_rot);
+        std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>(vel_trans, vel_rot, acc_trans, acc_rot);
 
     // Get Composite Profile
     std::string profile_name = ci.getProfile();
     profile_name = tesseract_planning::getProfileString(name_, profile_name, input.composite_profile_remapping);
-    auto profile = tesseract_planning::getProfile<CartesianTimeParameterizationProfile>(
+    auto profile = tesseract_planning::getProfile<ConstantTCPSpeedTimeParameterizationProfile>(
         name_, profile_name, *input.profiles, default_profile);
     profile = tesseract_planning::applyProfileOverrides(name_, profile_name, profile, ci.profile_overrides);
 
@@ -90,9 +91,10 @@ public:
     tesseract_planning::TrajectoryContainer::Ptr trajectory =
         std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
 
-    CartesianTimeParameterization solver(input.env, manip_info.manipulator, manip_info.tcp_frame,
-                                         profile->max_translational_velocity, profile->max_rotational_velocity,
-                                         profile->max_translational_acceleration, profile->max_rotational_acceleration);
+    ConstantTCPSpeedTimeParameterization solver(input.env, manip_info.manipulator, manip_info.tcp_frame,
+                                                profile->max_translational_velocity, profile->max_rotational_velocity,
+                                                profile->max_translational_acceleration,
+                                                profile->max_rotational_acceleration);
 
     if (!solver.compute(*trajectory, profile->max_velocity_scaling_factor, profile->max_acceleration_scaling_factor))
     {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cartesian_time_parameterization_task_generator.hpp"
+#include "constant_tcp_speed_time_parameterization_task_generator.hpp"
 
 #include <tesseract_motion_planners/trajopt/trajopt_motion_planner.h>
 #include <tesseract_motion_planners/simple/simple_motion_planner.h>
@@ -140,7 +140,7 @@ tesseract_planning::TaskflowGenerator::UPtr createSNPRasterTaskflow()
 
   // Time parameterization
   int time_param =
-      graph->addNode(std::make_unique<snp_motion_planning::CartesianTimeParameterizationTaskGenerator>(), true);
+      graph->addNode(std::make_unique<snp_motion_planning::ConstantTCPSpeedTimeParameterizationTaskGenerator>(), true);
 
   graph->addEdges(check_input, { tesseract_planning::GraphTaskflow::ERROR_NODE, has_seed });
   graph->addEdges(has_seed, { tesseract_planning::GraphTaskflow::ERROR_NODE, seed_min_length });

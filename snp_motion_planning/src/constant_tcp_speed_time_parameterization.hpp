@@ -37,16 +37,16 @@ Eigen::VectorXd fromKDL(const KDL::Twist& k)
 
 namespace snp_motion_planning
 {
-class CartesianTimeParameterization
+class ConstantTCPSpeedTimeParameterization
 {
 public:
-  using Ptr = std::shared_ptr<CartesianTimeParameterization>;
-  using ConstPtr = std::shared_ptr<const CartesianTimeParameterization>;
+  using Ptr = std::shared_ptr<ConstantTCPSpeedTimeParameterization>;
+  using ConstPtr = std::shared_ptr<const ConstantTCPSpeedTimeParameterization>;
 
-  CartesianTimeParameterization(tesseract_environment::Environment::ConstPtr env, const std::string& group,
-                                const std::string& tcp, const double max_translational_vel,
-                                const double max_rotational_vel, const double max_translational_acc,
-                                const double max_rotational_acc)
+  ConstantTCPSpeedTimeParameterization(tesseract_environment::Environment::ConstPtr env, const std::string& group,
+                                       const std::string& tcp, const double max_translational_vel,
+                                       const double max_rotational_vel, const double max_translational_acc,
+                                       const double max_rotational_acc)
     : motion_group(env->getJointGroup(group))
     , tcp(tcp)
     , max_translational_vel(max_translational_vel)
