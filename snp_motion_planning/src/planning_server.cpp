@@ -28,6 +28,16 @@ static const std::string PLANNING_SERVICE = "create_motion_plan";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
 
+static const std::string VERBOSE_PARAM = "verbose";
+static const std::string TOUCH_LINKS_PARAM = "touch_links";
+static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
+static const std::string MAX_ROT_VEL_PARAM = "max_rotational_vel";
+static const std::string MAX_TRANS_ACC_PARAM = "max_translational_acc";
+static const std::string MAX_ROT_ACC_PARAM = "max_rotational_acc";
+static const std::string CHECK_JOINT_ACC_PARAM = "check_joint_accelerations";
+static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
+static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
+
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
   tesseract_common::Toolpath tps;
@@ -57,7 +67,6 @@ tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 template <typename T>
 T get(rclcpp::Node::SharedPtr node, const std::string& key)
 {
-  node->declare_parameter(key);
   T val;
   if (!node->get_parameter(key, val))
     throw std::runtime_error("Failed to get '" + key + "' parameter");
@@ -100,11 +109,22 @@ class PlanningServer
 public:
   PlanningServer(rclcpp::Node::SharedPtr node)
     : node_(node)
-    , verbose_(get<bool>(node_, "verbose"))
-    , touch_links_(get<std::vector<std::string>>(node_, "touch_links"))
     , env_(std::make_shared<tesseract_environment::Environment>())
     , planning_server_(std::make_shared<tesseract_planning::ProcessPlanningServer>(env_))
   {
+    // Declare ROS parameters
+    node_->declare_parameter("robot_description");
+    node_->declare_parameter("robot_description_semantic");
+    node_->declare_parameter(VERBOSE_PARAM, false);
+    node_->declare_parameter<std::vector<std::string>>(TOUCH_LINKS_PARAM, {});
+    node_->declare_parameter(MAX_TRANS_VEL_PARAM);
+    node_->declare_parameter(MAX_ROT_VEL_PARAM);
+    node_->declare_parameter(MAX_TRANS_ACC_PARAM);
+    node_->declare_parameter(MAX_ROT_ACC_PARAM);
+    node_->declare_parameter<bool>(CHECK_JOINT_ACC_PARAM, false);
+    node_->declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
+    node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
+
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
       auto srdf_string = get<std::string>(node_, "robot_description_semantic");
@@ -145,22 +165,6 @@ public:
       pd->addProfile<tesseract_planning::SeedMinLengthProfile>(
           tesseract_planning::profile_ns::SEED_MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
           std::make_shared<tesseract_planning::SeedMinLengthProfile>(5));
-      pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-          tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
-          std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
-
-      {
-        auto vel_trans = get<double>(node_, "max_translational_vel");
-        auto vel_rot = get<double>(node_, "max_rotational_vel");
-        auto acc_trans = get<double>(node_, "max_translational_acc");
-        auto acc_rot = get<double>(node_, "max_rotational_acc");
-        auto check_joint_acc = get<bool>(node_, "check_joint_acc");
-        auto cart_time_param_profile =
-            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-                vel_trans, vel_rot, acc_trans, acc_rot, check_joint_acc);
-        pd->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-            "CARTESIAN_TIME_PARAMETERIZATION", PROFILE, cart_time_param_profile);
-      }
     }
 
     // Advertise the ROS2 service
@@ -302,6 +306,31 @@ private:
     {
       RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
 
+      // Add custom profiles that require ROS parameters
+      {
+        auto pd = planning_server_->getProfiles();
+
+        auto velocity_scaling_factor = get<double>(node_, VEL_SCALE_PARAM);
+        auto acceleration_scaling_factor = get<double>(node_, ACC_SCALE_PARAM);
+
+        pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
+            tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
+            std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
+                                                                                         acceleration_scaling_factor));
+
+        auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
+        auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
+        auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
+        auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
+        auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
+        auto cart_time_param_profile =
+            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+                vel_trans, vel_rot, acc_trans, acc_rot, check_joint_acc, velocity_scaling_factor,
+                acceleration_scaling_factor);
+        pd->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+            "CARTESIAN_TIME_PARAMETERIZATION", PROFILE, cart_time_param_profile);
+      }
+
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
       tesseract_planning::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
@@ -310,10 +339,11 @@ private:
       plan_req.name = RASTER_PLANNER;
       plan_req.instructions = createProgram(manip_info, fromMsg(req->tool_paths));
       plan_req.env_state = env_->getState();
-      plan_req.commands = createScanAdditionCommands(req->mesh_filename, req->mesh_frame, touch_links_);
+      plan_req.commands = createScanAdditionCommands(req->mesh_filename, req->mesh_frame,
+                                                     get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
 
       auto log_level = console_bridge::getLogLevel();
-      if (verbose_)
+      if (get<bool>(node_, VERBOSE_PARAM))
         console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
       tesseract_planning::ProcessPlanningFuture plan_result = planning_server_->run(plan_req);
@@ -345,8 +375,6 @@ private:
   }
 
   rclcpp::Node::SharedPtr node_;
-  const bool verbose_{ false };
-  const std::vector<std::string> touch_links_;
 
   tesseract_environment::Environment::Ptr env_;
   tesseract_planning::ProcessPlanningServer::Ptr planning_server_;
