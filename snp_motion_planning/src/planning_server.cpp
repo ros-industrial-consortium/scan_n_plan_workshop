@@ -154,9 +154,10 @@ public:
         auto vel_rot = get<double>(node_, "max_rotational_vel");
         auto acc_trans = get<double>(node_, "max_translational_acc");
         auto acc_rot = get<double>(node_, "max_rotational_acc");
+        auto check_joint_acc = get<bool>(node_, "check_joint_acc");
         auto cart_time_param_profile =
-            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(vel_trans, vel_rot,
-                                                                                               acc_trans, acc_rot);
+            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+                vel_trans, vel_rot, acc_trans, acc_rot, check_joint_acc);
         pd->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
             "CARTESIAN_TIME_PARAMETERIZATION", PROFILE, cart_time_param_profile);
       }

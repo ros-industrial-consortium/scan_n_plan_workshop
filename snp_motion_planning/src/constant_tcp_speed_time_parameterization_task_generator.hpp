@@ -91,10 +91,10 @@ public:
     tesseract_planning::TrajectoryContainer::Ptr trajectory =
         std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
 
-    ConstantTCPSpeedTimeParameterization solver(input.env, manip_info.manipulator, manip_info.tcp_frame,
-                                                profile->max_translational_velocity, profile->max_rotational_velocity,
-                                                profile->max_translational_acceleration,
-                                                profile->max_rotational_acceleration);
+    ConstantTCPSpeedTimeParameterization solver(
+        input.env, manip_info.manipulator, manip_info.tcp_frame, profile->max_translational_velocity,
+        profile->max_rotational_velocity, profile->max_translational_acceleration, profile->max_rotational_acceleration,
+        profile->check_joint_accelerations);
 
     if (!solver.compute(*trajectory, profile->max_velocity_scaling_factor, profile->max_acceleration_scaling_factor))
     {
