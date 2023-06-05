@@ -2,6 +2,7 @@
 #include "taskflow_generators.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_process_managers/core/process_planning_server.h>
 #include <tesseract_motion_planners/default_planner_namespaces.h>
 #include <tesseract_process_managers/task_profiles/check_input_profile.h>
@@ -65,14 +66,14 @@ static tesseract_environment::Commands createScanAdditionCommands(const std::str
                                                                   const std::string& mesh_frame,
                                                                   const std::vector<std::string>& touch_links)
 {
-  std::vector<tesseract_geometry::ConvexMesh::Ptr> geometries =
-      tesseract_geometry::createMeshFromPath<tesseract_geometry::ConvexMesh>(filename);
+  std::vector<tesseract_geometry::Mesh::Ptr> geometries =
+      tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
 
   tesseract_scene_graph::Link link("scan");
-  for (tesseract_geometry::ConvexMesh::Ptr geometry : geometries)
+  for (tesseract_geometry::Mesh::Ptr geometry : geometries)
   {
     tesseract_scene_graph::Collision::Ptr collision = std::make_shared<tesseract_scene_graph::Collision>();
-    collision->geometry = geometry;
+    collision->geometry = tesseract_collision::makeConvexMesh(*geometry);
     link.collision.push_back(collision);
   }
 
