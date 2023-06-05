@@ -24,6 +24,9 @@
     </link>
   </xacro:macro>
 
+  <xacro:include filename="$(find snp_blending)/urdf/ros2_control.xacro"/>
+  <xacro:snp_blending_ros2_control name="SNP Blending ROS2 Control" prefix=""/>
+
   <xacro:include filename="$(find snp_blending)/urdf/mh180_120/mh180_120_macro.xacro"/>
   <xacro:motoman_mh180_120 prefix=""/>
 
