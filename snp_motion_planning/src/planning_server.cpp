@@ -73,6 +73,11 @@ T get(rclcpp::Node::SharedPtr node, const std::string& key)
   return val;
 }
 
+double clamp(const double val, const double min, const double max)
+{
+  return std::min(std::max(val, min), max);
+}
+
 static tesseract_environment::Commands createScanAdditionCommands(const std::string& filename,
                                                                   const std::string& mesh_frame,
                                                                   const std::vector<std::string>& touch_links)
@@ -310,8 +315,10 @@ private:
       {
         auto pd = planning_server_->getProfiles();
 
-        auto velocity_scaling_factor = get<double>(node_, VEL_SCALE_PARAM);
-        auto acceleration_scaling_factor = get<double>(node_, ACC_SCALE_PARAM);
+        auto velocity_scaling_factor =
+            clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
+        auto acceleration_scaling_factor =
+            clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
 
         pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
             tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
