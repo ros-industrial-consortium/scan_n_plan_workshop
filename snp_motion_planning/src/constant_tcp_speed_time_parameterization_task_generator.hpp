@@ -12,6 +12,8 @@
 #include <tesseract_command_language/utils/flatten_utils.h>
 #include <tesseract_time_parameterization/instructions_trajectory.h>
 
+static const std::string CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME = "CONSTANT_TCP_SPEED_TIME_PARAMETERIZATION";
+
 namespace snp_motion_planning
 {
 class ConstantTCPSpeedTimeParameterizationTaskInfo : public tesseract_planning::TaskInfo
@@ -20,8 +22,8 @@ public:
   using Ptr = std::shared_ptr<ConstantTCPSpeedTimeParameterizationTaskInfo>;
   using ConstPtr = std::shared_ptr<const ConstantTCPSpeedTimeParameterizationTaskInfo>;
 
-  ConstantTCPSpeedTimeParameterizationTaskInfo(std::size_t unique_id, std::string name = "CARTESIAN_TIME_"
-                                                                                         "PARAMETERIZATION")
+  ConstantTCPSpeedTimeParameterizationTaskInfo(std::size_t unique_id,
+                                               std::string name = CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME)
     : TaskInfo(unique_id, std::move(name))
   {
   }
@@ -30,7 +32,7 @@ public:
 class ConstantTCPSpeedTimeParameterizationTaskGenerator : public tesseract_planning::TaskGenerator
 {
 public:
-  ConstantTCPSpeedTimeParameterizationTaskGenerator(std::string name = "CARTESIAN_TIME_PARAMETERIZATION")
+  ConstantTCPSpeedTimeParameterizationTaskGenerator(std::string name = CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME)
     : tesseract_planning::TaskGenerator(std::move(name))
   {
   }
@@ -53,7 +55,7 @@ public:
     tesseract_planning::Instruction* input_results = input.getResults();
     if (!isCompositeInstruction(*input_results))
     {
-      CONSOLE_BRIDGE_logError("Input results to iterative spline parameterization must be a composite instruction");
+      info->message = "Input results to constant TCP speed time parameterization must be a composite instruction";
       saveOutputs(*info, input);
       info->elapsed_time = timer.elapsedSeconds();
       return 0;
@@ -80,7 +82,7 @@ public:
     auto flattened = tesseract_planning::flatten(ci, tesseract_planning::moveFilter);
     if (flattened.empty())
     {
-      CONSOLE_BRIDGE_logWarn("Cartesian time parameterization found no MoveInstructions to process");
+      info->message = "Cartesian time parameterization found no MoveInstructions to process";
       info->return_value = 1;
       saveOutputs(*info, input);
       info->elapsed_time = timer.elapsedSeconds();
@@ -91,21 +93,21 @@ public:
     tesseract_planning::TrajectoryContainer::Ptr trajectory =
         std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
 
-    ConstantTCPSpeedTimeParameterization solver(
-        input.env, manip_info.manipulator, manip_info.tcp_frame, profile->max_translational_velocity,
-        profile->max_rotational_velocity, profile->max_translational_acceleration, profile->max_rotational_acceleration,
-        profile->check_joint_accelerations);
+    ConstantTCPSpeedTimeParameterization solver(input.env, manip_info.manipulator, manip_info.tcp_frame,
+                                                profile->max_translational_velocity, profile->max_rotational_velocity,
+                                                profile->max_translational_acceleration,
+                                                profile->max_rotational_acceleration);
 
     if (!solver.compute(*trajectory, profile->max_velocity_scaling_factor, profile->max_acceleration_scaling_factor))
     {
-      CONSOLE_BRIDGE_logInform("Failed to perform iterative spline time parameterization for process input: %s!",
-                               input_results->getDescription().c_str());
+      info->message = "Failed to perform constant TCP speed time parameterization for process input: " +
+                      input_results->getDescription();
       saveOutputs(*info, input);
       info->elapsed_time = timer.elapsedSeconds();
       return 0;
     }
 
-    CONSOLE_BRIDGE_logDebug("Iterative spline time parameterization succeeded");
+    info->message = "Constant TCP speed time parameterization succeeded";
     info->return_value = 1;
     saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();

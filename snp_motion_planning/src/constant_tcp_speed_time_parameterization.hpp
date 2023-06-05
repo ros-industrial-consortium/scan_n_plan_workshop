@@ -46,13 +46,12 @@ public:
   ConstantTCPSpeedTimeParameterization(tesseract_environment::Environment::ConstPtr env, const std::string& group,
                                        const std::string& tcp, const double max_translational_vel,
                                        const double max_rotational_vel, const double max_translational_acc,
-                                       const double max_rotational_acc, const bool check_joint_accelerations = false)
+                                       const double max_rotational_acc)
     : motion_group(env->getJointGroup(group))
     , tcp(tcp)
     , max_translational_vel(max_translational_vel)
     , max_translational_acc(max_translational_acc)
     , eq_radius_(std::max((max_translational_vel / max_rotational_vel), (max_translational_acc / max_rotational_acc)))
-    , check_joint_accelerations_(check_joint_accelerations)
   {
     // Construct the KDL chain
     tesseract_kinematics::KDLChainData data;
@@ -163,37 +162,6 @@ public:
         const Eigen::VectorXd joint_vel = computeJointVelocity(vel, joints);
         const Eigen::VectorXd joint_acc = computeJointAcceleration(acc, joints, joint_vel);
 
-        // Check for joint velocity limit violations
-        Eigen::Array<bool, Eigen::Dynamic, 1> vel_limit_violations =
-            motion_group->getLimits().velocity_limits.array() < joint_vel.array().abs();
-        if (vel_limit_violations.any())
-        {
-          Eigen::ArrayXd capacity = 100.0 * joint_vel.array().abs() / motion_group->getLimits().velocity_limits.array();
-          std::stringstream ss;
-          ss << "Joint velocity limit violations at waypoint " << i << ": "
-             << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
-          throw std::runtime_error(ss.str());
-        }
-
-        // Optionally compute joint accelerations and check against defined limits
-        // Note: this check is optional because often joint accleration limits for manipulators are not provided by
-        // manufacturers and their values depend on the run-time configuraion of the robot (e.g., payload, etc.)
-        if (check_joint_accelerations_)
-        {
-          // Check for joint velocity acceleration limit violations
-          Eigen::Array<bool, Eigen::Dynamic, 1> acc_limit_violations =
-              motion_group->getLimits().acceleration_limits.array() < joint_acc.array().abs();
-          if (acc_limit_violations.any())
-          {
-            Eigen::ArrayXd capacity =
-                100.0 * joint_acc.array().abs() / motion_group->getLimits().acceleration_limits.array();
-            std::stringstream ss;
-            ss << "Joint acceleration limit violations at waypoint " << i << ": "
-               << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
-            throw std::runtime_error(ss.str());
-          }
-        }
-
         // Update the trajectory container
         trajectory.setData(i, joint_vel, joint_acc, t);
       }
@@ -281,7 +249,6 @@ private:
   const double max_translational_vel;
   const double max_translational_acc;
   const double eq_radius_;
-  const bool check_joint_accelerations_;
 };
 
 }  // namespace snp_motion_planning

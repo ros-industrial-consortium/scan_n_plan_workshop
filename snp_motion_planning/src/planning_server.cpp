@@ -320,22 +320,29 @@ private:
         auto acceleration_scaling_factor =
             clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
 
+        // ISP profile
         pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
             tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
             std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
                                                                                          acceleration_scaling_factor));
 
+        // Constant TCP time parameterization profile
         auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
         auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
         auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
         auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
-        auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
         auto cart_time_param_profile =
             std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-                vel_trans, vel_rot, acc_trans, acc_rot, check_joint_acc, velocity_scaling_factor,
-                acceleration_scaling_factor);
+                vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
         pd->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-            "CARTESIAN_TIME_PARAMETERIZATION", PROFILE, cart_time_param_profile);
+            CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
+
+        // Kinematic limit check
+        auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
+        auto kin_limit_check_profile =
+            std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
+        pd->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE,
+                                                                         kin_limit_check_profile);
       }
 
       // Create a manipulator info and program from the service request
