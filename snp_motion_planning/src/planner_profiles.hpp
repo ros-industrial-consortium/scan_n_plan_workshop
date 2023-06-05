@@ -78,10 +78,10 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 {
   // TrajOpt profiles
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
-  profile->smooth_velocities = false;
-
-  profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
-  profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 20.0);
+  profile->smooth_velocities = true;
+  profile->velocity_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
+  profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 25.0);
+  profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 50.0);
 
   profile->collision_cost_config.enabled = true;
   profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
@@ -96,5 +96,5 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 
 std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
 {
-  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 5);
+  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 1);
 }
