@@ -33,10 +33,12 @@
     <!-- TSDF parameters -->
     <param name="tsdf.min.x" value="0.0"/>
     <param name="tsdf.min.y" value="0.0"/>
-    <param name="tsdf.min.z" value="0.05"/>
+    <param name="tsdf.min.z" value="0.02"/>
     <param name="tsdf.max.x" value="0.9144"/>
     <param name="tsdf.max.y" value="1.524"/>
     <param name="tsdf.max.z" value="0.5"/>
+    <param name="tsdf.voxel_length" value="0.003"/>
+<!--    <param name="tsdf.sdf_trunc" value="0.025"/>-->
   </node>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->

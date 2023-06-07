@@ -8,15 +8,15 @@ tool_path_planner:
   name: PlaneSlicerRasterPlanner
   direction_generator:
     name: FixedDirectionGenerator
-    x: 1
-    y: 0
+    x: 0
+    y: 1
     z: 0
   origin_generator:
     name: FixedOriginGenerator
     x: 0
     y: 0
     z: 0
-  line_spacing: 0.03
+  line_spacing: 0.015
   point_spacing: 0.015
   min_hole_size: 0.1
   search_radius: 0.03
