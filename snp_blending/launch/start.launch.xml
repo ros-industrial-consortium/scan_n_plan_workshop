@@ -2,7 +2,7 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
-  <arg name="sim_execution" default="True" if="$(var sim_robot)"/>
+  <arg name="sim_execution" default="$(var sim_robot)" />
   <arg name="mesh_file" default="$(find-pkg-share snp_blending)/meshes/part_scan.ply"/>
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_blending)/config/scan_traj.yaml"/>
   <arg name="verbose" default="True"/>
@@ -11,7 +11,9 @@
   <arg name="robot_description" default="$(command 'xacro $(var robot_description_file)')"/>
   <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_blending)/config/workcell.srdf')"/>
   <arg name="reference_frame" default="table"/>
-  <arg name="follow_joint_trajectory_action" default="joint_trajectory_position_controller/follow_joint_trajectory"/>
+  <!-- Set the default name of the follow joint trajectory action depending on whether the robot is simulated (i.e., ros2_control) or real hardware is being used -->
+  <arg name="follow_joint_trajectory_action" default="joint_trajectory_position_controller/follow_joint_trajectory" if="$(var sim_robot)"/>
+  <arg name="follow_joint_trajectory_action" default="joint_trajectory_action" unless="$(var sim_robot)"/>
 
   <!-- URDF, Rviz -->
   <include file="$(find-pkg-share snp_blending)/launch/test.launch.xml">
