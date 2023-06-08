@@ -8,6 +8,7 @@
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_geometry/mesh_parser.h>
 #include <tesseract_rosutils/utils.h>
+#include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <tf2_eigen/tf2_eigen.h>
 
@@ -159,27 +160,6 @@ public:
     tesseract_monitor_->startPublishingEnvironment();
     tesseract_monitor_->startStateMonitor("/robot_joint_states", true);
 
-    profile_dict_ = std::make_shared<tesseract_planning::ProfileDictionary>();
-    // Add custom profiles
-    {
-      profile_dict_->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
-          SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
-      profile_dict_->addProfile<tesseract_planning::OMPLPlanProfile>(
-          OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
-      profile_dict_->addProfile<tesseract_planning::TrajOptPlanProfile>(
-          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile());
-      profile_dict_->addProfile<tesseract_planning::TrajOptCompositeProfile>(
-          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
-      profile_dict_->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
-          DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
-      profile_dict_->addProfile<tesseract_planning::MinLengthProfile>(
-          MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
-          std::make_shared<tesseract_planning::MinLengthProfile>(5));
-      profile_dict_->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-          ISP_DEFAULT_NAMESPACE, PROFILE,
-          std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>());
-    }
-
     // Advertise the ROS2 service
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
@@ -328,18 +308,31 @@ private:
     {
       RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
 
-      // Add custom profiles that require ROS parameters
-      {
-        auto pd = planning_server_->getProfiles();
 
+      tesseract_planning::ProfileDictionary::Ptr profile_dict = std::make_shared<tesseract_planning::ProfileDictionary>();
+      // Add custom profiles
+      {
+        profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
+            SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
+        profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(
+            OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
+        profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(
+            TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile());
+        profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
+            TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
+        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
+            DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
+        profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
+            MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
+            std::make_shared<tesseract_planning::MinLengthProfile>(5));
         auto velocity_scaling_factor =
             clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
         auto acceleration_scaling_factor =
             clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
 
         // ISP profile
-        pd->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-            tesseract_planning::profile_ns::ITERATIVE_SPLINE_PARAMETERIZATION_DEFAULT_NAMESPACE, PROFILE,
+        profile_dict->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
+            ISP_DEFAULT_NAMESPACE, PROFILE,
             std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
                                                                                          acceleration_scaling_factor));
 
@@ -348,18 +341,18 @@ private:
         auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
         auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
         auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
-        auto cart_time_param_profile =
-            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-                vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
-        pd->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-            CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
+//        auto cart_time_param_profile =
+//            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+//                vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
+//        profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+//            CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
 
         // Kinematic limit check
         auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
-        auto kin_limit_check_profile =
-            std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
-        pd->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE,
-                                                                         kin_limit_check_profile);
+//        auto kin_limit_check_profile =
+//            std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
+//        profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE,
+//                                                                         kin_limit_check_profile);
       }
 
       // Create a manipulator info and program from the service request
@@ -389,7 +382,7 @@ private:
       tesseract_planning::TaskComposerDataStorage input_data;
       input_data.setData(input_key, program);
       tesseract_planning::TaskComposerProblem problem(env_, input_data);
-      tesseract_planning::TaskComposerInput input(problem, profile_dict_);
+      tesseract_planning::TaskComposerInput input(problem, profile_dict);
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
@@ -466,7 +459,6 @@ private:
   rclcpp::Node::SharedPtr node_;
 
   tesseract_environment::Environment::Ptr env_;
-  tesseract_planning::ProfileDictionary::Ptr profile_dict_;
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
