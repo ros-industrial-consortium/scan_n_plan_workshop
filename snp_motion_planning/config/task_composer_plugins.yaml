@@ -9,7 +9,7 @@ task_composer_plugins:
       TaskflowExecutor:
         class: TaskflowTaskComposerExecutorFactory
         config:
-          threads: 2
+          threads: 8
   tasks:
     plugins:    
       SNPCartesianPipeline:
@@ -32,13 +32,14 @@ task_composer_plugins:
                 conditional: true
                 inputs: [input_data]
                 outputs: [output_data]
+                format_result_as_input: false
             #DescartesMotionPlannerTask:
             #  class: DescartesFMotionPlannerTaskFactory
             #  config:
             #    conditional: true
             #    inputs: [output_data]
             #    outputs: [output_data]
-            #    format_result_as_input: true
+            #    format_result_as_input: false
             TrajOptMotionPlannerTask:
               class: TrajOptMotionPlannerTaskFactory
               config:
@@ -59,10 +60,11 @@ task_composer_plugins:
                 outputs: [output_data]
           edges:
             - source: MinLengthTask
-            #  destinations: [DescartesMotionPlannerTask]
-              destinations: [TrajOptMotionPlannerTask]
+            #  destinations: [ErrorTask, DescartesMotionPlannerTask]
+              destinations: [ErrorTask, TrajOptMotionPlannerTask]
             #- source: DescartesMotionPlannerTask
             #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
+            #  destinations: [ErrorTask, DiscreteContactCheckTask]
             - source: TrajOptMotionPlannerTask
               destinations: [ErrorTask, DiscreteContactCheckTask]
             - source: DiscreteContactCheckTask
@@ -116,7 +118,8 @@ task_composer_plugins:
                 outputs: [output_data]
           edges:
             - source: MinLengthTask
-              destinations: [OMPLMotionPlannerTask]
+            #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
+              destinations: [ErrorTask, OMPLMotionPlannerTask]
             - source: OMPLMotionPlannerTask
               destinations: [ErrorTask, TrajOptMotionPlannerTask]
             - source: TrajOptMotionPlannerTask
@@ -172,7 +175,7 @@ task_composer_plugins:
                 outputs: [output_data]
           edges:
             - source: MinLengthTask
-              destinations: [TrajOptMotionPlannerTask]
+              destinations: [ErrorTask, TrajOptMotionPlannerTask]
             - source: TrajOptMotionPlannerTask
               destinations: [OMPLMotionPlannerTask, DiscreteContactCheckTask]
             - source: OMPLMotionPlannerTask
@@ -219,18 +222,24 @@ task_composer_plugins:
                   task: SNPFreespacePipeline
                   input_remapping:
                     input_data: output_data
+                  output_remapping:
+                    output_data: output_data
                   input_indexing: [output_data]
                   output_indexing: [output_data]
                 raster:
                   task: SNPCartesianPipeline
                   input_remapping:
                     input_data: output_data
+                  output_remapping:
+                    output_data: output_data
                   input_indexing: [output_data]
                   output_indexing: [output_data]
                 transition:
                   task: SNPTransitionPipeline
                   input_remapping:
                     input_data: output_data
+                  output_remapping:
+                    output_data: output_data
                   input_indexing: [output_data]
                   output_indexing: [output_data]
           edges:
