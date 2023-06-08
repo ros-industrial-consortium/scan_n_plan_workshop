@@ -414,6 +414,23 @@ private:
       tesseract_planning::TaskComposerFuture::UPtr exec_fut = executor->run(*task, input);
       exec_fut->wait();
 
+
+      auto info_map = input.task_infos.getInfoMap();
+      std::ofstream tc_out_results;
+      tc_out_results.open(tesseract_common::getTempPath() + "ScanNPlanPipelineResults.dot");
+      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, info_map);
+      tc_out_results.close();
+      for (const auto& pair : info_map)
+      {
+        if (!pair.second->dot_graph.empty())
+        {
+          std::ofstream sub_tc_out_results;
+          sub_tc_out_results.open(tesseract_common::getTempPath() + pair.second->name + "_Results.dot");
+          sub_tc_out_results << pair.second->dot_graph;
+          sub_tc_out_results.close();
+        }
+      }
+
       // Reset the log level
       console_bridge::setLogLevel(log_level);
 
