@@ -1,8 +1,9 @@
 #include "planner_profiles.hpp"
 //#include "taskflow_generators.hpp"
+//#include "constant_tcp_speed_time_parameterization_profile.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tesseract_time_parameterization/iterative_spline_parameterization.h>
+#include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
 #include <tesseract_monitoring/environment_monitor.h>
 #include <tesseract_monitoring/environment_monitor_interface.h>
 #include <tesseract_rosutils/plotting.h>
@@ -12,7 +13,7 @@
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <tesseract_time_parameterization/instructions_trajectory.h>
+#include <tesseract_time_parameterization/core/instructions_trajectory.h>
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_motion_planners/interface_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
@@ -23,12 +24,14 @@
 #include <tesseract_command_language/profile_dictionary.h>
 #include <tesseract_command_language/utils.h>
 
-#include <tesseract_task_composer/profiles/min_length_profile.h>
-#include <tesseract_task_composer/profiles/interative_spline_parameterization_profile.h>
+#include <tesseract_task_composer/planning/planning_task_composer_problem.h>
+#include <tesseract_task_composer/planning/profiles/min_length_profile.h>
+#include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 
-#include <tesseract_task_composer/task_composer_problem.h>
-#include <tesseract_task_composer/task_composer_input.h>
-#include <tesseract_task_composer/task_composer_plugin_factory.h>
+#include <tesseract_task_composer/core/task_composer_problem.h>
+#include <tesseract_task_composer/core/task_composer_input.h>
+#include <tesseract_task_composer/core/task_composer_plugin_factory.h>
+
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
@@ -381,8 +384,9 @@ private:
       const std::string output_key = task->getOutputKeys().front();
       tesseract_planning::TaskComposerDataStorage input_data;
       input_data.setData(input_key, program);
-      tesseract_planning::TaskComposerProblem problem(env_, input_data);
-      tesseract_planning::TaskComposerInput input(problem, profile_dict);
+      tesseract_planning::TaskComposerProblem::UPtr problem = std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(env_, input_data, profile_dict);
+      tesseract_planning::TaskComposerInput input(std::move(problem));
+      input.dotgraph = true;
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
@@ -411,18 +415,20 @@ private:
       auto info_map = input.task_infos.getInfoMap();
       std::ofstream tc_out_results;
       tc_out_results.open(tesseract_common::getTempPath() + "ScanNPlanPipelineResults.dot");
-      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, info_map);
+      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr, info_map);
       tc_out_results.close();
-      for (const auto& pair : info_map)
-      {
-        if (!pair.second->dot_graph.empty())
-        {
-          std::ofstream sub_tc_out_results;
-          sub_tc_out_results.open(tesseract_common::getTempPath() + pair.second->name + "_Results.dot");
-          sub_tc_out_results << pair.second->dot_graph;
-          sub_tc_out_results.close();
-        }
-      }
+//      for (const auto& pair : info_map)
+//      {
+//        std::cout << "Results: " << pair.second->name << std::endl;
+//        if (!pair.second->dotgraph.empty())
+//        {
+//          std::cout << "YES!" << std::endl;
+//          std::ofstream sub_tc_out_results;
+//          sub_tc_out_results.open(tesseract_common::getTempPath() + pair.second->name + "_Results.dot");
+//          sub_tc_out_results << pair.second->dotgraph;
+//          sub_tc_out_results.close();
+//        }
+//      }
 
       // Reset the log level
       console_bridge::setLogLevel(log_level);

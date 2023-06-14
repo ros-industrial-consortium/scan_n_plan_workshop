@@ -58,6 +58,12 @@ task_composer_plugins:
                 conditional: true
                 inputs: [output_data]
                 outputs: [output_data]
+           # ConstantTCPSpeedTimeParameterizationTask:
+           #   class: ConstantTCPSpeedTimeParameterizationTaskFactory
+           #   config:
+           #     conditional: true
+           #     inputs: [output_data]
+           #     outputs: [output_data]
           edges:
             - source: MinLengthTask
             #  destinations: [ErrorTask, DescartesMotionPlannerTask]

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constant_tcp_speed_time_parameterization_task_generator.hpp"
+#include "constant_tcp_speed_time_parameterization_task.hpp"
 #include "kinematic_limits_check_task_generator.hpp"
 
 #include <tesseract_motion_planners/trajopt/trajopt_motion_planner.h>

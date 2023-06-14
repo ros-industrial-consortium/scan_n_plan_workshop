@@ -25,27 +25,58 @@ find_package(tesseract_command_language REQUIRED)
 find_package(tesseract_task_composer REQUIRED)
 find_package(tesseract_kinematics REQUIRED)
 find_package(LAPACK REQUIRED) # Requried for ikfast
+find_package(yaml-cpp REQUIRED)
+
+#add_library(${PROJECT_NAME}_tasks SHARED
+#  src/constant_tcp_speed_time_parameterization_task.hpp
+##  src/kinematic_limits_check_task_generator.hpp
+#  )
+#ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
+#target_link_libraries(
+#  ${PROJECT_NAME}_tasks
+#  tesseract::tesseract_common
+#  tesseract::tesseract_command_language
+#  tesseract::tesseract_task_composer
+#  tesseract::tesseract_kinematics_kdl
+#  yaml-cpp)
 
 # Planning server
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_node
+#  ${PROJECT_NAME}_tasks
+  tesseract::tesseract_common
   tesseract::tesseract_command_language
   tesseract::tesseract_task_composer
+  tesseract::tesseract_task_composer_planning
   tesseract::tesseract_motion_planners_core
   tesseract::tesseract_motion_planners_simple
   tesseract::tesseract_motion_planners_ompl
   tesseract::tesseract_motion_planners_trajopt
   tesseract::tesseract_motion_planners_descartes
   tesseract::tesseract_time_parameterization_isp
-  tesseract::tesseract_kinematics_kdl)
+  tesseract::tesseract_kinematics_kdl
+  yaml-cpp)
 
 # Plugin Library
 add_library(${PROJECT_NAME}_plugins SHARED src/motoman_hc10_ikfast_plugin.cpp)
 target_link_libraries(${PROJECT_NAME}_plugins PUBLIC ${LAPACK_LIBRARIES} tesseract::tesseract_common
                                                      tesseract::tesseract_kinematics_ikfast)
 target_include_directories(${PROJECT_NAME}_plugins SYSTEM PUBLIC ${LAPACK_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+
+
+#add_library(${PROJECT_NAME}_factories src/task_composer_plugin_factory.cpp)
+#target_link_libraries(${PROJECT_NAME}_factories
+#  PUBLIC
+##  ${PROJECT_NAME}_tasks
+#tesseract::tesseract_common
+#tesseract::tesseract_command_language
+#tesseract::tesseract_task_composer
+#tesseract::tesseract_time_parameterization_core
+#tesseract::tesseract_motion_planners_core
+#tesseract::tesseract_kinematics_kdl
+#)
 
 # Install the executable(s)
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
