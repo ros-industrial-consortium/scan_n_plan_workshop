@@ -125,6 +125,12 @@ task_composer_plugins:
                 conditional: true
                 inputs: [output_data]
                 outputs: [output_data]
+            KinematicLimitsCheckTask:
+              class: KinematicLimitsCheckTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
           edges:
             - source: MinLengthTask
             #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
@@ -136,6 +142,8 @@ task_composer_plugins:
             - source: DiscreteContactCheckTask
               destinations: [ErrorTask, IterativeSplineParameterizationTask]
             - source: IterativeSplineParameterizationTask
+              destinations: [ErrorTask, KinematicLimitsCheckTask]
+            - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DoneTask]
       SNPTransitionPipeline:
         class: GraphTaskFactory
@@ -182,6 +190,12 @@ task_composer_plugins:
                 conditional: true
                 inputs: [output_data]
                 outputs: [output_data]
+            KinematicLimitsCheckTask:
+              class: KinematicLimitsCheckTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
           edges:
             - source: MinLengthTask
               destinations: [ErrorTask, TrajOptMotionPlannerTask]
@@ -192,6 +206,8 @@ task_composer_plugins:
             - source: DiscreteContactCheckTask
               destinations: [ErrorTask, IterativeSplineParameterizationTask]
             - source: IterativeSplineParameterizationTask
+              destinations: [ErrorTask, KinematicLimitsCheckTask]
+            - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DoneTask]
       SNPPipeline:
         class: GraphTaskFactory
