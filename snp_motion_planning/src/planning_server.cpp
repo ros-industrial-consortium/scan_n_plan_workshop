@@ -32,7 +32,6 @@
 #include <tesseract_task_composer/core/task_composer_input.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 
-
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
@@ -129,8 +128,7 @@ class PlanningServer
 {
 public:
   PlanningServer(rclcpp::Node::SharedPtr node)
-    : node_(node)
-    , env_(std::make_shared<tesseract_environment::Environment>())
+    : node_(node), env_(std::make_shared<tesseract_environment::Environment>())
   {
     // Declare ROS parameters
     node_->declare_parameter("robot_description");
@@ -311,23 +309,22 @@ private:
     {
       RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
 
-
-      tesseract_planning::ProfileDictionary::Ptr profile_dict = std::make_shared<tesseract_planning::ProfileDictionary>();
+      tesseract_planning::ProfileDictionary::Ptr profile_dict =
+          std::make_shared<tesseract_planning::ProfileDictionary>();
       // Add custom profiles
       {
-        profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(
-            SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
-        profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(
-            OMPL_DEFAULT_NAMESPACE, PROFILE, createOMPLProfile());
-        profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(
-            TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile());
-        profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
-            TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile());
-        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
-            DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>());
+        profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
+                                                                               createSimplePlannerProfile());
+        profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE,
+                                                                      createOMPLProfile());
+        profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
+                                                                         createTrajOptToolZFreePlanProfile());
+        profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
+                                                                              createTrajOptProfile());
+        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
+                                                                                  createDescartesPlanProfile<float>());
         profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
-            MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
-            std::make_shared<tesseract_planning::MinLengthProfile>(5));
+            MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(5));
         auto velocity_scaling_factor =
             clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
         auto acceleration_scaling_factor =
@@ -354,8 +351,8 @@ private:
         auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
         auto kin_limit_check_profile =
             std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
-        profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE,
-                                                                         kin_limit_check_profile);
+        profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME,
+                                                                                   PROFILE, kin_limit_check_profile);
       }
 
       // Create a manipulator info and program from the service request
@@ -364,8 +361,8 @@ private:
 
       // Set up composite instruction and environment
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
-      tesseract_environment::Commands env_cmds = createScanAdditionCommands(req->mesh_filename, req->mesh_frame,
-                                                                            get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
+      tesseract_environment::Commands env_cmds = createScanAdditionCommands(
+          req->mesh_filename, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
       tesseract_environment::Environment::Ptr planner_env = env_->clone();
       planner_env->applyCommands(env_cmds);
 
@@ -384,7 +381,8 @@ private:
       const std::string output_key = task->getOutputKeys().front();
       tesseract_planning::TaskComposerDataStorage input_data;
       input_data.setData(input_key, program);
-      tesseract_planning::TaskComposerProblem::UPtr problem = std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(env_, input_data, profile_dict);
+      tesseract_planning::TaskComposerProblem::UPtr problem =
+          std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(env_, input_data, profile_dict);
       tesseract_planning::TaskComposerInput input(std::move(problem));
       input.dotgraph = true;
 
@@ -410,7 +408,6 @@ private:
       // Run problem
       tesseract_planning::TaskComposerFuture::UPtr exec_fut = executor->run(*task, input);
       exec_fut->wait();
-
 
       auto info_map = input.task_infos.getInfoMap();
       std::ofstream tc_out_results;

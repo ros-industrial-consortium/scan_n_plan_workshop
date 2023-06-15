@@ -5,8 +5,10 @@
 
 namespace snp_motion_planning
 {
-using ConstantTCPSpeedTimeParameterizationTaskFactory = tesseract_planning::TaskComposerTaskFactory<ConstantTCPSpeedTimeParameterizationTask>;
+using ConstantTCPSpeedTimeParameterizationTaskFactory =
+    tesseract_planning::TaskComposerTaskFactory<ConstantTCPSpeedTimeParameterizationTask>;
 }  // namespace snp_motion_planning
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(snp_motion_planning::ConstantTCPSpeedTimeParameterizationTaskFactory, ConstantTCPSpeedTimeParameterizationTaskFactory)
+TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(snp_motion_planning::ConstantTCPSpeedTimeParameterizationTaskFactory,
+                                        ConstantTCPSpeedTimeParameterizationTaskFactory)

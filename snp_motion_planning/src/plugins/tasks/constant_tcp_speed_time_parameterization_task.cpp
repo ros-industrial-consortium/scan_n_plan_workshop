@@ -20,7 +20,6 @@
 
 namespace snp_motion_planning
 {
-
 class ConstantTCPSpeedTimeParameterizationTask : public tesseract_planning::TaskComposerTask
 {
 public:
@@ -34,18 +33,16 @@ public:
   {
   }
 
-  explicit ConstantTCPSpeedTimeParameterizationTask(std::string name,
-                                                    std::string input_key,
-                                                    std::string output_key,
+  explicit ConstantTCPSpeedTimeParameterizationTask(std::string name, std::string input_key, std::string output_key,
                                                     bool is_conditional = true)
-    : tesseract_planning::TaskComposerTask(std::move(name), is_conditional)  {
+    : tesseract_planning::TaskComposerTask(std::move(name), is_conditional)
+  {
     input_keys_.push_back(std::move(input_key));
     output_keys_.push_back(std::move(output_key));
   }
 
   explicit ConstantTCPSpeedTimeParameterizationTask(
-      std::string name,
-      const YAML::Node& config,
+      std::string name, const YAML::Node& config,
       const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
     : tesseract_planning::TaskComposerTask(std::move(name), config)
   {
@@ -53,14 +50,16 @@ public:
       throw std::runtime_error("ConstantTCPSpeedTimeParameterizationTask, config missing 'inputs' entry");
 
     if (input_keys_.size() > 1)
-      throw std::runtime_error("ConstantTCPSpeedTimeParameterizationTask, config 'inputs' entry currently only supports "
+      throw std::runtime_error("ConstantTCPSpeedTimeParameterizationTask, config 'inputs' entry currently only "
+                               "supports "
                                "one input key");
 
     if (output_keys_.empty())
       throw std::runtime_error("ConstantTCPSpeedTimeParameterizationTask, config missing 'outputs' entry");
 
     if (output_keys_.size() > 1)
-      throw std::runtime_error("ConstantTCPSpeedTimeParameterizationTask, config 'outputs' entry currently only supports "
+      throw std::runtime_error("ConstantTCPSpeedTimeParameterizationTask, config 'outputs' entry currently only "
+                               "supports "
                                "one output key");
   }
 
@@ -106,7 +105,8 @@ protected:
     // Check that inputs are valid
     // --------------------
     auto input_data_poly = input.data_storage.getData(input_keys_[0]);
-    if (input_data_poly.isNull() || input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
+    if (input_data_poly.isNull() ||
+        input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
       info->message = "Input results to constant TCP speed time parameterization must be a composite instruction";
       info->elapsed_time = timer.elapsedSeconds();
@@ -121,7 +121,7 @@ protected:
     std::string profile = ci.getProfile();
     profile = tesseract_planning::getProfileString(name_, profile, problem.composite_profile_remapping);
     auto cur_composite_profile = tesseract_planning::getProfile<ConstantTCPSpeedTimeParameterizationProfile>(
-          name_, profile, *problem.profiles, std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>());
+        name_, profile, *problem.profiles, std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>());
     cur_composite_profile = applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
 
     // Create data structures for checking for plan profile overrides
@@ -138,15 +138,16 @@ protected:
     tesseract_planning::TrajectoryContainer::Ptr trajectory =
         std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
 
-    ConstantTCPSpeedTimeParameterization solver(problem.env, manip_info.manipulator, manip_info.tcp_frame,
-                                                cur_composite_profile->max_translational_velocity, cur_composite_profile->max_rotational_velocity,
-                                                cur_composite_profile->max_translational_acceleration,
-                                                cur_composite_profile->max_rotational_acceleration);
+    ConstantTCPSpeedTimeParameterization solver(
+        problem.env, manip_info.manipulator, manip_info.tcp_frame, cur_composite_profile->max_translational_velocity,
+        cur_composite_profile->max_rotational_velocity, cur_composite_profile->max_translational_acceleration,
+        cur_composite_profile->max_rotational_acceleration);
 
-    if (!solver.compute(*trajectory, cur_composite_profile->max_velocity_scaling_factor, cur_composite_profile->max_acceleration_scaling_factor))
+    if (!solver.compute(*trajectory, cur_composite_profile->max_velocity_scaling_factor,
+                        cur_composite_profile->max_acceleration_scaling_factor))
     {
-      info->message = "Failed to perform constant TCP speed time parameterization for process input: " +
-          ci.getDescription();
+      info->message =
+          "Failed to perform constant TCP speed time parameterization for process input: " + ci.getDescription();
       info->elapsed_time = timer.elapsedSeconds();
       return info;
     }
@@ -160,7 +161,7 @@ protected:
     ss << ", masf: " << cur_composite_profile->max_acceleration_scaling_factor;
 
     info->color = "green";
-//    info->message = "Constant TCP speed time parameterization succeeded";
+    //    info->message = "Constant TCP speed time parameterization succeeded";
     info->message = ss.str();
     info->return_value = 1;
     info->elapsed_time = timer.elapsedSeconds();
@@ -180,4 +181,6 @@ protected:
 TESSERACT_SERIALIZE_ARCHIVES_INSTANTIATE(snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask)
 BOOST_CLASS_EXPORT_IMPLEMENT(snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask)
 
-TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask>, ConstantTCPSpeedTimeParameterizationTaskFactory)
+TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(
+    tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask>,
+    ConstantTCPSpeedTimeParameterizationTaskFactory)

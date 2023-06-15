@@ -20,7 +20,6 @@
 
 namespace snp_motion_planning
 {
-
 class KinematicLimitsCheckTask : public tesseract_planning::TaskComposerTask
 {
 public:
@@ -29,24 +28,20 @@ public:
   using UPtr = std::unique_ptr<KinematicLimitsCheckTask>;
   using ConstUPtr = std::unique_ptr<const KinematicLimitsCheckTask>;
 
-  KinematicLimitsCheckTask()
-    : tesseract_planning::TaskComposerTask(KINEMATIC_LIMITS_CHECK_TASK_NAME, true)
+  KinematicLimitsCheckTask() : tesseract_planning::TaskComposerTask(KINEMATIC_LIMITS_CHECK_TASK_NAME, true)
   {
   }
 
-  explicit KinematicLimitsCheckTask(std::string name,
-                                    std::string input_key,
-                                    std::string output_key,
+  explicit KinematicLimitsCheckTask(std::string name, std::string input_key, std::string output_key,
                                     bool is_conditional = true)
-    : tesseract_planning::TaskComposerTask(std::move(name), is_conditional)  {
+    : tesseract_planning::TaskComposerTask(std::move(name), is_conditional)
+  {
     input_keys_.push_back(std::move(input_key));
     output_keys_.push_back(std::move(output_key));
   }
 
-  explicit KinematicLimitsCheckTask(
-      std::string name,
-      const YAML::Node& config,
-      const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
+  explicit KinematicLimitsCheckTask(std::string name, const YAML::Node& config,
+                                    const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
     : tesseract_planning::TaskComposerTask(std::move(name), config)
   {
     if (input_keys_.empty())
@@ -107,7 +102,8 @@ protected:
     // Check that inputs are valid
     // --------------------
     auto input_data_poly = input.data_storage.getData(input_keys_[0]);
-    if (input_data_poly.isNull() || input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
+    if (input_data_poly.isNull() ||
+        input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
       info->message = "Input results to kinimatic limits check must be a composite instruction";
       info->elapsed_time = timer.elapsedSeconds();
@@ -122,7 +118,7 @@ protected:
     std::string profile = ci.getProfile();
     profile = tesseract_planning::getProfileString(name_, profile, problem.composite_profile_remapping);
     auto cur_composite_profile = tesseract_planning::getProfile<KinematicLimitsCheckProfile>(
-          name_, profile, *problem.profiles, std::make_shared<KinematicLimitsCheckProfile>());
+        name_, profile, *problem.profiles, std::make_shared<KinematicLimitsCheckProfile>());
     cur_composite_profile = applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
 
     // Create data structures for checking for plan profile overrides
@@ -216,4 +212,6 @@ protected:
 TESSERACT_SERIALIZE_ARCHIVES_INSTANTIATE(snp_motion_planning::KinematicLimitsCheckTask)
 BOOST_CLASS_EXPORT_IMPLEMENT(snp_motion_planning::KinematicLimitsCheckTask)
 
-TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::KinematicLimitsCheckTask>, KinematicLimitsCheckTaskFactory)
+TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(
+    tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::KinematicLimitsCheckTask>,
+    KinematicLimitsCheckTaskFactory)
