@@ -32,7 +32,7 @@ add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_node
-#  ${PROJECT_NAME}_tasks
+  # ${PROJECT_NAME}_tasks
   tesseract::tesseract_common
   tesseract::tesseract_command_language
   tesseract::tesseract_task_composer
@@ -52,10 +52,8 @@ target_link_libraries(${PROJECT_NAME}_plugins PUBLIC ${LAPACK_LIBRARIES} tessera
                                                      tesseract::tesseract_kinematics_ikfast)
 target_include_directories(${PROJECT_NAME}_plugins SYSTEM PUBLIC ${LAPACK_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME}_tasks SHARED
-  src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp
-  src/plugins/tasks/kinematic_limits_check_task.cpp
-  )
+add_library(${PROJECT_NAME}_tasks SHARED src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp
+                                         src/plugins/tasks/kinematic_limits_check_task.cpp)
 ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_tasks
@@ -66,18 +64,11 @@ target_link_libraries(
   tesseract::tesseract_time_parameterization_core
   yaml-cpp)
 
-
-#add_library(${PROJECT_NAME}_factories src/task_composer_plugin_factory.cpp)
-#target_link_libraries(${PROJECT_NAME}_factories
-#  PUBLIC
-##  ${PROJECT_NAME}_tasks
-#tesseract::tesseract_common
-#tesseract::tesseract_command_language
-#tesseract::tesseract_task_composer
-#tesseract::tesseract_time_parameterization_core
-#tesseract::tesseract_motion_planners_core
-#tesseract::tesseract_kinematics_kdl
-#)
+# add_library(${PROJECT_NAME}_factories src/task_composer_plugin_factory.cpp)
+# target_link_libraries(${PROJECT_NAME}_factories PUBLIC ${PROJECT_NAME}_tasks tesseract::tesseract_common
+# tesseract::tesseract_command_language tesseract::tesseract_task_composer
+# tesseract::tesseract_time_parameterization_core tesseract::tesseract_motion_planners_core
+# tesseract::tesseract_kinematics_kdl )
 
 # Install the executable(s)
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
