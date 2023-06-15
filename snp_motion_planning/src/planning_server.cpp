@@ -1,6 +1,6 @@
 #include "planner_profiles.hpp"
-//#include "taskflow_generators.hpp"
-//#include "constant_tcp_speed_time_parameterization_profile.hpp"
+#include "plugins/tasks/constant_tcp_speed_time_parameterization_profile.hpp"
+#include "plugins/tasks/kinematic_limits_check_profile.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
@@ -344,18 +344,18 @@ private:
         auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
         auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
         auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
-//        auto cart_time_param_profile =
-//            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-//                vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
-//        profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-//            CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
+        auto cart_time_param_profile =
+            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+                vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
+        profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+            CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
 
         // Kinematic limit check
         auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
-//        auto kin_limit_check_profile =
-//            std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
-//        profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE,
-//                                                                         kin_limit_check_profile);
+        auto kin_limit_check_profile =
+            std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
+        profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE,
+                                                                         kin_limit_check_profile);
       }
 
       // Create a manipulator info and program from the service request
@@ -417,18 +417,6 @@ private:
       tc_out_results.open(tesseract_common::getTempPath() + "ScanNPlanPipelineResults.dot");
       static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr, info_map);
       tc_out_results.close();
-//      for (const auto& pair : info_map)
-//      {
-//        std::cout << "Results: " << pair.second->name << std::endl;
-//        if (!pair.second->dotgraph.empty())
-//        {
-//          std::cout << "YES!" << std::endl;
-//          std::ofstream sub_tc_out_results;
-//          sub_tc_out_results.open(tesseract_common::getTempPath() + pair.second->name + "_Results.dot");
-//          sub_tc_out_results << pair.second->dotgraph;
-//          sub_tc_out_results.close();
-//        }
-//      }
 
       // Reset the log level
       console_bridge::setLogLevel(log_level);

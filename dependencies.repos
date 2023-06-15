@@ -16,5 +16,5 @@
     version: c2bff22f4990f04b8b10d64bbbd832618e0b0c02
 - git:
     local-name: tesseract_ros2
-    uri: https://github.com/rjoomen/tesseract_ros2.git
-    version: 9da3e4540ec84b44dd41a6023d3af4b04bb002fc
+    uri: https://github.com/marrts/tesseract_ros2.git
+    version: 11864423c068d67cbf008308895f6632c25ab7f0

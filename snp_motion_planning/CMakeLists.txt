@@ -27,19 +27,6 @@ find_package(tesseract_kinematics REQUIRED)
 find_package(LAPACK REQUIRED) # Requried for ikfast
 find_package(yaml-cpp REQUIRED)
 
-#add_library(${PROJECT_NAME}_tasks SHARED
-#  src/constant_tcp_speed_time_parameterization_task.hpp
-##  src/kinematic_limits_check_task_generator.hpp
-#  )
-#ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
-#target_link_libraries(
-#  ${PROJECT_NAME}_tasks
-#  tesseract::tesseract_common
-#  tesseract::tesseract_command_language
-#  tesseract::tesseract_task_composer
-#  tesseract::tesseract_kinematics_kdl
-#  yaml-cpp)
-
 # Planning server
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
@@ -60,10 +47,24 @@ target_link_libraries(
   yaml-cpp)
 
 # Plugin Library
-add_library(${PROJECT_NAME}_plugins SHARED src/motoman_hc10_ikfast_plugin.cpp)
+add_library(${PROJECT_NAME}_plugins SHARED src/plugins/kinematics/motoman_hc10_ikfast_plugin.cpp)
 target_link_libraries(${PROJECT_NAME}_plugins PUBLIC ${LAPACK_LIBRARIES} tesseract::tesseract_common
                                                      tesseract::tesseract_kinematics_ikfast)
 target_include_directories(${PROJECT_NAME}_plugins SYSTEM PUBLIC ${LAPACK_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+
+add_library(${PROJECT_NAME}_tasks SHARED
+  src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp
+  src/plugins/tasks/kinematic_limits_check_task.cpp
+  )
+ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
+target_link_libraries(
+  ${PROJECT_NAME}_tasks
+  tesseract::tesseract_common
+  tesseract::tesseract_command_language
+  tesseract::tesseract_task_composer
+  tesseract::tesseract_kinematics_kdl
+  tesseract::tesseract_time_parameterization_core
+  yaml-cpp)
 
 
 #add_library(${PROJECT_NAME}_factories src/task_composer_plugin_factory.cpp)
@@ -82,7 +83,7 @@ target_include_directories(${PROJECT_NAME}_plugins SYSTEM PUBLIC ${LAPACK_INCLUD
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
 
 # Install the library(ies)
-install(TARGETS ${PROJECT_NAME}_plugins EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PROJECT_NAME}_plugins ${PROJECT_NAME}_tasks EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

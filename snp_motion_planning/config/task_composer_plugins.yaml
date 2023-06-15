@@ -3,6 +3,7 @@ task_composer_plugins:
     - /usr/local/lib
   search_libraries:
     - tesseract_task_composer_factories
+    - snp_motion_planning_tasks
   executors:
     default: TaskflowExecutor
     plugins:
@@ -52,30 +53,39 @@ task_composer_plugins:
               config:
                 conditional: true
                 inputs: [output_data]
-            IterativeSplineParameterizationTask:
-              class: IterativeSplineParameterizationTaskFactory
-              config:
-                conditional: true
-                inputs: [output_data]
-                outputs: [output_data]
-           # ConstantTCPSpeedTimeParameterizationTask:
-           #   class: ConstantTCPSpeedTimeParameterizationTaskFactory
+           # IterativeSplineParameterizationTask:
+           #   class: IterativeSplineParameterizationTaskFactory
            #   config:
            #     conditional: true
            #     inputs: [output_data]
            #     outputs: [output_data]
+            ConstantTCPSpeedTimeParameterizationTask:
+              class: ConstantTCPSpeedTimeParameterizationTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
+            KinematicLimitsCheckTask:
+              class: KinematicLimitsCheckTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
           edges:
             - source: MinLengthTask
             #  destinations: [ErrorTask, DescartesMotionPlannerTask]
               destinations: [ErrorTask, TrajOptMotionPlannerTask]
             #- source: DescartesMotionPlannerTask
             #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
-            #  destinations: [ErrorTask, DiscreteContactCheckTask]
+            #  destinations: [ErrorTask, KinematicLimitsCheckTask]
             - source: TrajOptMotionPlannerTask
+              destinations: [ErrorTask, KinematicLimitsCheckTask]
+            - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DiscreteContactCheckTask]
             - source: DiscreteContactCheckTask
-              destinations: [ErrorTask, IterativeSplineParameterizationTask]
-            - source: IterativeSplineParameterizationTask
+            #  destinations: [ErrorTask, IterativeSplineParameterizationTask]
+              destinations: [ErrorTask, ConstantTCPSpeedTimeParameterizationTask]
+            - source: ConstantTCPSpeedTimeParameterizationTask # IterativeSplineParameterizationTask
               destinations: [ErrorTask, DoneTask]
       SNPFreespacePipeline:
         class: GraphTaskFactory

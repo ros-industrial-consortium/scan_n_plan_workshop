@@ -1,6 +1,7 @@
-#pragma once
 #include "constant_tcp_speed_time_parameterization.hpp"
 #include "constant_tcp_speed_time_parameterization_profile.hpp"
+
+#include <tesseract_task_composer/core/task_composer_plugin_factory_utils.h>
 
 #include <tesseract_common/macros.h>
 #include <console_bridge/console.h>
@@ -10,17 +11,16 @@
 #include <tesseract_motion_planners/planner_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/poly/move_instruction_poly.h>
-#include <tesseract_time_parameterization/instructions_trajectory.h>
+#include <tesseract_time_parameterization/core/instructions_trajectory.h>
 
-#include <tesseract_task_composer/task_composer_task.h>
-#include <tesseract_task_composer/task_composer_executor_plugin_factory.h>
-#include <tesseract_task_composer/task_composer_plugin_factory.h>
-#include <tesseract_task_composer/task_composer_task_plugin_factory.h>
+#include <tesseract_task_composer/core/task_composer_task.h>
+#include <tesseract_task_composer/core/task_composer_plugin_factory.h>
+#include <tesseract_task_composer/core/task_composer_plugin_factory_utils.h>
+#include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 
 namespace snp_motion_planning
 {
 
-class tesseract_planning::TaskComposerPluginFactory;
 class ConstantTCPSpeedTimeParameterizationTask : public tesseract_planning::TaskComposerTask
 {
 public:
@@ -30,7 +30,7 @@ public:
   using ConstUPtr = std::unique_ptr<const ConstantTCPSpeedTimeParameterizationTask>;
 
   ConstantTCPSpeedTimeParameterizationTask()
-    : tesseract_planning::TaskComposerTask("ConstantTCPSpeedTimeParameterizationTask", true)
+    : tesseract_planning::TaskComposerTask(CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, true)
   {
   }
 
@@ -85,17 +85,19 @@ protected:
   friend struct tesseract_common::Serialization;
   friend class boost::serialization::access;
   tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerInput& input,
-                                                         OptionalTaskComposerExecutor executor = std::nullopt) const override final
+                                                         OptionalTaskComposerExecutor /*executor*/) const override final
   {
-    auto info = std::make_unique<tesseract_planning::TaskComposerNodeInfo>(*this);
+    auto info = std::make_unique<tesseract_planning::TaskComposerNodeInfo>(*this, input);
     info->return_value = 0;
-    info->env = input.problem.env;
 
     if (input.isAborted())
     {
       info->message = "Aborted";
       return info;
     }
+
+    // Get the problem
+    auto& problem = dynamic_cast<tesseract_planning::PlanningTaskComposerProblem&>(*input.problem);
 
     tesseract_common::Timer timer;
     timer.start();
@@ -115,18 +117,11 @@ protected:
     auto& ci = input_data_poly.as<tesseract_planning::CompositeInstruction>();
     const tesseract_common::ManipulatorInfo& manip_info = ci.getManipulatorInfo();
 
-    const double vel_trans = 0.250;
-    const double vel_rot = M_PI / 2.0;
-    const double acc_trans = vel_trans;
-    const double acc_rot = vel_rot;
-    auto default_profile =
-        std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>(vel_trans, vel_rot, acc_trans, acc_rot);
-
     // Get Composite Profile
     std::string profile = ci.getProfile();
-    profile = tesseract_planning::getProfileString(name_, profile, input.problem.composite_profile_remapping);
+    profile = tesseract_planning::getProfileString(name_, profile, problem.composite_profile_remapping);
     auto cur_composite_profile = tesseract_planning::getProfile<ConstantTCPSpeedTimeParameterizationProfile>(
-          name_, profile, *input.profiles, std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>());
+          name_, profile, *problem.profiles, std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>());
     cur_composite_profile = applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
 
     // Create data structures for checking for plan profile overrides
@@ -143,7 +138,7 @@ protected:
     tesseract_planning::TrajectoryContainer::Ptr trajectory =
         std::make_shared<tesseract_planning::InstructionsTrajectory>(ci);
 
-    ConstantTCPSpeedTimeParameterization solver(input.problem.env, manip_info.manipulator, manip_info.tcp_frame,
+    ConstantTCPSpeedTimeParameterization solver(problem.env, manip_info.manipulator, manip_info.tcp_frame,
                                                 cur_composite_profile->max_translational_velocity, cur_composite_profile->max_rotational_velocity,
                                                 cur_composite_profile->max_translational_acceleration,
                                                 cur_composite_profile->max_rotational_acceleration);
@@ -156,7 +151,17 @@ protected:
       return info;
     }
 
-    info->message = "Constant TCP speed time parameterization succeeded";
+    std::stringstream ss;
+    ss << "Success: mtv: " << cur_composite_profile->max_translational_velocity;
+    ss << ", mrv: " << cur_composite_profile->max_rotational_velocity;
+    ss << ", mta: " << cur_composite_profile->max_translational_acceleration;
+    ss << ", mra: " << cur_composite_profile->max_rotational_acceleration;
+    ss << ", mvsf: " << cur_composite_profile->max_velocity_scaling_factor;
+    ss << ", masf: " << cur_composite_profile->max_acceleration_scaling_factor;
+
+    info->color = "green";
+//    info->message = "Constant TCP speed time parameterization succeeded";
+    info->message = ss.str();
     info->return_value = 1;
     info->elapsed_time = timer.elapsedSeconds();
     return info;
@@ -175,4 +180,4 @@ protected:
 TESSERACT_SERIALIZE_ARCHIVES_INSTANTIATE(snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask)
 BOOST_CLASS_EXPORT_IMPLEMENT(snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask)
 
-//TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask>, ConstantTCPSpeedTimeParameterizationTaskFactory)
+TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::ConstantTCPSpeedTimeParameterizationTask>, ConstantTCPSpeedTimeParameterizationTaskFactory)

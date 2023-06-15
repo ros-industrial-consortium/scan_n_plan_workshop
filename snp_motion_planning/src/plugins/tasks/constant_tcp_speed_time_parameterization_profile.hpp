@@ -4,7 +4,7 @@
 #include <cmath>
 
 
-static const std::string CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME = "CONSTANT_TCP_SPEED_TIME_PARAMETERIZATION";
+static const std::string CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME = "ConstantTCPSpeedTimeParameterizationTask";
 
 namespace snp_motion_planning
 {

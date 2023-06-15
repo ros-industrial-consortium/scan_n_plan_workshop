@@ -11,7 +11,7 @@
 #include <tesseract_kinematics/core/joint_group.h>
 #include <tesseract_kinematics/kdl/kdl_utils.h>
 #include <tesseract_kinematics/core/utils.h>
-#include <tesseract_time_parameterization/trajectory_container.h>
+#include <tesseract_time_parameterization/core/trajectory_container.h>
 #include <tesseract_environment/environment.h>
 
 /** @details Adapted from http://docs.ros.org/en/indigo/api/eigen_conversions/html/eigen__kdl_8cpp_source.html#l00090 */
