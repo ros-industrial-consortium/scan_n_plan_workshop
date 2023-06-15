@@ -152,18 +152,9 @@ protected:
       return info;
     }
 
-    std::stringstream ss;
-    ss << "Success: mtv: " << cur_composite_profile->max_translational_velocity;
-    ss << ", mrv: " << cur_composite_profile->max_rotational_velocity;
-    ss << ", mta: " << cur_composite_profile->max_translational_acceleration;
-    ss << ", mra: " << cur_composite_profile->max_rotational_acceleration;
-    ss << ", mvsf: " << cur_composite_profile->max_velocity_scaling_factor;
-    ss << ", masf: " << cur_composite_profile->max_acceleration_scaling_factor;
-
     info->color = "green";
-    //    info->message = "Constant TCP speed time parameterization succeeded";
+    info->message = "Constant TCP speed time parameterization succeeded";
     input.data_storage.setData(output_keys_[0], input_data_poly);
-    info->message = ss.str();
     info->return_value = 1;
     info->elapsed_time = timer.elapsedSeconds();
     return info;
