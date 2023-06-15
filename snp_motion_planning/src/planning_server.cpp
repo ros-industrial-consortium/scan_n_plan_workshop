@@ -324,7 +324,7 @@ private:
         profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
                                                                                   createDescartesPlanProfile<float>());
         profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
-            MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(5));
+            MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(6));
         auto velocity_scaling_factor =
             clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
         auto acceleration_scaling_factor =
