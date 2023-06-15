@@ -162,6 +162,7 @@ protected:
 
     info->color = "green";
     //    info->message = "Constant TCP speed time parameterization succeeded";
+    input.data_storage.setData(output_keys_[0], input_data_poly);
     info->message = ss.str();
     info->return_value = 1;
     info->elapsed_time = timer.elapsedSeconds();
