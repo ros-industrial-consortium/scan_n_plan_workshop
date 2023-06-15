@@ -53,12 +53,6 @@ task_composer_plugins:
               config:
                 conditional: true
                 inputs: [output_data]
-           # IterativeSplineParameterizationTask:
-           #   class: IterativeSplineParameterizationTaskFactory
-           #   config:
-           #     conditional: true
-           #     inputs: [output_data]
-           #     outputs: [output_data]
             ConstantTCPSpeedTimeParameterizationTask:
               class: ConstantTCPSpeedTimeParameterizationTaskFactory
               config:
@@ -77,15 +71,14 @@ task_composer_plugins:
               destinations: [ErrorTask, TrajOptMotionPlannerTask]
             #- source: DescartesMotionPlannerTask
             #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
-            #  destinations: [ErrorTask, KinematicLimitsCheckTask]
+            #  destinations: [ErrorTask, DiscreteContactCheckTask]
             - source: TrajOptMotionPlannerTask
-              destinations: [ErrorTask, KinematicLimitsCheckTask]
-            - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DiscreteContactCheckTask]
             - source: DiscreteContactCheckTask
-            #  destinations: [ErrorTask, IterativeSplineParameterizationTask]
               destinations: [ErrorTask, ConstantTCPSpeedTimeParameterizationTask]
             - source: ConstantTCPSpeedTimeParameterizationTask # IterativeSplineParameterizationTask
+              destinations: [ErrorTask, KinematicLimitsCheckTask]
+            - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DoneTask]
       SNPFreespacePipeline:
         class: GraphTaskFactory
