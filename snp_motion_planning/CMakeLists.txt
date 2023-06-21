@@ -64,12 +64,6 @@ target_link_libraries(
   tesseract::tesseract_time_parameterization_core
   yaml-cpp)
 
-# add_library(${PROJECT_NAME}_factories src/task_composer_plugin_factory.cpp)
-# target_link_libraries(${PROJECT_NAME}_factories PUBLIC ${PROJECT_NAME}_tasks tesseract::tesseract_common
-# tesseract::tesseract_command_language tesseract::tesseract_task_composer
-# tesseract::tesseract_time_parameterization_core tesseract::tesseract_motion_planners_core
-# tesseract::tesseract_kinematics_kdl )
-
 # Install the executable(s)
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})
 
