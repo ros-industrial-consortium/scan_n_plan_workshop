@@ -27,6 +27,7 @@
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
+#include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 
 #include <tesseract_task_composer/core/task_composer_problem.h>
 #include <tesseract_task_composer/core/task_composer_input.h>
@@ -49,6 +50,8 @@ static const std::string MAX_ROT_ACC_PARAM = "max_rotational_acc";
 static const std::string CHECK_JOINT_ACC_PARAM = "check_joint_accelerations";
 static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
 static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
+static const std::string LVS_PARAM = "contact_check_longest_valid_segment";
+static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -141,6 +144,8 @@ public:
     node_->declare_parameter<bool>(CHECK_JOINT_ACC_PARAM, false);
     node_->declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
+    node_->declare_parameter<double>(LVS_PARAM, 0.05);
+    node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -334,6 +339,13 @@ private:
             ISP_DEFAULT_NAMESPACE, PROFILE,
             std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
                                                                                          acceleration_scaling_factor));
+
+        // Discrete contact check profile
+        auto contact_check_lvs = get<double>(node_, LVS_PARAM);
+        auto contact_check_dist = get<double>(node_, CONTACT_DIST_PARAM);
+        profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
+              CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+              std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, contact_check_dist));
 
         // Constant TCP time parameterization profile
         auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
