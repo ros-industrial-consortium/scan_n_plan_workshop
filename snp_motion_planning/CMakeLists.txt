@@ -32,7 +32,6 @@ add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_node
-  # ${PROJECT_NAME}_tasks
   tesseract::tesseract_common
   tesseract::tesseract_command_language
   tesseract::tesseract_task_composer
