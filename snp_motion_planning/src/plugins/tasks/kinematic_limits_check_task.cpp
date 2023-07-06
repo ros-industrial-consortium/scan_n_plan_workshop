@@ -83,7 +83,7 @@ protected:
   tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerInput& input,
                                                          OptionalTaskComposerExecutor /*executor*/) const override final
   {
-    auto info = std::make_unique<tesseract_planning::TaskComposerNodeInfo>(*this, input);
+    auto info = std::make_unique<tesseract_planning::TaskComposerNodeInfo>(*this);
     info->return_value = 0;
 
     if (input.isAborted())

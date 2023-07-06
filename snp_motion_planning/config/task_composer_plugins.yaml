@@ -80,6 +80,7 @@ task_composer_plugins:
               destinations: [ErrorTask, KinematicLimitsCheckTask]
             - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DoneTask]
+          terminals: [ErrorTask, DoneTask]
       SNPFreespacePipeline:
         class: GraphTaskFactory
         config:
@@ -145,6 +146,7 @@ task_composer_plugins:
               destinations: [ErrorTask, KinematicLimitsCheckTask]
             - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DoneTask]
+          terminals: [ErrorTask, DoneTask]
       SNPTransitionPipeline:
         class: GraphTaskFactory
         config:
@@ -209,6 +211,7 @@ task_composer_plugins:
               destinations: [ErrorTask, KinematicLimitsCheckTask]
             - source: KinematicLimitsCheckTask
               destinations: [ErrorTask, DoneTask]
+          terminals: [ErrorTask, DoneTask]
       SNPPipeline:
         class: GraphTaskFactory
         config:
@@ -245,28 +248,31 @@ task_composer_plugins:
                 outputs: [output_data]
                 freespace:
                   task: SNPFreespacePipeline
-                  input_remapping:
-                    input_data: output_data
-                  output_remapping:
-                    output_data: output_data
-                  input_indexing: [output_data]
-                  output_indexing: [output_data]
+                  config:
+                    input_remapping:
+                      input_data: output_data
+                    output_remapping:
+                      output_data: output_data
+                    input_indexing: [output_data]
+                    output_indexing: [output_data]
                 raster:
                   task: SNPCartesianPipeline
-                  input_remapping:
-                    input_data: output_data
-                  output_remapping:
-                    output_data: output_data
-                  input_indexing: [output_data]
-                  output_indexing: [output_data]
+                  config:
+                    input_remapping:
+                      input_data: output_data
+                    output_remapping:
+                      output_data: output_data
+                    input_indexing: [output_data]
+                    output_indexing: [output_data]
                 transition:
                   task: SNPTransitionPipeline
-                  input_remapping:
-                    input_data: output_data
-                  output_remapping:
-                    output_data: output_data
-                  input_indexing: [output_data]
-                  output_indexing: [output_data]
+                  config:
+                    input_remapping:
+                      input_data: output_data
+                    output_remapping:
+                      output_data: output_data
+                    input_indexing: [output_data]
+                    output_indexing: [output_data]
           edges:
             - source: SimpleMotionPlannerTask
               destinations: [ErrorTask, DescartesMotionPlannerTask]
@@ -274,3 +280,4 @@ task_composer_plugins:
               destinations: [ErrorTask, RasterMotionTask]
             - source: RasterMotionTask
               destinations: [ErrorTask, DoneTask]
+          terminals: [ErrorTask, DoneTask]

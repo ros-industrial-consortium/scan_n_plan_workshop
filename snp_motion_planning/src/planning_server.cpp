@@ -344,8 +344,8 @@ private:
         auto contact_check_lvs = get<double>(node_, LVS_PARAM);
         auto contact_check_dist = get<double>(node_, CONTACT_DIST_PARAM);
         profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
-              CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-              std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, contact_check_dist));
+            CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+            std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, contact_check_dist));
 
         // Constant TCP time parameterization profile
         auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
