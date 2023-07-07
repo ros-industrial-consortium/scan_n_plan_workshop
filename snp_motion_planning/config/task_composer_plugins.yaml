@@ -23,8 +23,8 @@ task_composer_plugins:
               class: DoneTaskFactory
               config:
                 conditional: false
-            ErrorTask:
-              class: ErrorTaskFactory
+            AbortTask:
+              class: AbortTaskFactory
               config:
                 conditional: false
             MinLengthTask:
@@ -67,20 +67,20 @@ task_composer_plugins:
                 outputs: [output_data]
           edges:
             - source: MinLengthTask
-            #  destinations: [ErrorTask, DescartesMotionPlannerTask]
-              destinations: [ErrorTask, TrajOptMotionPlannerTask]
+            #  destinations: [AbortTask, DescartesMotionPlannerTask]
+              destinations: [AbortTask, TrajOptMotionPlannerTask]
             #- source: DescartesMotionPlannerTask
-            #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
-            #  destinations: [ErrorTask, DiscreteContactCheckTask]
+            #  destinations: [AbortTask, TrajOptMotionPlannerTask]
+            #  destinations: [AbortTask, DiscreteContactCheckTask]
             - source: TrajOptMotionPlannerTask
-              destinations: [ErrorTask, DiscreteContactCheckTask]
+              destinations: [AbortTask, DiscreteContactCheckTask]
             - source: DiscreteContactCheckTask
-              destinations: [ErrorTask, ConstantTCPSpeedTimeParameterizationTask]
+              destinations: [AbortTask, ConstantTCPSpeedTimeParameterizationTask]
             - source: ConstantTCPSpeedTimeParameterizationTask # IterativeSplineParameterizationTask
-              destinations: [ErrorTask, KinematicLimitsCheckTask]
+              destinations: [AbortTask, KinematicLimitsCheckTask]
             - source: KinematicLimitsCheckTask
-              destinations: [ErrorTask, DoneTask]
-          terminals: [ErrorTask, DoneTask]
+              destinations: [AbortTask, DoneTask]
+          terminals: [AbortTask, DoneTask]
       SNPFreespacePipeline:
         class: GraphTaskFactory
         config:
@@ -91,8 +91,8 @@ task_composer_plugins:
               class: DoneTaskFactory
               config:
                 conditional: false
-            ErrorTask:
-              class: ErrorTaskFactory
+            AbortTask:
+              class: AbortTaskFactory
               config:
                 conditional: false
             MinLengthTask:
@@ -134,19 +134,19 @@ task_composer_plugins:
                 outputs: [output_data]
           edges:
             - source: MinLengthTask
-            #  destinations: [ErrorTask, TrajOptMotionPlannerTask]
-              destinations: [ErrorTask, OMPLMotionPlannerTask]
+            #  destinations: [AbortTask, TrajOptMotionPlannerTask]
+              destinations: [AbortTask, OMPLMotionPlannerTask]
             - source: OMPLMotionPlannerTask
-              destinations: [ErrorTask, TrajOptMotionPlannerTask]
+              destinations: [AbortTask, TrajOptMotionPlannerTask]
             - source: TrajOptMotionPlannerTask
-              destinations: [ErrorTask, DiscreteContactCheckTask]
+              destinations: [AbortTask, DiscreteContactCheckTask]
             - source: DiscreteContactCheckTask
-              destinations: [ErrorTask, IterativeSplineParameterizationTask]
+              destinations: [AbortTask, IterativeSplineParameterizationTask]
             - source: IterativeSplineParameterizationTask
-              destinations: [ErrorTask, KinematicLimitsCheckTask]
+              destinations: [AbortTask, KinematicLimitsCheckTask]
             - source: KinematicLimitsCheckTask
-              destinations: [ErrorTask, DoneTask]
-          terminals: [ErrorTask, DoneTask]
+              destinations: [AbortTask, DoneTask]
+          terminals: [AbortTask, DoneTask]
       SNPTransitionPipeline:
         class: GraphTaskFactory
         config:
@@ -157,8 +157,8 @@ task_composer_plugins:
               class: DoneTaskFactory
               config:
                 conditional: false
-            ErrorTask:
-              class: ErrorTaskFactory
+            AbortTask:
+              class: AbortTaskFactory
               config:
                 conditional: false
             MinLengthTask:
@@ -200,18 +200,18 @@ task_composer_plugins:
                 outputs: [output_data]
           edges:
             - source: MinLengthTask
-              destinations: [ErrorTask, TrajOptMotionPlannerTask]
+              destinations: [AbortTask, TrajOptMotionPlannerTask]
             - source: TrajOptMotionPlannerTask
               destinations: [OMPLMotionPlannerTask, DiscreteContactCheckTask]
             - source: OMPLMotionPlannerTask
-              destinations: [ErrorTask, DiscreteContactCheckTask]
+              destinations: [AbortTask, DiscreteContactCheckTask]
             - source: DiscreteContactCheckTask
-              destinations: [ErrorTask, IterativeSplineParameterizationTask]
+              destinations: [AbortTask, IterativeSplineParameterizationTask]
             - source: IterativeSplineParameterizationTask
-              destinations: [ErrorTask, KinematicLimitsCheckTask]
+              destinations: [AbortTask, KinematicLimitsCheckTask]
             - source: KinematicLimitsCheckTask
-              destinations: [ErrorTask, DoneTask]
-          terminals: [ErrorTask, DoneTask]
+              destinations: [AbortTask, DoneTask]
+          terminals: [AbortTask, DoneTask]
       SNPPipeline:
         class: GraphTaskFactory
         config:
@@ -222,8 +222,8 @@ task_composer_plugins:
               class: DoneTaskFactory
               config:
                 conditional: false
-            ErrorTask:
-              class: ErrorTaskFactory
+            AbortTask:
+              class: AbortTaskFactory
               config:
                 conditional: false
             SimpleMotionPlannerTask:
@@ -275,9 +275,9 @@ task_composer_plugins:
                     output_indexing: [output_data]
           edges:
             - source: SimpleMotionPlannerTask
-              destinations: [ErrorTask, DescartesMotionPlannerTask]
+              destinations: [AbortTask, DescartesMotionPlannerTask]
             - source: DescartesMotionPlannerTask
-              destinations: [ErrorTask, RasterMotionTask]
+              destinations: [AbortTask, RasterMotionTask]
             - source: RasterMotionTask
-              destinations: [ErrorTask, DoneTask]
-          terminals: [ErrorTask, DoneTask]
+              destinations: [AbortTask, DoneTask]
+          terminals: [AbortTask, DoneTask]
