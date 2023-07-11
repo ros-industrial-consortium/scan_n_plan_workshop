@@ -56,7 +56,7 @@ jobs:
           UPSTREAM_WORKSPACE: dependencies.repos
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${ROS_DISTRO}/setup.bash'
           ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
-          AFTER_SCRIPT: ''
+          AFTER_SCRIPT: 'rm -r $BASEDIR/${PREFIX}upstream_ws/build $BASEDIR/${PREFIX}target_ws/build'
           DOCKER_COMMIT: ${{ steps.meta.outputs.tags }}
 
       - name: Push post-build Docker
