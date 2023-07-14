@@ -1,4 +1,4 @@
-name: Focal-Foxy
+name: Ubuntu
 
 on:
   push:
@@ -13,8 +13,12 @@ on:
 
 jobs:
   ci:
-    name: Focal-Foxy
+    name: ${{ matrix.distro }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [foxy]
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
@@ -45,7 +49,7 @@ jobs:
       - name: Build repository
         uses: ros-industrial/industrial_ci@master
         env:
-          ROS_DISTRO: foxy
+          ROS_DISTRO: ${{ matrix.distro }}
           ROS_REPO: main
           PREFIX: ${{ github.repository }}_
           DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}:ci
