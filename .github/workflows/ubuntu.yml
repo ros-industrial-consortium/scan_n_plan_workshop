@@ -53,7 +53,7 @@ jobs:
           ROS_REPO: main
           BEFORE_INIT: ''
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ env.ROS_DISTRO }}-master
+          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-master
           GIT_SUBMODULE_STRATEGY: normal
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
