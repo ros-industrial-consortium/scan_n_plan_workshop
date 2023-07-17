@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [foxy]
+        distro: [foxy, humble, rolling]
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
@@ -58,7 +58,7 @@ jobs:
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
           ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
-          UNDERLAY: /root/tesseract-robotics/tesseract_planning_target_ws/install
+          UNDERLAY: /root/tesseract-robotics/tesseract_ros2_target_ws/install
           UPSTREAM_WORKSPACE: dependencies.repos
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${ROS_DISTRO}/setup.bash'
           ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
