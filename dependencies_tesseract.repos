@@ -1,8 +1,4 @@
 - git:
-    local-name: Qt-Advanced-Docking-System
-    uri: https://github.com/Levi-Armstrong/Qt-Advanced-Docking-System.git
-    version: e28bc8e17308ff0ea256c87d44eb566ab9e2b9c1
-- git:
     local-name: ros_industrial_cmake_boilerplate
     uri: https://github.com/ros-industrial/ros_industrial_cmake_boilerplate.git
     version: 0.4.7
@@ -21,7 +17,11 @@
 - git:
     local-name: tesseract_qt
     uri: https://github.com/tesseract-robotics/tesseract_qt.git
-    version: 0.18.1
+    version: 5b5d38e202a87e5b34d12d14397ea6db3343f045
+- git:
+    local-name: tesseract_ros2
+    uri: https://github.com/tesseract-robotics/tesseract_ros2.git
+    version: f7147aa20d8055953d49c6dcb7f144ef6de65d17
 - git:
     local-name: descartes_light
     uri: https://github.com/swri-robotics/descartes_light.git
