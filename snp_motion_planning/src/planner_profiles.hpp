@@ -8,6 +8,14 @@
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
 
+static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
+static const std::string OMPL_DEFAULT_NAMESPACE = "OMPLMotionPlannerTask";
+static const std::string DESCARTES_DEFAULT_NAMESPACE = "DescartesMotionPlannerTask";
+static const std::string SIMPLE_DEFAULT_NAMESPACE = "SimpleMotionPlannerTask";
+static const std::string MIN_LENGTH_DEFAULT_NAMESPACE = "MinLengthTask";
+static const std::string CONTACT_CHECK_DEFAULT_NAMESPACE = "DiscreteContactCheckTask";
+static const std::string ISP_DEFAULT_NAMESPACE = "IterativeSplineParameterizationTask";
+
 template <typename FloatType>
 typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createDescartesPlanProfile()
 {
@@ -20,7 +28,7 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
 
   // Use the default state and edge evaluators
   profile->state_evaluator = nullptr;
-  profile->edge_evaluator = [](const tesseract_planning::DescartesProblem<FloatType>& prob) ->
+  profile->edge_evaluator = [](const tesseract_planning::DescartesProblem<FloatType> & /*prob*/) ->
       typename descartes_light::EdgeEvaluator<FloatType>::Ptr {
         auto eval = std::make_shared<descartes_light::CompoundEdgeEvaluator<FloatType>>();
 
@@ -50,15 +58,16 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile()
   // OMPL freespace and transition profiles
   // Create the RRT parameters
   auto n = static_cast<Eigen::Index>(std::thread::hardware_concurrency());
-  auto range = Eigen::VectorXd::LinSpaced(n, 0.005, 0.15);
+  auto range = Eigen::VectorXd::LinSpaced(n, 0.05, 0.5);
 
   // Add as many planners as available threads so mulitple OMPL plans can happen in parallel
   auto profile = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
-  profile->planning_time = 10.0;
+  profile->planning_time = 20.0;
+  profile->planners.clear();
   profile->planners.reserve(static_cast<std::size_t>(n));
   for (Eigen::Index i = 0; i < n; ++i)
   {
-    auto rrt = std::make_shared<tesseract_planning::RRTConfigurator>();
+    auto rrt = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
     rrt->range = range(i);
     profile->planners.push_back(rrt);
   }

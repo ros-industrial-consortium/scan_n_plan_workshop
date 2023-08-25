@@ -3,6 +3,8 @@
 #include <memory>
 #include <cmath>
 
+static const std::string CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME = "ConstantTCPSpeedTimeParameterizationTask";
+
 namespace snp_motion_planning
 {
 struct ConstantTCPSpeedTimeParameterizationProfile

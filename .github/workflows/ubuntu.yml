@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [foxy]
+        distro: [foxy, humble, rolling]
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
@@ -51,15 +51,17 @@ jobs:
         env:
           ROS_DISTRO: ${{ matrix.distro }}
           ROS_REPO: main
+          BEFORE_INIT: ''
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}:ci
+          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-master
           GIT_SUBMODULE_STRATEGY: normal
           TMPDIR: ${CI_PROJECT_DIR}.tmp
           BUILDER: colcon
           ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
-          UNDERLAY: /root/tesseract-robotics/tesseract_planning_target_ws/install
+          UNDERLAY: /root/tesseract-robotics/tesseract_ros2_target_ws/install
           UPSTREAM_WORKSPACE: dependencies.repos
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${ROS_DISTRO}/setup.bash'
+          BEFORE_RUN_TARGET_TEST_EMBED: ''
           ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
           AFTER_SCRIPT: 'rm -r $BASEDIR/${PREFIX}upstream_ws/build $BASEDIR/${PREFIX}target_ws/build'
           DOCKER_COMMIT: ${{ steps.meta.outputs.tags }}

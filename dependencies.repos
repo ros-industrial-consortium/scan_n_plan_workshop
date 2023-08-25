@@ -14,7 +14,3 @@
     local-name: rviz_polygon_selection_tool
     uri: https://github.com/marip8/rviz_polygon_selection_tool.git
     version: c2bff22f4990f04b8b10d64bbbd832618e0b0c02
-- git:
-    local-name: tesseract_ros2
-    uri: https://github.com/collinthornton/tesseract_ros2.git
-    version: 0f8e97b1f12ea4643e06f3fdf62fa35f249334f6

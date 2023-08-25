@@ -31,7 +31,7 @@ Framework for developing and operating simple Scan 'N Plan applications in which
 ## Build
 
 ```bash
-colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF
+colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF -DBUILD_RENDERING=OFF
 ```
 
 ## Application-specific Implementations

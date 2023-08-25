@@ -2,6 +2,8 @@
 
 #include <memory>
 
+static const std::string KINEMATIC_LIMITS_CHECK_TASK_NAME = "KinematicLimitsCheckTask";
+
 namespace snp_motion_planning
 {
 struct KinematicLimitsCheckProfile
