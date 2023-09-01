@@ -19,9 +19,10 @@ find_package(ament_cmake REQUIRED)
 find_package(industrial_reconstruction_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(PCL REQUIRED)
 
 add_executable(open3d_sim_node src/open3d_sim_node.cpp)
-target_link_libraries(open3d_sim_node Boost::filesystem)
+target_link_libraries(open3d_sim_node Boost::filesystem ${PCL_LIBRARIES})
 ament_target_dependencies(
   open3d_sim_node
   rclcpp
