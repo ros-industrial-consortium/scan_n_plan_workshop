@@ -7,6 +7,8 @@
 #include <pcl/point_types.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_cloud.h>
+#include <stdio.h>
+#include <pcl/io/vtk_lib_io.h>
 
 
 static const std::string MESH_FILE_PARAMETER = "mesh_file";
@@ -37,7 +39,7 @@ private:
   std::string reference_frame;
   visualization_msgs::msg::Marker pclMeshToRos(const pcl::PolygonMesh& pcl_mesh) {
       visualization_msgs::msg::Marker out_msg;
-      out_msg.header.frame_id = reference_frame; // Set your desired frame_id
+      out_msg.header.frame_id = reference_frame;
       out_msg.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
       out_msg.action = visualization_msgs::msg::Marker::ADD;
       out_msg.id = 1;
@@ -104,32 +106,12 @@ private:
 
       // Publish the mesh
       {
-//        visualization_msgs::msg::Marker mesh_marker;
-//        mesh_marker.header.frame_id = reference_frame;
-
-//        mesh_marker.color.r = 200;
-//        mesh_marker.color.g = 200;
-//        mesh_marker.color.b = 0;
-//        mesh_marker.color.a = 1;
-
-//        mesh_marker.scale.x = 1;
-//        mesh_marker.scale.y = 1;
-//        mesh_marker.scale.z = 1;
-
-//        mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-//        mesh_marker.mesh_resource = "file://" + mesh_file;
-
-//        scan_mesh_pub_->publish(mesh_marker);
-
-
-//        mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-
         // Load the PLY mesh from a file
         pcl::PolygonMesh pcl_mesh;
-        pcl::io::loadPLYFile(MESH_FILE_PARAMETER, pcl_mesh);
+        pcl::io::loadPLYFile(mesh_file, pcl_mesh);
         visualization_msgs::msg::Marker out_msg = pclMeshToRos(pcl_mesh);
         out_msg.mesh_resource = "file://" + mesh_file;
-        scan_mesh_pub_->publish(out_msg);;
+        scan_mesh_pub_->publish(out_msg);
       }
 
 
