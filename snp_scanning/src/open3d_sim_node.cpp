@@ -7,7 +7,6 @@
 #include <pcl/point_types.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_cloud.h>
-#include <stdio.h>
 #include <pcl/io/vtk_lib_io.h>
 
 
