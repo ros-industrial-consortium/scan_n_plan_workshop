@@ -15,7 +15,6 @@
 
 #include <tesseract_time_parameterization/core/instructions_trajectory.h>
 #include <tesseract_motion_planners/core/utils.h>
-#include <tesseract_motion_planners/interface_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_command_language/cartesian_waypoint.h>
