@@ -4,6 +4,8 @@
   <arg name="robot_description_semantic"/>
   <arg name="verbose" default="False"/>
   <arg name="touch_links" default="[]"/>
+  <arg name="task_composer_config_file" default="$(find-pkg-share snp_motion_planning)/config/task_composer_plugins.yaml"/>
+  <arg name="task_name" default="SNPPipeline"/>
 
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node" output="screen">
     <param name="robot_description" value="$(var robot_description)"/>
@@ -15,6 +17,8 @@
     <param name="max_translational_acc" value="0.1"/>
     <param name="max_rotational_acc" value="3.14159"/>
     <param name="check_joint_acc" value="false"/>
+    <param name="task_composer_config_file" value="$(var task_composer_config_file)"/>
+    <param name="task_name" value="$(var task_name)"/>
   </node>
 
 </launch>
