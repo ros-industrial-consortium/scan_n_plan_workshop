@@ -2,7 +2,7 @@
 <launch>
   <arg name="sim_vision" default="True"/>
   <arg name="sim_robot" default="True"/>
-  <arg name="sim_execution" default="$(var sim_robot)" />
+  <arg name="bypass_execution" default="$(var sim_robot)" />
   <arg name="mesh_file" default="$(find-pkg-share snp_automate_2022)/meshes/part_scan.ply"/>
   <arg name="scan_trajectory_file" default="$(find-pkg-share snp_automate_2022)/config/scan_traj.yaml"/>
   <arg name="verbose" default="True"/>
@@ -20,7 +20,7 @@
     <arg name="robot_description" value="$(var robot_description)"/>
     <arg name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <arg name="rviz" value="False"/>
-    <arg name="use_gui" value="$(var sim_execution)"/>
+    <arg name="use_gui" value="$(var bypass_execution)"/>
   </include>
 
   <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_automate_2022)/config/app.rviz">
@@ -94,12 +94,12 @@
   </group>
   <group if="$(var sim_robot)">
     <node pkg="snp_motion_execution" exec="robot_enable_simulator" />
-    <group if="$(var sim_execution)">
+    <group if="$(var bypass_execution)">
       <node pkg="snp_motion_execution" exec="execution_simulator" >
         <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
       </node>
     </group>
-    <group unless="$(var sim_execution)">
+    <group unless="$(var bypass_execution)">
       <include file="$(find-pkg-share snp_motion_execution)/launch/ros2_control.launch.py">
         <arg name="robot_description_file" value="$(var robot_description_file)"/>
         <arg name="controllers_file" value="$(find-pkg-share snp_automate_2022)/config/controllers.yaml"/>

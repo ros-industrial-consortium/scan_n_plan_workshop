@@ -15,7 +15,6 @@
 
 #include <tesseract_time_parameterization/core/instructions_trajectory.h>
 #include <tesseract_motion_planners/core/utils.h>
-#include <tesseract_motion_planners/interface_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_command_language/cartesian_waypoint.h>
@@ -52,6 +51,8 @@ static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
 static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
 static const std::string LVS_PARAM = "contact_check_longest_valid_segment";
 static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
+static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
+static const std::string TASK_NAME_PARAM = "task_name";
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -146,6 +147,8 @@ public:
     node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(LVS_PARAM, 0.05);
     node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
+    node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM);
+    node_->declare_parameter(TASK_NAME_PARAM);
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -378,16 +381,20 @@ private:
       planner_env->applyCommands(env_cmds);
 
       // Set up task composer problem
-      std::string config_path = ament_index_cpp::get_package_share_directory("snp_motion_planning");
-      config_path += "/config/task_composer_plugins.yaml";
-      tesseract_planning::TaskComposerPluginFactory factory(YAML::LoadFile(config_path));
-      std::string task_pipeline = "SNPPipeline";
+      auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
+      const YAML::Node task_composer_config = YAML::LoadFile(task_composer_config_file);
+      tesseract_planning::TaskComposerPluginFactory factory(task_composer_config);
+
+      auto task_name = get<std::string>(node_, TASK_NAME_PARAM);
       auto executor = factory.createTaskComposerExecutor("TaskflowExecutor");
-      tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_pipeline);
+      tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_name);
+
       // Save dot graph
-      std::ofstream tc_out_data;
-      tc_out_data.open(tesseract_common::getTempPath() + "ScanNPlanPipeline.dot");
-      task->dump(tc_out_data);
+      {
+        std::ofstream tc_out_data(tesseract_common::getTempPath() + task_name + ".dot");
+        task->dump(tc_out_data);
+      }
+
       const std::string input_key = task->getInputKeys().front();
       const std::string output_key = task->getOutputKeys().front();
       tesseract_planning::TaskComposerDataStorage input_data;
@@ -402,18 +409,15 @@ private:
       if (get<bool>(node_, VERBOSE_PARAM))
       {
         console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
-        // Create a dump dotgraphs of each task for reference
-        std::ofstream cartesian_pipeline_out_data;
-        cartesian_pipeline_out_data.open(tesseract_common::getTempPath() + "SNPCartesianPipeline.dot");
-        factory.createTaskComposerNode("SNPCartesianPipeline")->dump(cartesian_pipeline_out_data);
 
-        std::ofstream freespace_pipeline_out_data;
-        freespace_pipeline_out_data.open(tesseract_common::getTempPath() + "SNPFreespacePipeline.dot");
-        factory.createTaskComposerNode("SNPFreespacePipeline")->dump(freespace_pipeline_out_data);
-
-        std::ofstream transition_pipeline_out_data;
-        transition_pipeline_out_data.open(tesseract_common::getTempPath() + "SNPTransitionPipeline.dot");
-        factory.createTaskComposerNode("SNPTransitionPipeline")->dump(transition_pipeline_out_data);
+        // Dump dotgraphs of each task for reference
+        const YAML::Node& task_plugins = task_composer_config["task_composer_plugins"]["tasks"]["plugins"];
+        for (auto it = task_plugins.begin(); it != task_plugins.end(); ++it)
+        {
+          auto task_plugin_name = it->first.as<std::string>();
+          std::ofstream f(tesseract_common::getTempPath() + task_plugin_name + ".dot");
+          factory.createTaskComposerNode(task_plugin_name)->dump(f);
+        }
       }
 
       // Run problem
@@ -421,10 +425,12 @@ private:
       exec_fut->wait();
 
       auto info_map = input.task_infos.getInfoMap();
-      std::ofstream tc_out_results;
-      tc_out_results.open(tesseract_common::getTempPath() + "ScanNPlanPipelineResults.dot");
-      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr, info_map);
-      tc_out_results.close();
+
+      // Save the output dot graph
+      {
+        std::ofstream tc_out_results(tesseract_common::getTempPath() + task_name + "_results.dot");
+        static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr, info_map);
+      }
 
       // Reset the log level
       console_bridge::setLogLevel(log_level);
