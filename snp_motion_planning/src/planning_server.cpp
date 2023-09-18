@@ -8,6 +8,7 @@
 #include <tesseract_monitoring/environment_monitor_interface.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_geometry/mesh_parser.h>
+#include <tesseract_geometry/geometries.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
@@ -101,13 +102,22 @@ static tesseract_environment::Commands createScanAdditionCommands(const std::str
   std::vector<tesseract_geometry::Mesh::Ptr> geometries =
       tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
 
-  tesseract_scene_graph::Link link("scan");
-  for (tesseract_geometry::Mesh::Ptr geometry : geometries)
+  auto octree = std::make_shared<octomap::OcTree>(0.01);
+  for (const auto& g : geometries)
   {
-    tesseract_scene_graph::Collision::Ptr collision = std::make_shared<tesseract_scene_graph::Collision>();
-    collision->geometry = tesseract_collision::makeConvexMesh(*geometry);
-    link.collision.push_back(collision);
+    for (const Eigen::Vector3d& v : *(g->getVertices()))
+    {
+      octree->updateNode(v.x(), v.y(), v.z(), true, true);
+    }
   }
+  octree->updateInnerOccupancy();
+
+  tesseract_scene_graph::Link link("scan");
+
+  // Add the octree
+  auto collision = std::make_shared<tesseract_scene_graph::Collision>();
+  collision->geometry =
+      std::make_shared<tesseract_geometry::Octree>(octree, tesseract_geometry::Octree::SubType::SPHERE_INSIDE);
 
   tesseract_scene_graph::Joint joint("world_to_scan");
   joint.type = tesseract_scene_graph::JointType::FIXED;
