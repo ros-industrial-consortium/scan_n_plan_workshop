@@ -35,6 +35,7 @@ static const std::string PROFILE = "SNPD";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
+static const std::string SCAN_LINK_NAME = "scan";
 
 static const std::string VERBOSE_PARAM = "verbose";
 static const std::string TOUCH_LINKS_PARAM = "touch_links";
@@ -140,7 +141,7 @@ static tesseract_environment::Commands
 createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>& geos, const std::string& mesh_frame,
                            const std::vector<std::string>& touch_links)
 {
-  tesseract_scene_graph::Link link("scan");
+  tesseract_scene_graph::Link link(SCAN_LINK_NAME);
 
   for (tesseract_geometry::Geometry::Ptr geo : geos)
   {
@@ -419,8 +420,11 @@ private:
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
 
       // Add the scan as a collision object to the environment
-      tesseract_environment::Environment::UPtr planner_env = env_->clone();
       {
+        // Remove any previously added collision object
+        if (env_->getSceneGraph()->getLink(SCAN_LINK_NAME))
+          env_->applyCommand(std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME));
+
         auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
         std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
         if (collision_object_type == "convex_mesh")
@@ -444,7 +448,7 @@ private:
         tesseract_environment::Commands env_cmds = createScanAdditionCommands(
             collision_objects, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
 
-        planner_env->applyCommands(env_cmds);
+        env_->applyCommands(env_cmds);
       }
 
       // Set up task composer problem
@@ -467,7 +471,7 @@ private:
       tesseract_planning::TaskComposerDataStorage input_data;
       input_data.setData(input_key, program);
       tesseract_planning::TaskComposerProblem::UPtr problem =
-          std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(planner_env, input_data, profile_dict);
+          std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(env_, input_data, profile_dict);
       tesseract_planning::TaskComposerInput input(std::move(problem));
       input.dotgraph = true;
 
