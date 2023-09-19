@@ -457,6 +457,30 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /industrial_reconstruction_mesh
       Value: true
+    - Class: tesseract_rviz/TesseractWorkbench
+      Enabled: true
+      Environment Properties:
+        Display Mode: Monitor
+        Joint State Topic: /joint_states
+        Monitor Topic: /snp_environment
+        Snapshot Topic: /tesseract_environment_snapshot
+        URDF Parameter: robot_description
+        Value: ""
+      Joint Trajectory Properties:
+        Legacy Joint Trajectory:
+          Value: true
+          topic: /joint_trajectory
+        Tesseract Joint Trajectory:
+          Joint Trajectory Topic: /tesseract/display_tesseract_trajectory
+          Value: true
+        Value: ""
+      Name: TesseractWorkbench
+      Value: true
+      tesseract::EnvMonitorJointStateTopic: /joint_states
+      tesseract::EnvMonitorMode: Monitor
+      tesseract::EnvMonitorSnapshotTopic: /snp_environment
+      tesseract::EnvMonitorTopic: /snp_environment
+      tesseract::EnvMonitorURDFDescription: robot_description
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

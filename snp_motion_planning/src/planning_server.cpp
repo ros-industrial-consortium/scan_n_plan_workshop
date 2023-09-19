@@ -2,7 +2,6 @@
 #include "plugins/tasks/constant_tcp_speed_time_parameterization_profile.hpp"
 #include "plugins/tasks/kinematic_limits_check_profile.hpp"
 
-#include <octomap_msgs/conversions.h>
 #include <rclcpp/rclcpp.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
@@ -51,6 +50,7 @@ static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
 static const std::string TASK_NAME_PARAM = "task_name";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
+static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -92,16 +92,27 @@ double clamp(const double val, const double min, const double max)
   return std::min(std::max(val, min), max);
 }
 
-static std::vector<tesseract_geometry::ConvexMesh::Ptr> scanMeshtoConvexMeshes(const std::string& filename)
+static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToMesh(const std::string& filename)
 {
   std::vector<tesseract_geometry::Mesh::Ptr> meshes =
       tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
 
-  std::vector<tesseract_geometry::ConvexMesh::Ptr> convex_meshes;
+  std::vector<tesseract_geometry::Geometry::Ptr> out;
+  for (const auto& mesh : meshes)
+    out.push_back(mesh);
+
+  return out;
+}
+
+static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToConvexMesh(const std::string& filename)
+{
+  std::vector<tesseract_geometry::Mesh::Ptr> meshes =
+      tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
+
+  std::vector<tesseract_geometry::Geometry::Ptr> convex_meshes;
   for (tesseract_geometry::Mesh::Ptr mesh : meshes)
-  {
     convex_meshes.push_back(tesseract_collision::makeConvexMesh(*mesh));
-  }
+
   return convex_meshes;
 }
 
@@ -127,8 +138,7 @@ scanMeshToOctree(const std::string& filename, const double resolution,
 
 static tesseract_environment::Commands
 createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>& geos, const std::string& mesh_frame,
-                           const std::vector<std::string>& touch_links,
-                           const rclcpp::Publisher<octomap_msgs::msg::Octomap>::ConstSharedPtr& publisher = nullptr)
+                           const std::vector<std::string>& touch_links)
 {
   tesseract_scene_graph::Link link("scan");
 
@@ -161,9 +171,7 @@ class PlanningServer
 {
 public:
   PlanningServer(rclcpp::Node::SharedPtr node)
-    : node_(node)
-    , octomap_pub_(node->create_publisher<octomap_msgs::msg::Octomap>("scan_octomap", 1))
-    , env_(std::make_shared<tesseract_environment::Environment>())
+    : node_(node), env_(std::make_shared<tesseract_environment::Environment>())
   {
     // Declare ROS parameters
     node_->declare_parameter("robot_description");
@@ -182,6 +190,7 @@ public:
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM);
     node_->declare_parameter(TASK_NAME_PARAM);
     node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
+    node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM);
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -410,20 +419,30 @@ private:
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
 
       // Add the scan as a collision object to the environment
-      tesseract_environment::Environment::Ptr planner_env = env_->clone();
+      tesseract_environment::Environment::UPtr planner_env = env_->clone();
       {
-        double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
-        tesseract_geometry::Octree::Ptr octree = scanMeshToOctree(req->mesh_filename, octree_resolution);
-
-        // Publish a visualization of the octree
-        octomap_msgs::msg::Octomap msg;
-        if (!octomap_msgs::fullMapToMsg(*octree->getOctree(), msg))
-          throw std::runtime_error("Failed to convert octree to ROS2 message");
-        msg.header.frame_id = req->mesh_frame;
-        octomap_pub_->publish(msg);
+        auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
+        std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
+        if (collision_object_type == "convex_mesh")
+          collision_objects = scanMeshToConvexMesh(req->mesh_filename);
+        else if (collision_object_type == "mesh")
+          collision_objects = scanMeshToMesh(req->mesh_filename);
+        else if (collision_object_type == "octree")
+        {
+          double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
+          collision_objects = { scanMeshToOctree(req->mesh_filename, octree_resolution) };
+        }
+        else
+        {
+          std::stringstream ss;
+          ss << "Invalid collision object type (" << collision_object_type
+             << ") for adding scan mesh to planning environment. Supported types are 'convex_mesh', 'mesh', and "
+                "'octree'";
+          throw std::runtime_error(ss.str());
+        }
 
         tesseract_environment::Commands env_cmds = createScanAdditionCommands(
-            { octree }, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
+            collision_objects, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
 
         planner_env->applyCommands(env_cmds);
       }
@@ -518,7 +537,6 @@ private:
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
-  rclcpp::Publisher<octomap_msgs::msg::Octomap>::SharedPtr octomap_pub_;
 };
 
 int main(int argc, char** argv)
