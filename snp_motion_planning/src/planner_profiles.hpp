@@ -22,9 +22,13 @@ typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr createD
   auto profile = std::make_shared<tesseract_planning::DescartesDefaultPlanProfile<FloatType>>();
   profile->num_threads = static_cast<int>(std::thread::hardware_concurrency());
   profile->use_redundant_joint_solutions = false;
+
+  // Collision checking
   profile->allow_collision = false;
   profile->enable_collision = true;
+  profile->vertex_collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
   profile->enable_edge_collision = false;
+  profile->edge_collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
 
   // Use the default state and edge evaluators
   profile->state_evaluator = nullptr;
@@ -72,6 +76,9 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile()
     profile->planners.push_back(rrt);
   }
 
+  // Collision checking
+  profile->collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
+
   return profile;
 }
 
@@ -91,6 +98,8 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   profile->velocity_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
   profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 25.0);
   profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 50.0);
+
+  profile->contact_test_type = tesseract_collision::ContactTestType::CLOSEST;
 
   profile->collision_cost_config.enabled = true;
   profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
