@@ -19,6 +19,7 @@
     <param name="check_joint_acc" value="false"/>
     <param name="task_composer_config_file" value="$(var task_composer_config_file)"/>
     <param name="task_name" value="$(var task_name)"/>
+    <param name="octree_resolution" value="0.010"/>
   </node>
 
 </launch>

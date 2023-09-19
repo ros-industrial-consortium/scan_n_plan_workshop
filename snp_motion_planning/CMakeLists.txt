@@ -10,6 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 set(ROS2_DEPS
+    octomap_msgs
     rclcpp
     snp_msgs
     std_srvs
