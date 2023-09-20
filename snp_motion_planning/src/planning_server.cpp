@@ -3,6 +3,8 @@
 #include "plugins/tasks/kinematic_limits_check_profile.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <snp_msgs/srv/generate_motion_plan.hpp>
+#include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
@@ -25,18 +27,16 @@
 #include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
-#include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <tf2_eigen/tf2_eigen.h>
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
-static const std::string PLANNING_SERVICE = "create_motion_plan";
-static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
 static const std::string SCAN_LINK_NAME = "scan";
 
+// Parameters
 static const std::string VERBOSE_PARAM = "verbose";
 static const std::string TOUCH_LINKS_PARAM = "touch_links";
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
@@ -52,6 +52,13 @@ static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config
 static const std::string TASK_NAME_PARAM = "task_name";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
 static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
+
+// Topics
+static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
+
+// Services
+static const std::string PLANNING_SERVICE = "create_motion_plan";
+static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -214,6 +221,10 @@ public:
     // Advertise the ROS2 service
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
+    remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
+        REMOVE_SCAN_LINK_SERVICE,
+        std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
+
     RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
   }
 
@@ -352,6 +363,17 @@ private:
     return output_trajectory;
   }
 
+  void removeScanLink()
+  {
+    if (env_->getSceneGraph()->getLink(SCAN_LINK_NAME))
+      env_->applyCommand(std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME));
+  }
+
+  void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
+  {
+    removeScanLink();
+  }
+
   void plan(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
             snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
   {
@@ -422,8 +444,7 @@ private:
       // Add the scan as a collision object to the environment
       {
         // Remove any previously added collision object
-        if (env_->getSceneGraph()->getLink(SCAN_LINK_NAME))
-          env_->applyCommand(std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME));
+        removeScanLink();
 
         auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
         std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
@@ -543,6 +564,7 @@ private:
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
 };
 
 int main(int argc, char** argv)
