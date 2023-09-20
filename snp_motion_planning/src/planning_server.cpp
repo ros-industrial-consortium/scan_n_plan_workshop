@@ -434,6 +434,8 @@ private:
         else if (collision_object_type == "octree")
         {
           double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
+          if (octree_resolution < std::numeric_limits<double>::epsilon())
+            throw std::runtime_error("Octree resolution must be > 0.0");
           collision_objects = { scanMeshToOctree(req->mesh_filename, octree_resolution) };
         }
         else
