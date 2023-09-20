@@ -3,18 +3,9 @@
 #include "plugins/tasks/kinematic_limits_check_profile.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
-#include <tesseract_monitoring/environment_monitor.h>
-#include <tesseract_monitoring/environment_monitor_interface.h>
-#include <tesseract_rosutils/plotting.h>
-#include <tesseract_geometry/mesh_parser.h>
-#include <tesseract_rosutils/utils.h>
-#include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
-#include <tf2_eigen/tf2_eigen.h>
-
-#include <tesseract_time_parameterization/core/instructions_trajectory.h>
-#include <tesseract_motion_planners/core/utils.h>
+#include <std_srvs/srv/empty.hpp>
+#include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_command_language/cartesian_waypoint.h>
@@ -22,24 +13,30 @@
 #include <tesseract_command_language/move_instruction.h>
 #include <tesseract_command_language/profile_dictionary.h>
 #include <tesseract_command_language/utils.h>
-
-#include <tesseract_task_composer/planning/planning_task_composer_problem.h>
-#include <tesseract_task_composer/planning/profiles/min_length_profile.h>
-#include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
-#include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
-
+#include <tesseract_geometry/geometries.h>
+#include <tesseract_geometry/mesh_parser.h>
+#include <tesseract_monitoring/environment_monitor.h>
+#include <tesseract_motion_planners/core/utils.h>
+#include <tesseract_rosutils/plotting.h>
+#include <tesseract_rosutils/utils.h>
+#include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
 #include <tesseract_task_composer/core/task_composer_problem.h>
 #include <tesseract_task_composer/core/task_composer_input.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
+#include <tesseract_task_composer/planning/planning_task_composer_problem.h>
+#include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
+#include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
+#include <tesseract_task_composer/planning/profiles/min_length_profile.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
-static const std::string PLANNING_SERVICE = "create_motion_plan";
-static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
+static const std::string SCAN_LINK_NAME = "scan";
 
+// Parameters
 static const std::string VERBOSE_PARAM = "verbose";
 static const std::string TOUCH_LINKS_PARAM = "touch_links";
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
@@ -53,6 +50,15 @@ static const std::string LVS_PARAM = "contact_check_longest_valid_segment";
 static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
 static const std::string TASK_NAME_PARAM = "task_name";
+static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
+static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
+
+// Topics
+static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
+
+// Services
+static const std::string PLANNING_SERVICE = "create_motion_plan";
+static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
 tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
 {
@@ -94,18 +100,60 @@ double clamp(const double val, const double min, const double max)
   return std::min(std::max(val, min), max);
 }
 
-static tesseract_environment::Commands createScanAdditionCommands(const std::string& filename,
-                                                                  const std::string& mesh_frame,
-                                                                  const std::vector<std::string>& touch_links)
+static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToMesh(const std::string& filename)
+{
+  std::vector<tesseract_geometry::Mesh::Ptr> meshes =
+      tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
+
+  std::vector<tesseract_geometry::Geometry::Ptr> out;
+  for (const auto& mesh : meshes)
+    out.push_back(mesh);
+
+  return out;
+}
+
+static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToConvexMesh(const std::string& filename)
+{
+  std::vector<tesseract_geometry::Mesh::Ptr> meshes =
+      tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
+
+  std::vector<tesseract_geometry::Geometry::Ptr> convex_meshes;
+  for (tesseract_geometry::Mesh::Ptr mesh : meshes)
+    convex_meshes.push_back(tesseract_collision::makeConvexMesh(*mesh));
+
+  return convex_meshes;
+}
+
+static tesseract_geometry::Octree::Ptr
+scanMeshToOctree(const std::string& filename, const double resolution,
+                 const tesseract_geometry::Octree::SubType type = tesseract_geometry::Octree::SubType::SPHERE_INSIDE)
 {
   std::vector<tesseract_geometry::Mesh::Ptr> geometries =
       tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
 
-  tesseract_scene_graph::Link link("scan");
-  for (tesseract_geometry::Mesh::Ptr geometry : geometries)
+  auto octree = std::make_shared<octomap::OcTree>(resolution);
+  for (const auto& g : geometries)
   {
-    tesseract_scene_graph::Collision::Ptr collision = std::make_shared<tesseract_scene_graph::Collision>();
-    collision->geometry = tesseract_collision::makeConvexMesh(*geometry);
+    for (const Eigen::Vector3d& v : *(g->getVertices()))
+    {
+      octree->updateNode(v.x(), v.y(), v.z(), true, true);
+    }
+  }
+  octree->updateInnerOccupancy();
+
+  return std::make_shared<tesseract_geometry::Octree>(octree, type);
+}
+
+static tesseract_environment::Commands
+createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>& geos, const std::string& mesh_frame,
+                           const std::vector<std::string>& touch_links)
+{
+  tesseract_scene_graph::Link link(SCAN_LINK_NAME);
+
+  for (tesseract_geometry::Geometry::Ptr geo : geos)
+  {
+    auto collision = std::make_shared<tesseract_scene_graph::Collision>();
+    collision->geometry = geo;
     link.collision.push_back(collision);
   }
 
@@ -149,6 +197,8 @@ public:
     node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM);
     node_->declare_parameter(TASK_NAME_PARAM);
+    node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
+    node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM);
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -171,6 +221,10 @@ public:
     // Advertise the ROS2 service
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
+    remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
+        REMOVE_SCAN_LINK_SERVICE,
+        std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
+
     RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
   }
 
@@ -309,6 +363,17 @@ private:
     return output_trajectory;
   }
 
+  void removeScanLink()
+  {
+    if (env_->getSceneGraph()->getLink(SCAN_LINK_NAME))
+      env_->applyCommand(std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME));
+  }
+
+  void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
+  {
+    removeScanLink();
+  }
+
   void plan(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
             snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
   {
@@ -375,10 +440,39 @@ private:
 
       // Set up composite instruction and environment
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
-      tesseract_environment::Commands env_cmds = createScanAdditionCommands(
-          req->mesh_filename, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
-      tesseract_environment::Environment::Ptr planner_env = env_->clone();
-      planner_env->applyCommands(env_cmds);
+
+      // Add the scan as a collision object to the environment
+      {
+        // Remove any previously added collision object
+        removeScanLink();
+
+        auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
+        std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
+        if (collision_object_type == "convex_mesh")
+          collision_objects = scanMeshToConvexMesh(req->mesh_filename);
+        else if (collision_object_type == "mesh")
+          collision_objects = scanMeshToMesh(req->mesh_filename);
+        else if (collision_object_type == "octree")
+        {
+          double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
+          if (octree_resolution < std::numeric_limits<double>::epsilon())
+            throw std::runtime_error("Octree resolution must be > 0.0");
+          collision_objects = { scanMeshToOctree(req->mesh_filename, octree_resolution) };
+        }
+        else
+        {
+          std::stringstream ss;
+          ss << "Invalid collision object type (" << collision_object_type
+             << ") for adding scan mesh to planning environment. Supported types are 'convex_mesh', 'mesh', and "
+                "'octree'";
+          throw std::runtime_error(ss.str());
+        }
+
+        tesseract_environment::Commands env_cmds = createScanAdditionCommands(
+            collision_objects, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
+
+        env_->applyCommands(env_cmds);
+      }
 
       // Set up task composer problem
       auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
@@ -400,7 +494,7 @@ private:
       tesseract_planning::TaskComposerDataStorage input_data;
       input_data.setData(input_key, program);
       tesseract_planning::TaskComposerProblem::UPtr problem =
-          std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(planner_env, input_data, profile_dict);
+          std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(env_, input_data, profile_dict);
       tesseract_planning::TaskComposerInput input(std::move(problem));
       input.dotgraph = true;
 
@@ -470,6 +564,7 @@ private:
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
 };
 
 int main(int argc, char** argv)

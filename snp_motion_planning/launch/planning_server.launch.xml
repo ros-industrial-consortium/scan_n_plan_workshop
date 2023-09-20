@@ -6,6 +6,7 @@
   <arg name="touch_links" default="[]"/>
   <arg name="task_composer_config_file" default="$(find-pkg-share snp_motion_planning)/config/task_composer_plugins.yaml"/>
   <arg name="task_name" default="SNPPipeline"/>
+  <arg name="collision_object_type" default="convex_mesh" description="Collision model representation for scan mesh (convex_mesh, mesh, octree)"/>
 
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node" output="screen">
     <param name="robot_description" value="$(var robot_description)"/>
@@ -19,6 +20,8 @@
     <param name="check_joint_acc" value="false"/>
     <param name="task_composer_config_file" value="$(var task_composer_config_file)"/>
     <param name="task_name" value="$(var task_name)"/>
+    <param name="octree_resolution" value="0.010"/>
+    <param name="collision_object_type" value="$(var collision_object_type)"/>
   </node>
 
 </launch>
