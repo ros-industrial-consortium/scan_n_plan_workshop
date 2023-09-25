@@ -13,7 +13,8 @@ set(ROS2_DEPS
     rclcpp
     snp_msgs
     std_srvs
-    tesseract_monitoring)
+    tesseract_monitoring
+    tf2_eigen)
 
 find_package(ament_cmake REQUIRED)
 foreach(dep ${ROS2_DEPS})
