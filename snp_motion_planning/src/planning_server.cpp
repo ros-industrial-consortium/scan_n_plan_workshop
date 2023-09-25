@@ -27,12 +27,7 @@
 #include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
-
-#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
-#include <tf2_eigen/tf2_eigen.hpp>
-#else  // ROS 2 Foxy
 #include <tf2_eigen/tf2_eigen.h>
-#endif
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
