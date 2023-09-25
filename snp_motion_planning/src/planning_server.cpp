@@ -28,6 +28,9 @@
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
 #include <tf2_eigen/tf2_eigen.h>
+#if __has_include(<rclcpp/version.h>)
+#include <rclcpp/version.h>
+#endif
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
@@ -182,7 +185,7 @@ public:
     : node_(node), env_(std::make_shared<tesseract_environment::Environment>())
   {
     // Declare ROS parameters
-#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
+#if __has_include(<rclcpp/version.h>) && RCLCPP_VERSION_MAJOR >= 16  // ROS 2 Humble
     node_->declare_parameter<std::string>("robot_description");
     node_->declare_parameter<std::string>("robot_description_semantic");
     node_->declare_parameter<bool>(VERBOSE_PARAM, false);

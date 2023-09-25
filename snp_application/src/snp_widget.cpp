@@ -8,6 +8,9 @@
 #include <tf2_eigen/tf2_eigen.h>
 #include "serialize.h"
 #include "trajectory_msgs_yaml.h"
+#if __has_include(<rclcpp/version.h>)
+#include <rclcpp/version.h>
+#endif
 
 static const std::string TOOL_PATH_TOPIC = "toolpath";
 
@@ -57,7 +60,7 @@ T declareAndGet(rclcpp::Node& node, const std::string& key)
 {
   T val;
 
-#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
+#if __has_include(<rclcpp/version.h>) && RCLCPP_VERSION_MAJOR >= 16  // ROS 2 Humble
   node.declare_parameter<T>(key);
 #else  // ROS 2 Foxy
   node.declare_parameter(key);
@@ -74,7 +77,7 @@ template <typename T>
 T declareAndGet(rclcpp::Node& node, const std::string& key, const T& default_value)
 {
   T val;
-#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
+#if __has_include(<rclcpp/version.h>) && RCLCPP_VERSION_MAJOR >= 16  // ROS 2 Humble
   node.declare_parameter<T>(key);
 #else  // ROS 2 Foxy
   node.declare_parameter(key);
