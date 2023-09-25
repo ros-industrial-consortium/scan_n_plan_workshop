@@ -182,6 +182,7 @@ public:
     : node_(node), env_(std::make_shared<tesseract_environment::Environment>())
   {
     // Declare ROS parameters
+#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
     node_->declare_parameter<std::string>("robot_description");
     node_->declare_parameter<std::string>("robot_description_semantic");
     node_->declare_parameter<bool>(VERBOSE_PARAM, false);
@@ -199,6 +200,25 @@ public:
     node_->declare_parameter<std::string>(TASK_NAME_PARAM);
     node_->declare_parameter<double>(OCTREE_RESOLUTION_PARAM, 0.010);
     node_->declare_parameter<std::string>(COLLISION_OBJECT_TYPE_PARAM);
+#else  // ROS 2 Foxy
+    node_->declare_parameter("robot_description");
+    node_->declare_parameter("robot_description_semantic");
+    node_->declare_parameter(VERBOSE_PARAM, false);
+    node_->declare_parameter<std::vector<std::string>>(TOUCH_LINKS_PARAM, {});
+    node_->declare_parameter(MAX_TRANS_VEL_PARAM);
+    node_->declare_parameter(MAX_ROT_VEL_PARAM);
+    node_->declare_parameter(MAX_TRANS_ACC_PARAM);
+    node_->declare_parameter(MAX_ROT_ACC_PARAM);
+    node_->declare_parameter<bool>(CHECK_JOINT_ACC_PARAM, false);
+    node_->declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
+    node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
+    node_->declare_parameter<double>(LVS_PARAM, 0.05);
+    node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
+    node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM);
+    node_->declare_parameter(TASK_NAME_PARAM);
+    node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
+    node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM);
+#endif
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");

@@ -9,7 +9,13 @@ template <typename T>
 T declare_and_get(rclcpp::Node* node, const std::string& key)
 {
   T val;
+
+#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
   node->declare_parameter<T>(key);
+#else  // ROS 2 Foxy
+  node->declare_parameter(key);
+#endif
+
   if (!node->get_parameter(key, val))
     throw std::runtime_error("Failed to get '" + key + "' parameter");
   return val;

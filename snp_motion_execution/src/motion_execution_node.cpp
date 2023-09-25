@@ -18,7 +18,13 @@ using FJT_Goal = control_msgs::action::FollowJointTrajectory_Goal;
 template <typename T>
 T get(rclcpp::Node* node, const std::string& key)
 {
+
+#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
   node->declare_parameter<T>(key);
+#else  // ROS 2 Foxy
+  node->declare_parameter(key);
+#endif
+
   T val;
   if (!node->get_parameter(key, val))
     throw std::runtime_error("Failed to get '" + key + "' parameter");
