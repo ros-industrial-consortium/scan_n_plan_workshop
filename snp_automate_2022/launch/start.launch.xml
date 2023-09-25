@@ -39,6 +39,10 @@
     <param name="tsdf.max.x" value="1.51"/>
     <param name="tsdf.max.y" value="0.45"/>
     <param name="tsdf.max.z" value="0.527"/>
+    <param name="tsdf.voxel_length" value="0.01"/>
+    <param name="tsdf.sdf_trunc" value="0.03"/>
+    <param name="rgbd.depth_scale" value="1000.0"/>
+    <param name="rgbd.depth_trunc" value="1.1"/>
   </node>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
