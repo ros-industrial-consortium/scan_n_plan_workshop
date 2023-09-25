@@ -74,7 +74,11 @@ template <typename T>
 T declareAndGet(rclcpp::Node& node, const std::string& key, const T& default_value)
 {
   T val;
+#if __has_include(<rclcpp/version.h>)  // ROS 2 Humble
   node.declare_parameter<T>(key);
+#else  // ROS 2 Foxy
+  node.declare_parameter(key);
+#endif
   node.get_parameter_or(key, val, default_value);
   return val;
 }
