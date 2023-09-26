@@ -5,9 +5,6 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#if __has_include(<rclcpp/version.h>)
-#include <rclcpp/version.h>
-#endif
 
 static const std::string MOTION_EXEC_SERVICE = "execute_motion_plan";
 static const std::string ENABLE_SERVICE = "robot_enable";
@@ -21,11 +18,7 @@ using FJT_Goal = control_msgs::action::FollowJointTrajectory_Goal;
 template <typename T>
 T get(rclcpp::Node* node, const std::string& key)
 {
-#if __has_include(<rclcpp/version.h>) && RCLCPP_VERSION_MAJOR >= 16  // ROS 2 Humble
-  node->declare_parameter<T>(key);
-#else  // ROS 2 Foxy
-  node->declare_parameter(key);
-#endif
+  node->declare_parameter(key, rclcpp::ParameterValue());
 
   T val;
   if (!node->get_parameter(key, val))
