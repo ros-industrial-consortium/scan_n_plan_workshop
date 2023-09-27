@@ -31,7 +31,9 @@ public:
   explicit MotionExecNode()
     : Node("motion_execution_node"), cb_group_(create_callback_group(rclcpp::CallbackGroupType::Reentrant))
   {
-    const std::string fjt_action = declareAndGet<std::string>(this, "follow_joint_trajectory_action", "joint_trajectory_position_controller/follow_joint_trajectory");
+    const std::string fjt_action = declareAndGet<std::string>(this, "follow_joint_trajectory_action",
+                                                              "joint_trajectory_position_controller/"
+                                                              "follow_joint_trajectory");
     fjt_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, fjt_action);
 
     enable_client_ = create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);
