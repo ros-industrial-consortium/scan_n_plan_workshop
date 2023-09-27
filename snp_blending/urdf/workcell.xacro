@@ -113,7 +113,13 @@
   </joint>
 
   <!-- Camera Calibration-->
-  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/calibration.yaml')}" />
+  <xacro:arg name="ros_distro" default="humble"/>
+  <xacro:if value="${'$(arg ros_distro)' > 'foxy'}">
+    <xacro:property name="camera_cal" value="${xacro.load_yaml('$(find snp_blending)/config/calibration.yaml')}" />
+  </xacro:if>
+  <xacro:unless value="${'$(arg ros_distro)' > 'foxy'}">
+    <xacro:property name="camera_cal" value="${load_yaml('$(find snp_blending)/config/calibration.yaml')}" />
+  </xacro:unless>
 
   <link name="camera_color_optical_frame"/>
   <joint name="tool0_to_camera" type="fixed">
@@ -135,7 +141,12 @@
   <xacro:property name="table_height" value="${37*0.0254}"/>
   <xacro:property name="table_width" value="${60*0.0254}"/>
   <xacro:property name="table_length" value="${36*0.0254}"/>
-  <xacro:property name="table_cal" value="${load_yaml('$(find snp_blending)/config/table_calibration.yaml')}" />
+  <xacro:if value="${'$(arg ros_distro)' > 'foxy'}">
+    <xacro:property name="table_cal" value="${xacro.load_yaml('$(find snp_blending)/config/table_calibration.yaml')}" />
+  </xacro:if>
+  <xacro:unless value="${'$(arg ros_distro)' > 'foxy'}">
+    <xacro:property name="table_cal" value="${load_yaml('$(find snp_blending)/config/table_calibration.yaml')}" />
+  </xacro:unless>
 
   <xacro:cuboid name="table" l="${table_length}" w="${table_width}" h="${table_height}" material="light_gray" offset="True"/>
 

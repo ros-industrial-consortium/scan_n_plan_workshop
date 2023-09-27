@@ -8,7 +8,7 @@
   <arg name="verbose" default="True"/>
   <arg name="touch_links" default="[table, base_link, floor]"/>
   <arg name="robot_description_file" default="$(find-pkg-share snp_blending)/urdf/workcell.xacro"/>
-  <arg name="robot_description" default="$(command 'xacro $(var robot_description_file)')"/>
+  <arg name="robot_description" default="$(command 'xacro $(var robot_description_file) ros_distro:=$(env ROS_DISTRO)')"/>
   <arg name="robot_description_semantic" default="$(command 'cat $(find-pkg-share snp_blending)/config/workcell.srdf')"/>
   <arg name="reference_frame" default="table"/>
   <!-- Set the default name of the follow joint trajectory action depending on whether the robot is simulated (i.e., ros2_control) or real hardware is being used -->
@@ -40,7 +40,9 @@
     <param name="tsdf.max.y" value="1.524"/>
     <param name="tsdf.max.z" value="0.5"/>
     <param name="tsdf.voxel_length" value="0.003"/>
-<!--    <param name="tsdf.sdf_trunc" value="0.025"/>-->
+    <param name="tsdf.sdf_trunc" value="0.03"/>
+    <param name="rgbd.depth_scale" value="1000.0"/>
+    <param name="rgbd.depth_trunc" value="1.1"/>
   </node>
 
   <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
