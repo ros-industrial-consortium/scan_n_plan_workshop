@@ -142,7 +142,13 @@
     <child link="ee"/>
   </joint>
 
-  <xacro:property name="camera_cal" value="${load_yaml('$(find snp_automate_2022)/config/camera_calibration.yaml')}" />
+  <xacro:arg name="ros_distro" default="humble"/>
+  <xacro:if value="${'$(arg ros_distro)' > 'foxy'}">
+    <xacro:property name="camera_cal" value="${xacro.load_yaml('$(find snp_automate_2022)/config/camera_calibration.yaml')}" />
+  </xacro:if>
+  <xacro:unless value="${'$(arg ros_distro)' > 'foxy'}">
+    <xacro:property name="camera_cal" value="${load_yaml('$(find snp_automate_2022)/config/camera_calibration.yaml')}" />
+  </xacro:unless>
 
   <link name="camera_color_optical_frame"/>
   <joint name="tool0_to_camera" type="fixed">

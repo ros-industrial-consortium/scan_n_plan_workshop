@@ -16,10 +16,10 @@ using FJT_Result = control_msgs::action::FollowJointTrajectory_Result;
 using FJT_Goal = control_msgs::action::FollowJointTrajectory_Goal;
 
 template <typename T>
-T get(rclcpp::Node* node, const std::string& key)
+T declareAndGet(rclcpp::Node* node, const std::string& key, const T& default_value)
 {
-  node->declare_parameter(key);
   T val;
+  node->declare_parameter(key, default_value);
   if (!node->get_parameter(key, val))
     throw std::runtime_error("Failed to get '" + key + "' parameter");
   return val;
@@ -31,7 +31,9 @@ public:
   explicit MotionExecNode()
     : Node("motion_execution_node"), cb_group_(create_callback_group(rclcpp::CallbackGroupType::Reentrant))
   {
-    const std::string fjt_action = get<std::string>(this, "follow_joint_trajectory_action");
+    const std::string fjt_action = declareAndGet<std::string>(this, "follow_joint_trajectory_action",
+                                                              "joint_trajectory_position_controller/"
+                                                              "follow_joint_trajectory");
     fjt_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, fjt_action);
 
     enable_client_ = create_client<std_srvs::srv::Trigger>(ENABLE_SERVICE);

@@ -19,6 +19,7 @@
   <depend>tesseract_support</depend>
   <depend>tesseract_urdf</depend>
   <depend>tesseract_kinematics</depend>
+  <depend>tf2_eigen</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -6,10 +6,10 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 
 template <typename T>
-T declare_and_get(rclcpp::Node* node, const std::string& key)
+T declareAndGet(rclcpp::Node* node, const std::string& key, const T& default_value)
 {
   T val;
-  node->declare_parameter(key);
+  node->declare_parameter(key, default_value);
   if (!node->get_parameter(key, val))
     throw std::runtime_error("Failed to get '" + key + "' parameter");
   return val;
@@ -23,7 +23,7 @@ public:
   {
     using namespace std::placeholders;
 
-    auto fjt_action = declare_and_get<std::string>(this, "follow_joint_trajectory_action");
+    auto fjt_action = declareAndGet<std::string>(this, "follow_joint_trajectory_action", "joint_trajectory_action");
     action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
         this, fjt_action, std::bind(&ExecSimServer::handleGoal, this, _1, _2),
         std::bind(&ExecSimServer::handleCancel, this, _1), std::bind(&ExecSimServer::handleAccepted, this, _1));

@@ -58,10 +58,10 @@ jobs:
           BUILDER: colcon
           ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
           UNDERLAY: /root/tesseract-robotics/tesseract_ros2_target_ws/install
-          UPSTREAM_WORKSPACE: dependencies.repos
+          UPSTREAM_WORKSPACE: dependencies_${{ matrix.distro }}.repos
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${ROS_DISTRO}/setup.bash'
           BEFORE_RUN_TARGET_TEST_EMBED: ''
-          ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros"
+          ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros libvtk"
           AFTER_SCRIPT: 'rm -r $BASEDIR/${PREFIX}upstream_ws/build $BASEDIR/${PREFIX}target_ws/build'
           DOCKER_COMMIT: ${{ steps.meta.outputs.tags }}
 

@@ -53,23 +53,12 @@ static const std::string SCAN_TRAJ_FILE_PARAM = "scan_trajectory_file";
 namespace  // anonymous restricts visibility to this file
 {
 template <typename T>
-T declareAndGet(rclcpp::Node& node, const std::string& key)
-{
-  T val;
-  node.declare_parameter(key);
-  if (!node.get_parameter(key, val))
-  {
-    throw std::runtime_error("Failed to get '" + key + "' parameter");
-  }
-  return val;
-}
-
-template <typename T>
 T declareAndGet(rclcpp::Node& node, const std::string& key, const T& default_value)
 {
   T val;
-  node.declare_parameter(key);
-  node.get_parameter_or(key, val, default_value);
+  node.declare_parameter(key, default_value);
+  if (!node.get_parameter(key, val))
+    throw std::runtime_error("Failed to get '" + key + "' parameter");
   return val;
 }
 
@@ -79,13 +68,13 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   : QWidget(parent)
   , ui_(new Ui::SNPWidget)
   , past_calibration_(false)
-  , mesh_file_(declareAndGet<std::string>(*node, MESH_FILE_PARAM))
-  , motion_group_(declareAndGet<std::string>(*node, MOTION_GROUP_PARAM))
-  , reference_frame_(declareAndGet<std::string>(*node, REF_FRAME_PARAM))
-  , tcp_frame_(declareAndGet<std::string>(*node, TCP_FRAME_PARAM))
-  , camera_frame_(declareAndGet<std::string>(*node, CAMERA_FRAME_PARAM))
+  , mesh_file_(declareAndGet<std::string>(*node, MESH_FILE_PARAM, ""))
+  , motion_group_(declareAndGet<std::string>(*node, MOTION_GROUP_PARAM, ""))
+  , reference_frame_(declareAndGet<std::string>(*node, REF_FRAME_PARAM, ""))
+  , tcp_frame_(declareAndGet<std::string>(*node, TCP_FRAME_PARAM, ""))
+  , camera_frame_(declareAndGet<std::string>(*node, CAMERA_FRAME_PARAM, ""))
   , scan_traj_(message_serialization::deserialize<trajectory_msgs::msg::JointTrajectory>(
-        declareAndGet<std::string>(*node, SCAN_TRAJ_FILE_PARAM)))
+        declareAndGet<std::string>(*node, SCAN_TRAJ_FILE_PARAM, "")))
   , start_scan_request_(std::make_shared<industrial_reconstruction_msgs::srv::StartReconstruction::Request>())
 {
   ui_->setupUi(this);
