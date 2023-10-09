@@ -53,7 +53,7 @@ jobs:
           ROS_REPO: main
           BEFORE_INIT: ''
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-master
+          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.18
           GIT_SUBMODULE_STRATEGY: normal
           BUILDER: colcon
           ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
