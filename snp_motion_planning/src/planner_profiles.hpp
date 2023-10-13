@@ -66,7 +66,9 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile()
 
   // Add as many planners as available threads so mulitple OMPL plans can happen in parallel
   auto profile = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
-  profile->planning_time = 20.0;
+  profile->planning_time = 5.0;
+  profile->max_solutions = 1;
+
   profile->planners.clear();
   profile->planners.reserve(static_cast<std::size_t>(n));
   for (Eigen::Index i = 0; i < n; ++i)
