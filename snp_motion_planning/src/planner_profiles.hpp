@@ -97,9 +97,9 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   // TrajOpt profiles
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
   profile->smooth_velocities = true;
-  profile->velocity_coeff = Eigen::VectorXd::Constant(6, 1, 10.0);
-  profile->acceleration_coeff = Eigen::VectorXd::Constant(6, 1, 25.0);
-  profile->jerk_coeff = Eigen::VectorXd::Constant(6, 1, 50.0);
+  profile->velocity_coeff = Eigen::VectorXd::Constant(1, 1, 10.0);
+  profile->acceleration_coeff = Eigen::VectorXd::Constant(1, 1, 25.0);
+  profile->jerk_coeff = Eigen::VectorXd::Constant(1, 1, 50.0);
 
   profile->contact_test_type = tesseract_collision::ContactTestType::CLOSEST;
 
