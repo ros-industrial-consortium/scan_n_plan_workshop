@@ -62,21 +62,32 @@ T declareAndGet(rclcpp::Node& node, const std::string& key, const T& default_val
   return val;
 }
 
+template <typename T>
+T get(rclcpp::Node& node, const std::string& key)
+{
+  T val;
+  if (!node.get_parameter(key, val))
+    throw std::runtime_error("Failed to get '" + key + "' parameter");
+  return val;
+}
+
 }  // namespace
 
 SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   : QWidget(parent)
+  , node_(node)
   , ui_(new Ui::SNPWidget)
   , past_calibration_(false)
   , mesh_file_(declareAndGet<std::string>(*node, MESH_FILE_PARAM, ""))
-  , motion_group_(declareAndGet<std::string>(*node, MOTION_GROUP_PARAM, ""))
   , reference_frame_(declareAndGet<std::string>(*node, REF_FRAME_PARAM, ""))
-  , tcp_frame_(declareAndGet<std::string>(*node, TCP_FRAME_PARAM, ""))
-  , camera_frame_(declareAndGet<std::string>(*node, CAMERA_FRAME_PARAM, ""))
   , scan_traj_(message_serialization::deserialize<trajectory_msgs::msg::JointTrajectory>(
         declareAndGet<std::string>(*node, SCAN_TRAJ_FILE_PARAM, "")))
   , start_scan_request_(std::make_shared<industrial_reconstruction_msgs::srv::StartReconstruction::Request>())
 {
+  node->declare_parameter(MOTION_GROUP_PARAM, rclcpp::ParameterValue());
+  node->declare_parameter(TCP_FRAME_PARAM, rclcpp::ParameterValue());
+  node->declare_parameter(CAMERA_FRAME_PARAM, rclcpp::ParameterValue());
+
   ui_->setupUi(this);
 
   connect(ui_->calibration_group_box, &QGroupBox::clicked, this, &SNPWidget::update_calibration_requirement);
@@ -116,7 +127,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 
   // Populate scan request
-  start_scan_request_->tracking_frame = camera_frame_;
+  start_scan_request_->tracking_frame = get<std::string>(*node_, CAMERA_FRAME_PARAM);
   start_scan_request_->relative_frame = reference_frame_;
   start_scan_request_->translation_distance = 0;
   start_scan_request_->rotational_distance = 0;
@@ -532,8 +543,8 @@ void SNPWidget::planMotion()
 
     // TODO: Fill a motion planning service request
     auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();
-    request->motion_group = motion_group_;
-    request->tcp_frame = tcp_frame_;
+    request->motion_group = get<std::string>(*node_, MOTION_GROUP_PARAM);
+    request->tcp_frame = get<std::string>(*node_, TCP_FRAME_PARAM);
     request->tool_paths = *tool_paths_;
     request->mesh_filename = mesh_file_;
     request->mesh_frame = reference_frame_;

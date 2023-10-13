@@ -28,14 +28,12 @@ public:
   explicit SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
 
 private:
+  rclcpp::Node::SharedPtr node_;
   Ui::SNPWidget* ui_;
   bool past_calibration_;
 
   const std::string mesh_file_;
-  const std::string motion_group_;
   const std::string reference_frame_;
-  const std::string tcp_frame_;
-  const std::string camera_frame_;
   const trajectory_msgs::msg::JointTrajectory scan_traj_;
   industrial_reconstruction_msgs::srv::StartReconstruction::Request::SharedPtr start_scan_request_;
 
