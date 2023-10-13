@@ -20,8 +20,6 @@
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
-#include <tesseract_task_composer/core/task_composer_problem.h>
-#include <tesseract_task_composer/core/task_composer_input.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 #include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
@@ -493,6 +491,8 @@ private:
       auto task_name = get<std::string>(node_, TASK_NAME_PARAM);
       auto executor = factory.createTaskComposerExecutor("TaskflowExecutor");
       tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_name);
+      if (!task)
+        throw std::runtime_error("Failed to create '" + task_name + "' task");
 
       // Save dot graph
       {
@@ -502,12 +502,11 @@ private:
 
       const std::string input_key = task->getInputKeys().front();
       const std::string output_key = task->getOutputKeys().front();
-      tesseract_planning::TaskComposerDataStorage input_data;
-      input_data.setData(input_key, program);
-      tesseract_planning::TaskComposerProblem::UPtr problem =
-          std::make_unique<tesseract_planning::PlanningTaskComposerProblem>(env_, input_data, profile_dict);
-      tesseract_planning::TaskComposerInput input(std::move(problem));
-      input.dotgraph = true;
+      auto task_data = std::make_shared<tesseract_planning::TaskComposerDataStorage>();
+      task_data->setData(input_key, program);
+      tesseract_planning::TaskComposerProblem::Ptr problem =
+          std::make_shared<tesseract_planning::PlanningTaskComposerProblem>(env_, profile_dict);
+      problem->dotgraph = true;
 
       // Update log level for debugging
       auto log_level = console_bridge::getLogLevel();
@@ -521,32 +520,34 @@ private:
         {
           auto task_plugin_name = it->first.as<std::string>();
           std::ofstream f(tesseract_common::getTempPath() + task_plugin_name + ".dot");
-          factory.createTaskComposerNode(task_plugin_name)->dump(f);
+          tesseract_planning::TaskComposerNode::Ptr task = factory.createTaskComposerNode(task_plugin_name);
+          if (!task)
+            throw std::runtime_error("Failed to load task: '" + task_plugin_name + "'");
+          task->dump(f);
         }
       }
 
       // Run problem
-      tesseract_planning::TaskComposerFuture::UPtr exec_fut = executor->run(*task, input);
-      exec_fut->wait();
-
-      auto info_map = input.task_infos.getInfoMap();
+      tesseract_planning::TaskComposerFuture::UPtr result = executor->run(*task, problem, task_data);
+      result->wait();
 
       // Save the output dot graph
       {
         std::ofstream tc_out_results(tesseract_common::getTempPath() + task_name + "_results.dot");
-        static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr, info_map);
+        static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr,
+                                                                              result->context->task_infos.getInfoMap());
       }
 
       // Reset the log level
       console_bridge::setLogLevel(log_level);
 
       // Check for successful plan
-      if (!input.isSuccessful())
+      if (!result->context->isSuccessful() || result->context->isAborted())
         throw std::runtime_error("Failed to create motion plan");
 
       // Get results of successful plan
       tesseract_planning::CompositeInstruction program_results =
-          input.data_storage.getData(output_key).as<tesseract_planning::CompositeInstruction>();
+          result->context->data_storage->getData(output_key).as<tesseract_planning::CompositeInstruction>();
 
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt = toJointTrajectory(program_results);
