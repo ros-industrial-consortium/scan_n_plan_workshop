@@ -21,13 +21,6 @@ TrajOptMotionPlannerTask: &trajopt
     inputs: [output_data]
     outputs: [output_data]
     format_result_as_input: false
-OMPLMotionPlannerTask: &ompl
-  class: OMPLMotionPlannerTaskFactory
-  config:
-    conditional: true
-    inputs: [output_data]
-    outputs: [output_data]
-    format_result_as_input: true
 DiscreteContactCheckTask: &contact_check
   class: DiscreteContactCheckTaskFactory
   config:
@@ -99,7 +92,13 @@ task_composer_plugins:
             DoneTask: *done
             AbortTask: *abort
             MinLengthTask: *min_length
-            OMPLMotionPlannerTask: *ompl
+            OMPLMotionPlannerTask:
+              class: OMPLMotionPlannerTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
+                format_result_as_input: true
             TrajOptMotionPlannerTask: *trajopt
             DiscreteContactCheckTask: *contact_check
             IterativeSplineParameterizationTask: *isp
@@ -128,7 +127,13 @@ task_composer_plugins:
             AbortTask: *abort
             MinLengthTask: *min_length
             TrajOptMotionPlannerTask: *trajopt
-            OMPLMotionPlannerTask: *ompl
+            OMPLMotionPlannerTask:
+              class: OMPLMotionPlannerTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
+                format_result_as_input: false
             DiscreteContactCheckTask: *contact_check
             IterativeSplineParameterizationTask: *isp
             KinematicLimitsCheckTask: *limits_check
