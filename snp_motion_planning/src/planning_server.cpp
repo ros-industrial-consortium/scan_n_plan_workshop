@@ -35,8 +35,10 @@ static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
 static const double MAX_TCP_SPEED = 0.25;  // m/s
 static const std::string SCAN_LINK_NAME = "scan";
+static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
+static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 
-// Parameters
+// Profile parameters
 static const std::string VERBOSE_PARAM = "verbose";
 static const std::string TOUCH_LINKS_PARAM = "touch_links";
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
@@ -48,10 +50,11 @@ static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
 static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
 static const std::string LVS_PARAM = "contact_check_longest_valid_segment";
 static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
+static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
+
+// Task composer parameters
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
 static const std::string TASK_NAME_PARAM = "task_name";
-static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
-static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 
 // Topics
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
@@ -186,6 +189,10 @@ public:
     node_->declare_parameter("robot_description_semantic", "");
     node_->declare_parameter(VERBOSE_PARAM, false);
     node_->declare_parameter<std::vector<std::string>>(TOUCH_LINKS_PARAM, {});
+    node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
+    node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");
+
+    // Profiles
     node_->declare_parameter(MAX_TRANS_VEL_PARAM, 0.05);
     node_->declare_parameter(MAX_ROT_VEL_PARAM, 1.571);
     node_->declare_parameter(MAX_TRANS_ACC_PARAM, 0.1);
@@ -195,10 +202,11 @@ public:
     node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(LVS_PARAM, 0.05);
     node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
+    node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
+
+    // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
     node_->declare_parameter(TASK_NAME_PARAM, "");
-    node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
-    node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -387,8 +395,11 @@ private:
       {
         profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
                                                                                createSimplePlannerProfile());
-        profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE,
-                                                                      createOMPLProfile());
+        {
+          auto profile = createOMPLProfile();
+          profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
+          profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
+        }
         profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                                                          createTrajOptToolZFreePlanProfile());
         profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
