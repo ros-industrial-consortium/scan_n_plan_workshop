@@ -7,7 +7,6 @@
 #include <console_bridge/console.h>
 #include <boost/serialization/string.hpp>
 
-#include <tesseract_common/timer.h>
 #include <tesseract_motion_planners/planner_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/poly/move_instruction_poly.h>
@@ -83,33 +82,23 @@ public:
 protected:
   friend struct tesseract_common::Serialization;
   friend class boost::serialization::access;
-  tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerInput& input,
+  tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerContext& context,
                                                          OptionalTaskComposerExecutor /*executor*/) const override final
   {
     auto info = std::make_unique<tesseract_planning::TaskComposerNodeInfo>(*this);
     info->return_value = 0;
 
-    if (input.isAborted())
-    {
-      info->message = "Aborted";
-      return info;
-    }
-
     // Get the problem
-    auto& problem = dynamic_cast<tesseract_planning::PlanningTaskComposerProblem&>(*input.problem);
-
-    tesseract_common::Timer timer;
-    timer.start();
+    auto& problem = dynamic_cast<tesseract_planning::PlanningTaskComposerProblem&>(*context.problem);
 
     // --------------------
     // Check that inputs are valid
     // --------------------
-    auto input_data_poly = input.data_storage.getData(input_keys_[0]);
+    auto input_data_poly = context.data_storage->getData(input_keys_[0]);
     if (input_data_poly.isNull() ||
         input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
       info->message = "Input results to constant TCP speed time parameterization must be a composite instruction";
-      info->elapsed_time = timer.elapsedSeconds();
       CONSOLE_BRIDGE_logError("%s", info->message.c_str());
       return info;
     }
@@ -122,7 +111,8 @@ protected:
     profile = tesseract_planning::getProfileString(name_, profile, problem.composite_profile_remapping);
     auto cur_composite_profile = tesseract_planning::getProfile<ConstantTCPSpeedTimeParameterizationProfile>(
         name_, profile, *problem.profiles, std::make_shared<ConstantTCPSpeedTimeParameterizationProfile>());
-    cur_composite_profile = applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
+    cur_composite_profile =
+        tesseract_planning::applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
 
     // Create data structures for checking for plan profile overrides
     auto flattened = ci.flatten(tesseract_planning::moveFilter);
@@ -130,7 +120,6 @@ protected:
     {
       info->message = "Cartesian time parameterization found no MoveInstructions to process";
       info->return_value = 1;
-      info->elapsed_time = timer.elapsedSeconds();
       return info;
     }
 
@@ -148,15 +137,13 @@ protected:
     {
       info->message =
           "Failed to perform constant TCP speed time parameterization for process input: " + ci.getDescription();
-      info->elapsed_time = timer.elapsedSeconds();
       return info;
     }
 
     info->color = "green";
     info->message = "Constant TCP speed time parameterization succeeded";
-    input.data_storage.setData(output_keys_[0], input_data_poly);
+    context.data_storage->setData(output_keys_[0], input_data_poly);
     info->return_value = 1;
-    info->elapsed_time = timer.elapsedSeconds();
     return info;
   }
 

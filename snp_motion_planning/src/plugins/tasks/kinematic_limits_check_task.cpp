@@ -80,33 +80,23 @@ protected:
   friend struct tesseract_common::Serialization;
   friend class boost::serialization::access;
 
-  tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerInput& input,
+  tesseract_planning::TaskComposerNodeInfo::UPtr runImpl(tesseract_planning::TaskComposerContext& context,
                                                          OptionalTaskComposerExecutor /*executor*/) const override final
   {
     auto info = std::make_unique<tesseract_planning::TaskComposerNodeInfo>(*this);
     info->return_value = 0;
 
-    if (input.isAborted())
-    {
-      info->message = "Aborted";
-      return info;
-    }
-
     // Get the problem
-    auto& problem = dynamic_cast<tesseract_planning::PlanningTaskComposerProblem&>(*input.problem);
-
-    tesseract_common::Timer timer;
-    timer.start();
+    auto& problem = dynamic_cast<tesseract_planning::PlanningTaskComposerProblem&>(*context.problem);
 
     // --------------------
     // Check that inputs are valid
     // --------------------
-    auto input_data_poly = input.data_storage.getData(input_keys_[0]);
+    auto input_data_poly = context.data_storage->getData(input_keys_[0]);
     if (input_data_poly.isNull() ||
         input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
       info->message = "Input results to kinimatic limits check must be a composite instruction";
-      info->elapsed_time = timer.elapsedSeconds();
       CONSOLE_BRIDGE_logError("%s", info->message.c_str());
       return info;
     }
@@ -119,7 +109,8 @@ protected:
     profile = tesseract_planning::getProfileString(name_, profile, problem.composite_profile_remapping);
     auto cur_composite_profile = tesseract_planning::getProfile<KinematicLimitsCheckProfile>(
         name_, profile, *problem.profiles, std::make_shared<KinematicLimitsCheckProfile>());
-    cur_composite_profile = applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
+    cur_composite_profile =
+        tesseract_planning::applyProfileOverrides(name_, profile, cur_composite_profile, ci.getProfileOverrides());
 
     // Create data structures for checking for plan profile overrides
     auto flattened = ci.flatten(tesseract_planning::moveFilter);
@@ -127,7 +118,6 @@ protected:
     {
       info->message = "Kinematic limits check found no MoveInstructions to process";
       info->return_value = 1;
-      info->elapsed_time = timer.elapsedSeconds();
       return info;
     }
 
@@ -195,7 +185,6 @@ protected:
     info->color = "green";
     info->return_value = 1;
     info->message = "Kinematic limits check succeeded";
-    info->elapsed_time = timer.elapsedSeconds();
     return info;
   }
 
