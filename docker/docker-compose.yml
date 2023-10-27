@@ -1,0 +1,24 @@
+version: '3'
+services:
+  ros2bridge20.04:
+    build:
+      context: "."
+      dockerfile: "./Dockerfile"
+    environment:
+      DISPLAY: $DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ~/.Xauthority:/home/$USER/.Xauthority:rw
+    image: rosbridge20.04
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    container_name: rosbridge
+    secrets:
+      - user_ssh_key
+    network_mode: host
+    privileged: true
+secrets:
+  user_ssh_key:
+    file: ${HOME}/.ssh/id_rsa
+
