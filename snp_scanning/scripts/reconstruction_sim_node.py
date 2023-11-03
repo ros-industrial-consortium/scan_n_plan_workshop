@@ -13,30 +13,32 @@ from visualization_msgs.msg import Marker
 from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import Point
 import shutil
+import time
 
 MESH_FILE_PARAMETER = "mesh_file"
 REFERENCE_FRAME_PARAMETER = "reference_frame"
 MESH_TOPIC = "mesh"
 
+
 class ReconstructionSimServer(Node):
     def __init__(self):
-        super().__init__()
+        super().__init__("reconstruction_sim_node")
 
-        self.start_srv_ = self.create_service(StartReconstruction,"start_reconstruction", self.startCB)
+        self.start_srv_ = self.create_service(StartReconstruction, "start_reconstruction", self.startCB)
 
         self.stop_srv = self.create_service(StopReconstruction, "stop_reconstruction", self.stopCB)
 
-        self.scan_mesh_pub_ = self.create_publisher(Marker, MESH_TOPIC, 10)
+        self.scan_mesh_pub_ = self.create_publisher(Marker, MESH_TOPIC, 100)
 
-        self.mesh_file_parameter_ = self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING, value='/home/D10.US.SWRI.ORG/dspielman/workspaces/blending_m5/swri_ws/target_ws/src/scan_n_plan_workshop/snp_automate_2022/meshes/part_scan.ply')
-
-        self. reference_frame_parameter_= self.declare_parameter(REFERENCE_FRAME_PARAMETER, rclpy.Parameter.Type.STRING, value="base_link")
+        self.mesh_file_parameter = self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING).value
+        self.reference_frame_parameter = self.declare_parameter(REFERENCE_FRAME_PARAMETER, rclpy.Parameter.Type.STRING).value
 
     def meshToRos(self, mesh):
         triangles = np.asarray(mesh.triangles)
         vertices = np.asarray(mesh.vertices)
         vertex_colors = np.asarray(mesh.vertex_colors)
         out_msg = visualization_msgs.msg.Marker()
+        out_msg.header.frame_id = self.reference_frame_parameter
         out_msg.type = out_msg.TRIANGLE_LIST
         out_msg.action = out_msg.ADD
         out_msg.id = 1
@@ -65,18 +67,19 @@ class ReconstructionSimServer(Node):
                 out_msg.colors.append(curr_point_color)
         return out_msg
 
-    def start_cb(self, request, response):
+    def startCB(self, request, response):
         response.success = True
         self.get_logger().info("Sim Started")
+        return response
 
-    def stop_cb(self, request, response):
+    def stopCB(self, request, response):
         # get parameter named "mesh_sourcepath" and local - var name it filepath_str
         try:
-            mesh_file = str(self.get_parameter(MESH_FILE_PARAMETER))
-            if not self.get_parameter(MESH_FILE_PARAMETER, mesh_file):
+            mesh_file = str(self.get_parameter(MESH_FILE_PARAMETER).value)
+            if not self.get_parameter(MESH_FILE_PARAMETER):
                 raise Exception("Failed to get parameter '" + MESH_FILE_PARAMETER + "'")
             reference_frame = str(self.get_parameter(REFERENCE_FRAME_PARAMETER))
-            if not self.get_parameter(REFERENCE_FRAME_PARAMETER, reference_frame):
+            if not self.get_parameter(REFERENCE_FRAME_PARAMETER):
                 raise Exception("Failed to get parameter '" + REFERENCE_FRAME_PARAMETER + "'")
 
             mesh_source_path = mesh_file
@@ -84,24 +87,29 @@ class ReconstructionSimServer(Node):
             shutil.copy2(mesh_source_path, mesh_target_path)
 
             mesh = open3d.io.read_triangle_mesh(mesh_file)
-            out_msg = self.meshtoRos(mesh)
+            out_msg = self.meshToRos(mesh)
             out_msg.mesh_resource = "file://" + mesh_file
-            self.scan_mesh_pub.publish(out_msg)
+            self.scan_mesh_pub_.publish(out_msg)
 
             response.success = True
             self.get_logger().info("Scanning simulation complete; mesh saved to '" + mesh_file + "'")
+            response.message = 'Success!'
 
         except Exception as e:
             response.success = False
             response.message = str(e)
 
+        return response
 
-def main(args=str(sys.argv)):
+
+def main(args=sys.argv):
     rclpy.init(args=args)
 
-    node = ReconstructionSimServer("reconstruction_sim_node")
+    # time.sleep(10)
+    node = ReconstructionSimServer()
     rclpy.spin(node)
     rclpy.shutdown()
 
 
-
+if __name__ == '__main__':
+    main()
