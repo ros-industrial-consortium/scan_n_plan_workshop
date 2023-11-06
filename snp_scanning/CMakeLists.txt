@@ -24,16 +24,6 @@ find_package(PCL REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 
-add_executable(open3d_sim_node src/open3d_sim_node.cpp)
-target_link_libraries(open3d_sim_node Boost::filesystem)
-ament_target_dependencies(
-  open3d_sim_node
-  rclcpp
-  industrial_reconstruction_msgs
-  visualization_msgs)
-
-install(TARGETS open3d_sim_node DESTINATION lib/${PROJECT_NAME})
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
