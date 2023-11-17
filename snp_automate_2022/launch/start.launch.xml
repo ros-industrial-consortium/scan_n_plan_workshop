@@ -88,7 +88,8 @@
   </include>
 
   <!-- Launch Motion Execution Node -->
-  <node pkg="snp_motion_execution" exec="snp_motion_execution_node">
+  <!-- <node pkg="snp_motion_execution" exec="snp_motion_execution_node"> -->
+  <node pkg="snp_motion_execution" exec="motion_execution_node.py">
     <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
   </node>
 
@@ -96,9 +97,11 @@
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
   <group if="$(var sim_robot)">
-    <node pkg="snp_motion_execution" exec="robot_enable_simulator" />
+    <!-- <node pkg="snp_motion_execution" exec="robot_enable_simulator" /> -->
+    <node pkg="snp_motion_execution" exec="robot_enable_simulator_node.py" />
     <group if="$(var bypass_execution)">
-      <node pkg="snp_motion_execution" exec="execution_simulator" >
+      <!-- <node pkg="snp_motion_execution" exec="execution_simulator" > -->
+      <node pkg="snp_motion_execution" exec="execution_simulator_node.py" >
         <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
       </node>
     </group>

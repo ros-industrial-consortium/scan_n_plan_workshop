@@ -8,7 +8,6 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.action import ActionClient
-from rclpy.waitable import Waitable
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 from std_srvs.srv import Trigger
@@ -71,6 +70,7 @@ class MotionExecServer():
         
         request = Trigger.Request()
         future = self.enable_client.call_async(request)
+        time.sleep(0.25)
         self.executor.spin_until_future_complete(future)
         
         response = future.result()
@@ -137,6 +137,7 @@ class MotionExecServer():
 
             self.node.get_logger().info("Sending joint trajectory")
             goal_handle_future = self.fjt_client.send_goal_async(goal_msg)
+            time.sleep(0.25)
             self.executor.spin_until_future_complete(goal_handle_future)
             
             goal_handle = goal_handle_future.result()
@@ -150,6 +151,7 @@ class MotionExecServer():
             # Wait for the trajectory to complete
             fjt_future = goal_handle.get_result_async()
             timeout = float(goal_msg.trajectory.points[-1].time_from_start.sec) * 1.5
+            time.sleep(0.25)
             self.executor.spin_until_future_complete(fjt_future, timeout_sec=timeout)
             if not fjt_future.done():
                 raise RuntimeError(f"Timed out waiting for trajectory to finish, > {timeout} sec")
