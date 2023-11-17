@@ -18,6 +18,8 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
 
 add_executable(${PROJECT_NAME}_node src/motion_execution_node.cpp)
 ament_target_dependencies(
@@ -41,6 +43,14 @@ ament_target_dependencies(robot_enable_simulator rclcpp std_srvs)
 
 install(TARGETS ${PROJECT_NAME}_node execution_simulator robot_enable_simulator DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+
+# Install Python executables
+install(PROGRAMS
+  scripts/motion_execution_node.py
+  scripts/robot_enable_simulator_node.py
+  scripts/execution_simulator_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
