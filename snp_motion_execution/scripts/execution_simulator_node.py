@@ -2,7 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionServer, GoalResponse, CancelResponse
+from rclpy.action.server import ActionServer, GoalResponse, CancelResponse, ServerGoalHandle
 from control_msgs.action import FollowJointTrajectory
 
 
@@ -22,7 +22,7 @@ class ExecSimServer(Node):
         self.get_logger().info("Started simulated robot execution node")
 
     '''Callback to execute action'''
-    async def execute_cb(self, goal_handle):
+    async def execute_cb(self, goal_handle: ServerGoalHandle):
         self.get_logger().info("Executing goal")
         result = FollowJointTrajectory.Result()
         result.error_code = FollowJointTrajectory.Result.SUCCESSFUL

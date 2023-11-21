@@ -14,7 +14,7 @@ class EnableRobotSimServer(Node):
         self.get_logger().info("Started simulated robot enable node")
     
     '''callback to enable robot'''
-    def enable_cb(self, request, response):
+    def enable_cb(self, request: Trigger.Request, response: Trigger.Response):
         return self.cb(request, response, "Enabled robot")
     
     '''callback to disable robot'''
@@ -22,7 +22,7 @@ class EnableRobotSimServer(Node):
         return self.cb(request, response, "Disabled robot")
 
     '''callback to simulate robot response'''
-    def cb(self, request, response, message):
+    def cb(self, request : Trigger.Request, response : Trigger.Response, message):
         response.success = True
         response.message = message
         return response
