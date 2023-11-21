@@ -2,7 +2,6 @@
 import threading
 import time
 import numpy as np
-import traceback
 from threading import Event
 
 import rclpy
@@ -123,8 +122,6 @@ class MotionExecServer(Node):
     def done_callback(self, future, event: Event, msg: None|str = None):
         event.set()
         event.clear()   # seems to work when immediately cleared
-        if msg is not None:
-            self.get_logger().info(f'done_callback: {msg}')
 
     '''Execute motion plan request'''
 
@@ -158,7 +155,7 @@ class MotionExecServer(Node):
             self.get_logger().info("Sending joint trajectory")
             send_goal_future: Future = self.fjt_client.send_goal_async(goal_msg)
             event = Event()
-            send_goal_future.add_done_callback(lambda f, e=event: self.done_callback(f, e, 'send_goal_future'))
+            send_goal_future.add_done_callback(lambda f, e=event: self.done_callback(f, e))
             event.wait()
 
             goal_handle: ClientGoalHandle = send_goal_future.result()
@@ -169,7 +166,7 @@ class MotionExecServer(Node):
 
             # Wait for the trajectory to complete
             fjt_future: Future = goal_handle.get_result_async()
-            fjt_future.add_done_callback(lambda f, e=event: self.done_callback(f, e, 'fjt_future'))
+            fjt_future.add_done_callback(lambda f, e=event: self.done_callback(f, e))
             event.wait()
 
             timeout = float(goal_msg.trajectory.points[-1].time_from_start.sec) * 1.5
@@ -199,7 +196,6 @@ class MotionExecServer(Node):
         except Exception as ex:
             result.success = False
             self.get_logger().error(f'{ex}')
-            traceback.print_exc()
             return result
 
 
