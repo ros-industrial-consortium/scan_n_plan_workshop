@@ -17,12 +17,8 @@ find_package(rclpy REQUIRED)
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 # Install Python executables
-install(PROGRAMS
-  scripts/motion_execution_node.py
-  scripts/robot_enable_simulator_node.py
-  scripts/execution_simulator_node.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+install(PROGRAMS scripts/motion_execution_node.py scripts/robot_enable_simulator_node.py
+                 scripts/execution_simulator_node.py DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
