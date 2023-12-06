@@ -13,13 +13,13 @@ public:
   using Ptr = std::shared_ptr<TCPSpeedLimiter>;
   using ConstPtr = std::shared_ptr<const TCPSpeedLimiter>;
 
-  TCPSpeedLimiter(tesseract_environment::Environment::ConstPtr env)
-    : env_(env)
+  TCPSpeedLimiter(tesseract_environment::Environment::ConstPtr env) : env_(env)
   {
   }
 
   // Joint names are assumed to be constant across the entire trajectory
-  bool compute(tesseract_planning::TrajectoryContainer& trajectory, std::vector<std::string> joint_names, const double max_speed, const std::string tcp) const
+  bool compute(tesseract_planning::TrajectoryContainer& trajectory, std::vector<std::string> joint_names,
+               const double max_speed, const std::string tcp) const
   {
     try
     {
@@ -31,13 +31,11 @@ public:
       for (Eigen::Index i = 1; i < trajectory.size(); i++)
       {
         // Find the previous waypoint position in Cartesian space
-        tesseract_scene_graph::SceneState prev_ss =
-            state_solver->getState(joint_names, trajectory.getPosition(i - 1));
+        tesseract_scene_graph::SceneState prev_ss = state_solver->getState(joint_names, trajectory.getPosition(i - 1));
         Eigen::Isometry3d prev_pose = prev_ss.link_transforms[tcp];
 
         // Find the current waypoint position in Cartesian space
-        tesseract_scene_graph::SceneState curr_ss =
-            state_solver->getState(joint_names, trajectory.getPosition(i));
+        tesseract_scene_graph::SceneState curr_ss = state_solver->getState(joint_names, trajectory.getPosition(i));
         Eigen::Isometry3d curr_pose = curr_ss.link_transforms[tcp];
 
         // Calculate the average TCP velocity between these waypoints
@@ -92,7 +90,6 @@ public:
 
 private:
   tesseract_environment::Environment::ConstPtr env_;
-  
 };
 
 }  // namespace snp_motion_planning

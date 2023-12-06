@@ -26,22 +26,20 @@ public:
   using UPtr = std::unique_ptr<TCPSpeedLimiterTask>;
   using ConstUPtr = std::unique_ptr<const TCPSpeedLimiterTask>;
 
-  TCPSpeedLimiterTask()
-    : tesseract_planning::TaskComposerTask(TCP_SPEED_LIMITER_TASK_NAME, true)
+  TCPSpeedLimiterTask() : tesseract_planning::TaskComposerTask(TCP_SPEED_LIMITER_TASK_NAME, true)
   {
   }
 
   explicit TCPSpeedLimiterTask(std::string name, std::string input_key, std::string output_key,
-                                                    bool is_conditional = true)
+                               bool is_conditional = true)
     : tesseract_planning::TaskComposerTask(std::move(name), is_conditional)
   {
     input_keys_.push_back(std::move(input_key));
     output_keys_.push_back(std::move(output_key));
   }
 
-  explicit TCPSpeedLimiterTask(
-      std::string name, const YAML::Node& config,
-      const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
+  explicit TCPSpeedLimiterTask(std::string name, const YAML::Node& config,
+                               const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
     : tesseract_planning::TaskComposerTask(std::move(name), config)
   {
     if (input_keys_.empty())
@@ -202,5 +200,4 @@ TESSERACT_SERIALIZE_ARCHIVES_INSTANTIATE(snp_motion_planning::TCPSpeedLimiterTas
 BOOST_CLASS_EXPORT_IMPLEMENT(snp_motion_planning::TCPSpeedLimiterTask)
 
 TESSERACT_ADD_TASK_COMPOSER_NODE_PLUGIN(
-    tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::TCPSpeedLimiterTask>,
-    TCPSpeedLimiterTaskFactory)
+    tesseract_planning::TaskComposerTaskFactory<snp_motion_planning::TCPSpeedLimiterTask>, TCPSpeedLimiterTaskFactory)

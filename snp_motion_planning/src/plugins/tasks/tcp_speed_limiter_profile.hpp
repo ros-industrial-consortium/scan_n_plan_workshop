@@ -21,4 +21,4 @@ struct TCPSpeedLimiterProfile
   double max_speed;
 };
 
-} // namespace snp_motion_planning
+}  // namespace snp_motion_planning
