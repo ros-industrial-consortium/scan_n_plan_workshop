@@ -67,7 +67,7 @@
   </group>
 
   <group if="$(var sim_vision)">
-    <node pkg="snp_scanning" exec="reconstruction_sim_node.py">
+    <node pkg="snp_scanning" exec="reconstruction_sim_node">
       <param name="mesh_file" value="$(var mesh_file)"/>
       <param name="reference_frame" value="$(var reference_frame)"/>
       <remap from="mesh" to="industrial_reconstruction_mesh"/>
