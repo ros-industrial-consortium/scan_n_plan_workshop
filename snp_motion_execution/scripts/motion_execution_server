@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+from action_msgs.msg import GoalStatus
+from builtin_interfaces.msg import Duration
+from control_msgs.action import FollowJointTrajectory
+import numpy as np
+import rclpy
+from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.action.client import ActionClient, ClientGoalHandle
+from rclpy.task import Future
+from threading import Event, Lock
+import time
+from trajectory_msgs.msg import JointTrajectoryPoint
+from sensor_msgs.msg import JointState
+from snp_msgs.srv import ExecuteMotionPlan
+from std_srvs.srv import Trigger
+
+
+MOTION_EXEC_SERVICE = "execute_motion_plan"
+ENABLE_SERVICE = "robot_enable"
+FJT_ACTION_PARAM = "follow_joint_trajectory_action"
+JOINT_STATES_TOPIC = "joint_states"
+JOINT_STATE_TIME_THRESHOLD = 0.1  # seconds
+
+
+def done_callback(_future: Future,
+                  event: Event,
+                  _msg: str = None):
+    """
+    done callback to unblock thread
+    """
+    event.set()
+    # seems to work when immediately cleared
+    event.clear()
+
+
+class MotionExecServer(Node):
+    def __init__(self):
+        super().__init__('motion_execution_server')
+
+        self.mutex = Lock()
+        self.latest_joint_state = JointState()
+        self.cb_group = ReentrantCallbackGroup()
+        self.cb_group_server = ReentrantCallbackGroup()
+
+        # Start subscribers, clients, and server
+        self.joint_state_sub = self.create_subscription(JointState, JOINT_STATES_TOPIC, self.joint_state_cb, 10,
+                                                        callback_group=self.cb_group)
+
+        fjt_action = self.declare_parameter(FJT_ACTION_PARAM, "follow_joint_trajectory").value
+        self.fjt_client = ActionClient(self, FollowJointTrajectory, fjt_action, callback_group=self.cb_group)
+
+        self.enable_client = self.create_client(Trigger, ENABLE_SERVICE, callback_group=self.cb_group)
+
+        self.server = self.create_service(ExecuteMotionPlan, MOTION_EXEC_SERVICE,
+                                          callback=self.execute_motion_plan, callback_group=self.cb_group_server)
+
+        self.get_logger().info("Motion execution server started")
+
+    def joint_state_cb(self, state: JointState):
+        with self.mutex:
+            self.latest_joint_state = state
+
+    def get_joint_state_age(self):
+        """
+        Calculates age of latest joint state
+        """
+        with self.mutex:
+            current_time = self.get_clock().now().seconds_nanoseconds()
+            latest_js_time = self.latest_joint_state.header.stamp
+            return current_time[0] + current_time[1] * 1e-9 - (latest_js_time.sec + latest_js_time.nanosec * 1e-9)
+
+    def enable_robot(self):
+        """
+        Calls service to enable robot
+        """
+        self.get_logger().info("Enabling robot")
+        if not self.enable_client.service_is_ready():
+            raise RuntimeError("Robot enable server is not available")
+
+        request = Trigger.Request()
+        future = self.enable_client.call_async(request)
+
+        event = Event()
+        future.add_done_callback(lambda f, e=event: done_callback(f, e))
+        event.wait()
+
+        response = future.result()
+        if not response.success:
+            raise RuntimeError("Failed to enable robot: '" + response.message + "'")
+
+        # TODO: test whether this is necessary and consider removing
+        # Sleep to ensure that robot_enable actually did everything it had to.
+        # This is probably only necessary the first time that servos are enabled.
+        time.sleep(1)
+
+        self.get_logger().info("Robot enabled")
+
+    def replace_start_state(self, fjt_goal: FollowJointTrajectory.Goal) -> FollowJointTrajectory.Goal:
+        """
+        Replaces start state of joint trajectory with latest joint state
+        """
+        start_point = JointTrajectoryPoint()
+        start_point.positions = len(fjt_goal.trajectory.joint_names) * [0.0]
+        start_point.velocities = len(start_point.positions) * [0.0]
+        start_point.accelerations = len(start_point.positions) * [0.0]
+        start_point.effort = len(start_point.positions) * [0.0]
+        start_point.time_from_start = Duration(sec=0, nanosec=0)
+
+        # Find the index of the trajectory joint in the latest joint state message
+        with self.mutex:
+            for i in range(len(fjt_goal.trajectory.joint_names)):
+                name = fjt_goal.trajectory.joint_names[i]
+                idx = self.latest_joint_state.name.index(name)
+                start_point.positions[i] = self.latest_joint_state.position[idx]
+
+        fjt_goal.trajectory.points[0] = start_point
+        return fjt_goal
+
+    def execute_motion_plan(self, request: ExecuteMotionPlan.Request,
+                            result: ExecuteMotionPlan.Request) -> ExecuteMotionPlan.Request:
+        try:
+            # Check the last received joint state
+            js_age = self.get_joint_state_age()
+            if js_age > JOINT_STATE_TIME_THRESHOLD:
+                raise RuntimeError(f"Last joint state was not received within threshold ({js_age} > {JOINT_STATE_TIME_THRESHOLD})")
+
+            # Enable robot
+            self.enable_robot()
+
+            # Check that the server exists
+            if not self.fjt_client.server_is_ready():
+                raise RuntimeError("FJT action server not ready")
+
+            # Send motion trajectory
+            goal_msg = FollowJointTrajectory.Goal()
+            goal_msg.trajectory = request.motion_plan
+
+            # Replace the start state of the trajectory with the current joint state
+            goal_msg = self.replace_start_state(goal_msg)
+
+            self.get_logger().info("Sending joint trajectory")
+            send_goal_future: Future = self.fjt_client.send_goal_async(goal_msg)
+            event = Event()
+            send_goal_future.add_done_callback(lambda f, e=event: done_callback(f, e))
+            event.wait()
+
+            goal_handle: ClientGoalHandle = send_goal_future.result()
+
+            if not goal_handle.accepted:
+                raise RuntimeError("Follow joint trajectory action goal was not accepted (code " +
+                                   str(goal_handle.status) + ")")
+
+            # Wait for the trajectory to complete
+            fjt_future: Future = goal_handle.get_result_async()
+            fjt_future.add_done_callback(lambda f, e=event: done_callback(f, e))
+            timeout = float(goal_msg.trajectory.points[-1].time_from_start.sec) * 1.5
+            event.wait(timeout=timeout)
+
+            if not fjt_future.done():
+                fjt_future.cancel()
+                raise RuntimeError(f"Timed out waiting for trajectory to finish, > {timeout} sec")
+
+            # Handle the action result code
+            fjt_wrapper = fjt_future.result()
+            if fjt_wrapper.status != GoalStatus.STATUS_SUCCEEDED:
+                raise RuntimeError("Follow joint trajectory action call did not succeed")
+
+            # Handle the FJT error code
+            if fjt_wrapper.result.error_code != FollowJointTrajectory.Result.SUCCESSFUL:
+                raise RuntimeError("Follow joint trajectory action did not succeed: '" +
+                                   fjt_wrapper.result.error_string + "'")
+
+            # Communicate success
+            self.get_logger().info('Motion execution service complete')
+            result.success = True
+            return result
+
+        except Exception as ex:
+            result.success = False
+            self.get_logger().error(f'{ex}')
+            return result
+
+
+if __name__ == "__main__":
+    rclpy.init()
+    node = MotionExecServer()
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    executor.spin()
+    rclpy.shutdown()

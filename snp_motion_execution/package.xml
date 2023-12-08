@@ -8,13 +8,13 @@
   <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <exec_depend>snp_msgs</exec_depend>
   <depend>control_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>rclcpp</depend>
-  <depend>rclcpp_action</depend>
+  <depend>rclpy</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

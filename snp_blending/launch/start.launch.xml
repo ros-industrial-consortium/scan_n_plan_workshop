@@ -89,7 +89,7 @@
   </include>
 
   <!-- Launch Motion Execution Node -->
-  <node pkg="snp_motion_execution" exec="snp_motion_execution_node">
+  <node pkg="snp_motion_execution" exec="motion_execution_server">
     <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
   </node>
 
