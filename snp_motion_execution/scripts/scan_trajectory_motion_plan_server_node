@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from snp_msgs.srv import GenerateScanTrajectoryMotionPlan
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+import yaml
+from builtin_interfaces.msg import Duration, Time
+from std_msgs.msg import Header
+
+
+class ScanTrajMotionPlanService(Node):
+
+    def __init__(self):
+        super().__init__('scan_traj_service')
+        self.srv = self.create_service(GenerateScanTrajectoryMotionPlan, 'generate_scan_trajectory_motion_plan',
+                                       self.generate_scan_traj_motion_plan_callback)
+        self.scan_trajectory_file_path = self.declare_parameter("scan_trajectory_file", rclpy.Parameter.Type.STRING).value
+
+    def generate_scan_traj_motion_plan_callback(self, request, response):
+        with open(self.scan_trajectory_file_path, "r") as file_input:
+            try:
+                scan_traj = yaml.safe_load(file_input)
+            except yaml.YAMLError as exc:
+                self.get_logger().info(str(exc))
+        # header = Header()
+        header = response.scan_trajectory_motion_plan.header
+        header.stamp = Time(sec=int(scan_traj['header']['stamp']['sec']),nanosec=int(scan_traj['header']['stamp']['nanosec']))
+        header.frame_id = scan_traj['header']['frame_id']
+        # response.scan_trajectory_motion_plan.header = header
+        response.scan_trajectory_motion_plan.joint_names = scan_traj['joint_names']
+        for point_val in scan_traj['points']:
+            point = JointTrajectoryPoint()
+            point.positions = point_val['positions']
+            point.velocities = point_val['velocities']
+            point.accelerations = point_val['accelerations']
+            point.effort = point_val['effort']
+            point.time_from_start = Duration(sec = int(point_val['time_from_start']['sec']),
+                                             nanosec= int(point_val['time_from_start']['nanosec']))
+            response.scan_trajectory_motion_plan.points.append(point)
+        return response
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    scan_traj_service = ScanTrajMotionPlanService()
+
+    rclpy.spin(scan_traj_service)
+
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

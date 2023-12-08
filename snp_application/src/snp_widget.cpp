@@ -20,6 +20,7 @@ static const std::string STOP_RECONSTRUCTION_SERVICE = "stop_reconstruction";
 static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_tool_paths";
 static const std::string MOTION_PLAN_SERVICE = "create_motion_plan";
 static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
+static const std::string SCAN_TRAJ_MOTION_PLAN_SERVICE = "generate_scan_trajectory_motion_plan";
 
 static const QString CALIBRATION_ST = "calibrate";
 static const QString SCAN_APPROACH_ST = "execute scan approach";
@@ -80,8 +81,6 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   , past_calibration_(false)
   , mesh_file_(declareAndGet<std::string>(*node, MESH_FILE_PARAM, ""))
   , reference_frame_(declareAndGet<std::string>(*node, REF_FRAME_PARAM, ""))
-  , scan_traj_(message_serialization::deserialize<trajectory_msgs::msg::JointTrajectory>(
-        declareAndGet<std::string>(*node, SCAN_TRAJ_FILE_PARAM, "")))
   , start_scan_request_(std::make_shared<industrial_reconstruction_msgs::srv::StartReconstruction::Request>())
 {
   node->declare_parameter(MOTION_GROUP_PARAM, "");
@@ -124,6 +123,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
       node->create_client<industrial_reconstruction_msgs::srv::StopReconstruction>(STOP_RECONSTRUCTION_SERVICE);
   tpp_client_ = node->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
   motion_planning_client_ = node->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
+  scan_traj_motion_planning_client_ = node->create_client<snp_msgs::srv::GenerateScanTrajectoryMotionPlan>(SCAN_TRAJ_MOTION_PLAN_SERVICE);
   motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 
   // Populate scan request
@@ -283,30 +283,39 @@ void SNPWidget::reset_calibration()
 
 void SNPWidget::scan()
 {
-  if (!motion_execution_client_->service_is_ready())
+  if (!scan_traj_motion_planning_client_->service_is_ready())
   {
-    emit log("Motion execution service is not available");
+    emit log("Scan motion planning service is not available");
     emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
     return;
   }
 
   emit log("Sending scan approach motion goal");
 
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  request->use_tool = false;
-  request->motion_plan.header = scan_traj_.header;
-  request->motion_plan.joint_names = scan_traj_.joint_names;
-  request->motion_plan.points.push_back(scan_traj_.points.at(0));
-  request->motion_plan.points.push_back(scan_traj_.points.at(1));
+  auto request = std::make_shared<snp_msgs::srv::GenerateScanTrajectoryMotionPlan::Request>();
+  scan_traj_motion_planning_client_->async_send_request(request,
+                                              std::bind(&SNPWidget::onScanGenerationDone, this, std::placeholders::_1));
+}
 
-  auto cb = std::bind(&SNPWidget::onScanApproachDone, this, std::placeholders::_1);
-  motion_execution_client_->async_send_request(request, cb);
+void SNPWidget::onScanGenerationDone(rclcpp::Client<snp_msgs::srv::GenerateScanTrajectoryMotionPlan>::SharedFuture future)
+{
+    snp_msgs::srv::GenerateScanTrajectoryMotionPlan::Response::SharedPtr response = future.get();
+    scan_traj_ = response->scan_trajectory_motion_plan;
+    auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
+    request->use_tool = false;
+    request->motion_plan.header = scan_traj_.header;
+    request->motion_plan.joint_names = scan_traj_.joint_names;
+    request->motion_plan.points.push_back(scan_traj_.points.at(0));
+    request->motion_plan.points.push_back(scan_traj_.points.at(1));
 
-  scan_complete_ = false;
+    auto cb = std::bind(&SNPWidget::onScanApproachDone, this, std::placeholders::_1);
+    motion_execution_client_->async_send_request(request, cb);
 
-  // Reset any tool paths or motion plans based on a previous scan
-  tool_paths_.reset();
-  motion_plan_.reset();
+    scan_complete_ = false;
+
+    // Reset any tool paths or motion plans based on a previous scan
+    tool_paths_.reset();
+    motion_plan_.reset();
 }
 
 void SNPWidget::onScanApproachDone(FJTResult result)

@@ -92,6 +92,10 @@
     <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
   </node>
 
+  <node pkg="snp_motion_execution" exec="scan_trajectory_motion_plan_server_node">
+    <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
+  </node>
+
   <group unless="$(var sim_robot)">
     <!-- [[Motoman Driver Goes Here]] -->
   </group>
