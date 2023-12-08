@@ -84,9 +84,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
         declareAndGet<std::string>(*node, SCAN_TRAJ_FILE_PARAM, "")))
   , start_scan_request_(std::make_shared<industrial_reconstruction_msgs::srv::StartReconstruction::Request>())
 {
-  node->declare_parameter(MOTION_GROUP_PARAM, rclcpp::ParameterValue());
-  node->declare_parameter(TCP_FRAME_PARAM, rclcpp::ParameterValue());
-  node->declare_parameter(CAMERA_FRAME_PARAM, rclcpp::ParameterValue());
+  node->declare_parameter(MOTION_GROUP_PARAM, "");
+  node->declare_parameter(TCP_FRAME_PARAM, "");
+  node->declare_parameter(CAMERA_FRAME_PARAM, "");
 
   ui_->setupUi(this);
 
