@@ -1,6 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, EnvironmentVariable
 
 from launch_ros.actions import Node
 import yaml
@@ -22,7 +22,15 @@ def generate_launch_description():
 
 def launch(context, *args, **kwargs):
     # Get URDF via xacro
-    robot_description_content = Command([PathJoinSubstitution([FindExecutable(name="xacro")]), " ", LaunchConfiguration('robot_description_file'),])
+    robot_description_content = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name="xacro")]),
+            " ",
+            LaunchConfiguration('robot_description_file'),
+            " ros_distro:=",
+            EnvironmentVariable('ROS_DISTRO')
+        ]
+    )
     robot_description = {"robot_description": robot_description_content}
 
     controllers_file = LaunchConfiguration('controllers_file')
