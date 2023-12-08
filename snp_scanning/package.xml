@@ -7,11 +7,11 @@
   <maintainer email="tyler.marr@swri.org">Tyler Marr</maintainer>
   <license>BSD</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <depend>industrial_reconstruction_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>rclcpp</depend>
+  <depend>rclpy</depend>
   <depend>ros_industrial_cmake_boilerplate</depend>
   <depend>visualization_msgs</depend>
 
