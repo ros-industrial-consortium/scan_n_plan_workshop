@@ -23,11 +23,9 @@ class ScanTrajMotionPlanService(Node):
                 scan_traj = yaml.safe_load(file_input)
             except yaml.YAMLError as exc:
                 self.get_logger().info(str(exc))
-        # header = Header()
         header = response.scan_trajectory_motion_plan.header
         header.stamp = Time(sec=int(scan_traj['header']['stamp']['sec']),nanosec=int(scan_traj['header']['stamp']['nanosec']))
         header.frame_id = scan_traj['header']['frame_id']
-        # response.scan_trajectory_motion_plan.header = header
         response.scan_trajectory_motion_plan.joint_names = scan_traj['joint_names']
         for point_val in scan_traj['points']:
             point = JointTrajectoryPoint()
