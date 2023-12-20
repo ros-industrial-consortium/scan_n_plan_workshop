@@ -47,7 +47,10 @@ add_library(
   include/trajectory_msgs_yaml.h
   include/serialize.h
   include/snp_widget.h
-  src/snp_widget.cpp)
+  src/snp_widget.cpp
+  # BT
+  include/bt/utils.h
+)
 
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
 ament_target_dependencies(
