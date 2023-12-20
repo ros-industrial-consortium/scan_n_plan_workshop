@@ -15,10 +15,9 @@
 
 namespace snp_application
 {
-SNPSequenceWithMemory::SNPSequenceWithMemory(const std::string& name) :
-  BT::ControlNode::ControlNode(name, {}), current_child_idx_(0)
+SNPSequenceWithMemory::SNPSequenceWithMemory(const std::string& name, const BT::NodeConfig& config) :
+  BT::ControlNode::ControlNode(name, config), current_child_idx_(0)
 {
-  setRegistrationID("SequenceWithMemory");
 }
 
 BT::NodeStatus SNPSequenceWithMemory::tick()
@@ -52,6 +51,9 @@ BT::NodeStatus SNPSequenceWithMemory::tick()
         {
           haltChild(i);
         }
+
+        // When a child node fails, decrement the current_child_idx by 1 to repeat the previous node
+        current_child_idx_ = current_child_idx_ < 1 ? 0 : current_child_idx_ - 1;
 
         return child_status;
       }
@@ -88,13 +90,6 @@ BT::NodeStatus SNPSequenceWithMemory::tick()
   }
   // Skip if ALL the nodes have been skipped
   return all_skipped_ ? BT::NodeStatus::SKIPPED : BT::NodeStatus::SUCCESS;
-}
-
-void SNPSequenceWithMemory::halt()
-{
-  // should we add this line of code or not?
-  // current_child_idx_ = 0;
-  ControlNode::halt();
 }
 
 }   // namespace snp_application

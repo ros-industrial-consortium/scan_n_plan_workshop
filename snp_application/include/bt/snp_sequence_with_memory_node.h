@@ -18,27 +18,22 @@
 namespace snp_application
 {
 /**
- * @brief The SequenceWithMemory is used to tick children in an ordered sequence.
- * If any child returns RUNNING, previous children are not ticked again.
- *
- * - If all the children return SUCCESS, this node returns SUCCESS.
- *
- * - If a child returns RUNNING, this node returns RUNNING.
- *   Loop is NOT restarted, the same running child will be ticked again.
- *
- * - If a child returns FAILURE, stop the loop and return FAILURE.
- *   Loop is NOT restarted, the same running child will be ticked again.
- *
+ * @brief Sequence control node that maintains the index of the current child node for direct re-entry in the case of halts or failures
+ * @details In the case that a child node fails, the sequence re-enters at the node prior to the one that failed.
+ * In the case that the sequence is halted, the sequence re-enters at the node where the sequence was halted
  */
-
 class SNPSequenceWithMemory : public BT::ControlNode
 {
 public:
-  SNPSequenceWithMemory(const std::string& name);
+  inline static BT::PortsList providedPorts() { return {}; }
+  SNPSequenceWithMemory(const std::string& name, const BT::NodeConfig& config);
 
   virtual ~SNPSequenceWithMemory() override = default;
 
-  virtual void halt() override;
+  /**
+   * Use the default halt behavior, which does not decrement `current_child_idx` by 1
+   */
+  using BT::ControlNode::halt;
 
 private:
   size_t current_child_idx_;
