@@ -50,6 +50,8 @@ add_library(
   src/snp_widget.cpp
   # BT
   include/bt/utils.h
+  include/bt/bt_thread.h
+  src/bt/bt_thread.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
