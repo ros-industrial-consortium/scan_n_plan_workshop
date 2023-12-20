@@ -52,6 +52,14 @@ add_library(
   include/bt/utils.h
   include/bt/bt_thread.h
   src/bt/bt_thread.cpp
+  include/bt/button_approval_node.h
+  src/bt/button_approval_node.cpp
+  include/bt/button_monitor_node.h
+  src/bt/button_monitor_node.cpp
+  include/bt/progress_decorator_node.h
+  src/bt/progress_decorator_node.cpp
+  include/bt/set_page_decorator_node.h
+  src/bt/set_page_decorator_node.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
