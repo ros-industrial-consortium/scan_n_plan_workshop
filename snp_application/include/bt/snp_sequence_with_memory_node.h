@@ -15,7 +15,7 @@
 
 #include "behaviortree_cpp/control_node.h"
 
-namespace BT
+namespace snp_application
 {
 /**
  * @brief The SequenceWithMemory is used to tick children in an ordered sequence.
@@ -31,12 +31,12 @@ namespace BT
  *
  */
 
-class SequenceWithMemory : public ControlNode
+class SNPSequenceWithMemory : public BT::ControlNode
 {
 public:
-  SequenceWithMemory(const std::string& name);
+  SNPSequenceWithMemory(const std::string& name);
 
-  virtual ~SequenceWithMemory() override = default;
+  virtual ~SNPSequenceWithMemory() override = default;
 
   virtual void halt() override;
 
@@ -47,4 +47,4 @@ private:
   virtual BT::NodeStatus tick() override;
 };
 
-}   // namespace BT
+}   // namespace snp_application

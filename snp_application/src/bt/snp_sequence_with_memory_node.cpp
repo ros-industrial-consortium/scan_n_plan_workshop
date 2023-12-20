@@ -11,42 +11,42 @@
 *   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "bt/sequence_with_memory_node.h"
+#include "bt/snp_sequence_with_memory_node.h"
 
-namespace BT
+namespace snp_application
 {
-SequenceWithMemory::SequenceWithMemory(const std::string& name) :
-  ControlNode::ControlNode(name, {}), current_child_idx_(0)
+SNPSequenceWithMemory::SNPSequenceWithMemory(const std::string& name) :
+  BT::ControlNode::ControlNode(name, {}), current_child_idx_(0)
 {
   setRegistrationID("SequenceWithMemory");
 }
 
-NodeStatus SequenceWithMemory::tick()
+BT::NodeStatus SNPSequenceWithMemory::tick()
 {
   const size_t children_count = children_nodes_.size();
 
-  if(status() == NodeStatus::IDLE)
+  if(status() == BT::NodeStatus::IDLE)
   {
     all_skipped_ = true;
   }
-  setStatus(NodeStatus::RUNNING);
+  setStatus(BT::NodeStatus::RUNNING);
 
   while (current_child_idx_ < children_count)
   {
     TreeNode* current_child_node = children_nodes_[current_child_idx_];
 
     auto prev_status = current_child_node->status();
-    const NodeStatus child_status = current_child_node->executeTick();
+    const BT::NodeStatus child_status = current_child_node->executeTick();
 
     // switch to RUNNING state as soon as you find an active child
-    all_skipped_ &= (child_status == NodeStatus::SKIPPED);
+    all_skipped_ &= (child_status == BT::NodeStatus::SKIPPED);
 
     switch (child_status)
     {
-      case NodeStatus::RUNNING: {
+      case BT::NodeStatus::RUNNING: {
         return child_status;
       }
-      case NodeStatus::FAILURE: {
+      case BT::NodeStatus::FAILURE: {
         // DO NOT reset current_child_idx_ on failure
         for (size_t i = current_child_idx_; i < childrenCount(); i++)
         {
@@ -55,27 +55,27 @@ NodeStatus SequenceWithMemory::tick()
 
         return child_status;
       }
-      case NodeStatus::SUCCESS: {
+      case BT::NodeStatus::SUCCESS: {
         current_child_idx_++;
         // Return the execution flow if the child is async,
         // to make this interruptable.
-        if (requiresWakeUp() && prev_status == NodeStatus::IDLE &&
+        if (requiresWakeUp() && prev_status == BT::NodeStatus::IDLE &&
             current_child_idx_ < children_count)
         {
           emitWakeUpSignal();
-          return NodeStatus::RUNNING;
+          return BT::NodeStatus::RUNNING;
         }
       }
       break;
 
-      case NodeStatus::SKIPPED: {
+      case BT::NodeStatus::SKIPPED: {
         // It was requested to skip this node
         current_child_idx_++;
       }
       break;
 
-      case NodeStatus::IDLE: {
-        throw LogicError("[", name(), "]: A children should not return IDLE");
+      case BT::NodeStatus::IDLE: {
+        throw BT::LogicError("[", name(), "]: A children should not return IDLE");
       }
     }   // end switch
   }     // end while loop
@@ -87,14 +87,14 @@ NodeStatus SequenceWithMemory::tick()
     current_child_idx_ = 0;
   }
   // Skip if ALL the nodes have been skipped
-  return all_skipped_ ? NodeStatus::SKIPPED : NodeStatus::SUCCESS;
+  return all_skipped_ ? BT::NodeStatus::SKIPPED : BT::NodeStatus::SUCCESS;
 }
 
-void SequenceWithMemory::halt()
+void SNPSequenceWithMemory::halt()
 {
   // should we add this line of code or not?
   // current_child_idx_ = 0;
   ControlNode::halt();
 }
 
-}   // namespace BT
+}   // namespace snp_application
