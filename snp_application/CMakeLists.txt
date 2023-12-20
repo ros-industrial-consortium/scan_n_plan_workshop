@@ -58,6 +58,8 @@ add_library(
   src/bt/button_monitor_node.cpp
   include/bt/progress_decorator_node.h
   src/bt/progress_decorator_node.cpp
+  include/bt/sequence_with_memory_node.h
+  src/bt/sequence_with_memory_node.cpp
   include/bt/set_page_decorator_node.h
   src/bt/set_page_decorator_node.cpp
 )
