@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="main">
+    <ReactiveSequence>
+      <ButtonMonitor button="reset"/>
+      <KeepRunningUntilFailure>
+        <ForceSuccess>
+          <ReactiveSequence>
+            <ButtonMonitor button="halt"/>
+            <SubTree ID="process"
+                     _autoremap="true"/>
+          </ReactiveSequence>
+        </ForceSuccess>
+      </KeepRunningUntilFailure>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="motion">
+    <Sequence>
+      <TriggerService service_name="robot_enable"/>
+      <ExecuteMotionPlanService service_name="execute_motion_plan"
+                                motion_plan="{motion_plan}"
+                                use_tool="true"/>
+      <TriggerService service_name="robot_disable"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="process">
+    <SNPSequenceWithMemory>
+      <Progress start="0"
+                end="20">
+        <Sequence>
+          <SetPage index="0">
+            <ButtonApproval name="approve_scan"
+                            approve_button="scan"
+                            disapprove_button="back"/>
+          </SetPage>
+          <GenerateScanMotionPlanService service_name="generate_scan_motion_plan"
+                                         motion_plan="{scan_motion_plan}"/>
+          <MotionPlanPub topic_name="motion_plan"
+                         motion_plan="{scan_motion_plan}"/>
+        </Sequence>
+      </Progress>
+      <Progress start="20"
+                end="40">
+        <Sequence>
+          <SetPage index="3">
+            <ButtonApproval name="approve_execute_scan"
+                            approve_button="execute"
+                            disapprove_button="back"/>
+          </SetPage>
+          <SubTree ID="scan"
+                   _autoremap="true"/>
+        </Sequence>
+      </Progress>
+      <Progress start="40"
+                end="60">
+        <Sequence>
+          <SetPage index="1">
+            <ButtonApproval name="approve_tpp"
+                            approve_button="tpp"
+                            disapprove_button="back"/>
+          </SetPage>
+          <GenerateToolPathsService service_name="generate_tool_paths"
+                                    tool_paths="{tool_paths}"/>
+          <ToolPathsPub topic_name="tool_paths"
+                        tool_paths="{tool_paths}"/>
+        </Sequence>
+      </Progress>
+      <Progress start="60"
+                end="80">
+        <Sequence>
+          <ButtonApproval name="approve_generate_motion_plan"
+                          approve_button="plan"
+                          disapprove_button="back"/>
+          <GenerateMotionPlanService service_name="generate_motion_plan"
+                                     tool_paths="{tool_paths}"
+                                     motion_plan="{motion_plan}"/>
+          <MotionPlanPub topic_name="motion_plan"
+                         motion_plan="{motion_plan}"/>
+        </Sequence>
+      </Progress>
+      <Progress start="80"
+                end="100">
+        <Sequence>
+          <SetPage index="3">
+            <ButtonApproval name="approve_process_motions"
+                            approve_button="execute"
+                            disapprove_button="back"/>
+          </SetPage>
+          <SubTree ID="motion"
+                   _autoremap="true"/>
+        </Sequence>
+      </Progress>
+      <SetPage index="4">
+        <ButtonApproval name="approve_restart"
+                        approve_button=""
+                        disapprove_button="back"/>
+      </SetPage>
+    </SNPSequenceWithMemory>
+  </BehaviorTree>
+
+  <BehaviorTree ID="scan">
+    <Sequence>
+      <TriggerService service_name="robot_enable"/>
+      <StartReconstructionService service_name="start_reconstruction"/>
+      <ExecuteMotionPlanService service_name="execute_motion_plan"
+                                motion_plan="{scan_motion_plan}"
+                                use_tool="false"/>
+      <StopReconstructionService service_name="stop_reconstruction"/>
+      <TriggerService service_name="robot_disable"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="ButtonApproval"
+            editable="true">
+      <input_port name="approve_button"/>
+      <input_port name="disapprove_button"/>
+    </Action>
+    <Condition ID="ButtonMonitor"
+               editable="true">
+      <input_port name="button"/>
+    </Condition>
+    <Action ID="ExecuteMotionPlanService"
+            editable="true">
+      <input_port name="service_name"
+                  default="execute_motion_plan"/>
+      <input_port name="motion_plan"
+                  default="{motion_plan}"/>
+      <input_port name="use_tool"
+                  default="false"/>
+    </Action>
+    <Action ID="GenerateMotionPlanService"
+            editable="true">
+      <input_port name="service_name"
+                  default="generate_motion_plan"/>
+      <input_port name="tool_paths"
+                  default="{tool_paths}"/>
+      <output_port name="motion_plan"
+                   default="{motion_plan}"/>
+    </Action>
+    <Action ID="GenerateScanMotionPlanService"
+            editable="true">
+      <input_port name="service_name"
+                  default="generate_scan_motion_plan"/>
+      <output_port name="motion_plan"
+                   default="{scan_motion_plan}"/>
+    </Action>
+    <Action ID="GenerateToolPathsService"
+            editable="true">
+      <input_port name="service_name"
+                  default="generate_tool_paths"/>
+      <input_port name="tool_paths"
+                  default="{tool_paths}"/>
+    </Action>
+    <Action ID="MotionPlanPub"
+            editable="true">
+      <input_port name="topic_name"/>
+      <input_port name="motion_plan"
+                  default="{motion_plan}"/>
+    </Action>
+    <Decorator ID="Progress"
+               editable="true">
+      <input_port name="start"
+                  default="0"/>
+      <input_port name="end"
+                  default="100"/>
+    </Decorator>
+    <Control ID="SNPSequenceWithMemory"
+             editable="true"/>
+    <Decorator ID="SetPage"
+               editable="true">
+      <input_port name="index"
+                  default="0"/>
+    </Decorator>
+    <Action ID="StartReconstructionService"
+            editable="true">
+      <input_port name="service_name"
+                  default="start_reconstruction"/>
+    </Action>
+    <Action ID="StopReconstructionService"
+            editable="true">
+      <input_port name="service_name"
+                  default="stop_reconstruction"/>
+    </Action>
+    <Action ID="ToolPathsPub"
+            editable="true">
+      <input_port name="topic_name"
+                  default="tool_paths"/>
+      <input_port name="tool_paths"
+                  default="{tool_paths}"/>
+    </Action>
+    <Action ID="TriggerService"
+            editable="true">
+      <input_port name="service_name"/>
+    </Action>
+  </TreeNodesModel>
+
+</root>

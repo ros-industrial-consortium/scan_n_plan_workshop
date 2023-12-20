@@ -104,5 +104,7 @@ ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
 
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME}/)
+
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
 ament_package()
