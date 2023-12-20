@@ -14,3 +14,7 @@
     local-name: rviz_polygon_selection_tool
     uri: https://github.com/marip8/rviz_polygon_selection_tool.git
     version: c2bff22f4990f04b8b10d64bbbd832618e0b0c02
+- git:
+    local-name: BehaviorTree.CPP
+    uri: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+    version: 4.4.3

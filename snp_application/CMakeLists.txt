@@ -21,6 +21,7 @@ endif()
 find_package(Eigen3 REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(behaviortree_cpp REQUIRED)
 
 find_package(ament_cmake REQUIRED)
 find_package(industrial_reconstruction_msgs REQUIRED)
@@ -47,9 +48,11 @@ add_library(
   include/serialize.h
   include/snp_widget.h
   src/snp_widget.cpp)
+
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
+  behaviortree_cpp
   industrial_reconstruction_msgs
   rclcpp_action
   rclcpp_components

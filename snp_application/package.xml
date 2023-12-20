@@ -12,7 +12,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-
+  <depend>behaviortree_cpp</depend>
   <depend>snp_msgs</depend>
   <depend>industrial_reconstruction_msgs</depend>
   <depend>sensor_msgs</depend>
