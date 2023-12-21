@@ -27,7 +27,7 @@ rosidl_generate_interfaces(
   "srv/ExecuteMotionPlan.srv"
   "srv/GenerateMotionPlan.srv"
   "srv/GenerateToolPaths.srv"
-  "srv/GenerateScanTrajectoryMotionPlan.srv"
+  "srv/GenerateScanMotionPlan.srv"
   DEPENDENCIES
   geometry_msgs
   trajectory_msgs)

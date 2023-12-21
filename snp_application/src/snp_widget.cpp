@@ -20,7 +20,7 @@ static const std::string STOP_RECONSTRUCTION_SERVICE = "stop_reconstruction";
 static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_tool_paths";
 static const std::string MOTION_PLAN_SERVICE = "create_motion_plan";
 static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
-static const std::string SCAN_TRAJ_MOTION_PLAN_SERVICE = "generate_scan_trajectory_motion_plan";
+static const std::string SCAN_MOTION_PLAN_SERVICE = "generate_scan_motion_plan";
 
 static const QString CALIBRATION_ST = "calibrate";
 static const QString SCAN_APPROACH_ST = "execute scan approach";
@@ -49,7 +49,6 @@ static const std::string REF_FRAME_PARAM = "reference_frame";
 static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
-static const std::string SCAN_TRAJ_FILE_PARAM = "scan_trajectory_file";
 
 namespace  // anonymous restricts visibility to this file
 {
@@ -124,7 +123,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   tpp_client_ = node->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
   motion_planning_client_ = node->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
   scan_traj_motion_planning_client_ =
-      node->create_client<snp_msgs::srv::GenerateScanTrajectoryMotionPlan>(SCAN_TRAJ_MOTION_PLAN_SERVICE);
+      node->create_client<snp_msgs::srv::GenerateScanMotionPlan>(SCAN_MOTION_PLAN_SERVICE);
   motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
 
   // Populate scan request
@@ -293,16 +292,16 @@ void SNPWidget::scan()
 
   emit log("Sending scan approach motion goal");
 
-  auto request = std::make_shared<snp_msgs::srv::GenerateScanTrajectoryMotionPlan::Request>();
+  auto request = std::make_shared<snp_msgs::srv::GenerateScanMotionPlan::Request>();
   scan_traj_motion_planning_client_->async_send_request(
       request, std::bind(&SNPWidget::onScanGenerationDone, this, std::placeholders::_1));
 }
 
 void SNPWidget::onScanGenerationDone(
-    rclcpp::Client<snp_msgs::srv::GenerateScanTrajectoryMotionPlan>::SharedFuture future)
+    rclcpp::Client<snp_msgs::srv::GenerateScanMotionPlan>::SharedFuture future)
 {
-  snp_msgs::srv::GenerateScanTrajectoryMotionPlan::Response::SharedPtr response = future.get();
-  scan_traj_ = response->scan_trajectory_motion_plan;
+  snp_msgs::srv::GenerateScanMotionPlan::Response::SharedPtr response = future.get();
+  scan_traj_ = response->motion_plan;
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->use_tool = false;
   request->motion_plan.header = scan_traj_.header;
