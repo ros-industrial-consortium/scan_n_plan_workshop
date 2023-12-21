@@ -15,7 +15,7 @@ public:
       auto node = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
       auto layout = new QVBoxLayout();
-      layout->addWidget(new SNPWidget(node, this));
+      layout->addWidget(new snp_application::SNPWidget(node, this));
       setLayout(layout);
     }
     catch (const std::exception& ex)

@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     signal(SIGTERM, handleSignal);
 
     auto node = std::make_shared<rclcpp::Node>("snp_application");
-    SNPWidget w(node);
+    snp_application::SNPWidget w(node);
     w.show();
 
     // Move the ROS spinning into a separate thread since the call to `spin` is synchronous
