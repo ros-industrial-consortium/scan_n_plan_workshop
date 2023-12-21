@@ -347,7 +347,7 @@ void SNPWidget::onScanGenerationDone(rclcpp::Client<snp_msgs::srv::GenerateScanM
   scan_complete_ = false;
 
   // Reset any tool paths or motion plans based on a previous scan
-  tool_paths_.reset();
+  tool_paths_.clear();
   motion_plan_.reset();
 }
 
@@ -514,7 +514,7 @@ void SNPWidget::planToolPaths()
     if (!tpp_client_->service_is_ready())
       throw std::runtime_error("Tool path planning server is not available");
 
-    tool_paths_.reset();
+    tool_paths_.clear();
 
     // Reset any motion plan computed on a previous tool path
     motion_plan_.reset();
@@ -545,13 +545,13 @@ void SNPWidget::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPa
     return;
   }
 
-  tool_paths_ = std::make_shared<snp_msgs::msg::ToolPaths>(response->tool_paths);
+  tool_paths_ = response->tool_paths;
 
   // Publish a message to display the tool path
   {
     geometry_msgs::msg::PoseArray flat_toolpath_msg;
     flat_toolpath_msg.header.frame_id = reference_frame_;
-    for (auto& toolpath : tool_paths_->paths)
+    for (auto& toolpath : tool_paths_)
     {
       for (auto& segment : toolpath.segments)
       {
@@ -574,7 +574,7 @@ void SNPWidget::planMotion()
   emit log("Attempting motion planning");
   try
   {
-    if (!tool_paths_ || tool_paths_->paths.empty())
+    if (tool_paths_.empty())
       throw std::runtime_error("No tool paths have been defined");
 
     if (!motion_planning_client_->service_is_ready())
@@ -587,7 +587,7 @@ void SNPWidget::planMotion()
     auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();
     request->motion_group = get<std::string>(*node_, MOTION_GROUP_PARAM);
     request->tcp_frame = get<std::string>(*node_, TCP_FRAME_PARAM);
-    request->tool_paths = *tool_paths_;
+    request->tool_paths = tool_paths_;
     request->mesh_filename = mesh_file_;
     request->mesh_frame = reference_frame_;
 
@@ -681,6 +681,6 @@ void SNPWidget::reset()
 
   // Clear the internal variables
   scan_complete_ = false;
-  tool_paths_.reset();
+  tool_paths_.clear();
   motion_plan_.reset();
 }

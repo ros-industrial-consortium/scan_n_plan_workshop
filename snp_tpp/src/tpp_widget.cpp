@@ -38,12 +38,12 @@ snp_msgs::msg::ToolPath toMsg(const noether::ToolPath& path)
   return path_msg;
 }
 
-snp_msgs::msg::ToolPaths toMsg(const noether::ToolPaths& paths)
+std::vector<snp_msgs::msg::ToolPath> toMsg(const noether::ToolPaths& paths)
 {
-  snp_msgs::msg::ToolPaths paths_msg;
-  paths_msg.paths.reserve(paths.size());
+  std::vector<snp_msgs::msg::ToolPath> paths_msg;
+  paths_msg.reserve(paths.size());
   for (const auto& path : paths)
-    paths_msg.paths.push_back(toMsg(path));
+    paths_msg.push_back(toMsg(path));
   return paths_msg;
 }
 

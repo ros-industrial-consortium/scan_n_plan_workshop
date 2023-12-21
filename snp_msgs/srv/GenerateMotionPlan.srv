@@ -3,7 +3,7 @@
 # Tool Paths - the input tool paths that need to be planned on.  These follow Noether conventions.
 # i.e. ToolPaths is a raster pattern.  ToolPath is a single raster, which may be broken up into
 # discrete segments, each made of waypoints.
-snp_msgs/ToolPaths tool_paths
+snp_msgs/ToolPath[] tool_paths
 
 # Params
 # [insert any relevant motion planning parameters here]
