@@ -23,6 +23,7 @@ static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
 static const std::string SCAN_MOTION_PLAN_SERVICE = "generate_scan_motion_plan";
 
 static const QString CALIBRATION_ST = "calibrate";
+static const QString SCAN_MOTION_PLANNING_ST = "plan scan motion";
 static const QString SCAN_APPROACH_ST = "execute scan approach";
 static const QString START_RECONSTRUCTION_ST = "start reconstruction";
 static const QString SCAN_EXECUTION_ST = "execute scan";
@@ -32,17 +33,34 @@ static const QString TPP_ST = "plan tool paths";
 static const QString MOTION_PLANNING_ST = "perform motion planning";
 static const QString MOTION_EXECUTION_ST = "execute process motion";
 
-static const std::map<QString, unsigned> STATES = {
-  { CALIBRATION_ST, 0 },
-  { SCAN_APPROACH_ST, 1 },
-  { START_RECONSTRUCTION_ST, 2 },
-  { SCAN_EXECUTION_ST, 3 },
-  { STOP_RECONSTRUCTION_ST, 4 },
-  { SCAN_DEPARTURE_ST, 5 },
-  { TPP_ST, 6 },
-  { MOTION_PLANNING_ST, 7 },
-  { MOTION_EXECUTION_ST, 8 },
+enum State : unsigned
+{
+  CALIBRATION = 0,
+  SCAN_MOTION_PLANNING,
+  SCAN_APPROACH,
+  START_RECONSTRUCTION,
+  SCAN_EXECUTION,
+  STOP_RECONSTRUCTION,
+  SCAN_DEPARTURE,
+  TPP,
+  MOTION_PLANNING,
+  MOTION_EXECUTION,
 };
+
+// clang-format off
+static const std::map<QString, unsigned> STATES = {
+  { CALIBRATION_ST, CALIBRATION },
+  { SCAN_MOTION_PLANNING_ST, SCAN_MOTION_PLANNING},
+  { SCAN_APPROACH_ST, SCAN_APPROACH},
+  { START_RECONSTRUCTION_ST, START_RECONSTRUCTION },
+  { SCAN_EXECUTION_ST, SCAN_EXECUTION },
+  { STOP_RECONSTRUCTION_ST, STOP_RECONSTRUCTION },
+  { SCAN_DEPARTURE_ST, SCAN_DEPARTURE },
+  { TPP_ST, TPP },
+  { MOTION_PLANNING_ST, MOTION_PLANNING },
+  { MOTION_EXECUTION_ST, MOTION_EXECUTION },
+};
+// clang-format on
 
 static const std::string MOTION_GROUP_PARAM = "motion_group";
 static const std::string REF_FRAME_PARAM = "reference_frame";
@@ -286,21 +304,35 @@ void SNPWidget::scan()
   if (!scan_traj_motion_planning_client_->service_is_ready())
   {
     emit log("Scan motion planning service is not available");
-    emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
+    emit updateStatus(false, SCAN_MOTION_PLANNING_ST, SCAN_MOTION_PLANNING_ST, STATES.at(SCAN_MOTION_PLANNING_ST));
     return;
   }
 
-  emit log("Sending scan approach motion goal");
+  emit log("Triggered scan motion planning service");
 
   auto request = std::make_shared<snp_msgs::srv::GenerateScanMotionPlan::Request>();
   scan_traj_motion_planning_client_->async_send_request(
       request, std::bind(&SNPWidget::onScanGenerationDone, this, std::placeholders::_1));
 }
 
-void SNPWidget::onScanGenerationDone(
-    rclcpp::Client<snp_msgs::srv::GenerateScanMotionPlan>::SharedFuture future)
+void SNPWidget::onScanGenerationDone(rclcpp::Client<snp_msgs::srv::GenerateScanMotionPlan>::SharedFuture future)
 {
   snp_msgs::srv::GenerateScanMotionPlan::Response::SharedPtr response = future.get();
+  if (response->success)
+  {
+    emit log("Successfully generated scan motion plan");
+    emit updateStatus(true, SCAN_MOTION_PLANNING_ST, SCAN_APPROACH_ST, STATES.at(SCAN_MOTION_PLANNING_ST));
+  }
+  else
+  {
+    QString message;
+    QTextStream ss(&message);
+    ss << "Failed to generate scan motion plan: '" << QString::fromStdString(response->message) << "'";
+    emit log(message);
+    emit updateStatus(false, SCAN_MOTION_PLANNING_ST, SCAN_MOTION_PLANNING_ST, STATES.at(SCAN_MOTION_PLANNING_ST));
+    return;
+  }
+
   scan_traj_ = response->motion_plan;
   auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
   request->use_tool = false;
