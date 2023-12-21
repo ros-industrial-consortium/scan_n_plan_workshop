@@ -22,6 +22,7 @@ find_package(Eigen3 REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
+find_package(behaviortree_ros2 REQUIRED)
 
 find_package(ament_cmake REQUIRED)
 find_package(industrial_reconstruction_msgs REQUIRED)
@@ -60,6 +61,8 @@ add_library(
   src/bt/progress_decorator_node.cpp
   include/bt/set_page_decorator_node.h
   src/bt/set_page_decorator_node.cpp
+  include/bt/snp_bt_service_node.h
+  src/bt/snp_bt_service_node.cpp
   include/bt/snp_sequence_with_memory_node.h
   src/bt/snp_sequence_with_memory_node.cpp
 )
@@ -68,6 +71,7 @@ target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
+  behaviortree_ros2
   industrial_reconstruction_msgs
   rclcpp_action
   rclcpp_components
