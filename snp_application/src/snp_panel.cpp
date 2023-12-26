@@ -5,6 +5,8 @@
 #include <rviz_common/panel.hpp>
 #include <rviz_common/display_context.hpp>
 
+namespace snp_application
+{
 class SNPPanel : public rviz_common::Panel
 {
 public:
@@ -26,5 +28,7 @@ public:
   }
 };
 
+} // namespace snp_application
+
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(::SNPPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(snp_application::SNPPanel, rviz_common::Panel)
