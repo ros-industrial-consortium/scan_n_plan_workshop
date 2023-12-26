@@ -14,11 +14,9 @@ import time
 from trajectory_msgs.msg import JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from snp_msgs.srv import ExecuteMotionPlan
-from std_srvs.srv import Trigger
 
 
 MOTION_EXEC_SERVICE = "execute_motion_plan"
-ENABLE_SERVICE = "robot_enable"
 FJT_ACTION_PARAM = "follow_joint_trajectory_action"
 JOINT_STATES_TOPIC = "joint_states"
 JOINT_STATE_TIME_THRESHOLD = 0.1  # seconds
@@ -51,8 +49,6 @@ class MotionExecServer(Node):
         fjt_action = self.declare_parameter(FJT_ACTION_PARAM, "follow_joint_trajectory").value
         self.fjt_client = ActionClient(self, FollowJointTrajectory, fjt_action, callback_group=self.cb_group)
 
-        self.enable_client = self.create_client(Trigger, ENABLE_SERVICE, callback_group=self.cb_group)
-
         self.server = self.create_service(ExecuteMotionPlan, MOTION_EXEC_SERVICE,
                                           callback=self.execute_motion_plan, callback_group=self.cb_group_server)
 
@@ -70,32 +66,6 @@ class MotionExecServer(Node):
             current_time = self.get_clock().now().seconds_nanoseconds()
             latest_js_time = self.latest_joint_state.header.stamp
             return current_time[0] + current_time[1] * 1e-9 - (latest_js_time.sec + latest_js_time.nanosec * 1e-9)
-
-    def enable_robot(self):
-        """
-        Calls service to enable robot
-        """
-        self.get_logger().info("Enabling robot")
-        if not self.enable_client.service_is_ready():
-            raise RuntimeError("Robot enable server is not available")
-
-        request = Trigger.Request()
-        future = self.enable_client.call_async(request)
-
-        event = Event()
-        future.add_done_callback(lambda f, e=event: done_callback(f, e))
-        event.wait()
-
-        response = future.result()
-        if not response.success:
-            raise RuntimeError("Failed to enable robot: '" + response.message + "'")
-
-        # TODO: test whether this is necessary and consider removing
-        # Sleep to ensure that robot_enable actually did everything it had to.
-        # This is probably only necessary the first time that servos are enabled.
-        time.sleep(1)
-
-        self.get_logger().info("Robot enabled")
 
     def replace_start_state(self, fjt_goal: FollowJointTrajectory.Goal) -> FollowJointTrajectory.Goal:
         """
@@ -125,9 +95,6 @@ class MotionExecServer(Node):
             js_age = self.get_joint_state_age()
             if js_age > JOINT_STATE_TIME_THRESHOLD:
                 raise RuntimeError(f"Last joint state was not received within threshold ({js_age} > {JOINT_STATE_TIME_THRESHOLD})")
-
-            # Enable robot
-            self.enable_robot()
 
             # Check that the server exists
             if not self.fjt_client.server_is_ready():
