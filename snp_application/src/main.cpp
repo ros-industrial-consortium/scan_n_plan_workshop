@@ -24,17 +24,11 @@ int main(int argc, char* argv[])
     snp_application::SNPWidget w(node);
     w.show();
 
-    // Move the ROS spinning into a separate thread since the call to `spin` is synchronous
-    std::thread t{ [node]() { rclcpp::spin(node); } };
-
     // Run the Qt application, which is also sychronous
     auto ret = app.exec();
 
     // Shut down ROS to terminate call to `spin`
     rclcpp::shutdown();
-
-    // Wait for the thread to finish
-    t.join();
 
     return ret;
   }

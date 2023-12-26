@@ -12,7 +12,8 @@ public:
   {
     try
     {
-      auto node = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+      // Create a new node that will be spun by the behavior tree framework
+      auto node = std::make_shared<rclcpp::Node>("snp_application");
 
       auto layout = new QVBoxLayout();
       layout->addWidget(new snp_application::SNPWidget(node, this));
