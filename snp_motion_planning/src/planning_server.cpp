@@ -59,7 +59,7 @@ static const std::string TASK_NAME_PARAM = "task_name";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 
 // Services
-static const std::string PLANNING_SERVICE = "create_motion_plan";
+static const std::string PLANNING_SERVICE = "generate_motion_plan";
 static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
 tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& paths)
