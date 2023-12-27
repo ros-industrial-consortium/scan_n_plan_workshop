@@ -22,7 +22,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="group_box_operation">
      <property name="title">
       <string>Operation</string>
      </property>
@@ -108,18 +108,25 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QProgressBar" name="progress_bar">
-        <property name="value">
-         <number>0</number>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QProgressBar" name="progress_bar">
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="push_button_halt">
+     <property name="text">
+      <string>Halt</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="group_box_log">
      <property name="title">
       <string>Log</string>
      </property>
