@@ -65,7 +65,7 @@ TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, boost_plugin_loader::PluginLo
 
   // Set up the ROS interfaces
   server_ = node->create_service<snp_msgs::srv::GenerateToolPaths>(
-      "/generate_tool_paths", std::bind(&TPPWidget::callback, this, std::placeholders::_1, std::placeholders::_2));
+      "generate_tool_paths", std::bind(&TPPWidget::callback, this, std::placeholders::_1, std::placeholders::_2));
 
   // Load a parameter-specified configuration file for the tool path planner
   std::string config_file;
