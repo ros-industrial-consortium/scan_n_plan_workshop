@@ -24,10 +24,12 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   , board_(BT::Blackboard::create())
 {
   ui_->setupUi(this);
+  ui_->group_box_operation->setEnabled(false);
 
   // Reset
   connect(ui_->push_button_reset, &QPushButton::clicked, [this](){
     ui_->stacked_widget->setCurrentIndex(0);
+    ui_->group_box_operation->setEnabled(true);
     runTreeWithThread();
   });
 
@@ -44,8 +46,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   board_->set(SetPageDecoratorNode::STACKED_WIDGET_KEY, ui_->stacked_widget);
   board_->set(ProgressDecoratorNode::PROGRESS_BAR_KEY, ui_->progress_bar);
   board_->set("reset", static_cast<QAbstractButton*>(ui_->push_button_reset));
-  board_->set("back", static_cast<QAbstractButton*>(ui_->push_button_back));
+  board_->set("halt", static_cast<QAbstractButton*>(ui_->push_button_halt));
 
+  board_->set("back", static_cast<QAbstractButton*>(ui_->push_button_back));
   board_->set("scan", static_cast<QAbstractButton*>(ui_->push_button_scan));
   board_->set("tpp", static_cast<QAbstractButton*>(ui_->push_button_tpp));
   board_->set("plan", static_cast<QAbstractButton*>(ui_->push_button_motion_plan));
@@ -70,6 +73,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   factory_.registerNodeType<StartReconstructionServiceNode>("StartReconstructionService", ros_params);
   factory_.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
 
+  factory_.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
+  factory_.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
+
   auto bt_files = get_parameter<std::vector<std::string>>(node, BT_FILES_PARAM);
   for(const std::string& file : bt_files)
     factory_.registerBehaviorTreeFromFile(file);
@@ -89,7 +95,7 @@ void SNPWidget::runTreeWithThread()
     return;
   }
 
-  connect(thread, &BTThread::finished, [thread](){
+  connect(thread, &BTThread::finished, [thread, this](){
     QString message;
     QTextStream stream(&message);
     switch (thread->result)
@@ -104,6 +110,7 @@ void SNPWidget::runTreeWithThread()
         break;
     }
     thread->deleteLater();
+    ui_->group_box_operation->setEnabled(false);
   });
 
   thread->start();
