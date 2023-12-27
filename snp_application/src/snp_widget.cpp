@@ -76,6 +76,8 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   factory_.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
   factory_.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
 
+  factory_.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
+
   auto bt_files = get_parameter<std::vector<std::string>>(node, BT_FILES_PARAM);
   for(const std::string& file : bt_files)
     factory_.registerBehaviorTreeFromFile(file);

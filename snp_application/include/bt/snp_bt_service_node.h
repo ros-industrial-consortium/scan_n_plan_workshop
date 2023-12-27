@@ -1,8 +1,10 @@
 #pragma once
 
+#include <behaviortree_ros2/bt_action_node.hpp>
 #include <behaviortree_ros2/bt_service_node.hpp>
 #include <behaviortree_ros2/bt_topic_pub_node.hpp>
 
+#include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <industrial_reconstruction_msgs/srv/start_reconstruction.hpp>
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
@@ -149,6 +151,17 @@ public:
   using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
 
   bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
+};
+
+class FollowJointTrajectoryActionNode : public BT::RosActionNode<control_msgs::action::FollowJointTrajectory>
+{
+public:
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
+  inline static BT::PortsList providedPorts() { return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) }); }
+  using BT::RosActionNode<control_msgs::action::FollowJointTrajectory>::RosActionNode;
+
+  bool setGoal(Goal& goal) override;
+  BT::NodeStatus onResultReceived(const WrappedResult& result) override;
 };
 
 }  // namespace snp_application

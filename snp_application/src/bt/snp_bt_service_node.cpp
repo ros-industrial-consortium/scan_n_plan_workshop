@@ -200,4 +200,38 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
   return true;
 }
 
+bool FollowJointTrajectoryActionNode::setGoal(Goal &goal)
+{
+  // TODO: replace first state?
+  goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
+  return true;
+}
+
+BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedResult& result)
+{
+  BT::NodeStatus status = BT::NodeStatus::SUCCESS;
+
+  // Check the action result code
+  switch(result.code)
+  {
+  case rclcpp_action::ResultCode::SUCCEEDED:
+    break;
+  default:
+    status = BT::NodeStatus::FAILURE;
+    break;
+  }
+
+  // Check the action specific code
+  switch(result.result->error_code)
+  {
+  case control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL:
+    break;
+  default:
+    status = BT::NodeStatus::FAILURE;
+    break;
+  }
+
+  return status;
+}
+
 } // namespace snp_application
