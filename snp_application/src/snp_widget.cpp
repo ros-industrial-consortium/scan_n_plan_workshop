@@ -63,7 +63,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
 
   BT::RosNodeParams ros_params;
   ros_params.nh = node;
-  ros_params.server_timeout = std::chrono::seconds(120);
+  ros_params.server_timeout = std::chrono::seconds(60);
 
   factory_.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
   factory_.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);

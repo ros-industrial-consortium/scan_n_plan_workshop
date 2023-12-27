@@ -24,6 +24,10 @@ bool ExecuteMotionPlanServiceNode::setRequest(typename Request::SharedPtr& reque
 {
   request->motion_plan = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, MOTION_PLAN_INPUT_PORT_KEY);
   request->use_tool = getBTInput<bool>(this, USE_TOOL_INPUT_PORT_KEY);
+
+  // Update the server timeout (1.2 x 1000 ms/sec)
+  service_timeout_ = static_cast<std::chrono::milliseconds>(1200 * request->motion_plan.points.back().time_from_start.sec);
+
   return true;
 }
 
@@ -202,8 +206,11 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
 
 bool FollowJointTrajectoryActionNode::setGoal(Goal &goal)
 {
-  // TODO: replace first state?
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
+
+  // Update the server timeout (1.2 x 1000 ms/sec)
+  server_timeout_ = static_cast<std::chrono::milliseconds>(1200 * goal.trajectory.points.back().time_from_start.sec);
+
   return true;
 }
 
