@@ -43,7 +43,7 @@ noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
   extractor.extractor.params.plane_distance_threshold = ui_->plane_distance_threshold->value();
 
   if (!client_->service_is_ready())
-    throw std::runtime_error("Service is not available");
+    throw std::runtime_error("ROI selection service is not available");
 
   auto request = std::make_shared<rviz_polygon_selection_tool::srv::GetSelection::Request>();
   auto future = client_->async_send_request(request);
@@ -52,9 +52,11 @@ noether::MeshModifier::ConstPtr ROISelectionMeshModifierWidget::create() const
     case std::future_status::ready:
       break;
     case std::future_status::timeout:
-      throw std::runtime_error("Service call to '" + std::string(client_->get_service_name()) + "' timed out");
+      throw std::runtime_error("ROI selection service call to '" + std::string(client_->get_service_name()) +
+                               "' timed out");
     default:
-      throw std::runtime_error("Service call to '" + std::string(client_->get_service_name()) + "' failed");
+      throw std::runtime_error("ROI selection service call to '" + std::string(client_->get_service_name()) +
+                               "' failed");
   }
 
   rviz_polygon_selection_tool::srv::GetSelection::Response::SharedPtr response = future.get();
