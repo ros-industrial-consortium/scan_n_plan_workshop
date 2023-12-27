@@ -1,6 +1,8 @@
 #include "bt/snp_bt_service_node.h"
 #include "bt/utils.h"
 
+#include <geometry_msgs/msg/pose_array.hpp>
+
 namespace snp_application
 {
 bool TriggerServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
@@ -96,8 +98,23 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
     return BT::NodeStatus::FAILURE;
   }
 
+  // Copy the tool paths
+  std::vector<snp_msgs::msg::ToolPath> tool_paths = response->tool_paths;
+
+  // Get the reference frame for the poses
+  auto ref_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+
+  // Set the reference frame in each pose array
+  for(snp_msgs::msg::ToolPath& tp : tool_paths)
+  {
+    for(geometry_msgs::msg::PoseArray& arr : tp.segments)
+    {
+      arr.header.frame_id = ref_frame;
+    }
+  }
+
   // Set output
-  setOutput(TOOL_PATHS_OUTPUT_PORT_KEY, response->tool_paths);
+  setOutput(TOOL_PATHS_OUTPUT_PORT_KEY, tool_paths);
 
   return BT::NodeStatus::SUCCESS;
 }
@@ -154,6 +171,33 @@ BT::NodeStatus StopReconstructionServiceNode::onResponseReceived(const typename 
   }
 
   return BT::NodeStatus::SUCCESS;
+}
+
+bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
+{
+  auto tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
+
+  if(tool_paths.empty() || tool_paths.at(0).segments.empty())
+    return true;
+
+  // Set the frame ID from the first tool path segment
+  msg.header.frame_id = tool_paths.at(0).segments.at(0).header.frame_id;
+
+  for(const snp_msgs::msg::ToolPath& tp : tool_paths)
+  {
+    for(const geometry_msgs::msg::PoseArray& arr : tp.segments)
+    {
+      msg.poses.insert(msg.poses.end(), arr.poses.begin(), arr.poses.end());
+    }
+  }
+
+  return true;
+}
+
+bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
+{
+  msg = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, MOTION_PLAN_INPUT_PORT_KEY);
+  return true;
 }
 
 } // namespace snp_application

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <behaviortree_ros2/bt_service_node.hpp>
+#include <behaviortree_ros2/bt_topic_pub_node.hpp>
+
 #include <industrial_reconstruction_msgs/srv/start_reconstruction.hpp>
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
@@ -127,6 +129,26 @@ public:
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+};
+
+class ToolPathsPubNode : public BT::RosTopicPubNode<geometry_msgs::msg::PoseArray>
+{
+public:
+  inline static std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
+  inline static BT::PortsList providedPorts() { return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY) }); }
+  using BT::RosTopicPubNode<geometry_msgs::msg::PoseArray>::RosTopicPubNode;
+
+  bool setMessage(geometry_msgs::msg::PoseArray& msg) override;
+};
+
+class MotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
+{
+public:
+  inline static std::string MOTION_PLAN_INPUT_PORT_KEY = "motion_plan";
+  inline static BT::PortsList providedPorts() { return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(MOTION_PLAN_INPUT_PORT_KEY) }); }
+  using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
+
+  bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
 };
 
 }  // namespace snp_application
