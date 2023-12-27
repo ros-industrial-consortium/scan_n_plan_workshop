@@ -3,10 +3,12 @@
 #include <behaviortree_ros2/bt_action_node.hpp>
 #include <behaviortree_ros2/bt_service_node.hpp>
 #include <behaviortree_ros2/bt_topic_pub_node.hpp>
+#include <behaviortree_ros2/bt_topic_sub_node.hpp>
 
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <industrial_reconstruction_msgs/srv/start_reconstruction.hpp>
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_scan_motion_plan.hpp>
@@ -162,6 +164,23 @@ public:
 
   bool setGoal(Goal& goal) override;
   BT::NodeStatus onResultReceived(const WrappedResult& result) override;
+};
+
+class UpdateTrajectoryStartStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
+{
+public:
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input";
+  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({
+      BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY)
+    });
+  }
+  using BT::RosTopicSubNode<sensor_msgs::msg::JointState>::RosTopicSubNode;
+
+  BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
 };
 
 }  // namespace snp_application

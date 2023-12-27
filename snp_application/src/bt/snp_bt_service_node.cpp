@@ -241,4 +241,51 @@ BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedRe
   return status;
 }
 
+BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
+{
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> input = getInput<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY);
+  if (!input)
+  {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to get required input value: '" << input.error() << "'");
+    return BT::NodeStatus::FAILURE;
+  }
+  trajectory_msgs::msg::JointTrajectory trajectory = input.value();
+
+  // Replace the start state of the trajectory with the current joint state
+  {
+    trajectory_msgs::msg::JointTrajectoryPoint start_point;
+    start_point.positions.resize(trajectory.joint_names.size());
+    start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
+    start_point.accelerations = std::vector<double>(start_point.positions.size(), 0);
+    start_point.effort = std::vector<double>(start_point.positions.size(), 0);
+    start_point.time_from_start = rclcpp::Duration::from_seconds(0.0);
+
+    // Find the index of the trajectory joint in the latest joint state message
+    for (std::size_t i = 0; i < trajectory.joint_names.size(); ++i)
+    {
+      const std::string& name = trajectory.joint_names[i];
+      auto it = std::find(last_msg->name.begin(), last_msg->name.end(), name);
+      if (it == last_msg->name.end())
+      {
+        RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to find joint '" << name << "' in latest joint state message");
+        return BT::NodeStatus::FAILURE;
+      }
+
+      auto idx = std::distance(last_msg->name.begin(), it);
+      start_point.positions[i] = last_msg->position[idx];
+    }
+
+    trajectory.points[0] = start_point;
+  }
+
+  BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, trajectory);
+  if(!output)
+  {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to set required output value: '" << output.error() << "'");
+    return BT::NodeStatus::FAILURE;
+  }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
 } // namespace snp_application
