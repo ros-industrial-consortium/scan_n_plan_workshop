@@ -33,6 +33,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
+find_package(snp_tpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(trajectory_msgs REQUIRED)
@@ -66,8 +67,10 @@ add_library(
   include/bt/snp_sequence_with_memory_node.h
   src/bt/snp_sequence_with_memory_node.cpp
 )
-
-target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets yaml-cpp)
+target_link_libraries(
+  ${PROJECT_NAME}_widget
+  Qt5::Widgets
+  yaml-cpp)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
@@ -79,9 +82,11 @@ ament_target_dependencies(
   sensor_msgs
   geometry_msgs
   snp_msgs
+  snp_tpp
   std_srvs
   tf2_eigen
   trajectory_msgs)
+target_compile_definitions(${PROJECT_NAME}_widget PUBLIC SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
 target_link_libraries(${PROJECT_NAME}_panel ${PROJECT_NAME}_widget)
