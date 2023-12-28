@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost_plugin_loader/plugin_loader.h>
 #include <QWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp/service.hpp>
@@ -8,12 +7,12 @@
 
 namespace noether
 {
-class TPPPipelineWidget;
+class ConfigurableTPPPipelineWidget;
 }
 
-namespace Ui
+namespace boost_plugin_loader
 {
-class TPPWidget;
+class PluginLoader;
 }
 
 namespace snp_tpp
@@ -29,13 +28,8 @@ private:
   void callback(const snp_msgs::srv::GenerateToolPaths::Request::SharedPtr req,
                 const snp_msgs::srv::GenerateToolPaths::Response::SharedPtr res);
 
-  void configureTPPPipeline(const std::string& file);
-  void onLoadConfiguration(const bool /*checked*/);
-  void onSaveConfiguration(const bool /*checked*/);
-
-  noether::TPPPipelineWidget* pipeline_widget_{ nullptr };
+  noether::ConfigurableTPPPipelineWidget* pipeline_widget_{ nullptr };
   rclcpp::Service<snp_msgs::srv::GenerateToolPaths>::SharedPtr server_{ nullptr };
-  Ui::TPPWidget* ui_{ nullptr };
 };
 
 }  // namespace snp_tpp
