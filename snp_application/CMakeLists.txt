@@ -39,6 +39,7 @@ find_package(tf2_eigen REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(trajectory_preview REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
@@ -85,7 +86,8 @@ ament_target_dependencies(
   snp_tpp
   std_srvs
   tf2_eigen
-  trajectory_msgs)
+  trajectory_msgs
+  trajectory_preview)
 target_compile_definitions(${PROJECT_NAME}_widget PUBLIC SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)

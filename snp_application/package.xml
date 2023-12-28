@@ -24,6 +24,7 @@
   <depend>rviz_common</depend>
   <depend>pluginlib</depend>
   <depend>tf2_eigen</depend>
+  <depend>trajectory_preview</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <!-- TODO: replace with more targeted set of linters

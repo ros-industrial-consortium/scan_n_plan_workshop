@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <snp_tpp/tpp_widget.h>
+#include <trajectory_preview/trajectory_preview_widget.h>
 
 static const std::string BT_FILES_PARAM = "bt_files";
 static const std::string BT_PARAM = "tree";
@@ -54,6 +55,13 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
     auto tpp_dialog = new TPPDialog(node, this);
     tpp_dialog->hide();
     connect(ui_->tool_button_tpp, &QToolButton::clicked, tpp_dialog, &QWidget::show);
+  }
+
+  // Add the trajectory preview widget
+  {
+    auto preview = new trajectory_preview::TrajectoryPreviewWidget(this);
+    preview->initializeROS(node, "motion_plan", "preview");
+    ui_->page_execute_motions->layout()->addWidget(preview);
   }
 
   // Reset

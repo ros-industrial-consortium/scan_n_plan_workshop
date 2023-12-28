@@ -18,3 +18,7 @@
     local-name: BehaviorTree.CPP
     uri: https://github.com/BehaviorTree/BehaviorTree.CPP.git
     version: 4.4.3
+- git:
+    local-name: trajectory_preview
+    uri: https://github.com/marip8/trajectory_preview.git
+    version: 2.0.0
