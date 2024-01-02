@@ -22,11 +22,15 @@
         <Action ID="GenerateMotionPlanService" editable="true">
             <input_port name="service_name" default="generate_motion_plan"/>
             <input_port name="tool_paths" default="{tool_paths}"/>
-            <output_port name="motion_plan" default="{motion_plan}"/>
+            <output_port name="approach" default="{approach}"/>
+            <output_port name="process" default="{process}"/>
+            <output_port name="departure" default="{departure}"/>
         </Action>
         <Action ID="GenerateScanMotionPlanService" editable="true">
             <input_port name="service_name" default="generate_scan_motion_plan"/>
-            <output_port name="motion_plan" default="{scan_motion_plan}"/>
+            <output_port name="approach" default="{scan_approach}"/>
+            <output_port name="process" default="{scan_process}"/>
+            <output_port name="departure" default="{scan_departure}"/>
         </Action>
         <Action ID="GenerateToolPathsService" editable="true">
             <input_port name="service_name" default="generate_tool_paths"/>
@@ -34,7 +38,9 @@
         </Action>
         <Action ID="MotionPlanPub" editable="true">
             <input_port name="topic_name"/>
-            <input_port name="motion_plan" default="{motion_plan}"/>
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
         </Action>
         <Action ID="ProcessNode" editable="true"/>
         <Decorator ID="Progress" editable="true">
@@ -58,5 +64,20 @@
         <Action ID="TriggerService" editable="true">
             <input_port name="service_name"/>
         </Action>
+        <Action ID="UpdateTrajectoryStartState" editable="true">
+            <input_port name="topic_name" default="/joint_states"/>
+            <input_port name="input" default="{trajectory}"/>
+            <output_port name="output" default="{trajectory}"/>
+        </Action>
+        <SubTree ID="motion" editable="true">
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
+        </SubTree>
+        <SubTree ID="scan" editable="true">
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
+        </SubTree>
     </TreeNodesModel>
 </root>

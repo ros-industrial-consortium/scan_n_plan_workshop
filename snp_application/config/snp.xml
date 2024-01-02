@@ -18,9 +18,15 @@
   <BehaviorTree ID="motion">
     <Sequence>
       <TriggerService service_name="robot_enable"/>
-      <ExecuteMotionPlanService service_name="execute_motion_plan"
-                                motion_plan="{motion_plan}"
-                                use_tool="true"/>
+      <UpdateTrajectoryStartState topic_name="/joint_states"
+                                  input="{approach}"
+                                  output="{updated_approach}"/>
+      <FollowJointTrajectoryAction action_name="joint_trajectory_position_controller/follow_joint_trajectory"
+                                   trajectory="{updated_approach}"/>
+      <FollowJointTrajectoryAction action_name="joint_trajectory_position_controller/follow_joint_trajectory"
+                                   trajectory="{process}"/>
+      <FollowJointTrajectoryAction action_name="joint_trajectory_position_controller/follow_joint_trajectory"
+                                   trajectory="{departure}"/>
       <TriggerService service_name="robot_disable"/>
     </Sequence>
   </BehaviorTree>
@@ -36,9 +42,13 @@
                             disapprove_button="back"/>
           </SetPage>
           <GenerateScanMotionPlanService service_name="generate_scan_motion_plan"
-                                         motion_plan="{scan_motion_plan}"/>
+                                         approach="{scan_approach}"
+                                         process="{scan_process}"
+                                         departure="{scan_departure}"/>
           <MotionPlanPub topic_name="motion_plan"
-                         motion_plan="{scan_motion_plan}"/>
+                         approach="{scan_approach}"
+                         process="{scan_process}"
+                         departure="{scan_departure}"/>
         </Sequence>
       </Progress>
       <Progress start="20"
@@ -50,6 +60,9 @@
                             disapprove_button="back"/>
           </SetPage>
           <SubTree ID="scan"
+                   approach="{scan_approach}"
+                   process="{scan_process}"
+                   departure="{scan_departure}"
                    _autoremap="true"/>
         </Sequence>
       </Progress>
@@ -70,14 +83,20 @@
       <Progress start="60"
                 end="80">
         <Sequence>
-          <ButtonApproval name="approve_generate_motion_plan"
-                          approve_button="plan"
-                          disapprove_button="back"/>
+          <SetPage index="1">
+            <ButtonApproval name="approve_generate_motion_plan"
+                            approve_button="plan"
+                            disapprove_button="back"/>
+          </SetPage>
           <GenerateMotionPlanService service_name="generate_motion_plan"
                                      tool_paths="{tool_paths}"
-                                     motion_plan="{motion_plan}"/>
+                                     approach="{approach}"
+                                     process="{process}"
+                                     departure="{departure}"/>
           <MotionPlanPub topic_name="motion_plan"
-                         motion_plan="{motion_plan}"/>
+                         approach="{approach}"
+                         process="{process}"
+                         departure="{departure}"/>
         </Sequence>
       </Progress>
       <Progress start="80"
@@ -89,6 +108,10 @@
                             disapprove_button="back"/>
           </SetPage>
           <SubTree ID="motion"
+                   approach="{approach}"
+                   process="{process}"
+                   departure="{departure}"
+                   trajectory="{motion_plan}"
                    _autoremap="true"/>
         </Sequence>
       </Progress>
@@ -103,11 +126,17 @@
   <BehaviorTree ID="scan">
     <Sequence>
       <TriggerService service_name="robot_enable"/>
+      <UpdateTrajectoryStartState topic_name="/joint_states"
+                                  input="{approach}"
+                                  output="{updated_approach}"/>
+      <FollowJointTrajectoryAction action_name="joint_trajectory_position_controller/follow_joint_trajectory"
+                                   trajectory="{updated_approach}"/>
       <StartReconstructionService service_name="start_reconstruction"/>
-      <ExecuteMotionPlanService service_name="execute_motion_plan"
-                                motion_plan="{scan_motion_plan}"
-                                use_tool="false"/>
+      <FollowJointTrajectoryAction action_name="joint_trajectory_position_controller/follow_joint_trajectory"
+                                   trajectory="{process}"/>
       <StopReconstructionService service_name="stop_reconstruction"/>
+      <FollowJointTrajectoryAction action_name="joint_trajectory_position_controller/follow_joint_trajectory"
+                                   trajectory="{departure}"/>
       <TriggerService service_name="robot_disable"/>
     </Sequence>
   </BehaviorTree>
@@ -138,15 +167,23 @@
                   default="generate_motion_plan"/>
       <input_port name="tool_paths"
                   default="{tool_paths}"/>
-      <output_port name="motion_plan"
-                   default="{motion_plan}"/>
+      <output_port name="approach"
+                   default="{approach}"/>
+      <output_port name="process"
+                   default="{process}"/>
+      <output_port name="departure"
+                   default="{departure}"/>
     </Action>
     <Action ID="GenerateScanMotionPlanService"
             editable="true">
       <input_port name="service_name"
                   default="generate_scan_motion_plan"/>
-      <output_port name="motion_plan"
-                   default="{scan_motion_plan}"/>
+      <output_port name="approach"
+                   default="{scan_approach}"/>
+      <output_port name="process"
+                   default="{scan_process}"/>
+      <output_port name="departure"
+                   default="{scan_departure}"/>
     </Action>
     <Action ID="GenerateToolPathsService"
             editable="true">
@@ -158,8 +195,12 @@
     <Action ID="MotionPlanPub"
             editable="true">
       <input_port name="topic_name"/>
-      <input_port name="motion_plan"
-                  default="{motion_plan}"/>
+      <input_port name="approach"
+                  default="{approach}"/>
+      <input_port name="process"
+                  default="{process}"/>
+      <input_port name="departure"
+                  default="{departure}"/>
     </Action>
     <Decorator ID="Progress"
                editable="true">
@@ -196,6 +237,33 @@
             editable="true">
       <input_port name="service_name"/>
     </Action>
+    <Action ID="UpdateTrajectoryStartState"
+            editable="true">
+      <input_port name="topic_name"
+                  default="/joint_states"/>
+      <input_port name="input"
+                  default="{trajectory}"/>
+      <output_port name="output"
+                   default="{trajectory}"/>
+    </Action>
+    <SubTree ID="motion"
+             editable="true">
+      <input_port name="approach"
+                  default="{approach}"/>
+      <input_port name="process"
+                  default="{process}"/>
+      <input_port name="departure"
+                  default="{departure}"/>
+    </SubTree>
+    <SubTree ID="scan"
+             editable="true">
+      <input_port name="approach"
+                  default="{approach}"/>
+      <input_port name="process"
+                  default="{process}"/>
+      <input_port name="departure"
+                  default="{departure}"/>
+    </SubTree>
   </TreeNodesModel>
 
 </root>

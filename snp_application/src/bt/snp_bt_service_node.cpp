@@ -62,7 +62,9 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   }
 
   // Set output
-  setOutput(MOTION_PLAN_OUTPUT_PORT_KEY, response->motion_plan);
+  setOutput(APPROACH_OUTPUT_PORT_KEY, response->approach);
+  setOutput(PROCESS_OUTPUT_PORT_KEY, response->process);
+  setOutput(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
 
   return BT::NodeStatus::SUCCESS;
 }
@@ -81,7 +83,9 @@ BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typen
   }
 
   // Set output
-  setOutput(MOTION_PLAN_OUTPUT_PORT_KEY, response->motion_plan);
+  setOutput(APPROACH_OUTPUT_PORT_KEY, response->approach);
+  setOutput(PROCESS_OUTPUT_PORT_KEY, response->process);
+  setOutput(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
 
   return BT::NodeStatus::SUCCESS;
 }
@@ -198,9 +202,150 @@ bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
   return true;
 }
 
+/**
+ * @details Adapted from https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L69-L75
+ */
+template <typename T>
+static bool isSubset(std::vector<T> a, std::vector<T> b)
+{
+  std::sort(a.begin(), a.end());
+  std::sort(b.begin(), b.end());
+  return std::includes(a.begin(), a.end(), b.begin(), b.end());
+}
+
+/**
+ * @details Adapted from https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L77C4-L96
+ */
+template <typename T>
+static std::vector<std::size_t> getSubsetIndices(const std::vector<T>& superset, const std::vector<T>& subset)
+{
+  std::vector<std::size_t> indices;
+  indices.reserve(subset.size());
+  for (std::size_t i = 0; i < subset.size(); ++i)
+  {
+    const T& item = subset[i];
+    auto it = std::find(superset.begin(), superset.end(), item);
+    if (it == superset.end())
+    {
+      std::stringstream ss;
+      ss << "Failed to find subset item (" << *it << ") in superset";
+      throw std::runtime_error(ss.str());
+    }
+    indices.push_back(static_cast<std::size_t>(std::distance(superset.begin(), it)));
+  }
+
+  return indices;
+}
+
+/**
+ * @details Adapted from https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L104-L194
+ */
+trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointTrajectory& first,
+                                              const trajectory_msgs::msg::JointTrajectory& second)
+{
+  if (first.joint_names == second.joint_names)
+  {
+    trajectory_msgs::msg::JointTrajectory result;
+    result.header = first.header;
+    result.joint_names = first.joint_names;
+
+    // Insert the first trajectory points
+    result.points.reserve(first.points.size() + second.points.size());
+    result.points.insert(result.points.end(), first.points.begin(), first.points.end());
+
+    // Insert the second trajectory points and modify their time from start to include the duration of the first
+    // trajectory
+    const auto lhs_duration = first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
+    for (const auto& pt : second.points)
+    {
+      result.points.push_back(pt);
+      result.points.back().time_from_start = rclcpp::Duration(result.points.back().time_from_start) + rclcpp::Duration(lhs_duration);
+    }
+
+    return result;
+  }
+  else if (isSubset(first.joint_names, second.joint_names))
+  {
+    // The first set of names includes the second set of names (i.e. first is the superset)
+    trajectory_msgs::msg::JointTrajectory out(first);
+    out.points.reserve(first.points.size() + second.points.size());
+
+    // Get the indices of the subset in the superset
+    std::vector<std::size_t> indices = getSubsetIndices(first.joint_names, second.joint_names);
+
+    // Create new trajectory points from the subset with the additional superset joints
+    const auto first_duration = first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
+    for (const trajectory_msgs::msg::JointTrajectoryPoint& pt : second.points)
+    {
+      // Copy the new trajectory point from the back of the first trajectory
+      trajectory_msgs::msg::JointTrajectoryPoint new_pt(first.points.back());
+
+      // Overwrite the joint values from the second trajectory
+      for (std::size_t i = 0; i < pt.positions.size(); ++i)
+      {
+        const std::size_t idx = indices[i];
+        new_pt.positions[idx] = pt.positions[i];
+      }
+
+      // Push this new trajectory point back onto the output trajectory
+      new_pt.time_from_start = rclcpp::Duration(pt.time_from_start) + rclcpp::Duration(first_duration);
+      out.points.push_back(new_pt);
+    }
+
+    return out;
+  }
+  else if (isSubset(second.joint_names, first.joint_names))
+  {
+    // The second set of names includes the first set of names (i.e. second is the superset)
+    trajectory_msgs::msg::JointTrajectory out(second);
+    out.points.reserve(first.points.size() + second.points.size());
+
+    // Update the start times of the second trajectory
+    const auto first_duration = first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
+    for (trajectory_msgs::msg::JointTrajectoryPoint& pt : out.points)
+    {
+      pt.time_from_start = rclcpp::Duration(pt.time_from_start) + rclcpp::Duration(first_duration);
+    }
+
+    std::vector<std::size_t> indices = getSubsetIndices(second.joint_names, first.joint_names);
+
+    // Iterate over the first points backwards and push them into the front of the new trajectory
+    for (auto it = first.points.rbegin(); it != first.points.rend(); ++it)
+    {
+      // Copy the trajectory from the first point of the second trajectory
+      trajectory_msgs::msg::JointTrajectoryPoint new_pt(second.points.front());
+
+      // Overwrite the joint values from the first trajectory
+      for (std::size_t i = 0; i < indices.size(); ++i)
+      {
+        const std::size_t idx = indices[i];
+        new_pt.positions[idx] = it->positions[i];
+      }
+
+      // Insert the new trajectory point at the beginning of the trajectory
+      out.points.insert(out.points.begin(), new_pt);
+    }
+
+    return out;
+  }
+
+  throw std::runtime_error("The joint names/orderings are neither the same nor subsets of the other");
+}
+
 bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
 {
-  msg = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, MOTION_PLAN_INPUT_PORT_KEY);
+  try
+  {
+    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, APPROACH_INPUT_PORT_KEY));
+    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY));
+    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, DEPARTURE_INPUT_PORT_KEY));
+  }
+  catch(const std::exception& ex)
+  {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Error combining trajectories: '" << ex.what() << "'");
+    return false;
+  }
+
   return true;
 }
 

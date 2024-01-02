@@ -70,12 +70,16 @@ class GenerateMotionPlanServiceNode : public BT::RosServiceNode<snp_msgs::srv::G
 {
 public:
   inline static std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
-  inline static std::string MOTION_PLAN_OUTPUT_PORT_KEY = "motion_plan";
+  inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
+  inline static std::string PROCESS_OUTPUT_PORT_KEY = "process";
+  inline static std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({
       BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY),
-      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(MOTION_PLAN_OUTPUT_PORT_KEY)
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY)
     });
   }
 
@@ -88,10 +92,16 @@ public:
 class GenerateScanMotionPlanServiceNode : public BT::RosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
 {
 public:
-  inline static std::string MOTION_PLAN_OUTPUT_PORT_KEY = "motion_plan";
+  inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
+  inline static std::string PROCESS_OUTPUT_PORT_KEY = "process";
+  inline static std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(MOTION_PLAN_OUTPUT_PORT_KEY) });
+    return providedBasicPorts({
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
+      BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY)
+    });
   }
 
   using BT::RosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>::RosServiceNode;
@@ -148,8 +158,17 @@ public:
 class MotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
 {
 public:
-  inline static std::string MOTION_PLAN_INPUT_PORT_KEY = "motion_plan";
-  inline static BT::PortsList providedPorts() { return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(MOTION_PLAN_INPUT_PORT_KEY) }); }
+  inline static std::string APPROACH_INPUT_PORT_KEY = "approach";
+  inline static std::string PROCESS_INPUT_PORT_KEY = "process";
+  inline static std::string DEPARTURE_INPUT_PORT_KEY = "departure";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({
+      BT::InputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_INPUT_PORT_KEY),
+      BT::InputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_INPUT_PORT_KEY),
+      BT::InputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_INPUT_PORT_KEY),
+    });
+  }
   using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
 
   bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
