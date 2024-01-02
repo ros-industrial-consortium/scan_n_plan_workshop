@@ -14,11 +14,10 @@ public:
   {
     try
     {
-      // Create a new node that will be spun by the behavior tree framework
-      auto node = std::make_shared<rclcpp::Node>("snp_application");
+      auto rviz_node = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
       auto layout = new QVBoxLayout();
-      layout->addWidget(new snp_application::SNPWidget(node, this));
+      layout->addWidget(new snp_application::SNPWidget(rviz_node, this));
       setLayout(layout);
     }
     catch (const std::exception& ex)

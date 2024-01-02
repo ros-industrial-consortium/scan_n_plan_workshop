@@ -41,9 +41,9 @@ public:
 
 namespace snp_application
 {
-SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
+SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   : QWidget(parent)
-  , node_(node)
+  , node_(std::make_shared<rclcpp::Node>("snp_application"))
   , ui_(new Ui::SNPWidget())
   , board_(BT::Blackboard::create())
 {
@@ -52,7 +52,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
 
   // Add the TPP widget
   {
-    auto tpp_dialog = new TPPDialog(node, this);
+    auto tpp_dialog = new TPPDialog(node_, this);
     tpp_dialog->hide();
     connect(ui_->tool_button_tpp, &QToolButton::clicked, tpp_dialog, &QWidget::show);
   }
@@ -60,7 +60,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   // Add the trajectory preview widget
   {
     auto preview = new trajectory_preview::TrajectoryPreviewWidget(this);
-    preview->initializeROS(node, "motion_plan", "preview");
+    preview->initializeROS(rviz_node, "motion_plan", "preview");
     ui_->page_execute_motions->layout()->addWidget(preview);
   }
 
@@ -72,13 +72,13 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   });
 
   // Declare parameters
-  node->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
-  node->declare_parameter<std::string>(REF_FRAME_PARAM, "");
-  node->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
-  node->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
-  node->declare_parameter<std::string>(MESH_FILE_PARAM, "");
-  node->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
-  node->declare_parameter<std::string>(BT_PARAM, "");
+  node_->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
+  node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
+  node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
+  node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
+  node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
+  node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
+  node_->declare_parameter<std::string>(BT_PARAM, "");
 
   // Populate the blackboard with buttons
   board_->set(SetPageDecoratorNode::STACKED_WIDGET_KEY, ui_->stacked_widget);
@@ -100,7 +100,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
   factory_.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
 
   BT::RosNodeParams ros_params;
-  ros_params.nh = node;
+  ros_params.nh = node_;
   ros_params.server_timeout = std::chrono::seconds(60);
 
   factory_.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
@@ -118,7 +118,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
 
   factory_.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
 
-  auto bt_files = get_parameter<std::vector<std::string>>(node, BT_FILES_PARAM);
+  auto bt_files = get_parameter<std::vector<std::string>>(node_, BT_FILES_PARAM);
   for(const std::string& file : bt_files)
     factory_.registerBehaviorTreeFromFile(file);
 }
