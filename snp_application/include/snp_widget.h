@@ -11,6 +11,7 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
+#include <snp_msgs/srv/generate_scan_motion_plan.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
@@ -34,7 +35,7 @@ private:
 
   const std::string mesh_file_;
   const std::string reference_frame_;
-  const trajectory_msgs::msg::JointTrajectory scan_traj_;
+  trajectory_msgs::msg::JointTrajectory scan_traj_;
   industrial_reconstruction_msgs::srv::StartReconstruction::Request::SharedPtr start_scan_request_;
 
   // joint state publisher
@@ -52,6 +53,7 @@ private:
 
   rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedPtr tpp_client_;
   rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedPtr motion_planning_client_;
+  rclcpp::Client<snp_msgs::srv::GenerateScanMotionPlan>::SharedPtr scan_traj_motion_planning_client_;
 
   rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedPtr motion_execution_client_;
 
@@ -79,6 +81,7 @@ private:
   using StartScanFuture = rclcpp::Client<industrial_reconstruction_msgs::srv::StartReconstruction>::SharedFuture;
   using StopScanFuture = rclcpp::Client<industrial_reconstruction_msgs::srv::StopReconstruction>::SharedFuture;
   void scan();
+  void onScanGenerationDone(rclcpp::Client<snp_msgs::srv::GenerateScanMotionPlan>::SharedFuture future);
   void onScanApproachDone(FJTResult result);
   void onScanStartDone(StartScanFuture result);
   void onScanDone(FJTResult result);

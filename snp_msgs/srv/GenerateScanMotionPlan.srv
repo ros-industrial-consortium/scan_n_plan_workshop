@@ -1,0 +1,9 @@
+# Request
+
+---
+# Response
+
+# Scan Trajectory Motion Plan - a joint trajectory for the robot to follow during a scan
+trajectory_msgs/JointTrajectory motion_plan
+bool success
+string message

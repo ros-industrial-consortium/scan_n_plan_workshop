@@ -18,6 +18,7 @@ if(BUILD_TESTING)
 endif()
 
 # Install Python executables
-install(PROGRAMS scripts/reconstruction_sim_node DESTINATION lib/${PROJECT_NAME})
+install(PROGRAMS scripts/reconstruction_sim_node scripts/scan_motion_plan_from_file_node
+        DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

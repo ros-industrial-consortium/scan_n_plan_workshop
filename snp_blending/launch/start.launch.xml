@@ -29,7 +29,6 @@
     <param name="reference_frame" value="$(var reference_frame)"/>
     <param name="tcp_frame" value="buffy_tcp"/>
     <param name="camera_frame" value="camera_color_optical_frame"/>
-    <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
     <param name="robot_description" value="$(var robot_description)"/>
     <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <!-- TSDF parameters -->
@@ -91,6 +90,10 @@
   <!-- Launch Motion Execution Node -->
   <node pkg="snp_motion_execution" exec="motion_execution_server">
     <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
+  </node>
+
+  <node pkg="snp_scanning" exec="scan_motion_plan_from_file_node">
+    <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>
   </node>
 
   <group unless="$(var sim_robot)">
