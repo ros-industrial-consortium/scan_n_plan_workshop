@@ -16,18 +16,7 @@ BT::NodeStatus SetPageDecoratorNode::tick()
   if(!QMetaObject::invokeMethod(stacked_widget, "setCurrentIndex", Qt::QueuedConnection, Q_ARG(int, index)))
     throw std::runtime_error("Failed to call setCurrentIndex");
 
-  BT::NodeStatus status = child()->executeTick();
-
-  switch(status)
-  {
-  case BT::NodeStatus::RUNNING:
-    break;
-  default:
-    if(!QMetaObject::invokeMethod(stacked_widget, "setEnabled", Qt::QueuedConnection, Q_ARG(bool, false)))
-      throw std::runtime_error("Failed to call setEnabled");
-  }
-
-  return status;
+  return child()->executeTick();
 }
 
 } // namespace snp_application
