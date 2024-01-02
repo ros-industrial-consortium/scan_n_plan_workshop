@@ -1,6 +1,7 @@
 #include "planner_profiles.hpp"
 #include "plugins/tasks/constant_tcp_speed_time_parameterization_profile.hpp"
 #include "plugins/tasks/kinematic_limits_check_profile.hpp"
+#include "plugins/tasks/tcp_speed_limiter_profile.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
@@ -31,7 +32,6 @@ static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
-static const double MAX_TCP_SPEED = 0.25;  // m/s
 static const std::string SCAN_LINK_NAME = "scan";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
 static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
@@ -49,6 +49,7 @@ static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
 static const std::string LVS_PARAM = "contact_check_longest_valid_segment";
 static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
+static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
 
 // Task composer parameters
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
@@ -201,6 +202,7 @@ public:
     node_->declare_parameter<double>(LVS_PARAM, 0.05);
     node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
     node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
+    node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
@@ -314,61 +316,6 @@ private:
     return program;
   }
 
-  tesseract_common::JointTrajectory tcpSpeedLimiter(const tesseract_common::JointTrajectory& input_trajectory,
-                                                    const double max_speed, const std::string tcp)
-  {
-    // Extract objects needed for calculating FK
-    tesseract_common::JointTrajectory output_trajectory = input_trajectory;
-    tesseract_scene_graph::StateSolver::UPtr state_solver = env_->getStateSolver();
-
-    // Find the adjacent waypoints that require the biggest speed reduction to stay under the max tcp speed
-    double strongest_scaling_factor = 1.0;
-    for (std::size_t i = 1; i < output_trajectory.size(); i++)
-    {
-      // Find the previous waypoint position in Cartesian space
-      tesseract_scene_graph::SceneState prev_ss =
-          state_solver->getState(output_trajectory[i - 1].joint_names, output_trajectory[i - 1].position);
-      Eigen::Isometry3d prev_pose = prev_ss.link_transforms[tcp];
-
-      // Find the current waypoint position in Cartesian space
-      tesseract_scene_graph::SceneState curr_ss =
-          state_solver->getState(output_trajectory[i].joint_names, output_trajectory[i].position);
-      Eigen::Isometry3d curr_pose = curr_ss.link_transforms[tcp];
-
-      // Calculate the average TCP velocity between these waypoints
-      double dist_traveled = (curr_pose.translation() - prev_pose.translation()).norm();
-      double time_to_travel = output_trajectory[i].time - output_trajectory[i - 1].time;
-      double original_velocity = dist_traveled / time_to_travel;
-
-      // If the velocity is over the max speed determine the scaling factor and update greatest seen to this point
-      if (original_velocity > max_speed)
-      {
-        double current_needed_scaling_factor = max_speed / original_velocity;
-        if (current_needed_scaling_factor < strongest_scaling_factor)
-          strongest_scaling_factor = current_needed_scaling_factor;
-      }
-    }
-
-    // Apply the strongest scaling factor to all trajectory points to maintain a smooth trajectory
-    double total_time = 0;
-    for (std::size_t i = 1; i < output_trajectory.size(); i++)
-    {
-      double original_time_diff = input_trajectory[i].time - input_trajectory[i - 1].time;
-      double new_time_diff = original_time_diff / strongest_scaling_factor;
-      double new_timestamp = total_time + new_time_diff;
-      // Apply new timestamp
-      output_trajectory[i].time = new_timestamp;
-      // Scale joint velocity by the scaling factor
-      output_trajectory[i].velocity = input_trajectory[i].velocity * strongest_scaling_factor;
-      // Scale joint acceleartion by the scaling factor squared
-      output_trajectory[i].acceleration =
-          input_trajectory[i].acceleration * strongest_scaling_factor * strongest_scaling_factor;
-      // Update the total running time of the trajectory up to this point
-      total_time = new_timestamp;
-    }
-    return output_trajectory;
-  }
-
   void removeScanLink()
   {
     if (env_->getSceneGraph()->getLink(SCAN_LINK_NAME))
@@ -441,6 +388,12 @@ private:
             std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
         profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME,
                                                                                    PROFILE, kin_limit_check_profile);
+
+        // TCP speed limit task
+        double tcp_max_speed = get<double>(node_, TCP_MAX_SPEED_PARAM);  // m/s
+        auto tcp_speed_limiter_profile = std::make_shared<snp_motion_planning::TCPSpeedLimiterProfile>(tcp_max_speed);
+        profile_dict->addProfile<snp_motion_planning::TCPSpeedLimiterProfile>(TCP_SPEED_LIMITER_TASK_NAME, PROFILE,
+                                                                              tcp_speed_limiter_profile);
       }
 
       // Create a manipulator info and program from the service request
@@ -551,14 +504,13 @@ private:
 
       // Convert to joint trajectory
       tesseract_common::JointTrajectory jt = toJointTrajectory(program_results);
-      tesseract_common::JointTrajectory tcp_velocity_scaled_jt = tcpSpeedLimiter(jt, MAX_TCP_SPEED, "tool0");
 
       // Send joint trajectory to Tesseract plotter widget
       plotter_->plotTrajectory(jt, *env_->getStateSolver());
 
       // Return results
-      res->motion_plan = tesseract_rosutils::toMsg(tcp_velocity_scaled_jt, env_->getState());
-      res->message = "Succesfully planned motion";
+      res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
+      res->message = "Successfully planned motion";
       res->success = true;
     }
     catch (const std::exception& ex)

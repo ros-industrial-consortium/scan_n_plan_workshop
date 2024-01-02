@@ -52,8 +52,10 @@ target_link_libraries(${PROJECT_NAME}_plugins PUBLIC ${LAPACK_LIBRARIES} tessera
                                                      tesseract::tesseract_kinematics_ikfast)
 target_include_directories(${PROJECT_NAME}_plugins SYSTEM PUBLIC ${LAPACK_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME}_tasks SHARED src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp
-                                         src/plugins/tasks/kinematic_limits_check_task.cpp)
+add_library(
+  ${PROJECT_NAME}_tasks SHARED
+  src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp src/plugins/tasks/kinematic_limits_check_task.cpp
+  src/plugins/tasks/tcp_speed_limiter_task.cpp)
 ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_tasks

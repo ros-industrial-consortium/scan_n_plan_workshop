@@ -207,11 +207,19 @@ task_composer_plugins:
                       output_data: output_data
                     input_indexing: [output_data]
                     output_indexing: [output_data]
+            TCPSpeedLimiterTask:
+              class: TCPSpeedLimiterTaskFactory
+              config:
+                conditional: true
+                inputs: [output_data]
+                outputs: [output_data]
           edges:
             - source: SimpleMotionPlannerTask
               destinations: [ErrorTask, DescartesMotionPlannerTask]
             - source: DescartesMotionPlannerTask
               destinations: [ErrorTask, RasterMotionTask]
             - source: RasterMotionTask
+              destinations: [ErrorTask, TCPSpeedLimiterTask]
+            - source: TCPSpeedLimiterTask
               destinations: [ErrorTask, DoneTask]
           terminals: [ErrorTask, DoneTask]
