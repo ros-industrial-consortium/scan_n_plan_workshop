@@ -61,7 +61,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   {
     auto preview = new trajectory_preview::TrajectoryPreviewWidget(this);
     preview->initializeROS(rviz_node, "motion_plan", "preview");
-    ui_->page_execute_motions->layout()->addWidget(preview);
+
+    auto layout = new QVBoxLayout(ui_->frame_preview_widget);
+    layout->addWidget(preview);
   }
 
   // Reset
@@ -152,7 +154,6 @@ void SNPWidget::runTreeWithThread()
         break;
     }
     thread->deleteLater();
-    ui_->group_box_operation->setEnabled(false);
   });
 
   thread->start();
