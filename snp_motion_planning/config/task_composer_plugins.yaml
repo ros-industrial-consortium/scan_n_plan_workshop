@@ -183,30 +183,24 @@ task_composer_plugins:
                 freespace:
                   task: SNPFreespacePipeline
                   config:
-                    input_remapping:
+                    remapping:
                       input_data: output_data
-                    output_remapping:
                       output_data: output_data
-                    input_indexing: [output_data]
-                    output_indexing: [output_data]
+                    indexing: [output_data]
                 raster:
                   task: SNPCartesianPipeline
                   config:
-                    input_remapping:
+                    remapping:
                       input_data: output_data
-                    output_remapping:
                       output_data: output_data
-                    input_indexing: [output_data]
-                    output_indexing: [output_data]
+                    indexing: [output_data]
                 transition:
                   task: SNPTransitionPipeline
                   config:
-                    input_remapping:
+                    remapping:
                       input_data: output_data
-                    output_remapping:
                       output_data: output_data
-                    input_indexing: [output_data]
-                    output_indexing: [output_data]
+                    indexing: [output_data]
             TCPSpeedLimiterTask:
               class: TCPSpeedLimiterTaskFactory
               config:
