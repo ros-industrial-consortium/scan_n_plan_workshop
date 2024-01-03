@@ -17,6 +17,7 @@ RUN --mount=type=bind,target=${WORKSPACE_DIR}/src/snp \
   && rosdep install \
     --from-paths ${WORKSPACE_DIR}/src \
     -iry \
+    --skip-keys libvtk \
   && apt install -y \
     libxmlrpcpp-dev
 
