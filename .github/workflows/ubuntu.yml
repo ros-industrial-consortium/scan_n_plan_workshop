@@ -5,11 +5,15 @@ on:
     branches:
       - master
   pull_request:
+    paths:
+      - 'snp**'
+      - '.github/workflows/ubuntu.yml'
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
   release:
     types:
       - released
-  schedule:
-    - cron: '0 5 * * *'
 
 jobs:
   ci:
@@ -18,53 +22,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [foxy, humble, rolling]
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}
+        include:
+          - distro: foxy
+            vcs-file: dependencies_foxy.repos
+          - distro: humble
+            vcs-file: dependencies_humble.repos
+          - distro: rolling
+            vcs-file: dependencies_rolling.repos
+    container:
+      image: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.21
+      env:
+        CCACHE_DIR: ${{ github.workspace }}/${{ matrix.distro }}/.ccache
+        DEBIAN_FRONTEND: noninteractive
+        TZ: Etc/UTC
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v1
-
-      - name: Login to Github Packages
-        uses: docker/login-action@v2
+        uses: actions/checkout@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          path: target_ws/src
 
-      - name: Extract Docker meta-information
-        id: meta
-        uses: docker/metadata-action@v3
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          apt install -y -qq libxmlrpcpp-dev
+
+      - name: Build and Tests
+        uses: tesseract-robotics/colcon-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=false
-            prefix=
-            suffix=
-          tags: |
-            type=ref,event=branch,prefix=${{ matrix.distro }}-
-            type=semver,pattern={{major}}.{{minor}},prefix=${{ matrix.distro }}-
-
-      - name: Build repository
-        uses: ros-industrial/industrial_ci@master
-        env:
-          ROS_DISTRO: ${{ matrix.distro }}
-          ROS_REPO: main
-          BEFORE_INIT: ''
-          PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.21
-          GIT_SUBMODULE_STRATEGY: normal
-          BUILDER: colcon
-          ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
-          UNDERLAY: /opt/tesseract_ros2/install
-          UPSTREAM_WORKSPACE: dependencies_${{ matrix.distro }}.repos
-          BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${ROS_DISTRO}/setup.bash'
-          BEFORE_RUN_TARGET_TEST_EMBED: ''
-          ROSDEP_SKIP_KEYS: "tesseract_rviz tesseract_plugins rviz octomap_ros libvtk"
-          AFTER_SCRIPT: 'rm -r $BASEDIR/${PREFIX}upstream_ws/build $BASEDIR/${PREFIX}target_ws/build'
-          DOCKER_COMMIT: ${{ steps.meta.outputs.tags }}
-
-      - name: Push post-build Docker
-        if: ${{ github.ref == 'refs/heads/master' || github.event_name == 'release' }}
-        run: docker push ${{ steps.meta.outputs.tags }}
+          before-script: source /opt/tesseract_ros2/install/setup.bash
+          ccache-prefix: ${{ matrix.distro }}
+          vcs-file: ${{ matrix.vcs-file }}
+          rosdep-install-args: '--skip-keys libvtk'
+          target-path: target_ws/src
+          target-args: --cmake-args -DCMAKE_BUILD_TYPE=Debug
