@@ -53,11 +53,11 @@ jobs:
           ROS_REPO: main
           BEFORE_INIT: ''
           PREFIX: ${{ github.repository }}_
-          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.20
+          DOCKER_IMAGE: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.21
           GIT_SUBMODULE_STRATEGY: normal
           BUILDER: colcon
           ADDITIONAL_DEBS: 'libxmlrpcpp-dev'
-          UNDERLAY: /root/tesseract-robotics/tesseract_ros2_target_ws/install
+          UNDERLAY: /opt/tesseract_ros2/install
           UPSTREAM_WORKSPACE: dependencies_${{ matrix.distro }}.repos
           BEFORE_BUILD_UPSTREAM_WORKSPACE_EMBED: 'ici_with_unset_variables source /opt/ros/${ROS_DISTRO}/setup.bash'
           BEFORE_RUN_TARGET_TEST_EMBED: ''
