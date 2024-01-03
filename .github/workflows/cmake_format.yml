@@ -5,17 +5,20 @@ on:
     branches:
       - master
   pull_request:
+    paths:
+      - 'snp**'
+      - '.github/workflows/cmake_format.yml'
+      - '**cmake-format'
   schedule:
     - cron: '0 5 * * *'
 
 jobs:
   cmake_format:
-    name: CMake-Format
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
 
-      - name: Run CMake format
+      - name: Run CMake Lang Format Check
         run: |
           sudo pip3 install cmakelang
           ./.run-cmake-format
