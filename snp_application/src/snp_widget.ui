@@ -121,22 +121,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="frame_preview_widget">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QFrame" name="frame">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -148,16 +132,16 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QProgressBar" name="progress_bar">
-          <property name="value">
-           <number>0</number>
+         <widget class="QPushButton" name="push_button_back">
+          <property name="text">
+           <string>Back</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="push_button_back">
-          <property name="text">
-           <string>Back</string>
+         <widget class="QProgressBar" name="progress_bar">
+          <property name="value">
+           <number>0</number>
           </property>
          </widget>
         </item>
@@ -177,6 +161,22 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame_preview_widget">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
     </widget>
    </item>
    <item>
