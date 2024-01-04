@@ -66,7 +66,7 @@ private:
   void onUpdateLog(const QString& message);
 
   bool scan_complete_{ false };
-  snp_msgs::msg::ToolPaths::SharedPtr tool_paths_{ nullptr };
+  std::vector<snp_msgs::msg::ToolPath> tool_paths_;
   trajectory_msgs::msg::JointTrajectory::SharedPtr motion_plan_{ nullptr };
 
   void update_calibration_requirement();

@@ -1,5 +1,6 @@
 #include <snp_tpp/tpp_widget.h>
 
+#include <boost_plugin_loader/plugin_loader.h>
 #include <QApplication>
 #include <rclcpp/rclcpp.hpp>
 #include <signal.h>

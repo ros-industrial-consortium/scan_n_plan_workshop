@@ -62,11 +62,11 @@ static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const std::string PLANNING_SERVICE = "create_motion_plan";
 static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
-tesseract_common::Toolpath fromMsg(const snp_msgs::msg::ToolPaths& msg)
+tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& paths)
 {
   tesseract_common::Toolpath tps;
-  tps.reserve(msg.paths.size());
-  for (const auto& path : msg.paths)
+  tps.reserve(paths.size());
+  for (const auto& path : paths)
   {
     for (const auto& segment : path.segments)
     {
@@ -397,7 +397,7 @@ private:
       }
 
       // Create a manipulator info and program from the service request
-      const std::string& base_frame = req->tool_paths.paths.at(0).segments.at(0).header.frame_id;
+      const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
       tesseract_common::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
       // Set up composite instruction and environment
