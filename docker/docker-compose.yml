@@ -6,7 +6,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         - TAG=humble-0.21
-        - ROS_DISTRO=humble
     environment:
       DISPLAY: $DISPLAY
       XAUTHORITY: $XAUTHORITY
