@@ -19,7 +19,6 @@ endif()
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(noether_tpp REQUIRED)
 find_package(noether_gui REQUIRED)
-find_package(noether_filtering REQUIRED)
 find_package(boost_plugin_loader REQUIRED)
 find_package(PCL REQUIRED)
 
@@ -46,7 +45,6 @@ target_include_directories(
 target_link_libraries(
   ${PROJECT_NAME}_mesh_modifier
   noether::noether_tpp
-  noether::noether_filtering
   noether::noether_gui)
 ament_target_dependencies(
   ${PROJECT_NAME}_mesh_modifier

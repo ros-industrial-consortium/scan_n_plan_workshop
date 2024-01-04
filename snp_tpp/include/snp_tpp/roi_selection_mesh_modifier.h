@@ -2,7 +2,7 @@
 
 #include <geometry_msgs/msg/point_stamped.hpp>
 #include <noether_tpp/core/mesh_modifier.h>
-#include <noether_filtering/subset_extraction/extruded_polygon_subset_extractor.h>
+#include <noether_tpp/mesh_modifiers/subset_extraction/extruded_polygon_subset_extractor.h>
 #include <rclcpp/node.hpp>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
