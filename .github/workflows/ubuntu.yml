@@ -22,13 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - distro: foxy
-            vcs-file: dependencies_foxy.repos
-          - distro: humble
-            vcs-file: dependencies_humble.repos
-          - distro: rolling
-            vcs-file: dependencies_rolling.repos
+        distro: [foxy, humble, rolling]
     container:
       image: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.21
       env:
@@ -51,7 +45,7 @@ jobs:
         with:
           before-script: source /opt/tesseract_ros2/install/setup.bash
           ccache-prefix: ${{ matrix.distro }}
-          vcs-file: ${{ matrix.vcs-file }}
+          vcs-file: dependencies.repos
           rosdep-install-args: '--skip-keys libvtk'
           target-path: target_ws/src
           target-args: --cmake-args -DCMAKE_BUILD_TYPE=Debug
