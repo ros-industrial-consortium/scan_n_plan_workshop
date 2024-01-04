@@ -4,7 +4,7 @@
     <xacro:property name="static_thickness" value="0.0785"/>
     <xacro:property name="media_radius" value="${2 * 0.0254}"/>
     <xacro:property name="chuck_length" value="0.055"/>
-    <xacro:property name="chuck_radius" value="${1.0 * 0.0254}}"/>
+    <xacro:property name="chuck_radius" value="${1.0 * 0.0254}"/>
 
     <link name="${prefix}base">
       <visual>
