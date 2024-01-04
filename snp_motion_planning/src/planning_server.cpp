@@ -398,6 +398,15 @@ private:
 
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
+      if(base_frame.empty()){
+        RCLCPP_WARN(node_->get_logger(), "Base frame is empty!");
+      }
+      if(req->motion_group.empty()){
+        RCLCPP_WARN(node_->get_logger(), "Motion group is empty!");
+      }
+      if(req->tcp_frame.empty()){
+        RCLCPP_WARN(node_->get_logger(), "TCP frame is empty!");
+      }
       tesseract_common::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
       // Set up composite instruction and environment
