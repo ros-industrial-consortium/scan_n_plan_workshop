@@ -398,6 +398,18 @@ private:
 
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
+      if (base_frame.empty())
+      {
+        throw std::runtime_error("Base frame is empty!");
+      }
+      if (req->motion_group.empty())
+      {
+        throw std::runtime_error("Motion group is empty!");
+      }
+      if (req->tcp_frame.empty())
+      {
+        throw std::runtime_error("TCP frame is empty!");
+      }
       tesseract_common::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
       // Set up composite instruction and environment
