@@ -419,7 +419,7 @@ private:
       removeScanLink();
 
       // Add the scan as a collision object to the environment
-      if(!req->mesh_filename.empty())
+      if (!req->mesh_filename.empty())
       {
         auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
         std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;

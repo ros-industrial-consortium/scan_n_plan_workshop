@@ -20,7 +20,13 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # find dependencies
-set(ROS2_DEPS industrial_reconstruction_msgs visualization_msgs rclpy rclcpp snp_msgs tf2_ros)
+set(ROS2_DEPS
+    industrial_reconstruction_msgs
+    visualization_msgs
+    rclpy
+    rclcpp
+    snp_msgs
+    tf2_ros)
 foreach(dep ${ROS2_DEPS})
   find_package(${dep} REQUIRED)
 endforeach()
@@ -28,13 +34,15 @@ find_package(ament_cmake REQUIRED)
 
 add_executable(scan_trajectory_node src/scan_trajectory_node.cpp)
 target_link_libraries(scan_trajectory_node noether::noether_tpp Eigen3::Eigen)
-ament_target_dependencies(scan_trajectory_node rclcpp snp_msgs tf2_ros)
-target_include_directories(scan_trajectory_node PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include>")
+ament_target_dependencies(
+  scan_trajectory_node
+  rclcpp
+  snp_msgs
+  tf2_ros)
+target_include_directories(scan_trajectory_node PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+                                                       "$<INSTALL_INTERFACE:include>")
 
 install(TARGETS scan_trajectory_node DESTINATION lib/${PROJECT_NAME})
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
