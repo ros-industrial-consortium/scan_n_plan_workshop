@@ -8,8 +8,6 @@ project(${pkg_extracted_name} VERSION ${pkg_extracted_version} LANGUAGES CXX)
 find_package(Eigen3 REQUIRED)
 find_package(noether_tpp REQUIRED)
 
-find_package(noether_filtering REQUIRED)
-
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
