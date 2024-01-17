@@ -8,19 +8,18 @@ ENV DEBIAN_FRONTEND noninteractive
 USER root
 
 # Install Python dependencies
-RUN python3 -m pip install open3d pyquaternion
+RUN python3 -m pip install open3d pyquaternion --upgrade
 
 # Bind mount the source directory so as not to unnecessarily copy source code into the docker image
 ARG WORKSPACE_DIR=/opt/snp
 RUN --mount=type=bind,target=${WORKSPACE_DIR}/src/snp \
-  source /opt/tesseract_ros2/install/setup.bash \
+  apt update -y -qq \
+  && source /opt/tesseract_ros2/install/setup.bash \
   && vcs import ${WORKSPACE_DIR}/src < ${WORKSPACE_DIR}/src/snp/dependencies.repos --shallow \
   && rosdep install \
     --from-paths ${WORKSPACE_DIR}/src \
     -iry \
-    --skip-keys libvtk \
-  && apt install -y \
-    libxmlrpcpp-dev
+    --skip-keys libvtk
 
 # Build the repository
 # Bind mount the source directory so as not to unnecessarily copy source code into the docker image

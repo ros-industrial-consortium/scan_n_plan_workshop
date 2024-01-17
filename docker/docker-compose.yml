@@ -12,14 +12,17 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: all
       ROS_LOG_DIR: /tmp
     container_name: snp
-    image: ghcr.io/ros-industrial-consortium/scan_n_plan_workshop:humble-latest
+    image: ghcr.io/ros-industrial-consortium/scan_n_plan_workshop:humble-master
     stdin_open: true
     tty: true
     network_mode: host
+    privileged: true
     user: ${CURRENT_UID}  # CURRENT_UID=$(id -u):$(id -g)
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/hosts:/etc/hosts
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
     deploy:
       resources:
         reservations:
