@@ -59,8 +59,8 @@ add_library(
   src/bt/progress_decorator_node.cpp
   include/bt/set_page_decorator_node.h
   src/bt/set_page_decorator_node.cpp
-  include/bt/snp_bt_service_node.h
-  src/bt/snp_bt_service_node.cpp
+  include/bt/snp_bt_ros_nodes.h
+  src/bt/snp_bt_ros_nodes.cpp
   include/bt/snp_sequence_with_memory_node.h
   src/bt/snp_sequence_with_memory_node.cpp
 )

@@ -6,7 +6,7 @@
 #include "bt/button_monitor_node.h"
 #include "bt/progress_decorator_node.h"
 #include "bt/set_page_decorator_node.h"
-#include "bt/snp_bt_service_node.h"
+#include "bt/snp_bt_ros_nodes.h"
 #include "bt/snp_sequence_with_memory_node.h"
 
 #include <boost_plugin_loader/plugin_loader.h>
