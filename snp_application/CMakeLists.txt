@@ -20,7 +20,6 @@ endif()
 
 find_package(Eigen3 REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(yaml-cpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 
@@ -46,9 +45,6 @@ include_directories(include ${EIGEN3_INCLUDE_DIRS})
 add_library(
   ${PROJECT_NAME}_widget SHARED
   src/snp_widget.ui
-  include/std_msgs_yaml.h
-  include/trajectory_msgs_yaml.h
-  include/serialize.h
   include/snp_widget.h
   src/snp_widget.cpp
   # BT
@@ -70,8 +66,7 @@ add_library(
 )
 target_link_libraries(
   ${PROJECT_NAME}_widget
-  Qt5::Widgets
-  yaml-cpp)
+  Qt5::Widgets)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
