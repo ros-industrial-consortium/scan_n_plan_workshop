@@ -108,6 +108,7 @@ static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToMesh(const std::
       tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
 
   std::vector<tesseract_geometry::Geometry::Ptr> out;
+  out.reserve(meshes.size());
   for (const auto& mesh : meshes)
     out.push_back(mesh);
 
@@ -120,6 +121,7 @@ static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToConvexMesh(const
       tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
 
   std::vector<tesseract_geometry::Geometry::Ptr> convex_meshes;
+  convex_meshes.reserve(meshes.size());
   for (tesseract_geometry::Mesh::Ptr mesh : meshes)
     convex_meshes.push_back(tesseract_collision::makeConvexMesh(*mesh));
 
@@ -245,48 +247,48 @@ private:
     tesseract_planning::CompositeInstruction program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
                                                      info);
 
-    // Perform a freespace move to the first waypoint
-    tesseract_planning::StateWaypoint swp1(joint_names, env_->getCurrentJointValues(joint_names));
+    // Define the current state
+    tesseract_planning::StateWaypoint current_state(joint_names, env_->getCurrentJointValues(joint_names));
 
-    // Create object needed for move instruction
-    tesseract_planning::StateWaypointPoly swp1_poly{ swp1 };
+    // Add a freespace move from the current state to the first waypoint
+    {
+      tesseract_planning::CompositeInstruction from_start(PROFILE);
+      from_start.setDescription("approach");
 
-    tesseract_planning::MoveInstruction start_instruction(swp1_poly, tesseract_planning::MoveInstructionType::FREESPACE,
-                                                          PROFILE, info);
+      // Define a move to the start waypoint
+      from_start.appendMoveInstruction(
+          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{ current_state },
+                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
 
+      // Define the target first waypoint
+      tesseract_planning::CartesianWaypoint wp1 = raster_strips.at(0).at(0);
+      from_start.appendMoveInstruction(
+          tesseract_planning::MoveInstruction(tesseract_planning::CartesianWaypointPoly{ wp1 },
+                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
+
+      // Add the composite to the program
+      program.push_back(from_start);
+    }
+
+    // Add the process raster motions
     for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
     {
-      if (rs == 0)
-      {
-        // Define from start composite instruction
-        tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
-        tesseract_planning::CartesianWaypointPoly wp1_poly{ wp1 };
-        tesseract_planning::MoveInstruction move_f0(wp1_poly, tesseract_planning::MoveInstructionType::FREESPACE,
-                                                    PROFILE, info);
-        move_f0.setDescription("from_start_plan");
-        tesseract_planning::CompositeInstruction from_start(PROFILE);
-        from_start.setDescription("from_start");
-        from_start.appendMoveInstruction(start_instruction);
-        from_start.appendMoveInstruction(move_f0);
-        program.push_back(from_start);
-      }
-
-      // Define raster
+      // Add raster
       tesseract_planning::CompositeInstruction raster_segment(PROFILE);
-      raster_segment.setDescription("Raster #" + std::to_string(rs + 1));
+      raster_segment.setDescription("Raster Index " + std::to_string(rs));
 
       for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
       {
         tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
-        tesseract_planning::CartesianWaypointPoly wp_poly{ wp };
-        raster_segment.appendMoveInstruction(tesseract_planning::MoveInstruction(
-            wp_poly, tesseract_planning::MoveInstructionType::LINEAR, PROFILE, info));
+        raster_segment.appendMoveInstruction(
+            tesseract_planning::MoveInstruction(tesseract_planning::CartesianWaypointPoly{ wp },
+                                                tesseract_planning::MoveInstructionType::LINEAR, PROFILE, info));
       }
       program.push_back(raster_segment);
 
+      // Add transition
       if (rs < raster_strips.size() - 1)
       {
-        // Add transition
         tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
         tesseract_planning::CartesianWaypointPoly twp_poly{ twp };
 
@@ -300,17 +302,16 @@ private:
 
         program.push_back(transition);
       }
-      else
-      {
-        // Add to end instruction
-        tesseract_planning::MoveInstruction plan_f2(swp1_poly, tesseract_planning::MoveInstructionType::FREESPACE,
-                                                    PROFILE, info);
-        plan_f2.setDescription("to_end_plan");
-        tesseract_planning::CompositeInstruction to_end(PROFILE);
-        to_end.setDescription("to_end");
-        to_end.appendMoveInstruction(plan_f2);
-        program.push_back(to_end);
-      }
+    }
+
+    // Add a move back to the current state
+    {
+      tesseract_planning::CompositeInstruction to_end(PROFILE);
+      to_end.setDescription("to_end");
+      to_end.appendMoveInstruction(
+          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{ current_state },
+                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
+      program.push_back(to_end);
     }
 
     return program;

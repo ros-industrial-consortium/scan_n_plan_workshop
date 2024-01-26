@@ -44,7 +44,6 @@ class ReconstructionSimServer(Node):
             self.scan_mesh_pub.publish(msg)
 
             response.success = True
-            self.get_logger().info()
             response.message = f'Scanning simulation complete; mesh saved to "{mesh_file}"'
 
         except Exception as e:
