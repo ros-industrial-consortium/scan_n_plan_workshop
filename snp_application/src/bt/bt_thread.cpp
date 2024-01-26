@@ -2,10 +2,8 @@
 
 namespace snp_application
 {
-BTThread::BTThread(QObject *parent)
-  : QThread(parent), tree({}), result(BT::NodeStatus::IDLE)
+BTThread::BTThread(QObject* parent) : QThread(parent), tree({}), result(BT::NodeStatus::IDLE)
 {
-
 }
 
 BTThread::BTThread(BT::Tree tree, QObject* parent)
@@ -26,4 +24,4 @@ void BTThread::run()
   }
 }
 
-} // namespace snp_application
+}  // namespace snp_application

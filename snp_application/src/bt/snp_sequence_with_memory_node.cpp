@@ -1,22 +1,25 @@
 /* Copyright (C) 2015-2018 Michele Colledanchise -  All Rights Reserved
  * Copyright (C) 2018-2020 Davide Faconti, Eurecat -  All Rights Reserved
-*
-*   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
-*   to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-*   and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-*   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*
-*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-*   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-*   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ *
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright
+ * notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+ * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #include "bt/snp_sequence_with_memory_node.h"
 
 namespace snp_application
 {
-SNPSequenceWithMemory::SNPSequenceWithMemory(const std::string& name, const BT::NodeConfig& config) :
-  BT::ControlNode::ControlNode(name, config), current_child_idx_(0)
+SNPSequenceWithMemory::SNPSequenceWithMemory(const std::string& name, const BT::NodeConfig& config)
+  : BT::ControlNode::ControlNode(name, config), current_child_idx_(0)
 {
 }
 
@@ -24,7 +27,7 @@ BT::NodeStatus SNPSequenceWithMemory::tick()
 {
   const size_t children_count = children_nodes_.size();
 
-  if(status() == BT::NodeStatus::IDLE)
+  if (status() == BT::NodeStatus::IDLE)
   {
     all_skipped_ = true;
   }
@@ -61,8 +64,7 @@ BT::NodeStatus SNPSequenceWithMemory::tick()
         current_child_idx_++;
         // Return the execution flow if the child is async,
         // to make this interruptable.
-        if (requiresWakeUp() && prev_status == BT::NodeStatus::IDLE &&
-            current_child_idx_ < children_count)
+        if (requiresWakeUp() && prev_status == BT::NodeStatus::IDLE && current_child_idx_ < children_count)
         {
           emitWakeUpSignal();
           return BT::NodeStatus::RUNNING;
@@ -79,8 +81,8 @@ BT::NodeStatus SNPSequenceWithMemory::tick()
       case BT::NodeStatus::IDLE: {
         throw BT::LogicError("[", name(), "]: A children should not return IDLE");
       }
-    }   // end switch
-  }     // end while loop
+    }  // end switch
+  }    // end while loop
 
   // The entire while loop completed. This means that all the children returned SUCCESS.
   if (current_child_idx_ == children_count)
@@ -92,4 +94,4 @@ BT::NodeStatus SNPSequenceWithMemory::tick()
   return all_skipped_ ? BT::NodeStatus::SKIPPED : BT::NodeStatus::SUCCESS;
 }
 
-}   // namespace snp_application
+}  // namespace snp_application

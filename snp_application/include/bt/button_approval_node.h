@@ -14,11 +14,11 @@ public:
   inline static std::string DISAPPROVE_BUTTON_PORT_KEY = "disapprove_button";
   static BT::PortsList providedPorts()
   {
-    return { BT::InputPort<std::string>(APPROVE_BUTTON_PORT_KEY), BT::InputPort<std::string>(DISAPPROVE_BUTTON_PORT_KEY) };
+    return { BT::InputPort<std::string>(APPROVE_BUTTON_PORT_KEY),
+             BT::InputPort<std::string>(DISAPPROVE_BUTTON_PORT_KEY) };
   }
 
-  explicit ButtonApprovalNode(const std::string& instance_name,
-                              const BT::NodeConfig& config);
+  explicit ButtonApprovalNode(const std::string& instance_name, const BT::NodeConfig& config);
 
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -30,8 +30,8 @@ private:
   std::atomic_bool approved_;
   std::atomic_bool disapproved_;
 
-  QAbstractButton* approve_button_{nullptr};
-  QAbstractButton* disapprove_button_{nullptr};
+  QAbstractButton* approve_button_{ nullptr };
+  QAbstractButton* disapprove_button_{ nullptr };
 };
 
-} // namespace snp_application
+}  // namespace snp_application

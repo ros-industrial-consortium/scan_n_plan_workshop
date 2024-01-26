@@ -14,4 +14,4 @@ T getBTInput(const BT::TreeNode* node, const std::string& port)
   return input.value();
 }
 
-} // namespace snp_application
+}  // namespace snp_application

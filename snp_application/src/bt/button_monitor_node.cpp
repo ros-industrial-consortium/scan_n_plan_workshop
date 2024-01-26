@@ -5,15 +5,13 @@
 
 namespace snp_application
 {
-ButtonMonitorNode::ButtonMonitorNode(const std::string& name,
-                                     const BT::NodeConfig& config)
-  : BT::ConditionNode(name, config)
-  , ok_(true)
+ButtonMonitorNode::ButtonMonitorNode(const std::string& name, const BT::NodeConfig& config)
+  : BT::ConditionNode(name, config), ok_(true)
 {
   auto button_key = getBTInput<std::string>(this, BUTTON_PORT_KEY);
   auto button = this->config().blackboard->get<QAbstractButton*>(button_key);
 
-  QObject::connect(button, &QAbstractButton::clicked, [this, button_key](const bool){
+  QObject::connect(button, &QAbstractButton::clicked, [this, button_key](const bool) {
     std::cout << "Button '" << button_key << "' clicked..." << std::endl;
     ok_ = false;
   });
@@ -21,7 +19,7 @@ ButtonMonitorNode::ButtonMonitorNode(const std::string& name,
 
 BT::NodeStatus ButtonMonitorNode::tick()
 {
-  if(!ok_)
+  if (!ok_)
   {
     ok_ = true;
     return BT::NodeStatus::FAILURE;
@@ -30,4 +28,4 @@ BT::NodeStatus ButtonMonitorNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-} // namespace snp_application
+}  // namespace snp_application

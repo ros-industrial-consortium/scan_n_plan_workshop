@@ -21,8 +21,7 @@ static const std::string BT_PARAM = "tree";
 class TPPDialog : public QDialog
 {
 public:
-  TPPDialog(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr)
-    : QDialog(parent)
+  TPPDialog(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr) : QDialog(parent)
   {
     setWindowTitle("Tool Path Planner");
 
@@ -67,7 +66,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   }
 
   // Reset
-  connect(ui_->push_button_reset, &QPushButton::clicked, [this](){
+  connect(ui_->push_button_reset, &QPushButton::clicked, [this]() {
     ui_->stacked_widget->setCurrentIndex(0);
     ui_->group_box_operation->setEnabled(true);
     runTreeWithThread();
@@ -121,7 +120,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   factory_.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
 
   auto bt_files = get_parameter<std::vector<std::string>>(node_, BT_FILES_PARAM);
-  for(const std::string& file : bt_files)
+  for (const std::string& file : bt_files)
     factory_.registerBehaviorTreeFromFile(file);
 }
 
@@ -133,13 +132,13 @@ void SNPWidget::runTreeWithThread()
   {
     thread->tree = factory_.createTree(get_parameter<std::string>(node_, BT_PARAM), board_);
   }
-  catch(const std::exception& ex)
+  catch (const std::exception& ex)
   {
     QMessageBox::warning(this, QString::fromStdString("Error"), QString::fromStdString(ex.what()));
     return;
   }
 
-  connect(thread, &BTThread::finished, [thread, this](){
+  connect(thread, &BTThread::finished, [thread, this]() {
     QString message;
     QTextStream stream(&message);
     switch (thread->result)
@@ -158,5 +157,4 @@ void SNPWidget::runTreeWithThread()
   thread->start();
 }
 
-} // namespace snp_application
-
+}  // namespace snp_application

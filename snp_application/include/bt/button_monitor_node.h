@@ -9,7 +9,10 @@ class ButtonMonitorNode : public BT::ConditionNode
 {
 public:
   inline static std::string BUTTON_PORT_KEY = "button";
-  static BT::PortsList providedPorts() { return { BT::InputPort<std::string>(BUTTON_PORT_KEY) }; }
+  static BT::PortsList providedPorts()
+  {
+    return { BT::InputPort<std::string>(BUTTON_PORT_KEY) };
+  }
 
   ButtonMonitorNode(const std::string& name, const BT::NodeConfig& config);
 
@@ -19,4 +22,4 @@ protected:
   std::atomic_bool ok_;
 };
 
-} // namespace snp_application
+}  // namespace snp_application

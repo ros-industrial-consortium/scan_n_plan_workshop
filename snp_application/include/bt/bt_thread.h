@@ -21,4 +21,4 @@ protected:
   void run() override;
 };
 
-} // namespace snp_application
+}  // namespace snp_application

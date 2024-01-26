@@ -27,7 +27,7 @@ public:
   }
 };
 
-} // namespace snp_application
+}  // namespace snp_application
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(snp_application::SNPPanel, rviz_common::Panel)

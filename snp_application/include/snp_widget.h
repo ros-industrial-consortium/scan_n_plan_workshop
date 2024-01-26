@@ -28,4 +28,4 @@ private:
   BT::BehaviorTreeFactory factory_;
 };
 
-} // namespace snp_application
+}  // namespace snp_application

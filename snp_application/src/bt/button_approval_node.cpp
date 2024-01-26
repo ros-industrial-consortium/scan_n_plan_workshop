@@ -5,24 +5,21 @@
 
 namespace snp_application
 {
-ButtonApprovalNode::ButtonApprovalNode(const std::string& instance_name,
-                                       const BT::NodeConfig& config)
-  : BT::StatefulActionNode(instance_name, config)
-  , approved_(false)
-  , disapproved_(false)
+ButtonApprovalNode::ButtonApprovalNode(const std::string& instance_name, const BT::NodeConfig& config)
+  : BT::StatefulActionNode(instance_name, config), approved_(false), disapproved_(false)
 {
   auto approve_button_key = getBTInput<std::string>(this, APPROVE_BUTTON_PORT_KEY);
-  if(!approve_button_key.empty())
+  if (!approve_button_key.empty())
   {
     approve_button_ = this->config().blackboard->get<QAbstractButton*>(approve_button_key);
-    QObject::connect(approve_button_, &QAbstractButton::clicked, [this](const bool){ approved_ = true; });
+    QObject::connect(approve_button_, &QAbstractButton::clicked, [this](const bool) { approved_ = true; });
   }
 
   auto disapprove_button_key = getBTInput<std::string>(this, DISAPPROVE_BUTTON_PORT_KEY);
-  if(!disapprove_button_key.empty())
+  if (!disapprove_button_key.empty())
   {
     disapprove_button_ = this->config().blackboard->get<QAbstractButton*>(disapprove_button_key);
-    QObject::connect(disapprove_button_, &QAbstractButton::clicked, [this](const bool){ disapproved_ = true; });
+    QObject::connect(disapprove_button_, &QAbstractButton::clicked, [this](const bool) { disapproved_ = true; });
   }
 
   setButtonsEnabled(false);
@@ -30,10 +27,10 @@ ButtonApprovalNode::ButtonApprovalNode(const std::string& instance_name,
 
 void ButtonApprovalNode::setButtonsEnabled(const bool enable)
 {
-  if(approve_button_)
+  if (approve_button_)
     approve_button_->setEnabled(enable);
 
-  if(disapprove_button_)
+  if (disapprove_button_)
     disapprove_button_->setEnabled(enable);
 }
 
@@ -50,7 +47,7 @@ BT::NodeStatus ButtonApprovalNode::onStart()
 
 BT::NodeStatus ButtonApprovalNode::onRunning()
 {
-  if(disapproved_)
+  if (disapproved_)
   {
     std::cout << "-- " << name() << " not approved --" << std::endl;
     setButtonsEnabled(false);
@@ -73,4 +70,4 @@ void ButtonApprovalNode::onHalted()
   setButtonsEnabled(false);
 }
 
-} // namespace snp_application
+}  // namespace snp_application

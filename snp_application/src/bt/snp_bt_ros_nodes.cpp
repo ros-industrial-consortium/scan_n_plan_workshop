@@ -12,7 +12,7 @@ bool TriggerServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
 
 BT::NodeStatus TriggerServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -26,14 +26,15 @@ bool ExecuteMotionPlanServiceNode::setRequest(typename Request::SharedPtr& reque
   request->use_tool = getBTInput<bool>(this, USE_TOOL_INPUT_PORT_KEY);
 
   // Update the server timeout (1.2 x 1000 ms/sec)
-  service_timeout_ = static_cast<std::chrono::milliseconds>(1200 * request->motion_plan.points.back().time_from_start.sec);
+  service_timeout_ =
+      static_cast<std::chrono::milliseconds>(1200 * request->motion_plan.points.back().time_from_start.sec);
 
   return true;
 }
 
 BT::NodeStatus ExecuteMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -55,7 +56,7 @@ bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& requ
 
 BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -76,7 +77,7 @@ bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& 
 
 BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -100,7 +101,7 @@ bool GenerateToolPathsServiceNode::setRequest(typename Request::SharedPtr& reque
 
 BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -113,9 +114,9 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
   auto ref_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
 
   // Set the reference frame in each pose array
-  for(snp_msgs::msg::ToolPath& tp : tool_paths)
+  for (snp_msgs::msg::ToolPath& tp : tool_paths)
   {
-    for(geometry_msgs::msg::PoseArray& arr : tp.segments)
+    for (geometry_msgs::msg::PoseArray& arr : tp.segments)
     {
       arr.header.frame_id = ref_frame;
     }
@@ -129,23 +130,23 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->tsdf_params.voxel_length =     get_parameter_or<float>(node_, "tsdf.voxel_length", 0.01f);
-  request->tsdf_params.sdf_trunc =        get_parameter_or<float>(node_, "tsdf.sdf_trunc", 0.03f);
+  request->tsdf_params.voxel_length = get_parameter_or<float>(node_, "tsdf.voxel_length", 0.01f);
+  request->tsdf_params.sdf_trunc = get_parameter_or<float>(node_, "tsdf.sdf_trunc", 0.03f);
   request->tsdf_params.min_box_values.x = get_parameter_or<double>(node_, "tsdf.min.x", 0.0);
   request->tsdf_params.min_box_values.y = get_parameter_or<double>(node_, "tsdf.min.y", 0.0);
   request->tsdf_params.min_box_values.z = get_parameter_or<double>(node_, "tsdf.min.z", 0.0);
   request->tsdf_params.max_box_values.x = get_parameter_or<double>(node_, "tsdf.max.x", 0.0);
   request->tsdf_params.max_box_values.y = get_parameter_or<double>(node_, "tsdf.max.y", 0.0);
   request->tsdf_params.max_box_values.z = get_parameter_or<double>(node_, "tsdf.max.z", 0.0);
-  request->rgbd_params.depth_scale =      get_parameter_or<float>(node_, "rgbd.depth_scale", 1000.0);
-  request->rgbd_params.depth_trunc =      get_parameter_or<float>(node_, "rgbd.depth_trunc", 1.1f);
+  request->rgbd_params.depth_scale = get_parameter_or<float>(node_, "rgbd.depth_scale", 1000.0);
+  request->rgbd_params.depth_trunc = get_parameter_or<float>(node_, "rgbd.depth_trunc", 1.1f);
 
   return true;
 }
 
 BT::NodeStatus StartReconstructionServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     // RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -172,7 +173,7 @@ bool StopReconstructionServiceNode::setRequest(typename Request::SharedPtr& requ
 
 BT::NodeStatus StopReconstructionServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
-  if(!response->success)
+  if (!response->success)
   {
     RCLCPP_ERROR(node_->get_logger(), response->message);
     return BT::NodeStatus::FAILURE;
@@ -185,15 +186,15 @@ bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
 {
   auto tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
 
-  if(tool_paths.empty() || tool_paths.at(0).segments.empty())
+  if (tool_paths.empty() || tool_paths.at(0).segments.empty())
     return true;
 
   // Set the frame ID from the first tool path segment
   msg.header.frame_id = tool_paths.at(0).segments.at(0).header.frame_id;
 
-  for(const snp_msgs::msg::ToolPath& tp : tool_paths)
+  for (const snp_msgs::msg::ToolPath& tp : tool_paths)
   {
-    for(const geometry_msgs::msg::PoseArray& arr : tp.segments)
+    for (const geometry_msgs::msg::PoseArray& arr : tp.segments)
     {
       msg.poses.insert(msg.poses.end(), arr.poses.begin(), arr.poses.end());
     }
@@ -203,7 +204,8 @@ bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
 }
 
 /**
- * @details Adapted from https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L69-L75
+ * @details Adapted from
+ * https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L69-L75
  */
 template <typename T>
 static bool isSubset(std::vector<T> a, std::vector<T> b)
@@ -214,7 +216,8 @@ static bool isSubset(std::vector<T> a, std::vector<T> b)
 }
 
 /**
- * @details Adapted from https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L77C4-L96
+ * @details Adapted from
+ * https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L77C4-L96
  */
 template <typename T>
 static std::vector<std::size_t> getSubsetIndices(const std::vector<T>& superset, const std::vector<T>& subset)
@@ -238,7 +241,8 @@ static std::vector<std::size_t> getSubsetIndices(const std::vector<T>& superset,
 }
 
 /**
- * @details Adapted from https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L104-L194
+ * @details Adapted from
+ * https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L104-L194
  */
 trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointTrajectory& first,
                                               const trajectory_msgs::msg::JointTrajectory& second)
@@ -255,11 +259,13 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
 
     // Insert the second trajectory points and modify their time from start to include the duration of the first
     // trajectory
-    const auto lhs_duration = first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
+    const auto lhs_duration =
+        first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
     for (const auto& pt : second.points)
     {
       result.points.push_back(pt);
-      result.points.back().time_from_start = rclcpp::Duration(result.points.back().time_from_start) + rclcpp::Duration(lhs_duration);
+      result.points.back().time_from_start =
+          rclcpp::Duration(result.points.back().time_from_start) + rclcpp::Duration(lhs_duration);
     }
 
     return result;
@@ -274,7 +280,8 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
     std::vector<std::size_t> indices = getSubsetIndices(first.joint_names, second.joint_names);
 
     // Create new trajectory points from the subset with the additional superset joints
-    const auto first_duration = first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
+    const auto first_duration =
+        first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
     for (const trajectory_msgs::msg::JointTrajectoryPoint& pt : second.points)
     {
       // Copy the new trajectory point from the back of the first trajectory
@@ -301,7 +308,8 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
     out.points.reserve(first.points.size() + second.points.size());
 
     // Update the start times of the second trajectory
-    const auto first_duration = first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
+    const auto first_duration =
+        first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
     for (trajectory_msgs::msg::JointTrajectoryPoint& pt : out.points)
     {
       pt.time_from_start = rclcpp::Duration(pt.time_from_start) + rclcpp::Duration(first_duration);
@@ -340,7 +348,7 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
     msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY));
     msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, DEPARTURE_INPUT_PORT_KEY));
   }
-  catch(const std::exception& ex)
+  catch (const std::exception& ex)
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Error combining trajectories: '" << ex.what() << "'");
     return false;
@@ -349,7 +357,7 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
   return true;
 }
 
-bool FollowJointTrajectoryActionNode::setGoal(Goal &goal)
+bool FollowJointTrajectoryActionNode::setGoal(Goal& goal)
 {
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
 
@@ -364,23 +372,23 @@ BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedRe
   BT::NodeStatus status = BT::NodeStatus::SUCCESS;
 
   // Check the action result code
-  switch(result.code)
+  switch (result.code)
   {
-  case rclcpp_action::ResultCode::SUCCEEDED:
-    break;
-  default:
-    status = BT::NodeStatus::FAILURE;
-    break;
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    default:
+      status = BT::NodeStatus::FAILURE;
+      break;
   }
 
   // Check the action specific code
-  switch(result.result->error_code)
+  switch (result.result->error_code)
   {
-  case control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL:
-    break;
-  default:
-    status = BT::NodeStatus::FAILURE;
-    break;
+    case control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL:
+      break;
+    default:
+      status = BT::NodeStatus::FAILURE;
+      break;
   }
 
   return status;
@@ -388,7 +396,8 @@ BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedRe
 
 BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
 {
-  BT::Expected<trajectory_msgs::msg::JointTrajectory> input = getInput<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY);
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> input =
+      getInput<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY);
   if (!input)
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to get required input value: '" << input.error() << "'");
@@ -424,7 +433,7 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   }
 
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, trajectory);
-  if(!output)
+  if (!output)
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to set required output value: '" << output.error() << "'");
     return BT::NodeStatus::FAILURE;
@@ -433,4 +442,4 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   return BT::NodeStatus::SUCCESS;
 }
 
-} // namespace snp_application
+}  // namespace snp_application
