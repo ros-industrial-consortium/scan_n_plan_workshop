@@ -63,10 +63,9 @@ add_library(
   src/bt/snp_bt_ros_nodes.cpp
   include/bt/snp_sequence_with_memory_node.h
   src/bt/snp_sequence_with_memory_node.cpp
-)
-target_link_libraries(
-  ${PROJECT_NAME}_widget
-  Qt5::Widgets)
+  include/bt/text_edit_logger.h
+  src/bt/text_edit_logger.cpp)
+target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
