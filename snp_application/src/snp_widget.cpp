@@ -70,6 +70,14 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
   // Reset
   connect(ui_->push_button_reset, &QPushButton::clicked, [this]() {
+    ui_->push_button_reset->setEnabled(false);
+    ui_->push_button_start->setEnabled(true);
+  });
+
+  // Start
+  connect(ui_->push_button_start, &QPushButton::clicked, [this]() {
+    ui_->push_button_start->setEnabled(false);
+    ui_->push_button_reset->setEnabled(true);
     ui_->text_edit_log->clear();
     ui_->stacked_widget->setCurrentIndex(0);
     ui_->group_box_operation->setEnabled(true);
