@@ -7,6 +7,12 @@ class QAbstractButton;
 
 namespace snp_application
 {
+/**
+ * @brief Action node that listens to the state of two Qt buttons to succeed or fail the
+ * @details Pointers (QAbstractButton*) to the buttons are provided via the blackboard using the keys defined in the
+ * input ports When the node is active and the "approve" button is pressed, the node returns success. When the node is
+ * active and the "disapprove" button is pressed, the node returns failure.
+ */
 class ButtonApprovalNode : public BT::StatefulActionNode
 {
 public:

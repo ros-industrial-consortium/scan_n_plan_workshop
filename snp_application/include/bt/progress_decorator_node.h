@@ -4,6 +4,12 @@
 
 namespace snp_application
 {
+/**
+ * @brief Decorator node that changes the state of a Qt progress bar
+ * @details A pointer to the progress bar (QProgressBar*) is provided via the blackboard
+ * As the decorator node is entered, it sets the progress equal to the value of the "start" input port.
+ * As the decorator node exits, it sets the progress equal to the value of the "end" input port
+ */
 class ProgressDecoratorNode : public BT::DecoratorNode
 {
 public:

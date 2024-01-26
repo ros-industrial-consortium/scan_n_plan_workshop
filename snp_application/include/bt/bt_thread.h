@@ -6,6 +6,9 @@
 
 namespace snp_application
 {
+/**
+ * @brief Thread used to tick a behavior tree
+ */
 class BTThread : public QThread
 {
   Q_OBJECT
