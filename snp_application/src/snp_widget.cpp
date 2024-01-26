@@ -153,7 +153,6 @@ void SNPWidget::runTreeWithThread()
         std::cout << message.toStdString() << std::endl;
         break;
     }
-    thread->deleteLater();
   });
 
   thread->start();
