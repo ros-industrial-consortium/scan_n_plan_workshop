@@ -8,10 +8,12 @@
 #include "bt/set_page_decorator_node.h"
 #include "bt/snp_bt_ros_nodes.h"
 #include "bt/snp_sequence_with_memory_node.h"
+#include "bt/text_edit_logger.h"
 
 #include <boost_plugin_loader/plugin_loader.h>
 #include <QMessageBox>
 #include <QTextStream>
+#include <QScrollBar>
 #include <snp_tpp/tpp_widget.h>
 #include <trajectory_preview/trajectory_preview_widget.h>
 
@@ -48,6 +50,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 {
   ui_->setupUi(this);
   ui_->group_box_operation->setEnabled(false);
+  ui_->push_button_reset->setEnabled(false);
 
   // Add the TPP widget
   {
@@ -61,15 +64,21 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
     auto* preview = new trajectory_preview::TrajectoryPreviewWidget(this);
     preview->initializeROS(rviz_node, "motion_plan", "preview");
 
-    auto layout = new QVBoxLayout(ui_->frame_preview_widget);
+    auto* layout = new QVBoxLayout(ui_->frame_preview_widget);
     layout->addWidget(preview);
   }
 
   // Reset
   connect(ui_->push_button_reset, &QPushButton::clicked, [this]() {
+    ui_->text_edit_log->clear();
     ui_->stacked_widget->setCurrentIndex(0);
     ui_->group_box_operation->setEnabled(true);
     runTreeWithThread();
+  });
+
+  // Move the text edit scroll bar to the maximum limit whenever it is resized
+  connect(ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
+    ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
   });
 
   // Declare parameters
@@ -131,6 +140,7 @@ void SNPWidget::runTreeWithThread()
   try
   {
     thread->tree = factory_.createTree(get_parameter<std::string>(node_, BT_PARAM), board_);
+    logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
   }
   catch (const std::exception& ex)
   {
@@ -144,14 +154,17 @@ void SNPWidget::runTreeWithThread()
     switch (thread->result)
     {
       case BT::NodeStatus::SUCCESS:
-        stream << "BT completed successfully: '" << thread->message << "'";
-        std::cout << message.toStdString() << std::endl;
+        stream << "Behavior tree completed successfully";
         break;
       default:
-        stream << "BT did not complete successfully: '" << thread->message << "'";
-        std::cout << message.toStdString() << std::endl;
+        stream << "Behavior tree did not complete successfully";
         break;
     }
+
+    if (!thread->message.isEmpty())
+      stream << ": '" << thread->message << "'";
+
+    QMetaObject::invokeMethod(ui_->text_edit_log, "append", Qt::QueuedConnection, Q_ARG(QString, message));
   });
 
   thread->start();

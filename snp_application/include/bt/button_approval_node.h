@@ -31,7 +31,7 @@ public:
   void onHalted() override;
 
 private:
-  void setButtonsEnabled(const bool enable);
+  void setButtonsEnabled(bool enable);
 
   std::atomic_bool approved_;
   std::atomic_bool disapproved_;

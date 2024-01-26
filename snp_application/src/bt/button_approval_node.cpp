@@ -25,18 +25,17 @@ ButtonApprovalNode::ButtonApprovalNode(const std::string& instance_name, const B
   setButtonsEnabled(false);
 }
 
-void ButtonApprovalNode::setButtonsEnabled(const bool enable)
+void ButtonApprovalNode::setButtonsEnabled(bool enable)
 {
-  if (approve_button_)
+  if (approve_button_ != nullptr)
     approve_button_->setEnabled(enable);
 
-  if (disapprove_button_)
+  if (disapprove_button_ != nullptr)
     disapprove_button_->setEnabled(enable);
 }
 
 BT::NodeStatus ButtonApprovalNode::onStart()
 {
-  std::cout << "-- " << name() << " started --" << std::endl;
   approved_ = false;
   disapproved_ = false;
 
@@ -49,14 +48,12 @@ BT::NodeStatus ButtonApprovalNode::onRunning()
 {
   if (disapproved_)
   {
-    std::cout << "-- " << name() << " not approved --" << std::endl;
     setButtonsEnabled(false);
     return BT::NodeStatus::FAILURE;
   }
 
   if (approved_)
   {
-    std::cout << "-- " << name() << " approved --" << std::endl;
     setButtonsEnabled(false);
     return BT::NodeStatus::SUCCESS;
   }
@@ -66,7 +63,6 @@ BT::NodeStatus ButtonApprovalNode::onRunning()
 
 void ButtonApprovalNode::onHalted()
 {
-  std::cout << "-- " << name() << " halted --" << std::endl;
   setButtonsEnabled(false);
 }
 
