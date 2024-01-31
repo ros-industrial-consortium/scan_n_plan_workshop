@@ -30,7 +30,8 @@ find_package(tf2_eigen REQUIRED)
 
 # Custom mesh modifier
 qt5_wrap_ui(${PROJECT_NAME}_ui_mocs ui/roi_selection_mesh_modifier_widget.ui ui/snp_raster_planner_widget.ui)
-qt5_wrap_cpp(${PROJECT_NAME}_mocs include/${PROJECT_NAME}/roi_selection_mesh_modifier_widget.h include/${PROJECT_NAME}/snp_raster_planner_widget.h)
+qt5_wrap_cpp(${PROJECT_NAME}_mocs include/${PROJECT_NAME}/roi_selection_mesh_modifier_widget.h
+             include/${PROJECT_NAME}/snp_raster_planner_widget.h)
 add_library(
   ${PROJECT_NAME}_mesh_modifier SHARED
   src/roi_selection_mesh_modifier.cpp

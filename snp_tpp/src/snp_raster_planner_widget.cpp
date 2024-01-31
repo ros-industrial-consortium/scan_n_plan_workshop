@@ -14,26 +14,29 @@ namespace snp_tpp
 SNPRasterPlannerWidget::SNPRasterPlannerWidget(QWidget* parent)
   : noether::ToolPathPlannerWidget(parent), ui_(new Ui::SNPRasterPlanner())
 {
-    ui_->setupUi(this);
+  ui_->setupUi(this);
 }
 
 void SNPRasterPlannerWidget::configure(const YAML::Node& config)
 {
-  RasterPlannerWidget::configure(config);
-  search_radius_->setValue(getEntry<double>(config, "search_radius"));
-  min_segment_size_->setValue(getEntry<double>(config, "min_segment_size"));
+  ui_->double_spin_box_rotation_offset->setValue(noether::getEntry<double>(config, "rotation_offset"));
+  ui_->double_spin_box_point_spacing->setValue(noether::getEntry<double>(config, "point_spacing"));
+  ui_->double_spin_box_line_spacing->setValue(noether::getEntry<double>(config, "line_spacing"));
+  ui_->double_spin_box_min_segment_length->setValue(noether::getEntry<double>(config, "min_segment_length"));
 }
 
 void SNPRasterPlannerWidget::save(YAML::Node& config) const
 {
-  RasterPlannerWidget::save(config);
-  config["search_radius"] = search_radius_->value();
-  config["min_segment_size"] = min_segment_size_->value();
+  config["rotation_offset"] = ui_->double_spin_box_rotation_offset->value();
+  config["point_spacing"] = ui_->double_spin_box_point_spacing->value();
+  config["line_spacing"] = ui_->double_spin_box_line_spacing->value();
+  config["min_segment_length"] = ui_->double_spin_box_min_segment_length->value();
 }
 
 noether::ToolPathPlanner::ConstPtr SNPRasterPlannerWidget::create() const
 {
-  auto dir_gen = std::make_unique<noether::PrincipalAxisDirectionGenerator>(ui_->double_spin_box_rotation_offset->value());
+  auto dir_gen =
+      std::make_unique<noether::PrincipalAxisDirectionGenerator>(ui_->double_spin_box_rotation_offset->value());
   auto orig_gen = std::make_unique<noether::CentroidOriginGenerator>();
   auto planner = std::make_unique<noether::PlaneSlicerRasterPlanner>(std::move(dir_gen), std::move(orig_gen));
   planner->setLineSpacing(ui_->double_spin_box_line_spacing->value());
@@ -45,4 +48,4 @@ noether::ToolPathPlanner::ConstPtr SNPRasterPlannerWidget::create() const
   return planner;
 }
 
-}  // namespace noether
+}  // namespace snp_tpp
