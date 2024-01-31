@@ -97,6 +97,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
   node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
   node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
+  node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
   node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
   node_->declare_parameter<std::string>(BT_PARAM, "");
   node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds

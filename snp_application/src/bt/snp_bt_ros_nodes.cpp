@@ -460,6 +460,9 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   }
   trajectory_msgs::msg::JointTrajectory trajectory = input.value();
 
+  // Get the tolerance from parameter
+  auto tolerance = get_parameter<double>(node_, START_STATE_REPLACEMENT_TOLERANCE_PARAM);
+
   // Replace the start state of the trajectory with the current joint state
   {
     trajectory_msgs::msg::JointTrajectoryPoint start_point;
@@ -481,6 +484,18 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
       }
 
       auto idx = std::distance(last_msg->name.begin(), it);
+
+      // Check tolerance
+      const double diff = std::abs(start_point.positions[i] - last_msg->position[idx]);
+      if (diff > tolerance)
+      {
+        RCLCPP_ERROR_STREAM(node_->get_logger(), "Joint '" << trajectory.joint_names[i]
+                                                           << "' difference from start state (" << diff
+                                                           << " radians) exceeds start state replacement tolerance ("
+                                                           << tolerance << " radians)");
+        return BT::NodeStatus::FAILURE;
+      }
+
       start_point.positions[i] = last_msg->position[idx];
     }
 
