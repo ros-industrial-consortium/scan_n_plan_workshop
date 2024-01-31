@@ -5,6 +5,70 @@
 
 namespace snp_application
 {
+template <typename T>
+BT::NodeStatus SnpRosServiceNode<T>::onFailure(BT::ServiceNodeErrorCode error)
+{
+  std::stringstream ss;
+  ss << "Service '" << BT::RosServiceNode<T>::prev_service_name_ << "'";
+
+  switch (error)
+  {
+    case BT::SERVICE_UNREACHABLE:
+      ss << " is unreachable";
+      break;
+    case BT::SERVICE_TIMEOUT:
+      ss << " timed out";
+      break;
+    case BT::INVALID_REQUEST:
+      ss << " was sent an invalid request";
+      break;
+    case BT::SERVICE_ABORTED:
+      ss << " was aborted";
+      break;
+    default:
+      break;
+  }
+
+  RCLCPP_ERROR(BT::RosServiceNode<T>::node_->get_logger(), ss.str().c_str());
+
+  return BT::NodeStatus::FAILURE;
+}
+
+template <typename T>
+BT::NodeStatus SnpRosActionNode<T>::onFailure(BT::ActionNodeErrorCode error)
+{
+  std::stringstream ss;
+  ss << "Action '" << BT::RosActionNode<T>::prev_action_name_ << "' failed: '";
+
+  switch (error)
+  {
+    case BT::SERVER_UNREACHABLE:
+      ss << "server unreachable'";
+      break;
+    case BT::SEND_GOAL_TIMEOUT:
+      ss << "goal timed out'";
+      break;
+    case BT::GOAL_REJECTED_BY_SERVER:
+      ss << "goal rejected by server'";
+      break;
+    case BT::ACTION_ABORTED:
+      ss << "action aborted'";
+      break;
+    case BT::ACTION_CANCELLED:
+      ss << "action cancelled'";
+      break;
+    case BT::INVALID_GOAL:
+      ss << "invalid goal'";
+      break;
+    default:
+      break;
+  }
+
+  RCLCPP_ERROR(BT::RosActionNode<T>::node_->get_logger(), ss.str().c_str());
+
+  return BT::NodeStatus::FAILURE;
+}
+
 bool TriggerServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
 {
   return true;
@@ -24,11 +88,6 @@ bool ExecuteMotionPlanServiceNode::setRequest(typename Request::SharedPtr& reque
 {
   request->motion_plan = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, MOTION_PLAN_INPUT_PORT_KEY);
   request->use_tool = getBTInput<bool>(this, USE_TOOL_INPUT_PORT_KEY);
-
-  // Update the server timeout (1.2 x 1000 ms/sec)
-  service_timeout_ =
-      static_cast<std::chrono::milliseconds>(1200 * request->motion_plan.points.back().time_from_start.sec);
-
   return true;
 }
 
@@ -360,10 +419,6 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
 bool FollowJointTrajectoryActionNode::setGoal(Goal& goal)
 {
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
-
-  // Update the server timeout (1.2 x 1000 ms/sec)
-  server_timeout_ = static_cast<std::chrono::milliseconds>(1200 * goal.trajectory.points.back().time_from_start.sec);
-
   return true;
 }
 

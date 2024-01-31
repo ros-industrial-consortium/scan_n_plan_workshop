@@ -21,7 +21,7 @@
 - git:
     local-name: BehaviorTree.ROS2
     uri: https://github.com/marip8/BehaviorTree.ROS2.git
-    version: 8a440454b9a54aade3f441e5f740a1ae567f9f9d
+    version: fd9e565591b019fc55d579577737d7879a88a4a0
 - git:
     local-name: trajectory_preview
     uri: https://github.com/marip8/trajectory_preview.git

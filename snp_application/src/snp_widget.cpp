@@ -19,6 +19,8 @@
 
 static const std::string BT_FILES_PARAM = "bt_files";
 static const std::string BT_PARAM = "tree";
+static const std::string BT_SHORT_TIMEOUT_PARAM = "bt_short_timeout";
+static const std::string BT_LONG_TIMEOUT_PARAM = "bt_long_timeout";
 
 class TPPDialog : public QDialog
 {
@@ -97,6 +99,8 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
   node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
   node_->declare_parameter<std::string>(BT_PARAM, "");
+  node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
+  node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
 
   // Populate the blackboard with buttons
   board_->set(SetPageDecoratorNode::STACKED_WIDGET_KEY, ui_->stacked_widget);
@@ -119,22 +123,25 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
   BT::RosNodeParams ros_params;
   ros_params.nh = node_;
-  ros_params.server_timeout = std::chrono::seconds(60);
+  ros_params.wait_for_server_timeout = std::chrono::seconds(0);
+  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(node_, BT_SHORT_TIMEOUT_PARAM));
 
+  // Publishers/Subscribers
+  factory_.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
+  factory_.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
+  factory_.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
+  // Short-running services
   factory_.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
-  factory_.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
-  factory_.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
-  factory_.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
   factory_.registerNodeType<GenerateToolPathsServiceNode>("GenerateToolPathsService", ros_params);
   factory_.registerNodeType<StartReconstructionServiceNode>("StartReconstructionService", ros_params);
   factory_.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
 
-  factory_.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
-  factory_.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
-
+  // Long-running services/actions
+  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(node_, BT_LONG_TIMEOUT_PARAM));
+  factory_.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
+  factory_.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
+  factory_.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
   factory_.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
-
-  factory_.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
 
   auto bt_files = get_parameter<std::vector<std::string>>(node_, BT_FILES_PARAM);
   for (const std::string& file : bt_files)

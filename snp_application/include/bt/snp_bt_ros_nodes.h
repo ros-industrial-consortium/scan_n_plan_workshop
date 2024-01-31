@@ -40,17 +40,33 @@ T get_parameter_or(rclcpp::Node::SharedPtr node, const std::string& key, const T
   return val;
 }
 
-class TriggerServiceNode : public BT::RosServiceNode<std_srvs::srv::Trigger>
+template <typename T>
+class SnpRosServiceNode : public BT::RosServiceNode<T>
 {
 public:
-  using BT::RosServiceNode<std_srvs::srv::Trigger>::providedPorts;
-  using BT::RosServiceNode<std_srvs::srv::Trigger>::RosServiceNode;
+  using BT::RosServiceNode<T>::RosServiceNode;
+  BT::NodeStatus onFailure(BT::ServiceNodeErrorCode error) override;
+};
+
+template <typename T>
+class SnpRosActionNode : public BT::RosActionNode<T>
+{
+public:
+  using BT::RosActionNode<T>::RosActionNode;
+  BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
+};
+
+class TriggerServiceNode : public SnpRosServiceNode<std_srvs::srv::Trigger>
+{
+public:
+  using SnpRosServiceNode<std_srvs::srv::Trigger>::providedPorts;
+  using SnpRosServiceNode<std_srvs::srv::Trigger>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
-class ExecuteMotionPlanServiceNode : public BT::RosServiceNode<snp_msgs::srv::ExecuteMotionPlan>
+class ExecuteMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::ExecuteMotionPlan>
 {
 public:
   inline static std::string MOTION_PLAN_INPUT_PORT_KEY = "motion_plan";
@@ -61,13 +77,13 @@ public:
                                 BT::InputPort<bool>(USE_TOOL_INPUT_PORT_KEY) });
   }
 
-  using BT::RosServiceNode<snp_msgs::srv::ExecuteMotionPlan>::RosServiceNode;
+  using SnpRosServiceNode<snp_msgs::srv::ExecuteMotionPlan>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
-class GenerateMotionPlanServiceNode : public BT::RosServiceNode<snp_msgs::srv::GenerateMotionPlan>
+class GenerateMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>
 {
 public:
   inline static std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
@@ -82,13 +98,13 @@ public:
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) });
   }
 
-  using BT::RosServiceNode<snp_msgs::srv::GenerateMotionPlan>::RosServiceNode;
+  using SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
-class GenerateScanMotionPlanServiceNode : public BT::RosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
+class GenerateScanMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
 {
 public:
   inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
@@ -101,13 +117,13 @@ public:
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) });
   }
 
-  using BT::RosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>::RosServiceNode;
+  using SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
-class GenerateToolPathsServiceNode : public BT::RosServiceNode<snp_msgs::srv::GenerateToolPaths>
+class GenerateToolPathsServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateToolPaths>
 {
 public:
   inline static std::string TOOL_PATHS_OUTPUT_PORT_KEY = "tool_paths";
@@ -116,28 +132,28 @@ public:
     return providedBasicPorts({ BT::OutputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_OUTPUT_PORT_KEY) });
   }
 
-  using BT::RosServiceNode<snp_msgs::srv::GenerateToolPaths>::RosServiceNode;
+  using SnpRosServiceNode<snp_msgs::srv::GenerateToolPaths>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
 class StartReconstructionServiceNode
-  : public BT::RosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>
+  : public SnpRosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>
 {
 public:
-  using BT::RosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>::providedPorts;
-  using BT::RosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>::RosServiceNode;
+  using SnpRosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>::providedPorts;
+  using SnpRosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
-class StopReconstructionServiceNode : public BT::RosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>
+class StopReconstructionServiceNode : public SnpRosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>
 {
 public:
-  using BT::RosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>::providedPorts;
-  using BT::RosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>::RosServiceNode;
+  using SnpRosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>::providedPorts;
+  using SnpRosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
@@ -175,7 +191,7 @@ public:
   bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
 };
 
-class FollowJointTrajectoryActionNode : public BT::RosActionNode<control_msgs::action::FollowJointTrajectory>
+class FollowJointTrajectoryActionNode : public SnpRosActionNode<control_msgs::action::FollowJointTrajectory>
 {
 public:
   inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
@@ -183,7 +199,7 @@ public:
   {
     return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
   }
-  using BT::RosActionNode<control_msgs::action::FollowJointTrajectory>::RosActionNode;
+  using SnpRosActionNode<control_msgs::action::FollowJointTrajectory>::SnpRosActionNode;
 
   bool setGoal(Goal& goal) override;
   BT::NodeStatus onResultReceived(const WrappedResult& result) override;
