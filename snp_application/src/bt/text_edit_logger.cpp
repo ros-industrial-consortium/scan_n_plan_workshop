@@ -18,7 +18,6 @@ void TextEditLogger::callback(BT::Duration /*timestamp*/, const BT::TreeNode& no
 
   static const QString info_html = "<font color=\"Grey\">";
   static const QString success_html = "<font color=\"Green\">";
-  static const QString alert_html = "<font color=\"Blue\">";
   static const QString end_html = "</font>";
 
   static const QString fail_html = "<b><i><font color=\"Red\">";
@@ -46,7 +45,7 @@ void TextEditLogger::callback(BT::Duration /*timestamp*/, const BT::TreeNode& no
       switch (status)
       {
         case BT::NodeStatus::FAILURE:
-          ss << alert_html << "Condition triggered: [ " << QString::fromStdString(node.name()) << " ]" << end_html;
+          ss << fail_html << "[ " << QString::fromStdString(node.name()) << " ]  ->  FAILED" << fail_end_html;
           break;
         default:
           break;
