@@ -29,7 +29,7 @@ BT::NodeStatus SnpRosServiceNode<T>::onFailure(BT::ServiceNodeErrorCode error)
       break;
   }
 
-  RCLCPP_ERROR(BT::RosServiceNode<T>::node_->get_logger(), ss.str().c_str());
+  this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
 
   return BT::NodeStatus::FAILURE;
 }
@@ -64,7 +64,7 @@ BT::NodeStatus SnpRosActionNode<T>::onFailure(BT::ActionNodeErrorCode error)
       break;
   }
 
-  RCLCPP_ERROR(BT::RosActionNode<T>::node_->get_logger(), ss.str().c_str());
+  this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
 
   return BT::NodeStatus::FAILURE;
 }
@@ -78,7 +78,7 @@ BT::NodeStatus TriggerServiceNode::onResponseReceived(const typename Response::S
 {
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
   return BT::NodeStatus::SUCCESS;
@@ -95,7 +95,7 @@ BT::NodeStatus ExecuteMotionPlanServiceNode::onResponseReceived(const typename R
 {
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
   return BT::NodeStatus::SUCCESS;
@@ -117,7 +117,7 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
 {
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
 
@@ -138,7 +138,7 @@ BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typen
 {
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
 
@@ -162,7 +162,7 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
 {
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
 
@@ -207,7 +207,7 @@ BT::NodeStatus StartReconstructionServiceNode::onResponseReceived(const typename
 {
   if (!response->success)
   {
-    // RCLCPP_ERROR(node_->get_logger(), response->message);
+    // config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
 
@@ -234,7 +234,7 @@ BT::NodeStatus StopReconstructionServiceNode::onResponseReceived(const typename 
 {
   if (!response->success)
   {
-    RCLCPP_ERROR(node_->get_logger(), response->message);
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
     return BT::NodeStatus::FAILURE;
   }
 
@@ -409,7 +409,9 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
   }
   catch (const std::exception& ex)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Error combining trajectories: '" << ex.what() << "'");
+    std::stringstream ss;
+    ss << "Error combining trajectories: '" << ex.what() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return false;
   }
 
@@ -455,7 +457,9 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
       getInput<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY);
   if (!input)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to get required input value: '" << input.error() << "'");
+    std::stringstream ss;
+    ss << "Failed to get required input value: '" << input.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
   trajectory_msgs::msg::JointTrajectory trajectory = input.value();
@@ -479,7 +483,9 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
       auto it = std::find(last_msg->name.begin(), last_msg->name.end(), name);
       if (it == last_msg->name.end())
       {
-        RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to find joint '" << name << "' in latest joint state message");
+        std::stringstream ss;
+        ss << "Failed to find joint '" << name << "' in latest joint state message";
+        config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
         return BT::NodeStatus::FAILURE;
       }
 
@@ -489,10 +495,10 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
       const double diff = std::abs(start_point.positions[i] - last_msg->position[idx]);
       if (diff > tolerance)
       {
-        RCLCPP_ERROR_STREAM(node_->get_logger(), "Joint '" << trajectory.joint_names[i]
-                                                           << "' difference from start state (" << diff
-                                                           << " radians) exceeds start state replacement tolerance ("
-                                                           << tolerance << " radians)");
+        std::stringstream ss;
+        ss << "Joint '" << trajectory.joint_names[i] << "' difference from start state (" << diff
+           << " radians) exceeds start state replacement tolerance (" << tolerance << " radians)";
+        config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
         return BT::NodeStatus::FAILURE;
       }
 
@@ -505,7 +511,9 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, trajectory);
   if (!output)
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to set required output value: '" << output.error() << "'");
+    std::stringstream ss;
+    ss << "Failed to set required output value: '" << output.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
 

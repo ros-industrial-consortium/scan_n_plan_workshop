@@ -9,6 +9,7 @@
 #include "bt/snp_bt_ros_nodes.h"
 #include "bt/snp_sequence_with_memory_node.h"
 #include "bt/text_edit_logger.h"
+#include "bt/utils.h"
 
 #include <boost_plugin_loader/plugin_loader.h>
 #include <QMessageBox>
@@ -102,6 +103,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   node_->declare_parameter<std::string>(BT_PARAM, "");
   node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
   node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
+
+  // Set the error message key in the blackboard
+  board_->set(ERROR_MESSAGE_KEY, "");
 
   // Populate the blackboard with buttons
   board_->set(SetPageDecoratorNode::STACKED_WIDGET_KEY, ui_->stacked_widget);
