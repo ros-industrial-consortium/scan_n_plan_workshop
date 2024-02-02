@@ -54,7 +54,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_point_spacing">
           <property name="text">
-           <string>Point Spacing</string>
+           <string>Point Spacing (m)</string>
           </property>
          </widget>
         </item>
@@ -77,7 +77,7 @@
         <item row="2" column="0">
          <widget class="QLabel" name="label_line_spacing">
           <property name="text">
-           <string>Line Spacing</string>
+           <string>Line Spacing (m)</string>
           </property>
          </widget>
         </item>
@@ -97,7 +97,7 @@
         <item row="3" column="0">
          <widget class="QLabel" name="label_minimum_segment_length">
           <property name="text">
-           <string>Min. Segment Length</string>
+           <string>Min. Segment Length (m)</string>
           </property>
          </widget>
         </item>

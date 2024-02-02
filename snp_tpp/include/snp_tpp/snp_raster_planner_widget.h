@@ -2,7 +2,6 @@
 
 #include <noether_gui/widgets.h>
 #include <noether_tpp/tool_path_planners/raster/raster_planner.h>
-// #include <noether_gui/widgets/tpp_widget.h>
 
 namespace Ui
 {
