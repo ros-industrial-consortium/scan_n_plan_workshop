@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
+#include <rclcpp/executors/single_threaded_executor.hpp>
 
 namespace Ui
 {
@@ -18,12 +19,15 @@ class SNPWidget : public QWidget
   Q_OBJECT
 
 public:
-  explicit SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr);
+  explicit SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent = nullptr);
 
 private:
   void runTreeWithThread();
 
-  rclcpp::Node::SharedPtr node_;
+  rclcpp::Node::SharedPtr bt_node_;
+  rclcpp::Node::SharedPtr tpp_node_;
+  rclcpp::executors::SingleThreadedExecutor tpp_node_executor_;
+  std::future<void> tpp_node_future_;
   Ui::SNPWidget* ui_;
   BT::Blackboard::Ptr board_;
   BT::BehaviorTreeFactory factory_;

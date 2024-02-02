@@ -47,7 +47,8 @@ namespace snp_application
 {
 SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   : QWidget(parent)
-  , node_(std::make_shared<rclcpp::Node>("snp_application"))
+  , bt_node_(std::make_shared<rclcpp::Node>("snp_application_bt"))
+  , tpp_node_(std::make_shared<rclcpp::Node>("snp_application_tpp"))
   , ui_(new Ui::SNPWidget())
   , board_(BT::Blackboard::create())
 {
@@ -57,9 +58,11 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
   // Add the TPP widget
   {
-    auto* tpp_dialog = new TPPDialog(node_, this);
+    auto* tpp_dialog = new TPPDialog(tpp_node_, this);
     tpp_dialog->hide();
     connect(ui_->tool_button_tpp, &QToolButton::clicked, tpp_dialog, &QWidget::show);
+    tpp_node_executor_.add_node(tpp_node_);
+    tpp_node_future_ = std::async(std::launch::async, [this]() { tpp_node_executor_.spin(); });
   }
 
   // Add the trajectory preview widget
@@ -93,16 +96,16 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   });
 
   // Declare parameters
-  node_->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
-  node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
-  node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
-  node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
-  node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
-  node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
-  node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
-  node_->declare_parameter<std::string>(BT_PARAM, "");
-  node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
-  node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
+  bt_node_->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
+  bt_node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
+  bt_node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
+  bt_node_->declare_parameter<std::string>(BT_PARAM, "");
+  bt_node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
+  bt_node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
 
   // Set the error message key in the blackboard
   board_->set(ERROR_MESSAGE_KEY, "");
@@ -127,9 +130,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   factory_.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
 
   BT::RosNodeParams ros_params;
-  ros_params.nh = node_;
+  ros_params.nh = bt_node_;
   ros_params.wait_for_server_timeout = std::chrono::seconds(0);
-  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(node_, BT_SHORT_TIMEOUT_PARAM));
+  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM));
 
   // Publishers/Subscribers
   factory_.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
@@ -142,13 +145,13 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   factory_.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
 
   // Long-running services/actions
-  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(node_, BT_LONG_TIMEOUT_PARAM));
+  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
   factory_.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
   factory_.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
   factory_.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
   factory_.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
 
-  auto bt_files = get_parameter<std::vector<std::string>>(node_, BT_FILES_PARAM);
+  auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
   for (const std::string& file : bt_files)
     factory_.registerBehaviorTreeFromFile(file);
 }
@@ -159,7 +162,7 @@ void SNPWidget::runTreeWithThread()
 
   try
   {
-    thread->tree = factory_.createTree(get_parameter<std::string>(node_, BT_PARAM), board_);
+    thread->tree = factory_.createTree(get_parameter<std::string>(bt_node_, BT_PARAM), board_);
     logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
   }
   catch (const std::exception& ex)
