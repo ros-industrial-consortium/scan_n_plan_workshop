@@ -520,4 +520,16 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   return BT::NodeStatus::SUCCESS;
 }
 
+RosSpinnerNode::RosSpinnerNode(const std::string& instance_name, const BT::NodeConfig& config,
+                               rclcpp::Node::SharedPtr node)
+  : BT::ConditionNode(instance_name, config), node_(node)
+{
+}
+
+BT::NodeStatus RosSpinnerNode::tick()
+{
+  rclcpp::spin_some(node_);
+  return BT::NodeStatus::SUCCESS;
+}
+
 }  // namespace snp_application

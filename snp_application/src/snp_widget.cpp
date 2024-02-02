@@ -128,6 +128,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   factory_.registerNodeType<ProgressDecoratorNode>("Progress");
   factory_.registerNodeType<SetPageDecoratorNode>("SetPage");
   factory_.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
+  factory_.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
 
   BT::RosNodeParams ros_params;
   ros_params.nh = bt_node_;

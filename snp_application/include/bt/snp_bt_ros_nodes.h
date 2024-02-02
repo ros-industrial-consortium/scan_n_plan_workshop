@@ -221,4 +221,23 @@ public:
   BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
 };
 
+/**
+ * @brief Condition node for spinning the BT ROS node to keep it accessible for parameter updates, service calls, etc.
+ */
+class RosSpinnerNode : public BT::ConditionNode
+{
+public:
+  inline static BT::PortsList providedPorts()
+  {
+    return {};
+  }
+
+  explicit RosSpinnerNode(const std::string& instance_name, const BT::NodeConfig& config, rclcpp::Node::SharedPtr node);
+
+protected:
+  BT::NodeStatus tick() override;
+
+  rclcpp::Node::SharedPtr node_;
+};
+
 }  // namespace snp_application

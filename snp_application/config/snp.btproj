@@ -47,6 +47,7 @@
             <input_port name="start" default="0"/>
             <input_port name="end" default="100"/>
         </Decorator>
+        <Condition ID="RosSpinner" editable="true"/>
         <Control ID="SNPSequenceWithMemory" editable="true"/>
         <Decorator ID="SetPage" editable="true">
             <input_port name="index" default="0"/>

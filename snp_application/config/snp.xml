@@ -3,6 +3,7 @@
   <BehaviorTree ID="main">
     <ForceSuccess>
       <ReactiveSequence>
+        <RosSpinner/>
         <ButtonMonitor name="Reset"
                        button="reset"
                        _description="Sequence has been reset to start state"/>
@@ -238,6 +239,8 @@
       <input_port name="end"
                   default="100"/>
     </Decorator>
+    <Condition ID="RosSpinner"
+               editable="true"/>
     <Control ID="SNPSequenceWithMemory"
              editable="true"/>
     <Decorator ID="SetPage"
