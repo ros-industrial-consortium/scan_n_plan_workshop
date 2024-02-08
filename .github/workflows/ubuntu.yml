@@ -41,7 +41,7 @@ jobs:
           apt install -y -qq libxmlrpcpp-dev
 
       - name: Build and Tests
-        uses: tesseract-robotics/colcon-action@v5
+        uses: tesseract-robotics/colcon-action@v6
         with:
           before-script: source /opt/tesseract_ros2/install/setup.bash
           ccache-prefix: ${{ matrix.distro }}

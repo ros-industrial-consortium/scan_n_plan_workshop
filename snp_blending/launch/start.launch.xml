@@ -23,7 +23,17 @@
     <arg name="use_gui" value="$(var bypass_execution)"/>
   </include>
 
-  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_blending)/config/app.rviz">
+  <!-- Trajectory Preview -->
+  <include file="$(find-pkg-share trajectory_preview)/launch/robot_model_preview_pipeline.launch.xml">
+    <arg name="robot_description" value="$(var robot_description)"/>
+    <arg name="root_frame" value="floor"/>
+  </include>
+
+  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share snp_blending)/config/app.rviz" output="screen">
+    <param name="bt_files" value="[$(find-pkg-share snp_application)/config/snp.xml]"/>
+    <param name="tree" value="main"/>
+    <!-- Application -->
+    <param name="config_file" value="$(find-pkg-share snp_blending)/config/tpp.yaml"/>
     <param name="mesh_file" value="/tmp/results_mesh.ply"/>
     <param name="motion_group" value="manipulator"/>
     <param name="reference_frame" value="$(var reference_frame)"/>
@@ -44,9 +54,6 @@
     <param name="rgbd.depth_trunc" value="1.1"/>
   </node>
 
-  <!-- Launch Calibration Node and Mutable Transform Publisher Node  -->
-  <!--<include file="$(find-pkg-share r2_apps)/launch/hand_eye_launch.py"/>-->
-
   <!-- Launch Open3d Interface Node -->
   <group unless="$(var sim_vision)">
     <node pkg="industrial_reconstruction" exec="industrial_reconstruction">
@@ -64,7 +71,6 @@
       <arg name="color_fps" value="90.0"/>
     </include>
   </group>
-
   <!-- Launch Open3d Interface Node (Sim) -->
   <group if="$(var sim_vision)">
     <node pkg="snp_scanning" exec="reconstruction_sim_node">
@@ -74,11 +80,6 @@
     </node>
   </group>
 
-  <!-- Launch Toolpath Planning Node -->
-  <node pkg="snp_tpp" exec="snp_tpp_app">
-    <param name="config_file" value="$(find-pkg-share snp_blending)/config/tpp.yaml"/>
-  </node>
-
   <!-- Launch Motion Planning Node -->
   <include file="$(find-pkg-share snp_motion_planning)/launch/planning_server.launch.xml">
     <arg name="robot_description" value="$(var robot_description)"/>
@@ -86,11 +87,6 @@
     <arg name="verbose" value="$(var verbose)"/>
     <arg name="touch_links" value="$(var touch_links)"/>
   </include>
-
-  <!-- Launch Motion Execution Node -->
-  <node pkg="snp_motion_execution" exec="motion_execution_server">
-    <param name="follow_joint_trajectory_action" value="$(var follow_joint_trajectory_action)"/>
-  </node>
 
   <node pkg="snp_scanning" exec="scan_motion_plan_from_file_node">
     <param name="scan_trajectory_file" value="$(var scan_trajectory_file)"/>

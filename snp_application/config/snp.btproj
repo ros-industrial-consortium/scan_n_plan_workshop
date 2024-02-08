@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" project_name="Project">
+    <include path="snp.xml"/>
+    <!-- Description of Node Models (used by Groot) -->
+    <TreeNodesModel>
+        <Action ID="ButtonApproval" editable="true">
+            <input_port name="approve_button"/>
+            <input_port name="disapprove_button"/>
+        </Action>
+        <Condition ID="ButtonMonitor" editable="true">
+            <input_port name="button"/>
+        </Condition>
+        <Action ID="ExecuteMotionPlanService" editable="true">
+            <input_port name="service_name" default="execute_motion_plan"/>
+            <input_port name="motion_plan" default="{motion_plan}"/>
+            <input_port name="use_tool" default="false"/>
+        </Action>
+        <Action ID="FollowJointTrajectoryAction" editable="true">
+            <input_port name="action_name" default="follow_joint_trajectory"/>
+            <input_port name="trajectory" default="{trajectory}"/>
+        </Action>
+        <Action ID="GenerateMotionPlanService" editable="true">
+            <input_port name="service_name" default="generate_motion_plan"/>
+            <input_port name="tool_paths" default="{tool_paths}"/>
+            <output_port name="approach" default="{approach}"/>
+            <output_port name="process" default="{process}"/>
+            <output_port name="departure" default="{departure}"/>
+        </Action>
+        <Action ID="GenerateScanMotionPlanService" editable="true">
+            <input_port name="service_name" default="generate_scan_motion_plan"/>
+            <output_port name="approach" default="{scan_approach}"/>
+            <output_port name="process" default="{scan_process}"/>
+            <output_port name="departure" default="{scan_departure}"/>
+        </Action>
+        <Action ID="GenerateToolPathsService" editable="true">
+            <input_port name="service_name" default="generate_tool_paths"/>
+            <input_port name="tool_paths" default="{tool_paths}"/>
+        </Action>
+        <Action ID="MotionPlanPub" editable="true">
+            <input_port name="topic_name"/>
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
+        </Action>
+        <Action ID="ProcessNode" editable="true"/>
+        <Decorator ID="Progress" editable="true">
+            <input_port name="start" default="0"/>
+            <input_port name="end" default="100"/>
+        </Decorator>
+        <Condition ID="RosSpinner" editable="true"/>
+        <Control ID="SNPSequenceWithMemory" editable="true"/>
+        <Decorator ID="SetPage" editable="true">
+            <input_port name="index" default="0"/>
+        </Decorator>
+        <Action ID="StartReconstructionService" editable="true">
+            <input_port name="service_name" default="start_reconstruction"/>
+        </Action>
+        <Action ID="StopReconstructionService" editable="true">
+            <input_port name="service_name" default="stop_reconstruction"/>
+        </Action>
+        <Action ID="ToolPathsPub" editable="true">
+            <input_port name="topic_name" default="tool_paths"/>
+            <input_port name="tool_paths" default="{tool_paths}"/>
+        </Action>
+        <Action ID="TriggerService" editable="true">
+            <input_port name="service_name"/>
+        </Action>
+        <Action ID="UpdateTrajectoryStartState" editable="true">
+            <input_port name="topic_name" default="/joint_states"/>
+            <input_port name="input" default="{trajectory}"/>
+            <output_port name="output" default="{trajectory}"/>
+        </Action>
+        <SubTree ID="motion" editable="true">
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
+        </SubTree>
+        <SubTree ID="scan" editable="true">
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
+        </SubTree>
+    </TreeNodesModel>
+</root>

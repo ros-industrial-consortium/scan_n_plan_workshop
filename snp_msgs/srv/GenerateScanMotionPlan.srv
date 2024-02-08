@@ -2,8 +2,9 @@
 
 ---
 # Response
+trajectory_msgs/JointTrajectory approach
+trajectory_msgs/JointTrajectory process
+trajectory_msgs/JointTrajectory departure
 
-# Scan Trajectory Motion Plan - a joint trajectory for the robot to follow during a scan
-trajectory_msgs/JointTrajectory motion_plan
 bool success
 string message

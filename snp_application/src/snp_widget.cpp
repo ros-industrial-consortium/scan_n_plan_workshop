@@ -1,686 +1,201 @@
 #include "snp_widget.h"
 #include "ui_snp_widget.h"
+// BT
+#include "bt/bt_thread.h"
+#include "bt/button_approval_node.h"
+#include "bt/button_monitor_node.h"
+#include "bt/progress_decorator_node.h"
+#include "bt/set_page_decorator_node.h"
+#include "bt/snp_bt_ros_nodes.h"
+#include "bt/snp_sequence_with_memory_node.h"
+#include "bt/text_edit_logger.h"
+#include "bt/utils.h"
 
+#include <behaviortree_cpp/bt_factory.h>
+#include <boost_plugin_loader/plugin_loader.h>
 #include <QMessageBox>
-#include <QScrollBar>
 #include <QTextStream>
-#include <rclcpp_action/create_client.hpp>
-#include <tf2_eigen/tf2_eigen.h>
-#include "serialize.h"
-#include "trajectory_msgs_yaml.h"
+#include <QScrollBar>
+#include <snp_tpp/tpp_widget.h>
+#include <trajectory_preview/trajectory_preview_widget.h>
 
-static const std::string TOOL_PATH_TOPIC = "toolpath";
+static const std::string BT_FILES_PARAM = "bt_files";
+static const std::string BT_PARAM = "tree";
+static const std::string BT_SHORT_TIMEOUT_PARAM = "bt_short_timeout";
+static const std::string BT_LONG_TIMEOUT_PARAM = "bt_long_timeout";
 
-static const std::string CALIBRATION_OBSERVE_SERVICE = "observe";
-static const std::string CALIBRATION_RUN_SERVICE = "run";
-static const std::string CALIBRATION_CORRELATION_SERVICE = "correlation";
-static const std::string CALIBRATION_INSTALL_SERVICE = "install";
-static const std::string START_RECONSTRUCTION_SERVICE = "start_reconstruction";
-static const std::string STOP_RECONSTRUCTION_SERVICE = "stop_reconstruction";
-static const std::string GENERATE_TOOL_PATHS_SERVICE = "generate_tool_paths";
-static const std::string MOTION_PLAN_SERVICE = "create_motion_plan";
-static const std::string MOTION_EXECUTION_SERVICE = "execute_motion_plan";
-static const std::string SCAN_MOTION_PLAN_SERVICE = "generate_scan_motion_plan";
-
-static const QString CALIBRATION_ST = "calibrate";
-static const QString SCAN_MOTION_PLANNING_ST = "plan scan motion";
-static const QString SCAN_APPROACH_ST = "execute scan approach";
-static const QString START_RECONSTRUCTION_ST = "start reconstruction";
-static const QString SCAN_EXECUTION_ST = "execute scan";
-static const QString STOP_RECONSTRUCTION_ST = "stop reconstruction";
-static const QString SCAN_DEPARTURE_ST = "execute scan departure";
-static const QString TPP_ST = "plan tool paths";
-static const QString MOTION_PLANNING_ST = "perform motion planning";
-static const QString MOTION_EXECUTION_ST = "execute process motion";
-
-enum State : unsigned
+class TPPDialog : public QDialog
 {
-  CALIBRATION = 0,
-  SCAN_MOTION_PLANNING,
-  SCAN_APPROACH,
-  START_RECONSTRUCTION,
-  SCAN_EXECUTION,
-  STOP_RECONSTRUCTION,
-  SCAN_DEPARTURE,
-  TPP,
-  MOTION_PLANNING,
-  MOTION_EXECUTION,
+public:
+  TPPDialog(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr) : QDialog(parent)
+  {
+    setWindowTitle("Tool Path Planner");
+
+    boost_plugin_loader::PluginLoader loader;
+    loader.search_libraries.insert(NOETHER_GUI_PLUGINS);
+    loader.search_libraries.insert(SNP_TPP_GUI_PLUGINS);
+    loader.search_libraries_env = NOETHER_GUI_PLUGIN_LIBS_ENV;
+    loader.search_paths_env = NOETHER_GUI_PLUGIN_PATHS_ENV;
+
+    auto* widget = new snp_tpp::TPPWidget(node, std::move(loader), this);
+
+    auto* layout = new QVBoxLayout(this);
+    layout->addWidget(widget);
+  }
 };
 
-// clang-format off
-static const std::map<QString, unsigned> STATES = {
-  { CALIBRATION_ST, CALIBRATION },
-  { SCAN_MOTION_PLANNING_ST, SCAN_MOTION_PLANNING},
-  { SCAN_APPROACH_ST, SCAN_APPROACH},
-  { START_RECONSTRUCTION_ST, START_RECONSTRUCTION },
-  { SCAN_EXECUTION_ST, SCAN_EXECUTION },
-  { STOP_RECONSTRUCTION_ST, STOP_RECONSTRUCTION },
-  { SCAN_DEPARTURE_ST, SCAN_DEPARTURE },
-  { TPP_ST, TPP },
-  { MOTION_PLANNING_ST, MOTION_PLANNING },
-  { MOTION_EXECUTION_ST, MOTION_EXECUTION },
-};
-// clang-format on
-
-static const std::string MOTION_GROUP_PARAM = "motion_group";
-static const std::string REF_FRAME_PARAM = "reference_frame";
-static const std::string TCP_FRAME_PARAM = "tcp_frame";
-static const std::string CAMERA_FRAME_PARAM = "camera_frame";
-static const std::string MESH_FILE_PARAM = "mesh_file";
-
-namespace  // anonymous restricts visibility to this file
+namespace snp_application
 {
-template <typename T>
-T declareAndGet(rclcpp::Node& node, const std::string& key, const T& default_value)
-{
-  T val;
-  node.declare_parameter(key, default_value);
-  if (!node.get_parameter(key, val))
-    throw std::runtime_error("Failed to get '" + key + "' parameter");
-  return val;
-}
-
-template <typename T>
-T get(rclcpp::Node& node, const std::string& key)
-{
-  T val;
-  if (!node.get_parameter(key, val))
-    throw std::runtime_error("Failed to get '" + key + "' parameter");
-  return val;
-}
-
-}  // namespace
-
-SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, QWidget* parent)
+SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   : QWidget(parent)
-  , node_(node)
-  , ui_(new Ui::SNPWidget)
-  , past_calibration_(false)
-  , mesh_file_(declareAndGet<std::string>(*node, MESH_FILE_PARAM, ""))
-  , reference_frame_(declareAndGet<std::string>(*node, REF_FRAME_PARAM, ""))
-  , start_scan_request_(std::make_shared<industrial_reconstruction_msgs::srv::StartReconstruction::Request>())
+  , bt_node_(std::make_shared<rclcpp::Node>("snp_application_bt"))
+  , tpp_node_(std::make_shared<rclcpp::Node>("snp_application_tpp"))
+  , ui_(new Ui::SNPWidget())
+  , board_(BT::Blackboard::create())
 {
-  node->declare_parameter(MOTION_GROUP_PARAM, "");
-  node->declare_parameter(TCP_FRAME_PARAM, "");
-  node->declare_parameter(CAMERA_FRAME_PARAM, "");
-
   ui_->setupUi(this);
+  ui_->group_box_operation->setEnabled(false);
+  ui_->push_button_reset->setEnabled(false);
 
-  connect(ui_->calibration_group_box, &QGroupBox::clicked, this, &SNPWidget::update_calibration_requirement);
-  connect(ui_->observe_button, &QPushButton::clicked, this, &SNPWidget::observe);
-  connect(ui_->run_calibration_button, &QPushButton::clicked, this, &SNPWidget::run_calibration);
-  connect(ui_->get_correlation_button, &QPushButton::clicked, this, &SNPWidget::get_correlation);
-  connect(ui_->install_calibration_button, &QPushButton::clicked, this, &SNPWidget::install_calibration);
-  connect(ui_->reset_calibration_button, &QPushButton::clicked, this, &SNPWidget::reset_calibration);
-  connect(ui_->scan_button, &QPushButton::clicked, this, &SNPWidget::scan);
-  connect(ui_->tpp_button, &QPushButton::clicked, this, &SNPWidget::planToolPaths);
-  connect(ui_->motion_plan_button, &QPushButton::clicked, this, &SNPWidget::planMotion);
-  connect(ui_->motion_execution_button, &QPushButton::clicked, this, &SNPWidget::execute);
-  connect(ui_->reset_button, &QPushButton::clicked, this, &SNPWidget::reset);
+  // Add the TPP widget
+  {
+    auto* tpp_dialog = new TPPDialog(tpp_node_, this);
+    tpp_dialog->hide();
+    connect(ui_->tool_button_tpp, &QToolButton::clicked, tpp_dialog, &QWidget::show);
+    tpp_node_executor_.add_node(tpp_node_);
+    tpp_node_future_ = std::async(std::launch::async, [this]() { tpp_node_executor_.spin(); });
+  }
+
+  // Add the trajectory preview widget
+  {
+    auto* preview = new trajectory_preview::TrajectoryPreviewWidget(this);
+    preview->initializeROS(rviz_node, "motion_plan", "preview");
+
+    auto* layout = new QVBoxLayout(ui_->frame_preview_widget);
+    layout->addWidget(preview);
+  }
+
+  // Reset
+  connect(ui_->push_button_reset, &QPushButton::clicked, [this]() {
+    ui_->push_button_reset->setEnabled(false);
+    ui_->push_button_start->setEnabled(true);
+  });
+
+  // Start
+  connect(ui_->push_button_start, &QPushButton::clicked, [this]() {
+    ui_->push_button_start->setEnabled(false);
+    ui_->push_button_reset->setEnabled(true);
+    ui_->text_edit_log->clear();
+    ui_->stacked_widget->setCurrentIndex(0);
+    ui_->group_box_operation->setEnabled(true);
+    runTreeWithThread();
+  });
 
   // Move the text edit scroll bar to the maximum limit whenever it is resized
   connect(ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
     ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
   });
 
-  connect(this, &SNPWidget::updateStatus, this, &SNPWidget::onUpdateStatus);
-  connect(this, &SNPWidget::log, this, &SNPWidget::onUpdateLog);
+  // Declare parameters
+  bt_node_->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
+  bt_node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
+  bt_node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
+  bt_node_->declare_parameter<std::string>(BT_PARAM, "");
+  bt_node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
+  bt_node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
 
-  toolpath_pub_ = node->create_publisher<geometry_msgs::msg::PoseArray>(TOOL_PATH_TOPIC, 10);
+  // Set the error message key in the blackboard
+  board_->set(ERROR_MESSAGE_KEY, "");
 
-  // TODO register all service/action clients
-  observe_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_OBSERVE_SERVICE);
-  run_calibration_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_RUN_SERVICE);
-  get_correlation_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_CORRELATION_SERVICE);
-  install_calibration_client_ = node->create_client<std_srvs::srv::Trigger>(CALIBRATION_INSTALL_SERVICE);
+  // Populate the blackboard with buttons
+  board_->set(SetPageDecoratorNode::STACKED_WIDGET_KEY, ui_->stacked_widget);
+  board_->set(ProgressDecoratorNode::PROGRESS_BAR_KEY, ui_->progress_bar);
+  board_->set("reset", static_cast<QAbstractButton*>(ui_->push_button_reset));
+  board_->set("halt", static_cast<QAbstractButton*>(ui_->push_button_halt));
 
-  start_reconstruction_client_ =
-      node->create_client<industrial_reconstruction_msgs::srv::StartReconstruction>(START_RECONSTRUCTION_SERVICE);
-  stop_reconstruction_client_ =
-      node->create_client<industrial_reconstruction_msgs::srv::StopReconstruction>(STOP_RECONSTRUCTION_SERVICE);
-  tpp_client_ = node->create_client<snp_msgs::srv::GenerateToolPaths>(GENERATE_TOOL_PATHS_SERVICE);
-  motion_planning_client_ = node->create_client<snp_msgs::srv::GenerateMotionPlan>(MOTION_PLAN_SERVICE);
-  scan_traj_motion_planning_client_ =
-      node->create_client<snp_msgs::srv::GenerateScanMotionPlan>(SCAN_MOTION_PLAN_SERVICE);
-  motion_execution_client_ = node->create_client<snp_msgs::srv::ExecuteMotionPlan>(MOTION_EXECUTION_SERVICE);
-
-  // Populate scan request
-  start_scan_request_->tracking_frame = get<std::string>(*node_, CAMERA_FRAME_PARAM);
-  start_scan_request_->relative_frame = reference_frame_;
-  start_scan_request_->translation_distance = 0;
-  start_scan_request_->rotational_distance = 0;
-  start_scan_request_->live = true;
-  start_scan_request_->rgbd_params.convert_rgb_to_intensity = false;
-  // Configurable parameters
-  start_scan_request_->tsdf_params.voxel_length = declareAndGet<float>(*node, "tsdf.voxel_length", 0.01f);
-  start_scan_request_->tsdf_params.sdf_trunc = declareAndGet<float>(*node, "tsdf.sdf_trunc", 0.03f);
-  start_scan_request_->tsdf_params.min_box_values.x = declareAndGet<double>(*node, "tsdf.min.x", 0.0);
-  start_scan_request_->tsdf_params.min_box_values.y = declareAndGet<double>(*node, "tsdf.min.y", 0.0);
-  start_scan_request_->tsdf_params.min_box_values.z = declareAndGet<double>(*node, "tsdf.min.z", 0.0);
-  start_scan_request_->tsdf_params.max_box_values.x = declareAndGet<double>(*node, "tsdf.max.x", 0.0);
-  start_scan_request_->tsdf_params.max_box_values.y = declareAndGet<double>(*node, "tsdf.max.y", 0.0);
-  start_scan_request_->tsdf_params.max_box_values.z = declareAndGet<double>(*node, "tsdf.max.z", 0.0);
-  start_scan_request_->rgbd_params.depth_scale = declareAndGet<float>(*node, "rgbd.depth_scale", 1000.0);
-  start_scan_request_->rgbd_params.depth_trunc = declareAndGet<float>(*node, "rgbd.depth_trunc", 1.1f);
+  board_->set("back", static_cast<QAbstractButton*>(ui_->push_button_back));
+  board_->set("scan", static_cast<QAbstractButton*>(ui_->push_button_scan));
+  board_->set("tpp", static_cast<QAbstractButton*>(ui_->push_button_tpp));
+  board_->set("plan", static_cast<QAbstractButton*>(ui_->push_button_motion_plan));
+  board_->set("execute", static_cast<QAbstractButton*>(ui_->push_button_motion_execution));
 }
 
-void SNPWidget::onUpdateStatus(bool success, QString current_process, QString next_process, unsigned step)
-{
-  QString status;
-  QTextStream status_stream(&status);
-  if (success)
-  {
-    status_stream << current_process << " completed!";
-    if (next_process != "")
-    {
-      status_stream << "\nWaiting to " << next_process << "...";
-    }
-
-    const double progress = (static_cast<double>(step) / static_cast<double>(STATES.size())) * 100.0;
-    ui_->progress_bar->setValue(static_cast<int>(progress));
-  }
-  else
-  {
-    status_stream << current_process << " failed\nWaiting to attempt again...";
-  }
-
-  onUpdateLog(status);
-}
-
-void SNPWidget::onUpdateLog(const QString& message)
-{
-  ui_->text_edit_log->append(message);
-}
-
-void SNPWidget::update_calibration_requirement()
-{
-  if (!ui_->calibration_group_box->isChecked() && !past_calibration_)
-  {
-    emit updateStatus(true, CALIBRATION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-  }
-  else
-  {
-    reset();
-  }
-}
-
-void SNPWidget::observe()
-{
-  if (!observe_client_->service_is_ready())
-  {
-    emit log("Observation service is not available");
-    return;
-  }
-
-  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-  auto future = observe_client_->async_send_request(request);
-  future.wait();
-
-  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-  if (response->success)
-  {
-    ui_->run_calibration_button->setEnabled(true);
-    emit log("Gathered observation.");
-  }
-  else
-  {
-    emit log("Failed to get observation.");
-  }
-}
-
-void SNPWidget::run_calibration()
-{
-  if (!run_calibration_client_->service_is_ready())
-  {
-    return;
-  }
-
-  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-  auto future = run_calibration_client_->async_send_request(request);
-  future.wait();
-  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-
-  if (response->success)
-  {
-    ui_->install_calibration_button->setEnabled(true);
-    emit log("Calibration run.");
-  }
-  else
-  {
-    emit log("Calibration attempt failed.");
-  }
-}
-
-void SNPWidget::get_correlation()
-{
-  if (!get_correlation_client_->service_is_ready())
-  {
-    return;
-  }
-
-  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-  auto future = get_correlation_client_->async_send_request(request);
-  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-
-  if (response->success)
-  {
-    emit log("Correlation written to file.");
-  }
-  else
-  {
-    emit log("Failed to write correlation to file.");
-  }
-}
-
-void SNPWidget::install_calibration()
-{
-  if (!install_calibration_client_->service_is_ready())
-  {
-    return;
-  }
-
-  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-  auto future = install_calibration_client_->async_send_request(request);
-  future.wait();
-  std_srvs::srv::Trigger::Response::SharedPtr response = future.get();
-
-  past_calibration_ = response->success;
-  emit updateStatus(response->success, CALIBRATION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-}
-
-void SNPWidget::reset_calibration()
-{
-  past_calibration_ = false;
-
-  // Update the UI
-  ui_->run_calibration_button->setEnabled(false);
-  ui_->get_correlation_button->setEnabled(false);
-  ui_->install_calibration_button->setEnabled(false);
-  ui_->reset_calibration_button->setEnabled(false);
-}
-
-void SNPWidget::scan()
-{
-  if (!scan_traj_motion_planning_client_->service_is_ready())
-  {
-    emit log("Scan motion planning service is not available");
-    emit updateStatus(false, SCAN_MOTION_PLANNING_ST, SCAN_MOTION_PLANNING_ST, STATES.at(SCAN_MOTION_PLANNING_ST));
-    return;
-  }
-
-  emit log("Triggered scan motion planning service");
-
-  auto request = std::make_shared<snp_msgs::srv::GenerateScanMotionPlan::Request>();
-  scan_traj_motion_planning_client_->async_send_request(
-      request, std::bind(&SNPWidget::onScanGenerationDone, this, std::placeholders::_1));
-}
-
-void SNPWidget::onScanGenerationDone(rclcpp::Client<snp_msgs::srv::GenerateScanMotionPlan>::SharedFuture future)
-{
-  snp_msgs::srv::GenerateScanMotionPlan::Response::SharedPtr response = future.get();
-  if (response->success)
-  {
-    emit log("Successfully generated scan motion plan");
-    emit updateStatus(true, SCAN_MOTION_PLANNING_ST, SCAN_APPROACH_ST, STATES.at(SCAN_MOTION_PLANNING_ST));
-  }
-  else
-  {
-    QString message;
-    QTextStream ss(&message);
-    ss << "Failed to generate scan motion plan: '" << QString::fromStdString(response->message) << "'";
-    emit log(message);
-    emit updateStatus(false, SCAN_MOTION_PLANNING_ST, SCAN_MOTION_PLANNING_ST, STATES.at(SCAN_MOTION_PLANNING_ST));
-    return;
-  }
-
-  scan_traj_ = response->motion_plan;
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  request->use_tool = false;
-  request->motion_plan.header = scan_traj_.header;
-  request->motion_plan.joint_names = scan_traj_.joint_names;
-  request->motion_plan.points.push_back(scan_traj_.points.at(0));
-  request->motion_plan.points.push_back(scan_traj_.points.at(1));
-
-  auto cb = std::bind(&SNPWidget::onScanApproachDone, this, std::placeholders::_1);
-  motion_execution_client_->async_send_request(request, cb);
-
-  scan_complete_ = false;
-
-  // Reset any tool paths or motion plans based on a previous scan
-  tool_paths_.clear();
-  motion_plan_.reset();
-}
-
-void SNPWidget::onScanApproachDone(FJTResult result)
-{
-  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (response->success)
-  {
-    emit updateStatus(true, SCAN_APPROACH_ST, START_RECONSTRUCTION_ST, STATES.at(START_RECONSTRUCTION_ST));
-    emit log("Successfully executed scan approach motion");
-  }
-  else
-  {
-    QString message;
-    QTextStream ss(&message);
-    ss << "Failed to execute scan approach motion: '" << QString::fromStdString(response->message) << "'";
-    emit log(message);
-    emit updateStatus(false, SCAN_APPROACH_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
-
-  auto cb = std::bind(&SNPWidget::onScanStartDone, this, std::placeholders::_1);
-  start_reconstruction_client_->async_send_request(start_scan_request_, cb);
-}
-
-void SNPWidget::onScanStartDone(StartScanFuture result)
-{
-  if (!result.get()->success)
-  {
-    emit log("Failed to start surface reconstruction");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
-
-  if (!motion_execution_client_->service_is_ready())
-  {
-    emit log("Motion execution service is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
-
-  emit updateStatus(true, START_RECONSTRUCTION_ST, SCAN_EXECUTION_ST, STATES.at(SCAN_EXECUTION_ST));
-  emit log("Sending scan trajectory goal");
-
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  request->use_tool = false;
-  request->motion_plan.header = scan_traj_.header;
-  request->motion_plan.joint_names = scan_traj_.joint_names;
-
-  const auto start_pt = scan_traj_.points.begin() + 1;
-  std::transform(start_pt, scan_traj_.points.end(), std::back_inserter(request->motion_plan.points),
-                 [&start_pt](trajectory_msgs::msg::JointTrajectoryPoint pt) {
-                   pt.time_from_start.sec -= start_pt->time_from_start.sec;
-                   pt.time_from_start.nanosec -= start_pt->time_from_start.nanosec;
-                   return pt;
-                 });
-
-  auto cb = std::bind(&SNPWidget::onScanDone, this, std::placeholders::_1);
-  motion_execution_client_->async_send_request(request, cb);
-}
-
-void SNPWidget::onScanDone(FJTResult result)
-{
-  // call reconstruction stop (regardless of trajectory success)
-  auto stop_request = std::make_shared<industrial_reconstruction_msgs::srv::StopReconstruction::Request>();
-  stop_request->archive_directory = "";
-  stop_request->mesh_filepath = mesh_file_;
-  stop_request->min_num_faces = 1000;
-  industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
-  norm_filt.normal_direction.x = 0;
-  norm_filt.normal_direction.y = 0;
-  norm_filt.normal_direction.z = 1;
-  norm_filt.angle = 85;
-  stop_request->normal_filters.push_back(norm_filt);
-
-  // Define a callback to enter when the stop reconstruction service is finished
-  std::function<void(StopScanFuture)> cb;
-
-  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (response->success)
-  {
-    emit updateStatus(true, SCAN_EXECUTION_ST, STOP_RECONSTRUCTION_ST, STATES.at(STOP_RECONSTRUCTION_ST));
-    emit log("Successfully executed scan motion");
-    cb = std::bind(&SNPWidget::onScanStopDone, this, std::placeholders::_1);
-  }
-  else
-  {
-    QString message;
-    QTextStream ss(&message);
-    ss << "Failed to execute scan motion: '" << QString::fromStdString(response->message) << "'";
-    emit log(message);
-    emit updateStatus(false, SCAN_EXECUTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-    cb = [](StopScanFuture) {};
-  }
-
-  stop_reconstruction_client_->async_send_request(stop_request, cb);
-}
-
-void SNPWidget::onScanStopDone(StopScanFuture stop_result)
-{
-  if (!stop_result.get()->success)
-  {
-    emit log("Failed to stop surface reconstruction");
-    emit updateStatus(false, STOP_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-  }
-
-  if (!motion_execution_client_->service_is_ready())
-  {
-    emit log("Motion execution service is not available");
-    emit updateStatus(false, START_RECONSTRUCTION_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
-
-  emit updateStatus(true, STOP_RECONSTRUCTION_ST, SCAN_DEPARTURE_ST, STATES.at(SCAN_DEPARTURE_ST));
-  emit log("Sending scan departure motion goal");
-
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  request->use_tool = false;
-  request->motion_plan.header = scan_traj_.header;
-  request->motion_plan.joint_names = scan_traj_.joint_names;
-
-  trajectory_msgs::msg::JointTrajectoryPoint start_pt = scan_traj_.points.at(scan_traj_.points.size() - 1);
-  const trajectory_msgs::msg::JointTrajectoryPoint& prev_pt = scan_traj_.points.at(scan_traj_.points.size() - 2);
-  start_pt.time_from_start.sec -= prev_pt.time_from_start.sec;
-  start_pt.time_from_start.nanosec -= prev_pt.time_from_start.nanosec;
-  request->motion_plan.points.push_back(start_pt);
-
-  trajectory_msgs::msg::JointTrajectoryPoint end_pt = scan_traj_.points.at(0);
-  end_pt.time_from_start.sec += start_pt.time_from_start.sec;
-  end_pt.time_from_start.nanosec += start_pt.time_from_start.nanosec;
-  request->motion_plan.points.push_back(end_pt);
-
-  auto cb = std::bind(&SNPWidget::onScanDepartureDone, this, std::placeholders::_1);
-  motion_execution_client_->async_send_request(request, cb);
-}
-
-void SNPWidget::onScanDepartureDone(FJTResult result)
-{
-  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (response->success)
-  {
-    emit log("Successfully completed scan and surface reconstruction");
-    emit updateStatus(true, SCAN_DEPARTURE_ST, TPP_ST, STATES.at(TPP_ST));
-    scan_complete_ = true;
-  }
-  else
-  {
-    QString message;
-    QTextStream ss(&message);
-    ss << "Failed to execute scan motion departure: '" << QString::fromStdString(response->message) << "'";
-    emit log(message);
-    emit updateStatus(false, SCAN_DEPARTURE_ST, SCAN_APPROACH_ST, STATES.at(SCAN_APPROACH_ST));
-    return;
-  }
-}
-
-void SNPWidget::planToolPaths()
+void SNPWidget::runTreeWithThread()
 {
   try
   {
-    if (!scan_complete_)
-      throw std::runtime_error("Scan has not been completed");
+    auto* thread = new BTThread(this);
 
-    if (!tpp_client_->service_is_ready())
-      throw std::runtime_error("Tool path planning server is not available");
+    // Create the BT factory
+    BT::BehaviorTreeFactory bt_factory;
 
-    tool_paths_.clear();
+    // Register custom nodes
+    bt_factory.registerNodeType<ButtonMonitorNode>("ButtonMonitor");
+    bt_factory.registerNodeType<ButtonApprovalNode>("ButtonApproval");
+    bt_factory.registerNodeType<ProgressDecoratorNode>("Progress");
+    bt_factory.registerNodeType<SetPageDecoratorNode>("SetPage");
+    bt_factory.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
+    bt_factory.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
 
-    // Reset any motion plan computed on a previous tool path
-    motion_plan_.reset();
+    BT::RosNodeParams ros_params;
+    ros_params.nh = bt_node_;
+    ros_params.wait_for_server_timeout = std::chrono::seconds(0);
+    ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM));
 
-    // Fill out the service call
-    auto request = std::make_shared<snp_msgs::srv::GenerateToolPaths::Request>();
-    request->mesh_filename = mesh_file_;
-    request->mesh_frame = reference_frame_;
+    // Publishers/Subscribers
+    bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
+    bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
+    bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
+    // Short-running services
+    bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
+    bt_factory.registerNodeType<GenerateToolPathsServiceNode>("GenerateToolPathsService", ros_params);
+    bt_factory.registerNodeType<StartReconstructionServiceNode>("StartReconstructionService", ros_params);
+    bt_factory.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
 
-    // Call the service
-    auto future = tpp_client_->async_send_request(
-        request, std::bind(&SNPWidget::onPlanToolPathsDone, this, std::placeholders::_1));
-  }
-  catch (const std::exception& ex)
-  {
-    emit log(QString(ex.what()));
-    emit updateStatus(false, TPP_ST, TPP_ST, STATES.at(TPP_ST));
-  }
-}
+    // Long-running services/actions
+    ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
+    bt_factory.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
+    bt_factory.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
+    bt_factory.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
+    bt_factory.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
 
-void SNPWidget::onPlanToolPathsDone(rclcpp::Client<snp_msgs::srv::GenerateToolPaths>::SharedFuture result)
-{
-  snp_msgs::srv::GenerateToolPaths::Response::SharedPtr response = result.get();
-  if (!response->success)
-  {
-    emit log(QString::fromStdString(response->message));
-    emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
-    return;
-  }
+    auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
+    for (const std::string& file : bt_files)
+      bt_factory.registerBehaviorTreeFromFile(file);
 
-  tool_paths_ = response->tool_paths;
+    thread->tree = bt_factory.createTree(get_parameter<std::string>(bt_node_, BT_PARAM), board_);
+    logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
 
-  // Publish a message to display the tool path
-  {
-    geometry_msgs::msg::PoseArray flat_toolpath_msg;
-    flat_toolpath_msg.header.frame_id = reference_frame_;
-    for (auto& toolpath : tool_paths_)
-    {
-      for (auto& segment : toolpath.segments)
+    connect(thread, &BTThread::finished, [thread, this]() {
+      QString message;
+      QTextStream stream(&message);
+      switch (thread->result)
       {
-        // Update the reference frame
-        segment.header.frame_id = reference_frame_;
-
-        // Insert the waypoints into the flattened structure
-        flat_toolpath_msg.poses.insert(flat_toolpath_msg.poses.end(), segment.poses.begin(), segment.poses.end());
+        case BT::NodeStatus::SUCCESS:
+          stream << "Behavior tree completed successfully";
+          break;
+        default:
+          stream << "Behavior tree did not complete successfully";
+          break;
       }
-    }
 
-    toolpath_pub_->publish(flat_toolpath_msg);
-  }
+      if (!thread->message.isEmpty())
+        stream << ": '" << thread->message << "'";
 
-  emit updateStatus(true, TPP_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
-}
+      QMetaObject::invokeMethod(ui_->text_edit_log, "append", Qt::QueuedConnection, Q_ARG(QString, message));
+    });
 
-void SNPWidget::planMotion()
-{
-  emit log("Attempting motion planning");
-  try
-  {
-    if (tool_paths_.empty())
-      throw std::runtime_error("No tool paths have been defined");
-
-    if (!motion_planning_client_->service_is_ready())
-      throw std::runtime_error("Motion planning server is not available");
-
-    // Reset the internal motion plan container
-    motion_plan_.reset();
-
-    // TODO: Fill a motion planning service request
-    auto request = std::make_shared<snp_msgs::srv::GenerateMotionPlan::Request>();
-    request->motion_group = get<std::string>(*node_, MOTION_GROUP_PARAM);
-    request->tcp_frame = get<std::string>(*node_, TCP_FRAME_PARAM);
-    request->tool_paths = tool_paths_;
-    request->mesh_filename = mesh_file_;
-    request->mesh_frame = reference_frame_;
-
-    // Call the service
-    motion_planning_client_->async_send_request(request,
-                                                std::bind(&SNPWidget::onPlanMotionDone, this, std::placeholders::_1));
-
-    QApplication::setOverrideCursor(Qt::BusyCursor);
+    thread->start();
   }
   catch (const std::exception& ex)
   {
-    emit log(ex.what());
-    emit updateStatus(false, MOTION_PLANNING_ST, MOTION_PLANNING_ST, STATES.at(MOTION_PLANNING_ST));
-  }
-}
-
-void SNPWidget::onPlanMotionDone(rclcpp::Client<snp_msgs::srv::GenerateMotionPlan>::SharedFuture future)
-{
-  QApplication::restoreOverrideCursor();
-  snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr response = future.get();
-  if (!response->success)
-  {
-    emit log(QString::fromStdString(response->message));
-  }
-  else
-  {
-    // Save the motion plan internally
-    motion_plan_ = std::make_shared<trajectory_msgs::msg::JointTrajectory>(response->motion_plan);
-  }
-
-  emit updateStatus(response->success, MOTION_PLANNING_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
-}
-
-void SNPWidget::execute()
-{
-  if (!motion_plan_)
-  {
-    emit log("Motion plan is empty, can not execute");
-    emit updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
+    QMessageBox::warning(this, QString::fromStdString("Error"), QString::fromStdString(ex.what()));
     return;
   }
-
-  if (!motion_execution_client_->service_is_ready())
-  {
-    emit log("Motion execution service is not available");
-    emit updateStatus(false, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
-    return;
-  }
-
-  // do execution things
-  auto request = std::make_shared<snp_msgs::srv::ExecuteMotionPlan::Request>();
-  request->motion_plan = *motion_plan_;
-  request->use_tool = true;
-
-  motion_execution_client_->async_send_request(request,
-                                               std::bind(&SNPWidget::onExecuteDone, this, std::placeholders::_1));
 }
 
-void SNPWidget::onExecuteDone(rclcpp::Client<snp_msgs::srv::ExecuteMotionPlan>::SharedFuture result)
-{
-  snp_msgs::srv::ExecuteMotionPlan::Response::SharedPtr response = result.get();
-  if (!response->success)
-  {
-    QString message;
-    QTextStream ss(&message);
-    ss << "Motion execution error: '" << QString::fromStdString(response->message) << "'";
-    emit log(message);
-    emit updateStatus(response->success, MOTION_EXECUTION_ST, MOTION_EXECUTION_ST, STATES.at(MOTION_EXECUTION_ST));
-    return;
-  }
-  else
-  {
-    emit updateStatus(response->success, MOTION_EXECUTION_ST, "", static_cast<unsigned>(STATES.size()));
-  }
-}
-
-void SNPWidget::reset()
-{
-  ui_->text_edit_log->setText("Waiting to calibrate...");
-
-  // reset button states
-  ui_->run_calibration_button->setEnabled(false);
-  ui_->get_correlation_button->setEnabled(false);
-  ui_->install_calibration_button->setEnabled(false);
-  ui_->scan_button->setEnabled(true);
-  ui_->tpp_button->setEnabled(true);
-  ui_->motion_plan_button->setEnabled(true);
-  ui_->motion_execution_button->setEnabled(true);
-
-  ui_->progress_bar->setValue(0);
-
-  // Clear the internal variables
-  scan_complete_ = false;
-  tool_paths_.clear();
-  motion_plan_.reset();
-}
+}  // namespace snp_application

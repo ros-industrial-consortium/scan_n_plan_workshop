@@ -19,7 +19,9 @@ string mesh_frame
 # Response
 
 # Motion Plan - a joint trajectory for the robot to follow
-trajectory_msgs/JointTrajectory motion_plan
+trajectory_msgs/JointTrajectory approach
+trajectory_msgs/JointTrajectory process
+trajectory_msgs/JointTrajectory departure
 
 # Success and error information
 bool success

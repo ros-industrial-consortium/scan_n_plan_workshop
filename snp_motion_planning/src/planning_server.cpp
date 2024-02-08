@@ -59,7 +59,7 @@ static const std::string TASK_NAME_PARAM = "task_name";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 
 // Services
-static const std::string PLANNING_SERVICE = "create_motion_plan";
+static const std::string PLANNING_SERVICE = "generate_motion_plan";
 static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
 tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& paths)
@@ -515,15 +515,41 @@ private:
       tesseract_planning::CompositeInstruction program_results =
           result->context->data_storage->getData(output_key).as<tesseract_planning::CompositeInstruction>();
 
-      // Convert to joint trajectory
-      tesseract_common::JointTrajectory jt = toJointTrajectory(program_results);
+      if (program_results.size() < 3)
+      {
+        std::stringstream ss;
+        ss << "The composite instruction must have at least 3 children (approach, process rasters, and departure). "
+              "This result only has "
+           << program_results.size();
+        throw std::runtime_error(ss.str());
+      }
 
       // Send joint trajectory to Tesseract plotter widget
-      plotter_->plotTrajectory(jt, *env_->getStateSolver());
+      plotter_->plotTrajectory(toJointTrajectory(program_results), *env_->getStateSolver());
 
       // Return results
-      res->motion_plan = tesseract_rosutils::toMsg(jt, env_->getState());
-      res->message = "Successfully planned motion";
+      res->approach = tesseract_rosutils::toMsg(toJointTrajectory(*program_results.begin()), env_->getState());
+
+      tesseract_planning::CompositeInstruction process_ci(program_results.begin() + 1, program_results.end() - 1);
+      res->process = tesseract_rosutils::toMsg(toJointTrajectory(process_ci), env_->getState());
+
+      res->departure = tesseract_rosutils::toMsg(toJointTrajectory(*(program_results.end() - 1)), env_->getState());
+
+      // Add the end of the approach to the beginning of the process trajectory
+      {
+        trajectory_msgs::msg::JointTrajectoryPoint approach_end = res->approach.points.back();
+        approach_end.time_from_start = builtin_interfaces::msg::Duration();
+        res->process.points.insert(res->process.points.begin(), approach_end);
+      }
+
+      // Add the end of the process trajectory to the beginning of the departure trajectory
+      {
+        trajectory_msgs::msg::JointTrajectoryPoint process_end = res->process.points.back();
+        process_end.time_from_start = builtin_interfaces::msg::Duration();
+        res->departure.points.insert(res->departure.points.begin(), process_end);
+      }
+
+      res->message = "Succesfully planned motion";
       res->success = true;
     }
     catch (const std::exception& ex)
