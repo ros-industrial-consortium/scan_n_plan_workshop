@@ -11,6 +11,7 @@
 #include "bt/text_edit_logger.h"
 #include "bt/utils.h"
 
+#include <behaviortree_cpp/bt_factory.h>
 #include <boost_plugin_loader/plugin_loader.h>
 #include <QMessageBox>
 #include <QTextStream>
@@ -121,77 +122,80 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   board_->set("tpp", static_cast<QAbstractButton*>(ui_->push_button_tpp));
   board_->set("plan", static_cast<QAbstractButton*>(ui_->push_button_motion_plan));
   board_->set("execute", static_cast<QAbstractButton*>(ui_->push_button_motion_execution));
-
-  // Register custom nodes
-  factory_.registerNodeType<ButtonMonitorNode>("ButtonMonitor");
-  factory_.registerNodeType<ButtonApprovalNode>("ButtonApproval");
-  factory_.registerNodeType<ProgressDecoratorNode>("Progress");
-  factory_.registerNodeType<SetPageDecoratorNode>("SetPage");
-  factory_.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
-  factory_.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
-
-  BT::RosNodeParams ros_params;
-  ros_params.nh = bt_node_;
-  ros_params.wait_for_server_timeout = std::chrono::seconds(0);
-  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM));
-
-  // Publishers/Subscribers
-  factory_.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
-  factory_.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
-  factory_.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
-  // Short-running services
-  factory_.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
-  factory_.registerNodeType<GenerateToolPathsServiceNode>("GenerateToolPathsService", ros_params);
-  factory_.registerNodeType<StartReconstructionServiceNode>("StartReconstructionService", ros_params);
-  factory_.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
-
-  // Long-running services/actions
-  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
-  factory_.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
-  factory_.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
-  factory_.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
-  factory_.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
-
-  auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
-  for (const std::string& file : bt_files)
-    factory_.registerBehaviorTreeFromFile(file);
 }
 
 void SNPWidget::runTreeWithThread()
 {
-  auto thread = new BTThread(this);
-
   try
   {
-    thread->tree = factory_.createTree(get_parameter<std::string>(bt_node_, BT_PARAM), board_);
+    auto* thread = new BTThread(this);
+
+    // Create the BT factory
+    BT::BehaviorTreeFactory bt_factory;
+
+    // Register custom nodes
+    bt_factory.registerNodeType<ButtonMonitorNode>("ButtonMonitor");
+    bt_factory.registerNodeType<ButtonApprovalNode>("ButtonApproval");
+    bt_factory.registerNodeType<ProgressDecoratorNode>("Progress");
+    bt_factory.registerNodeType<SetPageDecoratorNode>("SetPage");
+    bt_factory.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
+    bt_factory.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
+
+    BT::RosNodeParams ros_params;
+    ros_params.nh = bt_node_;
+    ros_params.wait_for_server_timeout = std::chrono::seconds(0);
+    ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM));
+
+    // Publishers/Subscribers
+    bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
+    bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
+    bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
+    // Short-running services
+    bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
+    bt_factory.registerNodeType<GenerateToolPathsServiceNode>("GenerateToolPathsService", ros_params);
+    bt_factory.registerNodeType<StartReconstructionServiceNode>("StartReconstructionService", ros_params);
+    bt_factory.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
+
+    // Long-running services/actions
+    ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
+    bt_factory.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
+    bt_factory.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
+    bt_factory.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
+    bt_factory.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
+
+    auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
+    for (const std::string& file : bt_files)
+      bt_factory.registerBehaviorTreeFromFile(file);
+
+    thread->tree = bt_factory.createTree(get_parameter<std::string>(bt_node_, BT_PARAM), board_);
     logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
+
+    connect(thread, &BTThread::finished, [thread, this]() {
+      QString message;
+      QTextStream stream(&message);
+      switch (thread->result)
+      {
+        case BT::NodeStatus::SUCCESS:
+          stream << "Behavior tree completed successfully";
+          break;
+        default:
+          stream << "Behavior tree did not complete successfully";
+          break;
+      }
+
+      if (!thread->message.isEmpty())
+        stream << ": '" << thread->message << "'";
+
+      QMetaObject::invokeMethod(ui_->text_edit_log, "append", Qt::QueuedConnection, Q_ARG(QString, message));
+    });
+
+    thread->start();
   }
   catch (const std::exception& ex)
   {
     QMessageBox::warning(this, QString::fromStdString("Error"), QString::fromStdString(ex.what()));
     return;
   }
-
-  connect(thread, &BTThread::finished, [thread, this]() {
-    QString message;
-    QTextStream stream(&message);
-    switch (thread->result)
-    {
-      case BT::NodeStatus::SUCCESS:
-        stream << "Behavior tree completed successfully";
-        break;
-      default:
-        stream << "Behavior tree did not complete successfully";
-        break;
-    }
-
-    if (!thread->message.isEmpty())
-      stream << ": '" << thread->message << "'";
-
-    QMetaObject::invokeMethod(ui_->text_edit_log, "append", Qt::QueuedConnection, Q_ARG(QString, message));
-  });
-
-  thread->start();
 }
 
 }  // namespace snp_application
