@@ -31,6 +31,9 @@ public:
   {
     setWindowTitle("Tool Path Planner");
 
+    // Set non-modal, so it can launch the load and save dialogs within itself
+    setModal(false);
+
     boost_plugin_loader::PluginLoader loader;
     loader.search_libraries.insert(NOETHER_GUI_PLUGINS);
     loader.search_libraries.insert(SNP_TPP_GUI_PLUGINS);
