@@ -164,10 +164,17 @@ void SNPWidget::runTreeWithThread()
     bt_factory.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
 
     auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
+    if (bt_files.empty())
+      throw std::runtime_error("Parameter '" + BT_FILES_PARAM + "' is empty");
+
     for (const std::string& file : bt_files)
       bt_factory.registerBehaviorTreeFromFile(file);
 
-    thread->tree = bt_factory.createTree(get_parameter<std::string>(bt_node_, BT_PARAM), board_);
+    auto bt_tree_name = get_parameter<std::string>(bt_node_, BT_PARAM);
+    if (bt_tree_name.empty())
+      throw std::runtime_error("Parameter '" + BT_PARAM + "' is not set");
+
+    thread->tree = bt_factory.createTree(bt_tree_name, board_);
     logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
 
     connect(thread, &BTThread::finished, [thread, this]() {
