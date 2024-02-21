@@ -470,7 +470,7 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   // Replace the start state of the trajectory with the current joint state
   {
     trajectory_msgs::msg::JointTrajectoryPoint start_point;
-    start_point.positions.resize(trajectory.joint_names.size());
+    start_point.positions = trajectory.points.front().positions;
     start_point.velocities = std::vector<double>(start_point.positions.size(), 0);
     start_point.accelerations = std::vector<double>(start_point.positions.size(), 0);
     start_point.effort = std::vector<double>(start_point.positions.size(), 0);
