@@ -1,6 +1,0 @@
-type: CharucoGridTargetFinderPlugin
-rows: 10
-cols: 6
-chessboard_dim: 0.040
-aruco_marker_dim: 0.031
-dictionary: 0  # DICT_4X4_250
