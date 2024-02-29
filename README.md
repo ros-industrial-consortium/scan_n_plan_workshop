@@ -35,4 +35,5 @@ colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF -DBUILD_RENDERING=OFF
 ```
 
 ## Application-specific Implementations
-- [Automate 2022](snp_automate_2022)
+- [Automate 2022](https://github.com/ros-industrial-consortium/snp_automate_2022)
+- [Robotic Blending Milestone 5](https://github.com/ros-industrial-consortium/snp_blending)
