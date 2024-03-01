@@ -58,7 +58,7 @@ class ScanMotionPlanFromFileNode(Node):
             response.process.header = header;
             response.departure.joint_names = scan_traj['joint_names']
             for i in range(len(points) - 2, len(points)):
-                response.departure.points.append(create_point(points[i], points[len(points)-2]))
+                response.departure.points.append(create_point(points[i], points[-2]))
 
             response.success = True
 
