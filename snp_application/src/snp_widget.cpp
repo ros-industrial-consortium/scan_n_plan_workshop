@@ -111,6 +111,18 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
   bt_node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
 
+  bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
+  bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
+  bt_node_->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
+  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
+  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
+  bt_node_->declare_parameter<bool>(IR_LIVE_PARAM, true);
+
   // Set the error message key in the blackboard
   board_->set(ERROR_MESSAGE_KEY, "");
 

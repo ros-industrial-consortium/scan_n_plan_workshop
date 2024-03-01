@@ -23,6 +23,17 @@ static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
 static const std::string START_STATE_REPLACEMENT_TOLERANCE_PARAM = "start_state_replacement_tolerance";
+static const std::string IR_TSDF_VOXEL_PARAM = "tsdf.voxel_length";
+static const std::string IR_TSDF_SDF_PARAM = "tsdf.sdf_trunc";
+static const std::string IR_TSDF_MIN_X_PARAM = "tsdf.min.x";
+static const std::string IR_TSDF_MIN_Y_PARAM = "tsdf.min.y";
+static const std::string IR_TSDF_MIN_Z_PARAM = "tsdf.min.z";
+static const std::string IR_TSDF_MAX_X_PARAM = "tsdf.max.x";
+static const std::string IR_TSDF_MAX_Y_PARAM = "tsdf.max.y";
+static const std::string IR_TSDF_MAX_Z_PARAM = "tsdf.max.z";
+static const std::string IR_RGBD_DEPTH_SCALE_PARAM = "rgbd.depth_scale";
+static const std::string IR_RGBD_DEPTH_TRUNC_PARAM = "rgbd.depth_trunc";
+static const std::string IR_LIVE_PARAM = "live";
 
 template <typename T>
 T get_parameter(rclcpp::Node::SharedPtr node, const std::string& key)

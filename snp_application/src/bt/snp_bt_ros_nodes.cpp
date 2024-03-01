@@ -189,16 +189,19 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->tsdf_params.voxel_length = get_parameter_or<float>(node_, "tsdf.voxel_length", 0.01f);
-  request->tsdf_params.sdf_trunc = get_parameter_or<float>(node_, "tsdf.sdf_trunc", 0.03f);
-  request->tsdf_params.min_box_values.x = get_parameter_or<double>(node_, "tsdf.min.x", 0.0);
-  request->tsdf_params.min_box_values.y = get_parameter_or<double>(node_, "tsdf.min.y", 0.0);
-  request->tsdf_params.min_box_values.z = get_parameter_or<double>(node_, "tsdf.min.z", 0.0);
-  request->tsdf_params.max_box_values.x = get_parameter_or<double>(node_, "tsdf.max.x", 0.0);
-  request->tsdf_params.max_box_values.y = get_parameter_or<double>(node_, "tsdf.max.y", 0.0);
-  request->tsdf_params.max_box_values.z = get_parameter_or<double>(node_, "tsdf.max.z", 0.0);
-  request->rgbd_params.depth_scale = get_parameter_or<float>(node_, "rgbd.depth_scale", 1000.0);
-  request->rgbd_params.depth_trunc = get_parameter_or<float>(node_, "rgbd.depth_trunc", 1.1f);
+  request->tracking_frame = get_parameter<std::string>(node_, CAMERA_FRAME_PARAM);
+  request->relative_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  request->tsdf_params.voxel_length = get_parameter_or<float>(node_, IR_TSDF_VOXEL_PARAM, 0.01f);
+  request->tsdf_params.sdf_trunc = get_parameter_or<float>(node_, IR_TSDF_SDF_PARAM, 0.03f);
+  request->tsdf_params.min_box_values.x = get_parameter_or<double>(node_, IR_TSDF_MIN_X_PARAM, 0.0);
+  request->tsdf_params.min_box_values.y = get_parameter_or<double>(node_, IR_TSDF_MIN_Y_PARAM, 0.0);
+  request->tsdf_params.min_box_values.z = get_parameter_or<double>(node_, IR_TSDF_MIN_Z_PARAM, 0.0);
+  request->tsdf_params.max_box_values.x = get_parameter_or<double>(node_, IR_TSDF_MAX_X_PARAM, 0.0);
+  request->tsdf_params.max_box_values.y = get_parameter_or<double>(node_, IR_TSDF_MAX_Y_PARAM, 0.0);
+  request->tsdf_params.max_box_values.z = get_parameter_or<double>(node_, IR_TSDF_MAX_Z_PARAM, 0.0);
+  request->rgbd_params.depth_scale = get_parameter_or<float>(node_, IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
+  request->rgbd_params.depth_trunc = get_parameter_or<float>(node_, IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
+  request->live = get_parameter_or<bool>(node_, IR_LIVE_PARAM, true);
 
   return true;
 }
