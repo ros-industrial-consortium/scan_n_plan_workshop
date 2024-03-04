@@ -24,6 +24,8 @@ public:
 private:
   void runTreeWithThread();
 
+  virtual BT::BehaviorTreeFactory createBTFactory();
+
   rclcpp::Node::SharedPtr bt_node_;
   rclcpp::Node::SharedPtr tpp_node_;
   rclcpp::executors::SingleThreadedExecutor tpp_node_executor_;
