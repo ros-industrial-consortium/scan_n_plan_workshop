@@ -21,7 +21,7 @@ class SNPWidget : public QWidget
 public:
   explicit SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent = nullptr);
 
-private:
+protected:
   void runTreeWithThread();
 
   virtual BT::BehaviorTreeFactory createBTFactory();
