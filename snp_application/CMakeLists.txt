@@ -101,4 +101,21 @@ install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME}/)
 
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
+ament_export_dependencies(
+  behaviortree_cpp
+  behaviortree_ros2
+  industrial_reconstruction_msgs
+  rclcpp_action
+  rclcpp_components
+  control_msgs
+  sensor_msgs
+  geometry_msgs
+  snp_msgs
+  snp_tpp
+  std_srvs
+  tf2_eigen
+  trajectory_msgs
+  trajectory_preview
+  rviz_common
+  pluginlib)
 ament_package()
