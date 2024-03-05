@@ -16,13 +16,13 @@ namespace snp_application
 {
 class SNPWidget : public QWidget
 {
-  Q_OBJECT
-
 public:
   explicit SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent = nullptr);
 
-private:
+protected:
   void runTreeWithThread();
+
+  virtual BT::BehaviorTreeFactory createBTFactory(int ros_short_timeout, int ros_long_timeout);
 
   rclcpp::Node::SharedPtr bt_node_;
   rclcpp::Node::SharedPtr tpp_node_;

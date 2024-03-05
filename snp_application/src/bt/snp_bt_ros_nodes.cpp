@@ -1,74 +1,9 @@
-#include "bt/snp_bt_ros_nodes.h"
-#include "bt/utils.h"
+#include <snp_application/bt/snp_bt_ros_nodes.h>
 
 #include <geometry_msgs/msg/pose_array.hpp>
 
 namespace snp_application
 {
-template <typename T>
-BT::NodeStatus SnpRosServiceNode<T>::onFailure(BT::ServiceNodeErrorCode error)
-{
-  std::stringstream ss;
-  ss << "Service '" << BT::RosServiceNode<T>::prev_service_name_ << "'";
-
-  switch (error)
-  {
-    case BT::SERVICE_UNREACHABLE:
-      ss << " is unreachable";
-      break;
-    case BT::SERVICE_TIMEOUT:
-      ss << " timed out";
-      break;
-    case BT::INVALID_REQUEST:
-      ss << " was sent an invalid request";
-      break;
-    case BT::SERVICE_ABORTED:
-      ss << " was aborted";
-      break;
-    default:
-      break;
-  }
-
-  this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
-
-  return BT::NodeStatus::FAILURE;
-}
-
-template <typename T>
-BT::NodeStatus SnpRosActionNode<T>::onFailure(BT::ActionNodeErrorCode error)
-{
-  std::stringstream ss;
-  ss << "Action '" << BT::RosActionNode<T>::prev_action_name_ << "' failed: '";
-
-  switch (error)
-  {
-    case BT::SERVER_UNREACHABLE:
-      ss << "server unreachable'";
-      break;
-    case BT::SEND_GOAL_TIMEOUT:
-      ss << "goal timed out'";
-      break;
-    case BT::GOAL_REJECTED_BY_SERVER:
-      ss << "goal rejected by server'";
-      break;
-    case BT::ACTION_ABORTED:
-      ss << "action aborted'";
-      break;
-    case BT::ACTION_CANCELLED:
-      ss << "action cancelled'";
-      break;
-    case BT::INVALID_GOAL:
-      ss << "invalid goal'";
-      break;
-    default:
-      break;
-  }
-
-  this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
-
-  return BT::NodeStatus::FAILURE;
-}
-
 bool TriggerServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
 {
   return true;

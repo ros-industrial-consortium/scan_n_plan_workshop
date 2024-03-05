@@ -1,5 +1,5 @@
-#include "bt/set_page_decorator_node.h"
-#include "bt/utils.h"
+#include <snp_application/bt/set_page_decorator_node.h>
+#include <snp_application/bt/utils.h>
 
 #include <QStackedWidget>
 

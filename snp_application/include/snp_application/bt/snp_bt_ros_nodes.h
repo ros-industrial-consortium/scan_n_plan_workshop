@@ -1,5 +1,7 @@
 #pragma once
 
+#include <snp_application/bt/utils.h>
+
 #include <behaviortree_ros2/bt_action_node.hpp>
 #include <behaviortree_ros2/bt_service_node.hpp>
 #include <behaviortree_ros2/bt_topic_pub_node.hpp>
@@ -57,7 +59,34 @@ class SnpRosServiceNode : public BT::RosServiceNode<T>
 {
 public:
   using BT::RosServiceNode<T>::RosServiceNode;
-  BT::NodeStatus onFailure(BT::ServiceNodeErrorCode error) override;
+
+  inline BT::NodeStatus onFailure(BT::ServiceNodeErrorCode error) override
+  {
+    std::stringstream ss;
+    ss << "Service '" << BT::RosServiceNode<T>::prev_service_name_ << "'";
+
+    switch (error)
+    {
+      case BT::SERVICE_UNREACHABLE:
+        ss << " is unreachable";
+        break;
+      case BT::SERVICE_TIMEOUT:
+        ss << " timed out";
+        break;
+      case BT::INVALID_REQUEST:
+        ss << " was sent an invalid request";
+        break;
+      case BT::SERVICE_ABORTED:
+        ss << " was aborted";
+        break;
+      default:
+        break;
+    }
+
+    this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+
+    return BT::NodeStatus::FAILURE;
+  }
 };
 
 template <typename T>
@@ -65,7 +94,40 @@ class SnpRosActionNode : public BT::RosActionNode<T>
 {
 public:
   using BT::RosActionNode<T>::RosActionNode;
-  BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
+
+  inline BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override
+  {
+    std::stringstream ss;
+    ss << "Action '" << BT::RosActionNode<T>::prev_action_name_ << "' failed: '";
+
+    switch (error)
+    {
+      case BT::SERVER_UNREACHABLE:
+        ss << "server unreachable'";
+        break;
+      case BT::SEND_GOAL_TIMEOUT:
+        ss << "goal timed out'";
+        break;
+      case BT::GOAL_REJECTED_BY_SERVER:
+        ss << "goal rejected by server'";
+        break;
+      case BT::ACTION_ABORTED:
+        ss << "action aborted'";
+        break;
+      case BT::ACTION_CANCELLED:
+        ss << "action cancelled'";
+        break;
+      case BT::INVALID_GOAL:
+        ss << "invalid goal'";
+        break;
+      default:
+        break;
+    }
+
+    this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+
+    return BT::NodeStatus::FAILURE;
+  }
 };
 
 class TriggerServiceNode : public SnpRosServiceNode<std_srvs::srv::Trigger>

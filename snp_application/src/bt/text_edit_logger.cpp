@@ -1,5 +1,5 @@
-#include "bt/text_edit_logger.h"
-#include "bt/utils.h"
+#include <snp_application/bt/text_edit_logger.h>
+#include <snp_application/bt/utils.h>
 
 #include <QTextCursor>
 #include <QTextEdit>

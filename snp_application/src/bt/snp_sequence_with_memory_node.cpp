@@ -14,7 +14,7 @@
  * SOFTWARE.
  */
 
-#include "bt/snp_sequence_with_memory_node.h"
+#include <snp_application/bt/snp_sequence_with_memory_node.h>
 
 namespace snp_application
 {
