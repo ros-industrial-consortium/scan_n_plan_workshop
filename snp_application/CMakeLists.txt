@@ -40,31 +40,25 @@ find_package(rviz_common REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(trajectory_preview REQUIRED)
 
-include_directories(include ${EIGEN3_INCLUDE_DIRS})
-
 add_library(
   ${PROJECT_NAME}_widget SHARED
   src/snp_widget.ui
-  include/snp_widget.h
   src/snp_widget.cpp
   # BT
-  include/bt/utils.h
-  include/bt/bt_thread.h
   src/bt/bt_thread.cpp
-  include/bt/button_approval_node.h
   src/bt/button_approval_node.cpp
-  include/bt/button_monitor_node.h
   src/bt/button_monitor_node.cpp
-  include/bt/progress_decorator_node.h
   src/bt/progress_decorator_node.cpp
-  include/bt/set_page_decorator_node.h
   src/bt/set_page_decorator_node.cpp
-  include/bt/snp_bt_ros_nodes.h
   src/bt/snp_bt_ros_nodes.cpp
-  include/bt/snp_sequence_with_memory_node.h
   src/bt/snp_sequence_with_memory_node.cpp
-  include/bt/text_edit_logger.h
   src/bt/text_edit_logger.cpp)
+target_include_directories(
+  ${PROJECT_NAME}_widget
+  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+         "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
+         "$<INSTALL_INTERFACE:include>"
+         ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
@@ -82,7 +76,6 @@ ament_target_dependencies(
   tf2_eigen
   trajectory_msgs
   trajectory_preview)
-target_compile_definitions(${PROJECT_NAME}_widget PUBLIC SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
 target_link_libraries(${PROJECT_NAME}_panel ${PROJECT_NAME}_widget)
@@ -91,6 +84,9 @@ ament_target_dependencies(${PROJECT_NAME}_panel rviz_common pluginlib)
 add_executable(roscon_app src/main.cpp)
 target_link_libraries(roscon_app Qt5::Widgets ${PROJECT_NAME}_widget)
 ament_target_dependencies(roscon_app rclcpp)
+
+# Install the headers
+install(DIRECTORY include/${PROJECT_NAME} DESTINATION include/)
 
 # Install the library(ies)
 install(TARGETS ${PROJECT_NAME}_widget ${PROJECT_NAME}_panel EXPORT ${PROJECT_NAME}-targets DESTINATION lib)

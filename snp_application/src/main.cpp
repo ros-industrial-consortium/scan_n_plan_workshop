@@ -1,4 +1,4 @@
-#include "snp_widget.h"
+#include <snp_application/snp_widget.h>
 #include <QApplication>
 
 #include <rclcpp/rclcpp.hpp>

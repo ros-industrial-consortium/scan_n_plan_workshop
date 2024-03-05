@@ -1,5 +1,5 @@
-#include "bt/snp_bt_ros_nodes.h"
-#include "bt/utils.h"
+#include <snp_application/bt/snp_bt_ros_nodes.h>
+#include <snp_application/bt/utils.h>
 
 #include <geometry_msgs/msg/pose_array.hpp>
 

@@ -1,5 +1,5 @@
-#include "bt/button_approval_node.h"
-#include "bt/utils.h"
+#include <snp_application/bt/button_approval_node.h>
+#include <snp_application/bt/utils.h>
 
 #include <QAbstractButton>
 

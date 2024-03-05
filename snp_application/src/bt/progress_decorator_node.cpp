@@ -1,5 +1,5 @@
-#include "bt/progress_decorator_node.h"
-#include "bt/utils.h"
+#include <snp_application/bt/progress_decorator_node.h>
+#include <snp_application/bt/utils.h>
 
 #include <QProgressBar>
 

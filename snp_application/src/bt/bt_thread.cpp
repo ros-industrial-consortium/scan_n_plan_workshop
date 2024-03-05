@@ -1,4 +1,4 @@
-#include "bt/bt_thread.h"
+#include <snp_application/bt/bt_thread.h>
 
 namespace snp_application
 {

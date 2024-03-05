@@ -1,4 +1,4 @@
-#include "snp_widget.h"
+#include <snp_application/snp_widget.h>
 
 #include <QMessageBox>
 #include <QVBoxLayout>
