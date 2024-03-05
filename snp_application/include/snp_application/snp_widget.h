@@ -16,8 +16,6 @@ namespace snp_application
 {
 class SNPWidget : public QWidget
 {
-  Q_OBJECT
-
 public:
   explicit SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent = nullptr);
 
