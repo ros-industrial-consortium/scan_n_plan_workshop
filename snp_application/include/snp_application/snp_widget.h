@@ -22,7 +22,7 @@ public:
 protected:
   void runTreeWithThread();
 
-  virtual BT::BehaviorTreeFactory createBTFactory();
+  virtual BT::BehaviorTreeFactory createBTFactory(int ros_short_timeout, int ros_long_timeout);
 
   rclcpp::Node::SharedPtr bt_node_;
   rclcpp::Node::SharedPtr tpp_node_;

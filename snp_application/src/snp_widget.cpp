@@ -139,7 +139,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   board_->set("execute", static_cast<QAbstractButton*>(ui_->push_button_motion_execution));
 }
 
-BT::BehaviorTreeFactory SNPWidget::createBTFactory()
+BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ros_long_timeout)
 {
   BT::BehaviorTreeFactory bt_factory;
 
@@ -154,7 +154,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory()
   BT::RosNodeParams ros_params;
   ros_params.nh = bt_node_;
   ros_params.wait_for_server_timeout = std::chrono::seconds(0);
-  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM));
+  ros_params.server_timeout = std::chrono::seconds(ros_short_timeout);
 
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
@@ -167,7 +167,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory()
   bt_factory.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
 
   // Long-running services/actions
-  ros_params.server_timeout = std::chrono::seconds(get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
+  ros_params.server_timeout = std::chrono::seconds(ros_long_timeout);
   bt_factory.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
   bt_factory.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
   bt_factory.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
@@ -183,7 +183,8 @@ void SNPWidget::runTreeWithThread()
     auto* thread = new BTThread(this);
 
     // Create the BT factory
-    BT::BehaviorTreeFactory bt_factory = createBTFactory();
+    BT::BehaviorTreeFactory bt_factory = createBTFactory(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM),
+                                                         get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
 
     auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
     if (bt_files.empty())
