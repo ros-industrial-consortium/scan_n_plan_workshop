@@ -9,6 +9,7 @@ on:
       - 'snp**'
       - 'docker/Dockerfile'
       - '.github/workflows/docker.yml'
+      - 'dependencies.repos'
   release:
     types:
       - released
