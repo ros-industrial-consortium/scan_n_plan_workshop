@@ -8,6 +8,7 @@ on:
     paths:
       - 'snp**'
       - '.github/workflows/ubuntu.yml'
+      - 'dependencies.repos'
   schedule:
     - cron: '0 5 * * *'
   workflow_dispatch:
