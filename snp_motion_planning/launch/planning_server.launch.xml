@@ -19,7 +19,7 @@
   <arg name="max_translational_acc" default="0.100"/>
   <arg name="max_rotational_acc" default="3.14"/>
   <arg name="check_joint_accelerations" default="false"/>
-  <arg name="contact_check_distance" default="0.0"/>
+  <arg name="min_contact_distance" default="0.0"/>
   <arg name="contact_check_lvs_distance" default="0.05"/>
   <arg name="ompl_max_planning_time" default="5.0"/>
   <arg name="tcp_max_speed" default="0.25"/>
@@ -44,7 +44,7 @@
     <param name="max_translational_acc" value="$(var max_translational_acc)"/>
     <param name="max_rotational_acc" value="$(var max_rotational_acc)"/>
     <param name="check_joint_accelerations" value="$(var check_joint_accelerations)"/>
-    <param name="contact_check_distance" value="$(var contact_check_distance)"/>
+    <param name="min_contact_distance" value="$(var min_contact_distance)"/>
     <param name="contact_check_lvs_distance" value="$(var contact_check_lvs_distance)"/>
     <param name="ompl_max_planning_time" value="$(var ompl_max_planning_time)"/>
     <param name="tcp_max_speed" value = "$(var tcp_max_speed)"/>

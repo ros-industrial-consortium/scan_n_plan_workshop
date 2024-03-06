@@ -53,7 +53,7 @@ static const std::string CHECK_JOINT_ACC_PARAM = "check_joint_accelerations";
 static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
 static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
 static const std::string LVS_PARAM = "contact_check_lvs_distance";
-static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
+static const std::string MIN_CONTACT_DIST_PARAM = "min_contact_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
 static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
 
@@ -204,7 +204,7 @@ public:
     node_->declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(LVS_PARAM, 0.05);
-    node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
+    node_->declare_parameter<double>(MIN_CONTACT_DIST_PARAM, 0.0);
     node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
     node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
 
@@ -341,19 +341,21 @@ private:
           std::make_shared<tesseract_planning::ProfileDictionary>();
       // Add custom profiles
       {
+        auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
+
         profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
                                                                                createSimplePlannerProfile());
         {
-          auto profile = createOMPLProfile();
+          auto profile = createOMPLProfile(min_contact_dist);
           profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
           profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
         }
         profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                                                          createTrajOptToolZFreePlanProfile());
         profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                                                                              createTrajOptProfile());
-        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
-                                                                                  createDescartesPlanProfile<float>());
+                                                                              createTrajOptProfile(min_contact_dist));
+        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
+            DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>(min_contact_dist));
         profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
             MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(6));
         auto velocity_scaling_factor =
@@ -369,10 +371,9 @@ private:
 
         // Discrete contact check profile
         auto contact_check_lvs = get<double>(node_, LVS_PARAM);
-        auto contact_check_dist = get<double>(node_, CONTACT_DIST_PARAM);
         profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
             CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-            std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, contact_check_dist));
+            std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, min_contact_dist));
 
         // Constant TCP time parameterization profile
         auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
