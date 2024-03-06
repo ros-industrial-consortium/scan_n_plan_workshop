@@ -33,12 +33,18 @@ static const std::string FREESPACE_PLANNER = "FREESPACE";
 static const std::string RASTER_PLANNER = "RASTER";
 static const std::string PROFILE = "SNPD";
 static const std::string SCAN_LINK_NAME = "scan";
-static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
-static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 
-// Profile parameters
-static const std::string VERBOSE_PARAM = "verbose";
+// Parameters
+//   General
 static const std::string TOUCH_LINKS_PARAM = "touch_links";
+static const std::string VERBOSE_PARAM = "verbose";
+//   Scan link
+static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
+static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
+//   Task composer
+static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
+static const std::string TASK_NAME_PARAM = "task_name";
+//   Profile
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
 static const std::string MAX_ROT_VEL_PARAM = "max_rotational_vel";
 static const std::string MAX_TRANS_ACC_PARAM = "max_translational_acc";
@@ -46,14 +52,10 @@ static const std::string MAX_ROT_ACC_PARAM = "max_rotational_acc";
 static const std::string CHECK_JOINT_ACC_PARAM = "check_joint_accelerations";
 static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
 static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
-static const std::string LVS_PARAM = "contact_check_longest_valid_segment";
+static const std::string LVS_PARAM = "contact_check_lvs_distance";
 static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
 static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
-
-// Task composer parameters
-static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
-static const std::string TASK_NAME_PARAM = "task_name";
 
 // Topics
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
