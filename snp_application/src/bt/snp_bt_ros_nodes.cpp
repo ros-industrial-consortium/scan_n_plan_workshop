@@ -154,15 +154,15 @@ BT::NodeStatus StartReconstructionServiceNode::onResponseReceived(const typename
 
 bool StopReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->archive_directory = "";
+  request->archive_directory = get_parameter_or<std::string>(node_, IR_ARCHIVE_DIR_PARAM, "");
   request->mesh_filepath = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->min_num_faces = 1000;
+  request->min_num_faces = get_parameter<int>(node_, IR_MIN_FACES_PARAM);
 
   industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
-  norm_filt.normal_direction.x = 0;
-  norm_filt.normal_direction.y = 0;
-  norm_filt.normal_direction.z = 1;
-  norm_filt.angle = 85;
+  norm_filt.normal_direction.x = get_parameter_or<double>(node_, IR_NORMAL_X_PARAM, 0.0);
+  norm_filt.normal_direction.y = get_parameter_or<double>(node_, IR_NORMAL_Y_PARAM, 0.0);
+  norm_filt.normal_direction.z = get_parameter_or<double>(node_, IR_NORMAL_Z_PARAM, 1.0);
+  norm_filt.angle = get_parameter_or<double>(node_, IR_NORMAL_ANGLE_TOL_PARAM, 180.0);
   request->normal_filters.push_back(norm_filt);
 
   return true;
