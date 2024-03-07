@@ -123,7 +123,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
   bt_node_->declare_parameter<bool>(IR_LIVE_PARAM, true);
   bt_node_->declare_parameter<int>(IR_MIN_FACES_PARAM, 0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, 180.0);
+  bt_node_->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
   bt_node_->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
   bt_node_->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
   bt_node_->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);

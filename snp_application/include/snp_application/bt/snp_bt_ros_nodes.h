@@ -19,12 +19,14 @@
 
 namespace snp_application
 {
+// Parameters
 static const std::string MOTION_GROUP_PARAM = "motion_group";
 static const std::string REF_FRAME_PARAM = "reference_frame";
 static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
 static const std::string START_STATE_REPLACEMENT_TOLERANCE_PARAM = "start_state_replacement_tolerance";
+//   Industrial Reconstruction
 static const std::string IR_TSDF_VOXEL_PARAM = "ir.tsdf.voxel_length";
 static const std::string IR_TSDF_SDF_PARAM = "ir.tsdf.sdf_trunc";
 static const std::string IR_TSDF_MIN_X_PARAM = "ir.tsdf.min.x";
