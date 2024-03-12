@@ -1,13 +1,14 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, EnvironmentVariable
+from launch_ros.parameter_descriptions import ParameterValue
 
 from launch_ros.actions import Node
 import yaml
 
 
 parameters = [
-    {'name': 'robot_description_file', 'description': 'Path to the URDF/xacro file',                  'default': ''},
+    {'name': 'robot_description',      'description': 'Path to the URDF/xacro file',                  'default': ''},
     {'name': 'controllers_file',       'description': 'Path to the ros2_control configuration file',  'default': ''},
 ]
 
@@ -21,17 +22,7 @@ def generate_launch_description():
 
 
 def launch(context, *args, **kwargs):
-    # Get URDF via xacro
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            LaunchConfiguration('robot_description_file'),
-            " ros_distro:=",
-            EnvironmentVariable('ROS_DISTRO')
-        ]
-    )
-    robot_description = {"robot_description": robot_description_content}
+    robot_description = ParameterValue(LaunchConfiguration('robot_description'))
 
     controllers_file = LaunchConfiguration('controllers_file')
 
@@ -39,7 +30,7 @@ def launch(context, *args, **kwargs):
         Node(
             package="controller_manager",
             executable="ros2_control_node",
-            parameters=[robot_description, controllers_file],
+            parameters=[{'robot_description': robot_description}, controllers_file],
             output="both",
         )
     ]
