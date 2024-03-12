@@ -154,16 +154,27 @@ BT::NodeStatus StartReconstructionServiceNode::onResponseReceived(const typename
 
 bool StopReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->archive_directory = "";
+  request->archive_directory = get_parameter_or<std::string>(node_, IR_ARCHIVE_DIR_PARAM, "");
   request->mesh_filepath = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->min_num_faces = 1000;
+  request->min_num_faces = get_parameter<int>(node_, IR_MIN_FACES_PARAM);
 
-  industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
-  norm_filt.normal_direction.x = 0;
-  norm_filt.normal_direction.y = 0;
-  norm_filt.normal_direction.z = 1;
-  norm_filt.angle = 85;
-  request->normal_filters.push_back(norm_filt);
+  try
+  {
+    industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
+    norm_filt.angle = get_parameter<double>(node_, IR_NORMAL_ANGLE_TOL_PARAM);
+    norm_filt.normal_direction.x = get_parameter<double>(node_, IR_NORMAL_X_PARAM);
+    norm_filt.normal_direction.y = get_parameter<double>(node_, IR_NORMAL_Y_PARAM);
+    norm_filt.normal_direction.z = get_parameter<double>(node_, IR_NORMAL_Z_PARAM);
+
+    // Do not add a normal filter if the angle is less than 0.0
+    if (norm_filt.angle > 0.0)
+      request->normal_filters.push_back(norm_filt);
+  }
+  catch (const std::exception& ex)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, ex.what());
+    return false;
+  }
 
   return true;
 }
