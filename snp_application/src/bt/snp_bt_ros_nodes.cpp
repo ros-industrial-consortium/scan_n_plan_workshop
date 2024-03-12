@@ -170,8 +170,10 @@ bool StopReconstructionServiceNode::setRequest(typename Request::SharedPtr& requ
     if (norm_filt.angle > 0.0)
       request->normal_filters.push_back(norm_filt);
   }
-  catch(const std::exception&)
+  catch (const std::exception& ex)
   {
+    config().blackboard->set(ERROR_MESSAGE_KEY, ex.what());
+    return false;
   }
 
   return true;
