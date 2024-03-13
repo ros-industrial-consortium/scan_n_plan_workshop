@@ -23,7 +23,6 @@
 #include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
-#include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
 #include <tf2_eigen/tf2_eigen.h>
@@ -36,7 +35,8 @@ static const std::string SCAN_LINK_NAME = "scan";
 
 // Parameters
 //   General
-static const std::string TOUCH_LINKS_PARAM = "touch_links";
+static const std::string SCAN_DISABLED_CONTACT_LINKS = "scan_disabled_contact_links";
+static const std::string SCAN_REDUCED_CONTACT_LINKS_PARAM = "scan_reduced_contact_links";
 static const std::string VERBOSE_PARAM = "verbose";
 //   Scan link
 static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
@@ -53,7 +53,7 @@ static const std::string CHECK_JOINT_ACC_PARAM = "check_joint_accelerations";
 static const std::string VEL_SCALE_PARAM = "velocity_scaling_factor";
 static const std::string ACC_SCALE_PARAM = "acceleration_scaling_factor";
 static const std::string LVS_PARAM = "contact_check_lvs_distance";
-static const std::string CONTACT_DIST_PARAM = "contact_check_distance";
+static const std::string MIN_CONTACT_DIST_PARAM = "min_contact_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
 static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
 
@@ -191,7 +191,8 @@ public:
     node_->declare_parameter("robot_description", "");
     node_->declare_parameter("robot_description_semantic", "");
     node_->declare_parameter(VERBOSE_PARAM, false);
-    node_->declare_parameter<std::vector<std::string>>(TOUCH_LINKS_PARAM, {});
+    node_->declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, {});
+    node_->declare_parameter<std::vector<std::string>>(SCAN_REDUCED_CONTACT_LINKS_PARAM, {});
     node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
     node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");
 
@@ -204,7 +205,7 @@ public:
     node_->declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
     node_->declare_parameter<double>(LVS_PARAM, 0.05);
-    node_->declare_parameter<double>(CONTACT_DIST_PARAM, 0.0);
+    node_->declare_parameter<double>(MIN_CONTACT_DIST_PARAM, 0.0);
     node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
     node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
 
@@ -339,21 +340,35 @@ private:
 
       tesseract_planning::ProfileDictionary::Ptr profile_dict =
           std::make_shared<tesseract_planning::ProfileDictionary>();
+
       // Add custom profiles
       {
+        // Get the default minimum distance allowable between any two links
+        auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
+
+        // Create a list of collision pairs between the scan link and the specified links where the minimum contact
+        // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
+        // very close to the scan but still should not contact it
+        std::vector<ExplicitCollisionPair> collision_pairs;
+        {
+          auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
+          for (const std::string& link : scan_contact_links)
+            collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
+        }
+
         profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
                                                                                createSimplePlannerProfile());
         {
-          auto profile = createOMPLProfile();
+          auto profile = createOMPLProfile(min_contact_dist, collision_pairs);
           profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
           profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
         }
         profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                                                          createTrajOptToolZFreePlanProfile());
-        profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                                                                              createTrajOptProfile());
-        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
-                                                                                  createDescartesPlanProfile<float>());
+        profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
+            TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
+        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
+            DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>(min_contact_dist, collision_pairs));
         profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
             MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(6));
         auto velocity_scaling_factor =
@@ -369,10 +384,9 @@ private:
 
         // Discrete contact check profile
         auto contact_check_lvs = get<double>(node_, LVS_PARAM);
-        auto contact_check_dist = get<double>(node_, CONTACT_DIST_PARAM);
         profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
             CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-            std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, contact_check_dist));
+            createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
 
         // Constant TCP time parameterization profile
         auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
@@ -446,7 +460,7 @@ private:
         }
 
         tesseract_environment::Commands env_cmds = createScanAdditionCommands(
-            collision_objects, req->mesh_frame, get<std::vector<std::string>>(node_, TOUCH_LINKS_PARAM));
+            collision_objects, req->mesh_frame, get<std::vector<std::string>>(node_, SCAN_DISABLED_CONTACT_LINKS));
 
         env_->applyCommands(env_cmds);
       }

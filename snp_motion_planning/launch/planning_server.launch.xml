@@ -4,7 +4,8 @@
   <arg name="robot_description"/>
   <arg name="robot_description_semantic"/>
   <arg name="verbose" default="False"/>
-  <arg name="touch_links" default="[]"/>
+  <arg name="scan_disabled_contact_links" default="[]" description="List of links that should be allowed to collide with the scan (e.g., link to which the scan is attached) "/>
+  <arg name="scan_reduced_contact_links" default="[]" description="List of links whose minimum acceptable contact distance to the scan should be set to 0.0 (e.g., the TCP link)"/>
   <!-- Scan Link -->
   <arg name="collision_object_type" default="convex_mesh" description="Collision model representation for scan mesh (convex_mesh, mesh, octree)"/>
   <arg name="octree_resolution" default="0.010"/>
@@ -19,7 +20,7 @@
   <arg name="max_translational_acc" default="0.100"/>
   <arg name="max_rotational_acc" default="3.14"/>
   <arg name="check_joint_accelerations" default="false"/>
-  <arg name="contact_check_distance" default="0.0"/>
+  <arg name="min_contact_distance" default="0.0"/>
   <arg name="contact_check_lvs_distance" default="0.05"/>
   <arg name="ompl_max_planning_time" default="5.0"/>
   <arg name="tcp_max_speed" default="0.25"/>
@@ -29,7 +30,8 @@
     <param name="robot_description" value="$(var robot_description)"/>
     <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
     <param name="verbose" value="$(var verbose)"/>
-    <param name="touch_links" value="$(var touch_links)"/>
+    <param name="scan_disabled_contact_links" value="$(var scan_disabled_contact_links)"/>
+    <param name="scan_reduced_contact_links" value="$(var scan_reduced_contact_links)"/>
     <!-- Scan Link -->
     <param name="collision_object_type" value="$(var collision_object_type)"/>
     <param name="octree_resolution" value="$(var octree_resolution)"/>
@@ -44,7 +46,7 @@
     <param name="max_translational_acc" value="$(var max_translational_acc)"/>
     <param name="max_rotational_acc" value="$(var max_rotational_acc)"/>
     <param name="check_joint_accelerations" value="$(var check_joint_accelerations)"/>
-    <param name="contact_check_distance" value="$(var contact_check_distance)"/>
+    <param name="min_contact_distance" value="$(var min_contact_distance)"/>
     <param name="contact_check_lvs_distance" value="$(var contact_check_lvs_distance)"/>
     <param name="ompl_max_planning_time" value="$(var ompl_max_planning_time)"/>
     <param name="tcp_max_speed" value = "$(var tcp_max_speed)"/>
