@@ -165,7 +165,8 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   ros_params.server_timeout = std::chrono::seconds(ros_short_timeout);
 
   // Get joint trajectory action topic name from parameter and store it in the blackboard
-  board_->set(FOLLOW_JOINT_TRAJECTORY_ACTION, snp_application::get_parameter<std::string>(bt_node_, FOLLOW_JOINT_TRAJECTORY_ACTION));
+  board_->set(FOLLOW_JOINT_TRAJECTORY_ACTION,
+              snp_application::get_parameter<std::string>(bt_node_, FOLLOW_JOINT_TRAJECTORY_ACTION));
 
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
