@@ -23,6 +23,7 @@ static const std::string BT_FILES_PARAM = "bt_files";
 static const std::string BT_PARAM = "tree";
 static const std::string BT_SHORT_TIMEOUT_PARAM = "bt_short_timeout";
 static const std::string BT_LONG_TIMEOUT_PARAM = "bt_long_timeout";
+static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory_action";
 
 class TPPDialog : public QDialog
 {
@@ -110,6 +111,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<std::string>(BT_PARAM, "");
   bt_node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
   bt_node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
+  bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
 
   bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
   bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
@@ -161,6 +163,10 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   ros_params.nh = bt_node_;
   ros_params.wait_for_server_timeout = std::chrono::seconds(0);
   ros_params.server_timeout = std::chrono::seconds(ros_short_timeout);
+
+  // Get joint trajectory action topic name from parameter and store it in the blackboard
+  board_->set(FOLLOW_JOINT_TRAJECTORY_ACTION,
+              snp_application::get_parameter<std::string>(bt_node_, FOLLOW_JOINT_TRAJECTORY_ACTION));
 
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
