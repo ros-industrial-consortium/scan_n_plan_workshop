@@ -7,6 +7,7 @@
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
+#include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 
 static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
 static const std::string OMPL_DEFAULT_NAMESPACE = "OMPLMotionPlannerTask";
@@ -163,4 +164,19 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
 {
   return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 1);
+}
+
+tesseract_planning::ContactCheckProfile::Ptr
+createContactCheckProfile(double longest_valid_segment_distance, double min_contact_distance = 0.0,
+                          const std::vector<UniqueCollisionPair>& collision_pairs = {})
+{
+  auto profile =
+      std::make_shared<tesseract_planning::ContactCheckProfile>(longest_valid_segment_distance, min_contact_distance);
+  profile->config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
+  profile->config.contact_manager_config.margin_data_override_type =
+      tesseract_common::CollisionMarginOverrideType::MODIFY;
+  for (const UniqueCollisionPair& pair : collision_pairs)
+    profile->config.contact_manager_config.margin_data.setPairCollisionMargin(pair.first, pair.second, pair.distance);
+
+  return profile;
 }
