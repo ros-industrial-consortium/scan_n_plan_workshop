@@ -23,7 +23,6 @@
 #include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
-#include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
 #include <tf2_eigen/tf2_eigen.h>
@@ -344,9 +343,13 @@ private:
 
       // Add custom profiles
       {
+        // Get the default minimum distance allowable between any two links
         auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
 
-        std::vector<UniqueCollisionPair> collision_pairs;
+        // Create a list of collision pairs between the scan link and the specified links where the minimum contact
+        // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
+        // very close to the scan but still should not contact it
+        std::vector<ExplicitCollisionPair> collision_pairs;
         {
           auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
           for (const std::string& link : scan_contact_links)
@@ -381,17 +384,9 @@ private:
 
         // Discrete contact check profile
         auto contact_check_lvs = get<double>(node_, LVS_PARAM);
-        auto contact_check_profile =
-            std::make_shared<tesseract_planning::ContactCheckProfile>(contact_check_lvs, min_contact_dist);
-        contact_check_profile->config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
-        contact_check_profile->config.contact_manager_config.margin_data_override_type =
-            tesseract_common::CollisionMarginOverrideType::MODIFY;
-        for (const UniqueCollisionPair& pair : collision_pairs)
-          contact_check_profile->config.contact_manager_config.margin_data.setPairCollisionMargin(
-              pair.first, pair.second, pair.distance);
-
-        profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-                                                                          contact_check_profile);
+        profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
+            CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+            createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
 
         // Constant TCP time parameterization profile
         auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
