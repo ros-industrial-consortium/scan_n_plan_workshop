@@ -5,6 +5,7 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 from launch_ros.actions import Node
 import yaml
+import os 
 
 
 parameters = [
@@ -44,7 +45,7 @@ def launch(context, *args, **kwargs):
             nodes.append(
                 Node(
                     package="controller_manager",
-                    executable="spawner.py",
+                    executable='spawner' if os.environ['ROS_DISTRO'] > 'foxy' else 'spawner.py',
                     arguments=[key, "-c", "/controller_manager"],
                 )
             )
