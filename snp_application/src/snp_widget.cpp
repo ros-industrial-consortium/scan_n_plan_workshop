@@ -239,5 +239,16 @@ void SNPWidget::runTreeWithThread()
     return;
   }
 }
+QWidget* SNPWidget::getStackedWidgetObject(int index)
+{
+  return ui_->stacked_widget->widget(index);
+}
+
+QTextEdit* SNPWidget::getTextEditObject()
+{
+  return ui_->text_edit_log;
+}
+
+
 
 }  // namespace snp_application
