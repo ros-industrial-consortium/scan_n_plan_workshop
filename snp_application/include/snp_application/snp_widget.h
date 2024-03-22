@@ -4,6 +4,7 @@
 #include <behaviortree_cpp/loggers/abstract_logger.h>
 #include <QWidget>
 #include <QTextEdit>
+#include <QStackedWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
 #include <rclcpp/executors/single_threaded_executor.hpp>
@@ -32,7 +33,7 @@ protected:
   Ui::SNPWidget* ui_;
   BT::Blackboard::Ptr board_;
   std::shared_ptr<BT::StatusChangeLogger> logger_;
-  QWidget* getStackedWidgetObject(int index);
+  QStackedWidget* getStackedWidgetObject();
   QTextEdit* getTextEditObject();
 };
 
