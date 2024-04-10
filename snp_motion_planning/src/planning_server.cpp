@@ -5,6 +5,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
+#include <snp_msgs/srv/generate_freespace_plan.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
@@ -20,6 +21,7 @@
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
+#include <tesseract_rosutils/conversions.h>
 #include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
@@ -66,6 +68,7 @@ static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 
 // Services
 static const std::string PLANNING_SERVICE = "generate_motion_plan";
+static const std::string FREESPACE_PLANNING_SERVICE = "generate_freespace_plan";
 static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
 tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& paths)
@@ -183,6 +186,14 @@ createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>&
                  });
 
   return cmds;
+}
+
+tesseract_planning::StateWaypoint rosJointStateToStateWaypoint(sensor_msgs::msg::JointState& js)
+{
+  tesseract_planning::StateWaypoint wp;
+  wp.setNames(js.name);
+  wp.setPosition(tesseract_rosutils::toEigen(js.position));
+  return wp;
 }
 
 class PlanningServer
@@ -600,6 +611,30 @@ private:
 
     RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
   }
+  void freespacePlan(const snp_msgs::srv::GenerateFreespacePlan::Request::SharedPtr req,
+            snp_msgs::srv::GenerateFreespacePlan::Response::SharedPtr res)
+  {
+    tesseract_common::ManipulatorInfo manip_info;
+    manip_info.manipulator = req->motion_group;
+
+    tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
+                                                     manip_info);
+    tesseract_planning::CompositeInstruction repeat_process(PROFILE);
+    repeat_process.setDescription("repeat_process");
+
+            // Define a freespace move to the first waypoint
+    repeat_process.appendMoveInstruction(
+        tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js1)},
+                                            tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+
+            // Define a freespace move to the second waypoint
+    repeat_process.appendMoveInstruction(
+        tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js2)},
+                                            tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+
+            // Add the composite to the program
+    freespace_program.push_back(repeat_process);
+  }
 
   rclcpp::Node::SharedPtr node_;
 
@@ -607,6 +642,7 @@ private:
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
+  rclcpp::Service<snp_msgs::srv::GenerateFreespacePlan>::SharedPtr freespace_server_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
 };
 

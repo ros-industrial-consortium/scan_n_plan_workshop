@@ -19,6 +19,8 @@ find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(trajectory_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
 
 rosidl_generate_interfaces(
   ${PROJECT_NAME}
@@ -27,9 +29,11 @@ rosidl_generate_interfaces(
   "srv/GenerateMotionPlan.srv"
   "srv/GenerateToolPaths.srv"
   "srv/GenerateScanMotionPlan.srv"
+  "srv/GenerateFreespacePlan.srv"
   DEPENDENCIES
   geometry_msgs
-  trajectory_msgs)
+  trajectory_msgs
+  sensor_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -37,5 +41,5 @@ if(BUILD_TESTING)
 endif()
 
 # Ament package settings
-ament_export_dependencies(geometry_msgs rosidl_default_runtime trajectory_msgs)
+ament_export_dependencies(geometry_msgs rosidl_default_runtime trajectory_msgs sensor_msgs)
 ament_package()
