@@ -16,6 +16,8 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QScrollBar>
+#include <QTextEdit>
+#include <QStackedWidget>
 #include <snp_tpp/tpp_widget.h>
 #include <trajectory_preview/trajectory_preview_widget.h>
 
@@ -239,13 +241,13 @@ void SNPWidget::runTreeWithThread()
     return;
   }
 }
-QStackedWidget* SNPWidget::getStackedWidgetObject()
+
+QStackedWidget* SNPWidget::getStackedWidget()
 {
-  // return ui_->stacked_widget->widget(index);
   return ui_->stacked_widget;
 }
 
-QTextEdit* SNPWidget::getTextEditObject()
+QTextEdit* SNPWidget::getTextEdit()
 {
   return ui_->text_edit_log;
 }
