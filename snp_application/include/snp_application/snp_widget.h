@@ -3,8 +3,6 @@
 #include <behaviortree_cpp/blackboard.h>
 #include <behaviortree_cpp/loggers/abstract_logger.h>
 #include <QWidget>
-#include <QTextEdit>
-#include <QStackedWidget>
 #include <rclcpp/node.hpp>
 #include <rclcpp_action/client.hpp>
 #include <rclcpp/executors/single_threaded_executor.hpp>
@@ -13,6 +11,9 @@ namespace Ui
 {
 class SNPWidget;
 }
+
+class QStackedWidget;
+class QTextEdit;
 
 namespace snp_application
 {
@@ -25,6 +26,8 @@ protected:
   void runTreeWithThread();
 
   virtual BT::BehaviorTreeFactory createBTFactory(int ros_short_timeout, int ros_long_timeout);
+  QStackedWidget* getStackedWidget();
+  QTextEdit* getTextEdit();
 
   rclcpp::Node::SharedPtr bt_node_;
   rclcpp::Node::SharedPtr tpp_node_;
@@ -33,8 +36,6 @@ protected:
   Ui::SNPWidget* ui_;
   BT::Blackboard::Ptr board_;
   std::shared_ptr<BT::StatusChangeLogger> logger_;
-  QStackedWidget* getStackedWidgetObject();
-  QTextEdit* getTextEditObject();
 };
 
 }  // namespace snp_application
