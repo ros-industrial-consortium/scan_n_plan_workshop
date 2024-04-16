@@ -330,92 +330,209 @@ private:
       env_->applyCommand(std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME));
   }
 
+  void addScanLink(const std::string& mesh_filename,
+                   const std::string& mesh_frame)
+  {
+    // Add the scan as a collision object to the environment
+    {
+      // Remove any previously added collision object
+      removeScanLink();
+
+      auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
+      std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
+      if (collision_object_type == "convex_mesh")
+        collision_objects = scanMeshToConvexMesh(mesh_filename);
+      else if (collision_object_type == "mesh")
+        collision_objects = scanMeshToMesh(mesh_filename);
+      else if (collision_object_type == "octree")
+      {
+        double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
+        if (octree_resolution < std::numeric_limits<double>::epsilon())
+          throw std::runtime_error("Octree resolution must be > 0.0");
+        collision_objects = { scanMeshToOctree(mesh_filename, octree_resolution) };
+      }
+      else
+      {
+        std::stringstream ss;
+        ss << "Invalid collision object type (" << collision_object_type
+           << ") for adding scan mesh to planning environment. Supported types are 'convex_mesh', 'mesh', and "
+              "'octree'";
+        throw std::runtime_error(ss.str());
+      }
+
+      tesseract_environment::Commands env_cmds = createScanAdditionCommands(
+          collision_objects, mesh_frame, get<std::vector<std::string>>(node_, SCAN_DISABLED_CONTACT_LINKS));
+
+      env_->applyCommands(env_cmds);
+    }
+  }
+
   void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
   {
     removeScanLink();
   }
 
-  void plan(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
-            snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
+  tesseract_planning::ProfileDictionary::Ptr createProfileDictionary()
+  {
+    tesseract_planning::ProfileDictionary::Ptr profile_dict =
+        std::make_shared<tesseract_planning::ProfileDictionary>();
+
+    // Add custom profiles
+    {
+      // Get the default minimum distance allowable between any two links
+      auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
+
+              // Create a list of collision pairs between the scan link and the specified links where the minimum contact
+              // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
+              // very close to the scan but still should not contact it
+      std::vector<ExplicitCollisionPair> collision_pairs;
+      {
+        auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
+        for (const std::string& link : scan_contact_links)
+          collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
+      }
+
+      profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
+                                                                             createSimplePlannerProfile());
+      {
+        auto profile = createOMPLProfile(min_contact_dist, collision_pairs);
+        profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
+        profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
+      }
+      profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
+                                                                       createTrajOptToolZFreePlanProfile());
+      profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
+          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
+      profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
+          DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>(min_contact_dist, collision_pairs));
+      profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
+          MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(6));
+      auto velocity_scaling_factor =
+          clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
+      auto acceleration_scaling_factor =
+          clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
+
+              // ISP profile
+      profile_dict->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
+          ISP_DEFAULT_NAMESPACE, PROFILE,
+          std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
+                                                                                       acceleration_scaling_factor));
+
+              // Discrete contact check profile
+      auto contact_check_lvs = get<double>(node_, LVS_PARAM);
+      profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
+          CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+          createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
+
+              // Constant TCP time parameterization profile
+      auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
+      auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
+      auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
+      auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
+      auto cart_time_param_profile =
+          std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+              vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
+      profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+          CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
+
+              // Kinematic limit check
+      auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
+      auto kin_limit_check_profile =
+          std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
+      profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME,
+                                                                                 PROFILE, kin_limit_check_profile);
+
+              // TCP speed limit task
+      double tcp_max_speed = get<double>(node_, TCP_MAX_SPEED_PARAM);  // m/s
+      auto tcp_speed_limiter_profile = std::make_shared<snp_motion_planning::TCPSpeedLimiterProfile>(tcp_max_speed);
+      profile_dict->addProfile<snp_motion_planning::TCPSpeedLimiterProfile>(TCP_SPEED_LIMITER_TASK_NAME, PROFILE,
+                                                                            tcp_speed_limiter_profile);
+    }
+
+    return profile_dict;
+  }
+
+  tesseract_planning::CompositeInstruction plan(tesseract_planning::CompositeInstruction& program,
+                                                tesseract_planning::ProfileDictionary& profile_dict,
+                                                std::string& task_name)
+  {
+    // Set up task composer problem
+    auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
+    const YAML::Node task_composer_config = YAML::LoadFile(task_composer_config_file);
+    tesseract_planning::TaskComposerPluginFactory factory(task_composer_config);
+
+    auto executor = factory.createTaskComposerExecutor("TaskflowExecutor");
+    tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_name);
+    if (!task)
+      throw std::runtime_error("Failed to create '" + task_name + "' task");
+
+            // Save dot graph
+    {
+      std::ofstream tc_out_data(tesseract_common::getTempPath() + task_name + ".dot");
+      task->dump(tc_out_data);
+    }
+
+    const std::string input_key = task->getInputKeys().front();
+    const std::string output_key = task->getOutputKeys().front();
+    auto task_data = std::make_shared<tesseract_planning::TaskComposerDataStorage>();
+    task_data->setData(input_key, program);
+    tesseract_planning::TaskComposerProblem::Ptr problem =
+        std::make_shared<tesseract_planning::PlanningTaskComposerProblem>(env_, profile_dict);
+    problem->dotgraph = true;
+
+            // Update log level for debugging
+    auto log_level = console_bridge::getLogLevel();
+    if (get<bool>(node_, VERBOSE_PARAM))
+    {
+      console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
+
+              // Dump dotgraphs of each task for reference
+      const YAML::Node& task_plugins = task_composer_config["task_composer_plugins"]["tasks"]["plugins"];
+      for (auto it = task_plugins.begin(); it != task_plugins.end(); ++it)
+      {
+        auto task_plugin_name = it->first.as<std::string>();
+        std::ofstream f(tesseract_common::getTempPath() + task_plugin_name + ".dot");
+        tesseract_planning::TaskComposerNode::Ptr task = factory.createTaskComposerNode(task_plugin_name);
+        if (!task)
+          throw std::runtime_error("Failed to load task: '" + task_plugin_name + "'");
+        task->dump(f);
+      }
+    }
+
+    // Run problem
+    tesseract_planning::TaskComposerFuture::UPtr result = executor->run(*task, problem, task_data);
+    result->wait();
+
+    // Save the output dot graph
+    {
+      std::ofstream tc_out_results(tesseract_common::getTempPath() + task_name + "_results.dot");
+      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr,
+                                                                            result->context->task_infos.getInfoMap());
+    }
+
+    // Reset the log level
+    console_bridge::setLogLevel(log_level);
+
+    // Check for successful plan
+    if (!result->context->isSuccessful() || result->context->isAborted())
+      throw std::runtime_error("Failed to create motion plan");
+
+    // Get results of successful plan
+    tesseract_planning::CompositeInstruction program_results =
+        result->context->data_storage->getData(output_key).as<tesseract_planning::CompositeInstruction>();
+
+    // Send joint trajectory to Tesseract plotter widget
+    plotter_->plotTrajectory(toJointTrajectory(program_results), *env_->getStateSolver());
+
+    return program_results;
+  }
+
+  void planCallback(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
+                    snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
   {
     try
     {
       RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
-
-      tesseract_planning::ProfileDictionary::Ptr profile_dict =
-          std::make_shared<tesseract_planning::ProfileDictionary>();
-
-      // Add custom profiles
-      {
-        // Get the default minimum distance allowable between any two links
-        auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
-
-        // Create a list of collision pairs between the scan link and the specified links where the minimum contact
-        // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
-        // very close to the scan but still should not contact it
-        std::vector<ExplicitCollisionPair> collision_pairs;
-        {
-          auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
-          for (const std::string& link : scan_contact_links)
-            collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
-        }
-
-        profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
-                                                                               createSimplePlannerProfile());
-        {
-          auto profile = createOMPLProfile(min_contact_dist, collision_pairs);
-          profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
-          profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
-        }
-        profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                                                                         createTrajOptToolZFreePlanProfile());
-        profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
-            TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
-        profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
-            DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>(min_contact_dist, collision_pairs));
-        profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
-            MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(6));
-        auto velocity_scaling_factor =
-            clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
-        auto acceleration_scaling_factor =
-            clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
-
-        // ISP profile
-        profile_dict->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-            ISP_DEFAULT_NAMESPACE, PROFILE,
-            std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
-                                                                                         acceleration_scaling_factor));
-
-        // Discrete contact check profile
-        auto contact_check_lvs = get<double>(node_, LVS_PARAM);
-        profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
-            CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-            createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
-
-        // Constant TCP time parameterization profile
-        auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
-        auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
-        auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
-        auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
-        auto cart_time_param_profile =
-            std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-                vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
-        profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-            CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
-
-        // Kinematic limit check
-        auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
-        auto kin_limit_check_profile =
-            std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
-        profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME,
-                                                                                   PROFILE, kin_limit_check_profile);
-
-        // TCP speed limit task
-        double tcp_max_speed = get<double>(node_, TCP_MAX_SPEED_PARAM);  // m/s
-        auto tcp_speed_limiter_profile = std::make_shared<snp_motion_planning::TCPSpeedLimiterProfile>(tcp_max_speed);
-        profile_dict->addProfile<snp_motion_planning::TCPSpeedLimiterProfile>(TCP_SPEED_LIMITER_TASK_NAME, PROFILE,
-                                                                              tcp_speed_limiter_profile);
-      }
 
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
@@ -436,104 +553,15 @@ private:
       // Set up composite instruction and environment
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
 
-      // Add the scan as a collision object to the environment
-      {
-        // Remove any previously added collision object
-        removeScanLink();
+      // Add the scan link to the planning environment
+      addScanLink(req->mesh_filename, req->mesh_frame);
 
-        auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
-        std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
-        if (collision_object_type == "convex_mesh")
-          collision_objects = scanMeshToConvexMesh(req->mesh_filename);
-        else if (collision_object_type == "mesh")
-          collision_objects = scanMeshToMesh(req->mesh_filename);
-        else if (collision_object_type == "octree")
-        {
-          double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
-          if (octree_resolution < std::numeric_limits<double>::epsilon())
-            throw std::runtime_error("Octree resolution must be > 0.0");
-          collision_objects = { scanMeshToOctree(req->mesh_filename, octree_resolution) };
-        }
-        else
-        {
-          std::stringstream ss;
-          ss << "Invalid collision object type (" << collision_object_type
-             << ") for adding scan mesh to planning environment. Supported types are 'convex_mesh', 'mesh', and "
-                "'octree'";
-          throw std::runtime_error(ss.str());
-        }
+      // Invoke the planner
+      auto pd = createProfileDictionary();
+      tesseract_planning::CompositeInstruction program_results = plan(program, *pd, get_parameter<std::string>(node_, TASK_NAME_PARAM));
 
-        tesseract_environment::Commands env_cmds = createScanAdditionCommands(
-            collision_objects, req->mesh_frame, get<std::vector<std::string>>(node_, SCAN_DISABLED_CONTACT_LINKS));
-
-        env_->applyCommands(env_cmds);
-      }
-
-      // Set up task composer problem
-      auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
-      const YAML::Node task_composer_config = YAML::LoadFile(task_composer_config_file);
-      tesseract_planning::TaskComposerPluginFactory factory(task_composer_config);
-
-      auto task_name = get<std::string>(node_, TASK_NAME_PARAM);
-      auto executor = factory.createTaskComposerExecutor("TaskflowExecutor");
-      tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_name);
-      if (!task)
-        throw std::runtime_error("Failed to create '" + task_name + "' task");
-
-      // Save dot graph
-      {
-        std::ofstream tc_out_data(tesseract_common::getTempPath() + task_name + ".dot");
-        task->dump(tc_out_data);
-      }
-
-      const std::string input_key = task->getInputKeys().front();
-      const std::string output_key = task->getOutputKeys().front();
-      auto task_data = std::make_shared<tesseract_planning::TaskComposerDataStorage>();
-      task_data->setData(input_key, program);
-      tesseract_planning::TaskComposerProblem::Ptr problem =
-          std::make_shared<tesseract_planning::PlanningTaskComposerProblem>(env_, profile_dict);
-      problem->dotgraph = true;
-
-      // Update log level for debugging
-      auto log_level = console_bridge::getLogLevel();
-      if (get<bool>(node_, VERBOSE_PARAM))
-      {
-        console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
-
-        // Dump dotgraphs of each task for reference
-        const YAML::Node& task_plugins = task_composer_config["task_composer_plugins"]["tasks"]["plugins"];
-        for (auto it = task_plugins.begin(); it != task_plugins.end(); ++it)
-        {
-          auto task_plugin_name = it->first.as<std::string>();
-          std::ofstream f(tesseract_common::getTempPath() + task_plugin_name + ".dot");
-          tesseract_planning::TaskComposerNode::Ptr task = factory.createTaskComposerNode(task_plugin_name);
-          if (!task)
-            throw std::runtime_error("Failed to load task: '" + task_plugin_name + "'");
-          task->dump(f);
-        }
-      }
-
-      // Run problem
-      tesseract_planning::TaskComposerFuture::UPtr result = executor->run(*task, problem, task_data);
-      result->wait();
-
-      // Save the output dot graph
-      {
-        std::ofstream tc_out_results(tesseract_common::getTempPath() + task_name + "_results.dot");
-        static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr,
-                                                                              result->context->task_infos.getInfoMap());
-      }
-
-      // Reset the log level
-      console_bridge::setLogLevel(log_level);
-
-      // Check for successful plan
-      if (!result->context->isSuccessful() || result->context->isAborted())
-        throw std::runtime_error("Failed to create motion plan");
-
-      // Get results of successful plan
-      tesseract_planning::CompositeInstruction program_results =
-          result->context->data_storage->getData(output_key).as<tesseract_planning::CompositeInstruction>();
+      // Remove scan link?
+      removeScanLink();
 
       if (program_results.size() < 3)
       {
@@ -543,9 +571,6 @@ private:
            << program_results.size();
         throw std::runtime_error(ss.str());
       }
-
-      // Send joint trajectory to Tesseract plotter widget
-      plotter_->plotTrajectory(toJointTrajectory(program_results), *env_->getStateSolver());
 
       // Return results
       res->approach = tesseract_rosutils::toMsg(toJointTrajectory(*program_results.begin()), env_->getState());
