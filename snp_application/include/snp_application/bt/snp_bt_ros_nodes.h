@@ -13,6 +13,7 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
+#include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/generate_scan_motion_plan.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -186,6 +187,23 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+class GenerateFreespaceMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>
+{
+public:
+  inline static std::string PROCESS_INPUT_PORT_KEY = "process";
+  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "trajectory";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_INPUT_PORT_KEY),
+                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) });
+  }
+
+  using SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>::SnpRosServiceNode;
+
+  bool setRequest(typename Request::SharedPtr& request) override;
+  BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+};
+
 class GenerateScanMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
 {
 public:
@@ -261,6 +279,23 @@ public:
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
+  }
+  using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
+
+  bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
+};
+
+class FreespaceMotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
+{
+public:
+  inline static std::string PROCESS_INPUT_PORT_KEY = "process";
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({
+        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_INPUT_PORT_KEY),
+        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY)
+    });
   }
   using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
 

@@ -5,7 +5,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
-#include <snp_msgs/srv/generate_freespace_plan.hpp>
+#include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_command_language/composite_instruction.h>
@@ -49,7 +49,9 @@ static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
 //   Task composer
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
-static const std::string TASK_NAME_PARAM = "task_name";
+static const std::string RASTER_TASK_NAME_PARAM = "raster_task_name";
+static const std::string FREESPACE_TASK_NAME_PARAM = "freespace_task_name";
+
 //   Profile
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
 static const std::string MAX_ROT_VEL_PARAM = "max_rotational_vel";
@@ -68,7 +70,7 @@ static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 
 // Services
 static const std::string PLANNING_SERVICE = "generate_motion_plan";
-static const std::string FREESPACE_PLANNING_SERVICE = "generate_freespace_plan";
+static const std::string FREESPACE_PLANNING_SERVICE = "generate_freespace_motion_plan";
 static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
 
 tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& paths)
@@ -226,7 +228,9 @@ public:
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
-    node_->declare_parameter(TASK_NAME_PARAM, "");
+    node_->declare_parameter(RASTER_TASK_NAME_PARAM, "");
+    node_->declare_parameter(FREESPACE_TASK_NAME_PARAM, "");
+
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -247,8 +251,10 @@ public:
     tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
 
     // Advertise the ROS2 service
-    server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
+    raster_server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::planCallback, this, std::placeholders::_1, std::placeholders::_2));
+    freespace_server_ = node_->create_service<snp_msgs::srv::GenerateFreespaceMotionPlan>(
+        FREESPACE_PLANNING_SERVICE, std::bind(&PlanningServer::freespaceMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
     remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
         REMOVE_SCAN_LINK_SERVICE,
         std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
@@ -611,29 +617,86 @@ private:
 
     RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
   }
-  void freespacePlan(const snp_msgs::srv::GenerateFreespacePlan::Request::SharedPtr req,
-            snp_msgs::srv::GenerateFreespacePlan::Response::SharedPtr res)
+  void freespaceMotionPlanCallback(const snp_msgs::srv::GenerateFreespaceMotionPlan::Request::SharedPtr req,
+            snp_msgs::srv::GenerateFreespaceMotionPlan::Response::SharedPtr res)
   {
-    tesseract_common::ManipulatorInfo manip_info;
-    manip_info.manipulator = req->motion_group;
+    try
+    {
+      RCLCPP_INFO_STREAM(node_->get_logger(), "Received freespace motion planning request");
 
-    tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
-                                                     manip_info);
-    tesseract_planning::CompositeInstruction repeat_process(PROFILE);
-    repeat_process.setDescription("repeat_process");
+      tesseract_common::ManipulatorInfo manip_info;
+      manip_info.manipulator = req->motion_group;
 
-            // Define a freespace move to the first waypoint
-    repeat_process.appendMoveInstruction(
-        tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js1)},
-                                            tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+      tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
+                                                                 manip_info);
+      tesseract_planning::CompositeInstruction repeat_process(PROFILE);
+      repeat_process.setDescription("repeat_process");
 
-            // Define a freespace move to the second waypoint
-    repeat_process.appendMoveInstruction(
-        tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js2)},
-                                            tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+      // Define a freespace move to the first waypoint
+      repeat_process.appendMoveInstruction(
+          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js1)},
+                                              tesseract_planning::JointWaypoint::FREESPACE, PROFILE, manip_info));
 
-            // Add the composite to the program
-    freespace_program.push_back(repeat_process);
+      // Define a freespace move to the second waypoint
+      repeat_process.appendMoveInstruction(
+          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js2)},
+                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+
+      // Add the composite to the program
+      freespace_program.push_back(repeat_process);
+
+      // Create a manipulator info and program from the service request
+      // const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
+      // if (base_frame.empty())
+      // {
+      //   throw std::runtime_error("Base frame is empty!");
+      // }
+      // if (req->motion_group.empty())
+      // {
+      //   throw std::runtime_error("Motion group is empty!");
+      // }
+      // if (req->tcp_frame.empty())
+      // {
+      //   throw std::runtime_error("TCP frame is empty!");
+      // }
+      // tesseract_common::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
+
+      // Set up composite instruction and environment
+      // tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
+
+      // Add the scan link to the planning environment
+      addScanLink(req->mesh_filename, req->mesh_frame);
+
+      // Invoke the planner
+      auto pd = createProfileDictionary();
+      auto freespace_task_name = get<std::string>(node_, FREESPACE_TASK_NAME_PARAM);
+      tesseract_planning::CompositeInstruction program_results = plan(freespace_program, pd, freespace_task_name);
+
+      // Remove scan link?
+      removeScanLink();
+
+      if (program_results.size() < 1)
+      {
+        std::stringstream ss;
+        ss << "The composite instruction must have at least 1 child. "
+              "This result only has "
+           << program_results.size();
+        throw std::runtime_error(ss.str());
+      }
+
+      // Return results
+
+      res->trajectory = tesseract_rosutils::toMsg(toJointTrajectory(program_results), env_->getState());
+      res->message = "Succesfully planned motion";
+      res->success = true;
+    }
+    catch (const std::exception& ex)
+    {
+      res->message = ex.what();
+      res->success = false;
+    }
+
+    RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
   }
 
   rclcpp::Node::SharedPtr node_;
@@ -641,8 +704,8 @@ private:
   tesseract_environment::Environment::Ptr env_;
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
-  rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr server_;
-  rclcpp::Service<snp_msgs::srv::GenerateFreespacePlan>::SharedPtr freespace_server_;
+  rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr raster_server_;
+  rclcpp::Service<snp_msgs::srv::GenerateFreespaceMotionPlan>::SharedPtr freespace_server_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
 };
 

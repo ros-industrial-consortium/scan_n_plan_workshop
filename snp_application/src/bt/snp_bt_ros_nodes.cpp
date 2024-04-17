@@ -64,6 +64,50 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   return BT::NodeStatus::SUCCESS;
 }
 
+sensor_msgs::msg::JointState jointTrajectoryPointToJointState(trajectory_msgs::msg::JointTrajectory jt, trajectory_msgs::msg::JointTrajectoryPoint jtp)
+{
+  sensor_msgs::msg::JointState js;
+  js.name = jt.joint_names;
+  js.position = jtp.positions;
+  return js;
+}
+
+bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
+{
+  trajectory_msgs::msg::JointTrajectory input =
+      snp_application::getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY);
+
+  trajectory_msgs::msg::JointTrajectory trajectory = input;
+  trajectory_msgs::msg::JointTrajectoryPoint tp1 = trajectory.points.back();
+  trajectory_msgs::msg::JointTrajectoryPoint tp2 = trajectory.points.front();
+
+  sensor_msgs::msg::JointState js1 = jointTrajectoryPointToJointState(trajectory, tp1);
+  sensor_msgs::msg::JointState js2 = jointTrajectoryPointToJointState(trajectory, tp2);
+
+  request->js1 = js1;
+  request->js2 = js2;
+
+  request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
+  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
+  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+
+  return true;
+}
+
+BT::NodeStatus GenerateFreespaceMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
+{
+  if (!response->success)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // Set output
+  setOutput(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
+
+  return BT::NodeStatus::SUCCESS;
+}
+
 bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
 {
   return true;
@@ -361,6 +405,24 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
   {
     std::stringstream ss;
     ss << "Error extracting trajectory message: '" << ex.what() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return false;
+  }
+
+  return true;
+}
+
+bool FreespaceMotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
+{
+  try
+  {
+    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY));
+    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY));
+  }
+  catch (const std::exception& ex)
+  {
+    std::stringstream ss;
+    ss << "Error combining trajectories: '" << ex.what() << "'";
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return false;
   }

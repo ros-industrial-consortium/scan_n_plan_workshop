@@ -12,7 +12,8 @@
   <arg name="octree_resolution" default="0.010"/>
   <!-- Task Composer -->
   <arg name="task_composer_config_file" default="$(find-pkg-share snp_motion_planning)/config/task_composer_plugins.yaml"/>
-  <arg name="task_name" default="SNPPipeline"/>
+  <arg name="raster_task_name" default="SNPPipeline"/>
+  <arg name="freespace_task_name" default="SNPFreespacePipeline"/>
   <!-- Profiles -->
   <arg name="velocity_scaling_factor" default="1.0"/>
   <arg name="acceleration_scaling_factor" default="1.0"/>
@@ -38,7 +39,8 @@
     <param name="octree_resolution" value="$(var octree_resolution)"/>
     <!-- Task Composer -->
     <param name="task_composer_config_file" value="$(var task_composer_config_file)"/>
-    <param name="task_name" value="$(var task_name)"/>
+    <param name="raster_task_name" value="$(var raster_task_name)"/>
+    <param name="freespace_task_name" value="$(var freespace_task_name)"/>
     <!-- Profiles -->
     <param name="velocity_scaling_factor" value="$(var velocity_scaling_factor)"/>
     <param name="acceleration_scaling_factor" value="$(var acceleration_scaling_factor)"/>

@@ -176,6 +176,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
   bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
+  bt_factory.registerNodeType<FreespaceMotionPlanPubNode>("FreespaceMotionPlanPub", ros_params);
   bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
   // Short-running services
   bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
@@ -187,6 +188,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   ros_params.server_timeout = std::chrono::seconds(ros_long_timeout);
   bt_factory.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
   bt_factory.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
+  bt_factory.registerNodeType<GenerateFreespaceMotionPlanServiceNode>("GenerateFreespaceMotionPlanService", ros_params);
   bt_factory.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
   bt_factory.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
 
