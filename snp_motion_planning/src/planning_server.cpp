@@ -47,7 +47,7 @@ static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
 //   Task composer
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
-static const std::string TASK_NAME_PARAM = "task_name";
+static const std::string RASTER_TASK_NAME_PARAM = "raster_task_name";
 //   Profile
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
 static const std::string MAX_ROT_VEL_PARAM = "max_rotational_vel";
@@ -215,7 +215,7 @@ public:
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
-    node_->declare_parameter(TASK_NAME_PARAM, "");
+    node_->declare_parameter(RASTER_TASK_NAME_PARAM, "");
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -237,7 +237,7 @@ public:
 
     // Advertise the ROS2 service
     server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
-        PLANNING_SERVICE, std::bind(&PlanningServer::plan, this, std::placeholders::_1, std::placeholders::_2));
+        PLANNING_SERVICE, std::bind(&PlanningServer::planCallback, this, std::placeholders::_1, std::placeholders::_2));
     remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
         REMOVE_SCAN_LINK_SERVICE,
         std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
@@ -453,7 +453,7 @@ private:
   }
 
   tesseract_planning::CompositeInstruction plan(tesseract_planning::CompositeInstruction& program,
-                                                tesseract_planning::ProfileDictionary& profile_dict,
+                                                tesseract_planning::ProfileDictionary::Ptr& profile_dict,
                                                 std::string& task_name)
   {
     // Set up task composer problem
@@ -558,7 +558,8 @@ private:
 
       // Invoke the planner
       auto pd = createProfileDictionary();
-      tesseract_planning::CompositeInstruction program_results = plan(program, *pd, get_parameter<std::string>(node_, TASK_NAME_PARAM));
+      auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
+      tesseract_planning::CompositeInstruction program_results = plan(program, pd, raster_task_name);
 
       // Remove scan link?
       removeScanLink();
