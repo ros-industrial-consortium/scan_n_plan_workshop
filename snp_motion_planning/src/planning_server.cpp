@@ -330,8 +330,7 @@ private:
       env_->applyCommand(std::make_shared<tesseract_environment::RemoveLinkCommand>(SCAN_LINK_NAME));
   }
 
-  void addScanLink(const std::string& mesh_filename,
-                   const std::string& mesh_frame)
+  void addScanLink(const std::string& mesh_filename, const std::string& mesh_frame)
   {
     // Add the scan as a collision object to the environment
     {
@@ -374,17 +373,16 @@ private:
 
   tesseract_planning::ProfileDictionary::Ptr createProfileDictionary()
   {
-    tesseract_planning::ProfileDictionary::Ptr profile_dict =
-        std::make_shared<tesseract_planning::ProfileDictionary>();
+    tesseract_planning::ProfileDictionary::Ptr profile_dict = std::make_shared<tesseract_planning::ProfileDictionary>();
 
     // Add custom profiles
     {
       // Get the default minimum distance allowable between any two links
       auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
 
-              // Create a list of collision pairs between the scan link and the specified links where the minimum contact
-              // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
-              // very close to the scan but still should not contact it
+      // Create a list of collision pairs between the scan link and the specified links where the minimum contact
+      // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
+      // very close to the scan but still should not contact it
       std::vector<ExplicitCollisionPair> collision_pairs;
       {
         auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
@@ -412,37 +410,36 @@ private:
       auto acceleration_scaling_factor =
           clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
 
-              // ISP profile
+      // ISP profile
       profile_dict->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
           ISP_DEFAULT_NAMESPACE, PROFILE,
           std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
                                                                                        acceleration_scaling_factor));
 
-              // Discrete contact check profile
+      // Discrete contact check profile
       auto contact_check_lvs = get<double>(node_, LVS_PARAM);
       profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
           CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
           createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
 
-              // Constant TCP time parameterization profile
+      // Constant TCP time parameterization profile
       auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
       auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
       auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
       auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
-      auto cart_time_param_profile =
-          std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-              vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
+      auto cart_time_param_profile = std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
+          vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
       profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
           CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
 
-              // Kinematic limit check
+      // Kinematic limit check
       auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
       auto kin_limit_check_profile =
           std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
       profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME,
                                                                                  PROFILE, kin_limit_check_profile);
 
-              // TCP speed limit task
+      // TCP speed limit task
       double tcp_max_speed = get<double>(node_, TCP_MAX_SPEED_PARAM);  // m/s
       auto tcp_speed_limiter_profile = std::make_shared<snp_motion_planning::TCPSpeedLimiterProfile>(tcp_max_speed);
       profile_dict->addProfile<snp_motion_planning::TCPSpeedLimiterProfile>(TCP_SPEED_LIMITER_TASK_NAME, PROFILE,
@@ -466,7 +463,7 @@ private:
     if (!task)
       throw std::runtime_error("Failed to create '" + task_name + "' task");
 
-            // Save dot graph
+    // Save dot graph
     {
       std::ofstream tc_out_data(tesseract_common::getTempPath() + task_name + ".dot");
       task->dump(tc_out_data);
@@ -480,13 +477,13 @@ private:
         std::make_shared<tesseract_planning::PlanningTaskComposerProblem>(env_, profile_dict);
     problem->dotgraph = true;
 
-            // Update log level for debugging
+    // Update log level for debugging
     auto log_level = console_bridge::getLogLevel();
     if (get<bool>(node_, VERBOSE_PARAM))
     {
       console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
-              // Dump dotgraphs of each task for reference
+      // Dump dotgraphs of each task for reference
       const YAML::Node& task_plugins = task_composer_config["task_composer_plugins"]["tasks"]["plugins"];
       for (auto it = task_plugins.begin(); it != task_plugins.end(); ++it)
       {
