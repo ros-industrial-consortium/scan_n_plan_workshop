@@ -634,24 +634,24 @@ private:
 
       tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
                                                                  manip_info);
-      tesseract_planning::CompositeInstruction repeat_process(PROFILE);
-      repeat_process.setDescription("repeat_process");
+      // tesseract_planning::CompositeInstruction repeat_process(PROFILE);
+      // repeat_process.setDescription("repeat_process");
 
       tesseract_planning::JointWaypoint wp1 = rosJointStateToJointWaypoint(req->js1);
       tesseract_planning::JointWaypoint wp2 = rosJointStateToJointWaypoint(req->js2);
 
       // Define a freespace move to the first waypoint
-      repeat_process.appendMoveInstruction(
+      freespace_program.appendMoveInstruction(
           tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{wp1},
                                               tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Define a freespace move to the second waypoint
-      repeat_process.appendMoveInstruction(
+      freespace_program.appendMoveInstruction(
           tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{wp2},
                                               tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Add the composite to the program
-      freespace_program.push_back(repeat_process);
+      // freespace_program.push_back(repeat_process);
 
       // Create a manipulator info and program from the service request
       // const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
@@ -683,14 +683,14 @@ private:
       // Remove scan link?
       removeScanLink();
 
-      if (program_results.size() < 1)
-      {
-        std::stringstream ss;
-        ss << "The composite instruction must have at least 1 child. "
-              "This result only has "
-           << program_results.size();
-        throw std::runtime_error(ss.str());
-      }
+      // if (program_results.size() != 1)
+      // {
+      //   std::stringstream ss;
+      //   ss << "The composite instruction must have at least 1 child. "
+      //         "This result only has "
+      //      << program_results.size();
+      //   throw std::runtime_error(ss.str());
+      // }
 
       // Return results
 

@@ -416,8 +416,10 @@ bool FreespaceMotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajector
 {
   try
   {
-    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY));
-    msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY));
+    // msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY));
+    // msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY));
+    msg = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
+
   }
   catch (const std::exception& ex)
   {
