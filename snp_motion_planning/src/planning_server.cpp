@@ -190,12 +190,15 @@ createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>&
   return cmds;
 }
 
-tesseract_planning::StateWaypoint rosJointStateToStateWaypoint(sensor_msgs::msg::JointState& js)
+tesseract_planning::JointWaypoint rosJointStateToJointWaypoint(sensor_msgs::msg::JointState& js)
 {
-  tesseract_planning::StateWaypoint wp;
-  wp.setNames(js.name);
-  wp.setPosition(tesseract_rosutils::toEigen(js.position));
-  return wp;
+  tesseract_planning::JointWaypoint jwp;
+  jwp.setNames(js.name);
+  jwp.setPosition(tesseract_rosutils::toEigen(js.position));
+  jwp.setIsConstrained(true);
+  jwp.setLowerTolerance(Eigen::VectorXd::Zero(6));
+  jwp.setUpperTolerance(Eigen::VectorXd::Zero(6));
+  return jwp;
 }
 
 class PlanningServer
@@ -626,20 +629,25 @@ private:
 
       tesseract_common::ManipulatorInfo manip_info;
       manip_info.manipulator = req->motion_group;
+      manip_info.tcp_frame = "sand_tcp";
+      manip_info.working_frame = "base_link";
 
       tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
                                                                  manip_info);
       tesseract_planning::CompositeInstruction repeat_process(PROFILE);
       repeat_process.setDescription("repeat_process");
 
+      tesseract_planning::JointWaypoint wp1 = rosJointStateToJointWaypoint(req->js1);
+      tesseract_planning::JointWaypoint wp2 = rosJointStateToJointWaypoint(req->js2);
+
       // Define a freespace move to the first waypoint
       repeat_process.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js1)},
-                                              tesseract_planning::JointWaypoint::FREESPACE, PROFILE, manip_info));
+          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{wp1},
+                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Define a freespace move to the second waypoint
       repeat_process.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{rosJointStateToStateWaypoint(req->js2)},
+          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{wp2},
                                               tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Add the composite to the program
