@@ -469,6 +469,74 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
   return BT::NodeStatus::SUCCESS;
 }
 
+/**
+ * @details Adapted from
+ * https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L77C4-L96
+ */
+trajectory_msgs::msg::JointTrajectory reverseTrajectory(const trajectory_msgs::msg::JointTrajectory& in)
+{
+  trajectory_msgs::msg::JointTrajectory out;
+  out.header = in.header;
+  out.joint_names = in.joint_names;
+
+  const rclcpp::Duration& path_duration = in.points.back().time_from_start;
+
+  for (auto it = in.points.rbegin(); it != in.points.rend(); ++it)
+  {
+    trajectory_msgs::msg::JointTrajectoryPoint pt(*it);
+
+            // Change the signs of the velocity and acceleration
+    for (std::size_t i = 0; i < pt.velocities.size(); ++i)
+    {
+      pt.velocities[i] = -pt.velocities[i];
+    }
+    for (std::size_t i = 0; i < pt.accelerations.size(); ++i)
+    {
+      pt.accelerations[i] = -pt.accelerations[i];
+    }
+
+            // Change the time from start
+    pt.time_from_start = path_duration - it->time_from_start;
+
+    out.points.push_back(std::move(pt));
+  }
+
+  return out;
+}
+
+ReverseTrajectoryNode::ReverseTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config)
+  : BT::ControlNode(instance_name, config)
+{
+
+}
+
+BT::NodeStatus ReverseTrajectoryNode::tick()
+{
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> input =
+      getInput<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY);
+  if (!input)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required input value: '" << input.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  trajectory_msgs::msg::JointTrajectory in = input.value();
+
+  trajectory_msgs::msg::JointTrajectory out = reverseTrajectory(in);
+
+  BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
+  if (!output)
+  {
+    std::stringstream ss;
+    ss << "Failed to set required output value: '" << output.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
 RosSpinnerNode::RosSpinnerNode(const std::string& instance_name, const BT::NodeConfig& config,
                                rclcpp::Node::SharedPtr node)
   : BT::ConditionNode(instance_name, config), node_(node)
