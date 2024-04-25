@@ -485,7 +485,7 @@ trajectory_msgs::msg::JointTrajectory reverseTrajectory(const trajectory_msgs::m
   {
     trajectory_msgs::msg::JointTrajectoryPoint pt(*it);
 
-            // Change the signs of the velocity and acceleration
+    // Change the signs of the velocity and acceleration
     for (std::size_t i = 0; i < pt.velocities.size(); ++i)
     {
       pt.velocities[i] = -pt.velocities[i];
@@ -495,7 +495,7 @@ trajectory_msgs::msg::JointTrajectory reverseTrajectory(const trajectory_msgs::m
       pt.accelerations[i] = -pt.accelerations[i];
     }
 
-            // Change the time from start
+    // Change the time from start
     pt.time_from_start = path_duration - it->time_from_start;
 
     out.points.push_back(std::move(pt));
@@ -507,7 +507,6 @@ trajectory_msgs::msg::JointTrajectory reverseTrajectory(const trajectory_msgs::m
 ReverseTrajectoryNode::ReverseTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config)
   : BT::ControlNode(instance_name, config)
 {
-
 }
 
 BT::NodeStatus ReverseTrajectoryNode::tick()
