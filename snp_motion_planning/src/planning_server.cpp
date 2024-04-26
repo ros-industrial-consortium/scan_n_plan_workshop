@@ -25,7 +25,11 @@
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
+#if __has_include(<tf2_eigen/tf2_eigen.hpp>)
+#include <tf2_eigen/tf2_eigen.hpp>
+#else
 #include <tf2_eigen/tf2_eigen.h>
+#endif
 
 static const std::string TRANSITION_PLANNER = "TRANSITION";
 static const std::string FREESPACE_PLANNER = "FREESPACE";
