@@ -302,6 +302,21 @@ public:
   BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
 };
 
+class ReverseTrajectoryNode : public BT::ControlNode
+{
+public:
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input";
+  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
+  inline static BT::PortsList providedPorts()
+  {
+    return { BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) };
+  }
+  explicit ReverseTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config);
+
+  BT::NodeStatus tick() override;
+};
+
 /**
  * @brief Condition node for spinning the BT ROS node to keep it accessible for parameter updates, service calls, etc.
  */

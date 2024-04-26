@@ -160,6 +160,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   bt_factory.registerNodeType<SetPageDecoratorNode>("SetPage");
   bt_factory.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
   bt_factory.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
+  bt_factory.registerNodeType<ReverseTrajectoryNode>("ReverseTrajectory");
 
   BT::RosNodeParams ros_params;
   ros_params.nh = bt_node_;
