@@ -536,6 +536,51 @@ BT::NodeStatus ReverseTrajectoryNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
+CombineTrajectoryNode::CombineTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config)
+  : BT::ControlNode(instance_name, config)
+{
+}
+
+BT::NodeStatus CombineTrajectoryNode::tick()
+{
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> first_trajectory =
+      getInput<trajectory_msgs::msg::JointTrajectory>(FIRST_TRAJECTORY_INPUT_PORT_KEY);
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> second_trajectory =
+      getInput<trajectory_msgs::msg::JointTrajectory>(SECOND_TRAJECTORY_INPUT_PORT_KEY);
+
+  if (!first_trajectory)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required input value: '" << first_trajectory.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+
+  if (!second_trajectory)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required input value: '" << second_trajectory.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+
+  trajectory_msgs::msg::JointTrajectory first_input = first_trajectory.value();
+  trajectory_msgs::msg::JointTrajectory second_input = second_trajectory.value();
+
+  trajectory_msgs::msg::JointTrajectory out = combine(first_input, second_input);
+
+  BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
+  if (!output)
+  {
+    std::stringstream ss;
+    ss << "Failed to set required output value: '" << output.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
 RosSpinnerNode::RosSpinnerNode(const std::string& instance_name, const BT::NodeConfig& config,
                                rclcpp::Node::SharedPtr node)
   : BT::ConditionNode(instance_name, config), node_(node)
