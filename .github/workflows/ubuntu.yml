@@ -36,11 +36,6 @@ jobs:
         with:
           path: target_ws/src
 
-      - name: Install Dependencies
-        shell: bash
-        run: |
-          apt install -y -qq libxmlrpcpp-dev
-
       - name: Build and Tests
         uses: tesseract-robotics/colcon-action@v6
         with:
