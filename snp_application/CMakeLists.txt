@@ -44,6 +44,7 @@ add_library(
   src/bt/bt_thread.cpp
   src/bt/button_approval_node.cpp
   src/bt/button_monitor_node.cpp
+  src/bt/monitor_sequence_node.cpp
   src/bt/progress_decorator_node.cpp
   src/bt/set_page_decorator_node.cpp
   src/bt/snp_bt_ros_nodes.cpp

@@ -36,6 +36,7 @@
             <input_port name="service_name" default="generate_tool_paths"/>
             <input_port name="tool_paths" default="{tool_paths}"/>
         </Action>
+        <Control ID="MonitorSequence" editable="true"/>
         <Action ID="MotionPlanPub" editable="true">
             <input_port name="topic_name"/>
             <input_port name="approach" default="{approach}"/>
