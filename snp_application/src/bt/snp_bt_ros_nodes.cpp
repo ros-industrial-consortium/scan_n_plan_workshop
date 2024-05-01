@@ -536,38 +536,38 @@ BT::NodeStatus ReverseTrajectoryNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-CombineTrajectoryNode::CombineTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config)
+CombineTrajectoriesNode::CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config)
   : BT::ControlNode(instance_name, config)
 {
 }
 
-BT::NodeStatus CombineTrajectoryNode::tick()
+BT::NodeStatus CombineTrajectoriesNode::tick()
 {
-  BT::Expected<trajectory_msgs::msg::JointTrajectory> first_trajectory =
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> first_input =
       getInput<trajectory_msgs::msg::JointTrajectory>(FIRST_TRAJECTORY_INPUT_PORT_KEY);
-  BT::Expected<trajectory_msgs::msg::JointTrajectory> second_trajectory =
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> second_input =
       getInput<trajectory_msgs::msg::JointTrajectory>(SECOND_TRAJECTORY_INPUT_PORT_KEY);
 
-  if (!first_trajectory)
+  if (!first_input)
   {
     std::stringstream ss;
-    ss << "Failed to get required input value: '" << first_trajectory.error() << "'";
+    ss << "Failed to get required input value: '" << first_input.error() << "'";
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
 
-  if (!second_trajectory)
+  if (!second_input)
   {
     std::stringstream ss;
-    ss << "Failed to get required input value: '" << second_trajectory.error() << "'";
+    ss << "Failed to get required input value: '" << second_input.error() << "'";
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
 
-  trajectory_msgs::msg::JointTrajectory first_input = first_trajectory.value();
-  trajectory_msgs::msg::JointTrajectory second_input = second_trajectory.value();
+  trajectory_msgs::msg::JointTrajectory first_trajectory = first_input.value();
+  trajectory_msgs::msg::JointTrajectory second_trajectory = second_input.value();
 
-  trajectory_msgs::msg::JointTrajectory out = combine(first_input, second_input);
+  trajectory_msgs::msg::JointTrajectory out = combine(first_trajectory, second_trajectory);
 
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
   if (!output)

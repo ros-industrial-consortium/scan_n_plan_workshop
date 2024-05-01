@@ -317,11 +317,11 @@ public:
   BT::NodeStatus tick() override;
 };
 
-class CombineTrajectoryNode : public BT::ControlNode
+class CombineTrajectoriesNode : public BT::ControlNode
 {
 public:
-  inline static std::string FIRST_TRAJECTORY_INPUT_PORT_KEY = "first_traj";
-  inline static std::string SECOND_TRAJECTORY_INPUT_PORT_KEY = "second_traj";
+  inline static std::string FIRST_TRAJECTORY_INPUT_PORT_KEY = "first";
+  inline static std::string SECOND_TRAJECTORY_INPUT_PORT_KEY = "second";
   inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
   inline static BT::PortsList providedPorts()
   {
@@ -329,7 +329,7 @@ public:
              BT::InputPort<trajectory_msgs::msg::JointTrajectory>(SECOND_TRAJECTORY_INPUT_PORT_KEY),
              BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) };
   }
-  explicit CombineTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config);
+  explicit CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config);
 
   BT::NodeStatus tick() override;
 };
