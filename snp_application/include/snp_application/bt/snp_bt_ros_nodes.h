@@ -260,8 +260,7 @@ public:
   inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({
-        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
+    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
   }
   using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
 
