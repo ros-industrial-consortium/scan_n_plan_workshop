@@ -558,9 +558,6 @@ private:
       auto task_name = get<std::string>(node_, TASK_NAME_PARAM);
       tesseract_planning::CompositeInstruction program_results = plan(program, pd, task_name);
 
-      // Remove scan link?
-      removeScanLink();
-
       if (program_results.size() < 3)
       {
         std::stringstream ss;
