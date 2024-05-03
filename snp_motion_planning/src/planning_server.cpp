@@ -449,9 +449,9 @@ private:
     return profile_dict;
   }
 
-  tesseract_planning::CompositeInstruction plan(tesseract_planning::CompositeInstruction& program,
-                                                tesseract_planning::ProfileDictionary::Ptr& profile_dict,
-                                                std::string& task_name)
+  tesseract_planning::CompositeInstruction plan(const tesseract_planning::CompositeInstruction& program,
+                                                tesseract_planning::ProfileDictionary::Ptr profile_dict,
+                                                const std::string& task_name)
   {
     // Set up task composer problem
     auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
