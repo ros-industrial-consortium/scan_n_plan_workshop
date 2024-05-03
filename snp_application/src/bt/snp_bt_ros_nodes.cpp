@@ -271,6 +271,11 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
         first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
     for (const auto& pt : second.points)
     {
+      if (pt == second.points.front())
+      {
+        continue;
+      }
+
       result.points.push_back(pt);
       result.points.back().time_from_start =
           rclcpp::Duration(result.points.back().time_from_start) + rclcpp::Duration(lhs_duration);
@@ -300,6 +305,11 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
       {
         const std::size_t idx = indices[i];
         new_pt.positions[idx] = pt.positions[i];
+      }
+
+      if (pt == second.points.front())
+      {
+        continue;
       }
 
       // Push this new trajectory point back onto the output trajectory
@@ -336,6 +346,11 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
       {
         const std::size_t idx = indices[i];
         new_pt.positions[idx] = it->positions[i];
+      }
+
+      if (new_pt == second.points.front())
+      {
+        continue;
       }
 
       // Insert the new trajectory point at the beginning of the trajectory
