@@ -47,7 +47,7 @@ static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
 //   Task composer
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
-static const std::string RASTER_TASK_NAME_PARAM = "raster_task_name";
+static const std::string TASK_NAME_PARAM = "task_name";
 //   Profile
 static const std::string MAX_TRANS_VEL_PARAM = "max_translational_vel";
 static const std::string MAX_ROT_VEL_PARAM = "max_rotational_vel";
@@ -215,7 +215,7 @@ public:
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
-    node_->declare_parameter(RASTER_TASK_NAME_PARAM, "");
+    node_->declare_parameter(TASK_NAME_PARAM, "");
 
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
@@ -555,8 +555,8 @@ private:
 
       // Invoke the planner
       auto pd = createProfileDictionary();
-      auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
-      tesseract_planning::CompositeInstruction program_results = plan(program, pd, raster_task_name);
+      auto task_name = get<std::string>(node_, TASK_NAME_PARAM);
+      tesseract_planning::CompositeInstruction program_results = plan(program, pd, task_name);
 
       // Remove scan link?
       removeScanLink();
