@@ -257,16 +257,10 @@ public:
 class MotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
 {
 public:
-  inline static std::string APPROACH_INPUT_PORT_KEY = "approach";
-  inline static std::string PROCESS_INPUT_PORT_KEY = "process";
-  inline static std::string DEPARTURE_INPUT_PORT_KEY = "departure";
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({
-        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_INPUT_PORT_KEY),
-        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_INPUT_PORT_KEY),
-        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_INPUT_PORT_KEY),
-    });
+    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
   }
   using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
 

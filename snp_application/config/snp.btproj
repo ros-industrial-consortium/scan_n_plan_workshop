@@ -10,6 +10,11 @@
         <Condition ID="ButtonMonitor" editable="true">
             <input_port name="button"/>
         </Condition>
+        <Action ID="CombineTrajectories" editable="true">
+            <input_port name="first"/>
+            <input_port name="second"/>
+            <output_port name="output"/>
+        </Action>
         <Action ID="ExecuteMotionPlanService" editable="true">
             <input_port name="service_name" default="execute_motion_plan"/>
             <input_port name="motion_plan" default="{motion_plan}"/>
@@ -38,15 +43,17 @@
         </Action>
         <Action ID="MotionPlanPub" editable="true">
             <input_port name="topic_name"/>
-            <input_port name="approach" default="{approach}"/>
-            <input_port name="process" default="{process}"/>
-            <input_port name="departure" default="{departure}"/>
+            <input_port name="trajectory"/>
         </Action>
         <Action ID="ProcessNode" editable="true"/>
         <Decorator ID="Progress" editable="true">
             <input_port name="start" default="0"/>
             <input_port name="end" default="100"/>
         </Decorator>
+        <Action ID="ReverseTrajectory" editable="true">
+            <input_port name="input"/>
+            <output_port name="output"/>
+        </Action>
         <Condition ID="RosSpinner" editable="true"/>
         <Control ID="SNPSequenceWithMemory" editable="true"/>
         <Decorator ID="SetPage" editable="true">
@@ -71,9 +78,7 @@
             <output_port name="output" default="{trajectory}"/>
         </Action>
         <SubTree ID="motion" editable="true">
-            <input_port name="approach" default="{approach}"/>
-            <input_port name="process" default="{process}"/>
-            <input_port name="departure" default="{departure}"/>
+            <input_port name="trajectory"/>
         </SubTree>
         <SubTree ID="scan" editable="true">
             <input_port name="approach" default="{approach}"/>
