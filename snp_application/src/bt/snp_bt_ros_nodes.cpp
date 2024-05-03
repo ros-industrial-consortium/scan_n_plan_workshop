@@ -269,12 +269,9 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
     // trajectory
     const auto lhs_duration =
         first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
-    for (const auto& pt : second.points)
+    for (std::size_t i = 1; i < second.points.size(); ++i)
     {
-      if (pt == second.points.front())
-      {
-        continue;
-      }
+      const trajectory_msgs::msg::JointTrajectoryPoint& pt = second.points[i];
 
       result.points.push_back(pt);
       result.points.back().time_from_start =
@@ -295,8 +292,10 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
     // Create new trajectory points from the subset with the additional superset joints
     const auto first_duration =
         first.points.empty() ? builtin_interfaces::msg::Duration() : first.points.back().time_from_start;
-    for (const trajectory_msgs::msg::JointTrajectoryPoint& pt : second.points)
+    for (std::size_t i = 1; i < second.points.size(); ++i)
     {
+      const trajectory_msgs::msg::JointTrajectoryPoint& pt = second.points[i];
+
       // Copy the new trajectory point from the back of the first trajectory
       trajectory_msgs::msg::JointTrajectoryPoint new_pt(first.points.back());
 
@@ -305,11 +304,6 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
       {
         const std::size_t idx = indices[i];
         new_pt.positions[idx] = pt.positions[i];
-      }
-
-      if (pt == second.points.front())
-      {
-        continue;
       }
 
       // Push this new trajectory point back onto the output trajectory
@@ -336,7 +330,7 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
     std::vector<std::size_t> indices = getSubsetIndices(second.joint_names, first.joint_names);
 
     // Iterate over the first points backwards and push them into the front of the new trajectory
-    for (auto it = first.points.rbegin(); it != first.points.rend(); ++it)
+    for (auto it = first.points.rbegin() + 1; it != first.points.rend(); ++it)
     {
       // Copy the trajectory from the first point of the second trajectory
       trajectory_msgs::msg::JointTrajectoryPoint new_pt(second.points.front());
@@ -347,12 +341,6 @@ trajectory_msgs::msg::JointTrajectory combine(const trajectory_msgs::msg::JointT
         const std::size_t idx = indices[i];
         new_pt.positions[idx] = it->positions[i];
       }
-
-      if (new_pt == second.points.front())
-      {
-        continue;
-      }
-
       // Insert the new trajectory point at the beginning of the trajectory
       out.points.insert(out.points.begin(), new_pt);
     }
