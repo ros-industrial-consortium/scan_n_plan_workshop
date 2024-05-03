@@ -317,6 +317,23 @@ public:
   BT::NodeStatus tick() override;
 };
 
+class CombineTrajectoriesNode : public BT::ControlNode
+{
+public:
+  inline static std::string FIRST_TRAJECTORY_INPUT_PORT_KEY = "first";
+  inline static std::string SECOND_TRAJECTORY_INPUT_PORT_KEY = "second";
+  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
+  inline static BT::PortsList providedPorts()
+  {
+    return { BT::InputPort<trajectory_msgs::msg::JointTrajectory>(FIRST_TRAJECTORY_INPUT_PORT_KEY),
+             BT::InputPort<trajectory_msgs::msg::JointTrajectory>(SECOND_TRAJECTORY_INPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) };
+  }
+  explicit CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config);
+
+  BT::NodeStatus tick() override;
+};
+
 /**
  * @brief Condition node for spinning the BT ROS node to keep it accessible for parameter updates, service calls, etc.
  */
