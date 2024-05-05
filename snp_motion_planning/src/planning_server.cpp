@@ -234,7 +234,6 @@ public:
     node_->declare_parameter(RASTER_TASK_NAME_PARAM, "");
     node_->declare_parameter(FREESPACE_TASK_NAME_PARAM, "");
 
-
     {
       auto urdf_string = get<std::string>(node_, "robot_description");
       auto srdf_string = get<std::string>(node_, "robot_description_semantic");
@@ -257,7 +256,8 @@ public:
     raster_server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE, std::bind(&PlanningServer::planCallback, this, std::placeholders::_1, std::placeholders::_2));
     freespace_server_ = node_->create_service<snp_msgs::srv::GenerateFreespaceMotionPlan>(
-        FREESPACE_PLANNING_SERVICE, std::bind(&PlanningServer::freespaceMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
+        FREESPACE_PLANNING_SERVICE,
+        std::bind(&PlanningServer::freespaceMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
     remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
         REMOVE_SCAN_LINK_SERVICE,
         std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
@@ -621,7 +621,7 @@ private:
     RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
   }
   void freespaceMotionPlanCallback(const snp_msgs::srv::GenerateFreespaceMotionPlan::Request::SharedPtr req,
-            snp_msgs::srv::GenerateFreespaceMotionPlan::Response::SharedPtr res)
+                                   snp_msgs::srv::GenerateFreespaceMotionPlan::Response::SharedPtr res)
   {
     try
     {
@@ -632,20 +632,20 @@ private:
       manip_info.tcp_frame = req->tcp_frame;
       manip_info.working_frame = req->mesh_frame;
 
-      tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
-                                                                 manip_info);
+      tesseract_planning::CompositeInstruction freespace_program(
+          PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
       tesseract_planning::JointWaypoint wp1 = rosJointStateToJointWaypoint(req->js1);
       tesseract_planning::JointWaypoint wp2 = rosJointStateToJointWaypoint(req->js2);
 
       // Define a freespace move to the first waypoint
       freespace_program.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{wp1},
+          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{ wp1 },
                                               tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Define a freespace move to the second waypoint
       freespace_program.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{wp2},
+          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{ wp2 },
                                               tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Add the scan link to the planning environment
