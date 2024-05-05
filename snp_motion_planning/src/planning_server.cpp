@@ -629,8 +629,8 @@ private:
 
       tesseract_common::ManipulatorInfo manip_info;
       manip_info.manipulator = req->motion_group;
-      manip_info.tcp_frame = "sand_tcp";
-      manip_info.working_frame = "base_link";
+      manip_info.tcp_frame = req->tcp_frame;
+      manip_info.working_frame = req->mesh_frame;
 
       tesseract_planning::CompositeInstruction freespace_program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
                                                                  manip_info);

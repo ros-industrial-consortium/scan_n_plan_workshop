@@ -90,6 +90,7 @@ bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::Shared
   request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
   request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
   request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
 
   return true;
 }
