@@ -285,23 +285,6 @@ public:
   bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
 };
 
-class FreespaceMotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
-{
-public:
-  inline static std::string PROCESS_INPUT_PORT_KEY = "process";
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
-  inline static BT::PortsList providedPorts()
-  {
-    return providedBasicPorts({
-        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_INPUT_PORT_KEY),
-        BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY)
-    });
-  }
-  using BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>::RosTopicPubNode;
-
-  bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
-};
-
 class FollowJointTrajectoryActionNode : public SnpRosActionNode<control_msgs::action::FollowJointTrajectory>
 {
 public:

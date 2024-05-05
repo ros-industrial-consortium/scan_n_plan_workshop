@@ -413,26 +413,6 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
   return true;
 }
 
-bool FreespaceMotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
-{
-  try
-  {
-    // msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY));
-    // msg = combine(msg, getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY));
-    msg = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
-
-  }
-  catch (const std::exception& ex)
-  {
-    std::stringstream ss;
-    ss << "Error combining trajectories: '" << ex.what() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
-    return false;
-  }
-
-  return true;
-}
-
 bool FollowJointTrajectoryActionNode::setGoal(Goal& goal)
 {
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);

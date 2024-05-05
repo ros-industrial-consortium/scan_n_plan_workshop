@@ -176,7 +176,6 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
   bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
-  bt_factory.registerNodeType<FreespaceMotionPlanPubNode>("FreespaceMotionPlanPub", ros_params);
   bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
   // Short-running services
   bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
