@@ -575,8 +575,8 @@ private:
 
       // Invoke the planner
       auto pd = createProfileDictionary();
-      auto task_name = get<std::string>(node_, TASK_NAME_PARAM);
-      tesseract_planning::CompositeInstruction program_results = plan(program, pd, task_name);
+      auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
+      tesseract_planning::CompositeInstruction program_results = plan(program, pd, raster_task_name);
 
       if (program_results.size() < 3)
       {
