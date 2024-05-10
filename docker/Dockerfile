@@ -7,9 +7,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 USER root
 
-# Install Python dependencies
-RUN python3 -m pip install open3d pyquaternion numpy --upgrade
-
 # Bind mount the source directory so as not to unnecessarily copy source code into the docker image
 ARG WORKSPACE_DIR=/opt/snp
 RUN --mount=type=bind,target=${WORKSPACE_DIR}/src/snp \
