@@ -14,6 +14,7 @@
   <depend>rclcpp</depend>
   <depend>behaviortree_cpp</depend>
   <depend>behaviortree_ros2</depend>
+  <depend>control_msgs</depend>
   <depend>snp_msgs</depend>
   <depend>snp_tpp</depend>
   <depend>industrial_reconstruction_msgs</depend>

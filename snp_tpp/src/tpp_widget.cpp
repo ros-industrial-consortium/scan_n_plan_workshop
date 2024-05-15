@@ -3,7 +3,11 @@
 #include <noether_gui/widgets/configurable_tpp_pipeline_widget.h>
 #include <pcl/io/vtk_lib_io.h>
 #include <QVBoxLayout>
+#if __has_include(<tf2_eigen/tf2_eigen.hpp>)
+#include <tf2_eigen/tf2_eigen.hpp>
+#else
 #include <tf2_eigen/tf2_eigen.h>
+#endif
 #include <yaml-cpp/yaml.h>
 
 namespace
