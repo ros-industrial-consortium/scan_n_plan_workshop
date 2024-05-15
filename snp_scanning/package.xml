@@ -7,15 +7,13 @@
   <maintainer email="tyler.marr@swri.org">Tyler Marr</maintainer>
   <license>BSD</license>
 
-  <buildtool_depend>ament_cmake_python</buildtool_depend>
-
-  <depend>industrial_reconstruction_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>rclpy</depend>
-  <depend>ros_industrial_cmake_boilerplate</depend>
-  <depend>visualization_msgs</depend>
+  <exec_depend>industrial_reconstruction_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>python3-open3d-pip</exec_depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
+    <build_type>ament_python</build_type>
   </export>
 </package>
