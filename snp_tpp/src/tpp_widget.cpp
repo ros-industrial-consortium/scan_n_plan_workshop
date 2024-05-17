@@ -86,7 +86,13 @@ void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::Shared
     // Plan the tool paths
     std::vector<noether::ToolPaths> tool_paths = pipeline.plan(mesh);
 
-    res->tool_paths = toMsg(tool_paths.at(0));
+    noether::ToolPaths test;
+    for(const noether::ToolPaths& foo : tool_paths)
+    {
+      test.insert(test.end(), foo.begin(), foo.end());
+    }
+
+    res->tool_paths = toMsg(test);
     res->success = true;
     res->message = "Success";
   }
