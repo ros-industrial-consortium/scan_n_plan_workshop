@@ -3,6 +3,7 @@
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 #include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
+#include <tesseract_motion_planners/ompl/ompl_planner_configurator.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
@@ -133,8 +134,8 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile(
 std::shared_ptr<tesseract_planning::TrajOptPlanProfile> createTrajOptToolZFreePlanProfile()
 {
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
-  profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 5.0);
-  profile->cartesian_coeff(5) = 0.0;
+  //  profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 5.0);
+  //  profile->cartesian_coeff(5) = 0.0;
   return profile;
 }
 
