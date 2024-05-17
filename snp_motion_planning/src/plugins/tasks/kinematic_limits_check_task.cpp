@@ -11,11 +11,14 @@
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/poly/move_instruction_poly.h>
 #include <tesseract_time_parameterization/core/instructions_trajectory.h>
-//#include <tesseract_common/kinematic_limits.h>
+#include <tesseract_environment/environment.h>
 
+#include <tesseract_task_composer/core/task_composer_context.h>
+#include <tesseract_task_composer/core/task_composer_data_storage.h>
 #include <tesseract_task_composer/core/task_composer_task.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory_utils.h>
+#include <tesseract_task_composer/core/task_composer_task_plugin_factory.h>
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 
 namespace snp_motion_planning
