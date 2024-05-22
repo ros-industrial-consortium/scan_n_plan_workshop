@@ -22,9 +22,9 @@ std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::Polygo
 
   for(const geometry_msgs::msg::PolygonStamped& inner_vector_ : boundary_)
   {
-    if (inner_vector_.polygon.points.size() < 5) // 5 because one single point/dot counts as 2, so a triangle (3 points in space) will count as size 6
+    if (inner_vector_.polygon.points.size() < 3)
     {
-      std::cout << "***** Polygon points size is less than 3, size is: " << inner_vector_.polygon.points.size()/2 << " *****" << std::endl;
+      std::cout << "***** Polygon points size is less than 3, size is: " << inner_vector_.polygon.points.size() << " *****" << std::endl;
       continue;
     }
     Eigen::MatrixX3d inner_matrix(inner_vector_.polygon.points.size(), 3);
