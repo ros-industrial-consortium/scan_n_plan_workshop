@@ -75,18 +75,8 @@ sensor_msgs::msg::JointState jointTrajectoryPointToJointState(trajectory_msgs::m
 
 bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  trajectory_msgs::msg::JointTrajectory input =
-      snp_application::getBTInput<trajectory_msgs::msg::JointTrajectory>(this, PROCESS_INPUT_PORT_KEY);
-
-  trajectory_msgs::msg::JointTrajectory trajectory = input;
-  trajectory_msgs::msg::JointTrajectoryPoint tp1 = trajectory.points.back();
-  trajectory_msgs::msg::JointTrajectoryPoint tp2 = trajectory.points.front();
-
-  sensor_msgs::msg::JointState js1 = jointTrajectoryPointToJointState(trajectory, tp1);
-  sensor_msgs::msg::JointState js2 = jointTrajectoryPointToJointState(trajectory, tp2);
-
-  request->js1 = js1;
-  request->js2 = js2;
+  request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);;
+  request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);;
 
   request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
   request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);

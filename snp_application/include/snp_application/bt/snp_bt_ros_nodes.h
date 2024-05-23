@@ -190,11 +190,13 @@ public:
 class GenerateFreespaceMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>
 {
 public:
-  inline static std::string PROCESS_INPUT_PORT_KEY = "process";
+  inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "start_joint_state";
+  inline static std::string GOAL_JOINT_STATE_INPUT_PORT_KEY = "goal_joint_state";
   inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_INPUT_PORT_KEY),
+    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(START_JOINT_STATE_INPUT_PORT_KEY),
+                                BT::InputPort<trajectory_msgs::msg::JointTrajectory>(GOAL_JOINT_STATE_INPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) });
   }
 
