@@ -24,11 +24,6 @@
             <input_port name="action_name" default="follow_joint_trajectory"/>
             <input_port name="trajectory" default="{trajectory}"/>
         </Action>
-        <Action ID="FreespaceMotionPlanPub" editable="true">
-            <input_port name="topic_name"/>
-            <input_port name="process" default="{process}"/>
-            <input_port name="trajectory" default="{trajectory}"/>
-        </Action>
         <Action ID="GenerateFreespaceMotionPlanService" editable="true">
             <input_port name="service_name" default="generate_freespace_motion_plan"/>
             <input_port name="process" default="{process}"/>
