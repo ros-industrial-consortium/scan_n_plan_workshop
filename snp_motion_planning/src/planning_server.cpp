@@ -571,7 +571,8 @@ private:
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
 
       // Add the scan link to the planning environment
-      addScanLink(req->mesh_filename, req->mesh_frame);
+      if (!req->mesh_filename.empty())
+        addScanLink(req->mesh_filename, req->mesh_frame);
 
       // Invoke the planner
       auto pd = createProfileDictionary();
@@ -649,7 +650,8 @@ private:
                                               tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Add the scan link to the planning environment
-      addScanLink(req->mesh_filename, req->mesh_frame);
+      if (!req->mesh_filename.empty())
+        addScanLink(req->mesh_filename, req->mesh_frame);
 
       // Invoke the planner
       auto pd = createProfileDictionary();
