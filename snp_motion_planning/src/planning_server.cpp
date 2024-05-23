@@ -658,11 +658,7 @@ private:
       auto freespace_task_name = get<std::string>(node_, FREESPACE_TASK_NAME_PARAM);
       tesseract_planning::CompositeInstruction program_results = plan(freespace_program, pd, freespace_task_name);
 
-      // Remove scan link
-      removeScanLink();
-
       // Return results
-
       res->trajectory = tesseract_rosutils::toMsg(toJointTrajectory(program_results), env_->getState());
       res->message = "Succesfully planned motion";
       res->success = true;
