@@ -1,7 +1,6 @@
 # Request
 
 # Params
-# [insert any relevant motion planning parameters here]
 string motion_group
 string tcp_frame
 sensor_msgs/JointState js1
