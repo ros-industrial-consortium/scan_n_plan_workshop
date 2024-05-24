@@ -75,8 +75,10 @@ sensor_msgs::msg::JointState jointTrajectoryPointToJointState(trajectory_msgs::m
 
 bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);;
-  request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);;
+  request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
+  ;
+  request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
+  ;
 
   request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
   request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
@@ -409,7 +411,7 @@ bool FollowJointTrajectoryActionNode::setGoal(Goal& goal)
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
   for (auto& point : goal.trajectory.points)
   {
-      point.effort.clear();
+    point.effort.clear();
   }
   return true;
 }
@@ -624,14 +626,14 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
 
 BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
 {
-    if (!last_msg)
-    {
-      std::stringstream ss;
-      ss << "Failed to find a joint state";
-      config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
-      return BT::NodeStatus::FAILURE;
-    }
-    sensor_msgs::msg::JointState js = *last_msg;
+  if (!last_msg)
+  {
+    std::stringstream ss;
+    ss << "Failed to find a joint state";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  sensor_msgs::msg::JointState js = *last_msg;
   BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, js);
 
   return BT::NodeStatus::SUCCESS;

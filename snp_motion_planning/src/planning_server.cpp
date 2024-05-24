@@ -254,7 +254,8 @@ public:
 
     // Advertise the ROS2 service
     raster_server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
-        PLANNING_SERVICE, std::bind(&PlanningServer::processMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
+        PLANNING_SERVICE,
+        std::bind(&PlanningServer::processMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
     freespace_server_ = node_->create_service<snp_msgs::srv::GenerateFreespaceMotionPlan>(
         FREESPACE_PLANNING_SERVICE,
         std::bind(&PlanningServer::freespaceMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
