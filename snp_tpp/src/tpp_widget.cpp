@@ -84,15 +84,14 @@ void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::Shared
     mesh.header.frame_id = req->mesh_frame;
 
     // Plan the tool paths
-    std::vector<noether::ToolPaths> tool_paths = pipeline.plan(mesh);
+    std::vector<noether::ToolPaths> tool_paths_vector = pipeline.plan(mesh);
 
-    noether::ToolPaths test;
-    for(const noether::ToolPaths& foo : tool_paths)
-    {
-      test.insert(test.end(), foo.begin(), foo.end());
-    }
+    // Concatenate the tool paths from each sub-mesh into a single tool paths object
+    noether::ToolPaths tool_paths_concat;
+    for(const noether::ToolPaths& tool_paths : tool_paths_vector)
+      tool_paths_concat.insert(tool_paths_concat.end(), tool_paths.begin(), tool_paths.end());
 
-    res->tool_paths = toMsg(test);
+    res->tool_paths = toMsg(tool_paths_concat);
     res->success = true;
     res->message = "Success";
   }

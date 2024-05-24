@@ -13,12 +13,12 @@ class ROISelectionMeshModifier : public noether::MeshModifier
 {
 public:
   ROISelectionMeshModifier(rclcpp::Node::SharedPtr node, noether::ExtrudedPolygonSubMeshExtractor extractor,
-                           std::vector<geometry_msgs::msg::PolygonStamped> boundary);
+                           std::vector<geometry_msgs::msg::PolygonStamped> boundaries);
 
   std::vector<pcl::PolygonMesh> modify(const pcl::PolygonMesh& mesh) const override;
 
 private:
-  const std::vector<geometry_msgs::msg::PolygonStamped> boundary_;
+  const std::vector<geometry_msgs::msg::PolygonStamped> boundaries_;
   const noether::ExtrudedPolygonSubMeshExtractor extractor_;
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
