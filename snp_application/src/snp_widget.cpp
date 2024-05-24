@@ -23,9 +23,11 @@
 
 static const std::string BT_FILES_PARAM = "bt_files";
 static const std::string BT_PARAM = "tree";
+static const std::string BT_FREESPACE_PARAM = "freespace_tree";
 static const std::string BT_SHORT_TIMEOUT_PARAM = "bt_short_timeout";
 static const std::string BT_LONG_TIMEOUT_PARAM = "bt_long_timeout";
 static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory_action";
+static const std::string HOME_STATE_BLACKBOARD_NAME = "home_state";
 
 class TPPDialog : public QDialog
 {
@@ -62,6 +64,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   ui_->setupUi(this);
   ui_->group_box_operation->setEnabled(false);
   ui_->push_button_reset->setEnabled(false);
+  ui_->push_button_home->setEnabled(true);
 
   // Add the TPP widget
   {
@@ -85,16 +88,38 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   connect(ui_->push_button_reset, &QPushButton::clicked, [this]() {
     ui_->push_button_reset->setEnabled(false);
     ui_->push_button_start->setEnabled(true);
+    ui_->push_button_home->setEnabled(true);
   });
 
   // Start
   connect(ui_->push_button_start, &QPushButton::clicked, [this]() {
     ui_->push_button_start->setEnabled(false);
     ui_->push_button_reset->setEnabled(true);
+    ui_->push_button_home->setEnabled(false);
     ui_->text_edit_log->clear();
     ui_->stacked_widget->setCurrentIndex(0);
     ui_->group_box_operation->setEnabled(true);
-    runTreeWithThread();
+
+    auto bt_tree_name = snp_application::get_parameter<std::string>(bt_node_, BT_PARAM);
+    if (bt_tree_name.empty())
+      throw std::runtime_error("Parameter '" + BT_PARAM + "' is not set");
+
+    runTreeWithThread(bt_tree_name);
+  });
+
+  // Start
+  connect(ui_->push_button_home, &QPushButton::clicked, [this]() {
+    ui_->push_button_start->setEnabled(false);
+    ui_->push_button_reset->setEnabled(true);
+    ui_->push_button_home->setEnabled(false);
+    ui_->stacked_widget->setCurrentIndex(0);
+    ui_->group_box_operation->setEnabled(true);
+
+    auto bt_tree_name = snp_application::get_parameter<std::string>(bt_node_, BT_FREESPACE_PARAM);
+    if (bt_tree_name.empty())
+      throw std::runtime_error("Parameter '" + BT_FREESPACE_PARAM + "' is not set");
+
+    runTreeWithThread(bt_tree_name);
   });
 
   // Move the text edit scroll bar to the maximum limit whenever it is resized
@@ -114,6 +139,11 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
   bt_node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
   bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
+
+  // Home state
+  bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
+  bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, {});
+  bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, {});
 
   bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
   bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
@@ -173,10 +203,16 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   board_->set(FOLLOW_JOINT_TRAJECTORY_ACTION,
               snp_application::get_parameter<std::string>(bt_node_, FOLLOW_JOINT_TRAJECTORY_ACTION));
 
+  sensor_msgs::msg::JointState home_state;
+  home_state.name = snp_application::get_parameter<std::vector<std::string>>(bt_node_, HOME_STATE_JOINT_NAMES_PARAM);
+  home_state.position = snp_application::get_parameter<std::vector<double>>(bt_node_, HOME_STATE_JOINT_VALUES_PARAM);
+  board_->set(HOME_STATE_BLACKBOARD_NAME, home_state);
+
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
   bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
   bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
+  bt_factory.registerNodeType<GetCurrentJointStateNode>("GetCurrentJointState", ros_params);
   // Short-running services
   bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
   bt_factory.registerNodeType<GenerateToolPathsServiceNode>("GenerateToolPathsService", ros_params);
@@ -194,7 +230,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   return bt_factory;
 }
 
-void SNPWidget::runTreeWithThread()
+void SNPWidget::runTreeWithThread(const std::string& bt_tree_name)
 {
   try
   {
@@ -210,10 +246,6 @@ void SNPWidget::runTreeWithThread()
 
     for (const std::string& file : bt_files)
       bt_factory.registerBehaviorTreeFromFile(file);
-
-    auto bt_tree_name = get_parameter<std::string>(bt_node_, BT_PARAM);
-    if (bt_tree_name.empty())
-      throw std::runtime_error("Parameter '" + BT_PARAM + "' is not set");
 
     thread->tree = bt_factory.createTree(bt_tree_name, board_);
     logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
