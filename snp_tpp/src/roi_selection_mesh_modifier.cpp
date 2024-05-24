@@ -18,7 +18,7 @@ std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::Polygo
 {
   std::vector<pcl::PolygonMesh> modified_meshes;
 
-  for(const geometry_msgs::msg::PolygonStamped& polygon : boundaries_)
+  for (const geometry_msgs::msg::PolygonStamped& polygon : boundaries_)
   {
     if (polygon.polygon.points.size() < 3)
       continue;
@@ -30,7 +30,7 @@ std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::Polygo
       Eigen::Isometry3d transform = tf2::transformToEigen(buffer_.lookupTransform(
           mesh.header.frame_id, polygon.header.frame_id, tf2::TimePointZero, std::chrono::seconds(3)));
 
-      Eigen::Vector3f v(polygon.polygon.points[i].x, polygon.polygon.points[i].y,polygon.polygon.points[i].z);
+      Eigen::Vector3f v(polygon.polygon.points[i].x, polygon.polygon.points[i].y, polygon.polygon.points[i].z);
 
       boundary.row(i) = transform * v.cast<double>();
     }
