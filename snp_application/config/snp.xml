@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+  <BehaviorTree ID="go_home_main">
+    <ForceSuccess>
+      <ReactiveSequence>
+        <RosSpinner/>
+        <ButtonMonitor name="Reset"
+                       button="reset"
+                       _description="Sequence has been reset to start state"/>
+        <KeepRunningUntilFailure>
+          <ForceSuccess>
+            <ReactiveSequence>
+              <ButtonMonitor name="Halt"
+                             button="halt"
+                             _description="Current task has been halted"/>
+              <SubTree ID="go_home_process"
+                       _autoremap="true"/>
+            </ReactiveSequence>
+          </ForceSuccess>
+        </KeepRunningUntilFailure>
+      </ReactiveSequence>
+    </ForceSuccess>
+  </BehaviorTree>
+
+  <BehaviorTree ID="go_home_process">
+    <SequenceWithMemory>
+      <Progress start="0"
+                end="50">
+        <Sequence>
+          <GetCurrentJointState topic_name="/joint_states"
+                                current_state="{current_state}"/>
+          <GenerateFreespaceMotionPlanService service_name="generate_freespace_motion_plan"
+                                              start_joint_state="{current_state}"
+                                              goal_joint_state="{home_state}"
+                                              trajectory="{trajectory}"/>
+          <MotionPlanPub topic_name="motion_plan"
+                         trajectory="{trajectory}"/>
+        </Sequence>
+      </Progress>
+      <Progress start="50"
+                end="100">
+        <Sequence>
+          <SetPage index="3">
+            <ButtonApproval name="Approve Scan Execution"
+                            approve_button="execute"
+                            disapprove_button="back"
+                            _description="Press next to approve the scan motion plan and proceed to scan motion execution"/>
+          </SetPage>
+          <SubTree ID="motion"
+                   trajectory="{trajectory}"
+                   _autoremap="true"/>
+        </Sequence>
+      </Progress>
+      <SetPage index="4">
+        <ButtonApproval name="Approve Restart"
+                        approve_button=""
+                        disapprove_button="back"/>
+      </SetPage>
+    </SequenceWithMemory>
+  </BehaviorTree>
+
   <BehaviorTree ID="main">
     <ForceSuccess>
       <ReactiveSequence>
@@ -200,20 +259,14 @@
       <input_port name="trajectory"
                   default="{trajectory}"/>
     </Action>
-    <Action ID="FreespaceMotionPlanPub"
-            editable="true">
-      <input_port name="topic_name"/>
-      <input_port name="process"
-                  default="{process}"/>
-      <input_port name="trajectory"
-                  default="{trajectory}"/>
-    </Action>
     <Action ID="GenerateFreespaceMotionPlanService"
             editable="true">
       <input_port name="service_name"
                   default="generate_freespace_motion_plan"/>
-      <input_port name="process"
-                  default="{process}"/>
+      <input_port name="start_joint_state"
+                  default="{start_joint_state}"/>
+      <input_port name="goal_joint_state"
+                  default="{goal_joint_state}"/>
       <output_port name="trajectory"
                    default="{trajectory}"/>
     </Action>
@@ -247,6 +300,13 @@
                   default="generate_tool_paths"/>
       <input_port name="tool_paths"
                   default="{tool_paths}"/>
+    </Action>
+    <Action ID="GetCurrentJointState"
+            editable="true">
+      <input_port name="topic_name"
+                  default="/joint_states"/>
+      <output_port name="current_state"
+                   default="{current_state}"/>
     </Action>
     <Action ID="MotionPlanPub"
             editable="true">

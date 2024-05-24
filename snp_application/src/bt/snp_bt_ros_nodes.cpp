@@ -407,6 +407,10 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
 bool FollowJointTrajectoryActionNode::setGoal(Goal& goal)
 {
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
+  for (auto& point : goal.trajectory.points)
+  {
+      point.effort.clear();
+  }
   return true;
 }
 
@@ -614,6 +618,21 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
+{
+    if (!last_msg)
+    {
+      std::stringstream ss;
+      ss << "Failed to find a joint state";
+      config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+      return BT::NodeStatus::FAILURE;
+    }
+    sensor_msgs::msg::JointState js = *last_msg;
+  BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, js);
 
   return BT::NodeStatus::SUCCESS;
 }

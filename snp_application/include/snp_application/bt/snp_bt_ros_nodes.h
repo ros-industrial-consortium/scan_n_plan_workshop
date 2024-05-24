@@ -27,6 +27,9 @@ static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
 static const std::string START_STATE_REPLACEMENT_TOLERANCE_PARAM = "start_state_replacement_tolerance";
+// Home state
+static const std::string HOME_STATE_JOINT_VALUES_PARAM = "home_state_joint_values";
+static const std::string HOME_STATE_JOINT_NAMES_PARAM = "home_state_joint_names";
 //   Industrial Reconstruction
 static const std::string IR_TSDF_VOXEL_PARAM = "ir.tsdf.voxel_length";
 static const std::string IR_TSDF_SDF_PARAM = "ir.tsdf.sdf_trunc";
@@ -195,8 +198,8 @@ public:
   inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(START_JOINT_STATE_INPUT_PORT_KEY),
-                                BT::InputPort<trajectory_msgs::msg::JointTrajectory>(GOAL_JOINT_STATE_INPUT_PORT_KEY),
+    return providedBasicPorts({ BT::InputPort<sensor_msgs::msg::JointState>(START_JOINT_STATE_INPUT_PORT_KEY),
+                                BT::InputPort<sensor_msgs::msg::JointState>(GOAL_JOINT_STATE_INPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) });
   }
 
@@ -346,6 +349,19 @@ public:
   explicit CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config);
 
   BT::NodeStatus tick() override;
+};
+
+class GetCurrentJointStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
+{
+public:
+  inline static std::string JOINT_STATE_OUTPUT_PORT_KEY = "current_state";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({ BT::OutputPort<sensor_msgs::msg::JointState>(JOINT_STATE_OUTPUT_PORT_KEY) });
+  }
+  using BT::RosTopicSubNode<sensor_msgs::msg::JointState>::RosTopicSubNode;
+
+  BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
 };
 
 /**
