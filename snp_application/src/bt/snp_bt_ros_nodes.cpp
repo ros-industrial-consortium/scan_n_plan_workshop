@@ -76,9 +76,7 @@ sensor_msgs::msg::JointState jointTrajectoryPointToJointState(const trajectory_m
 bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
-  ;
   request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
-  ;
 
   request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
   request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
