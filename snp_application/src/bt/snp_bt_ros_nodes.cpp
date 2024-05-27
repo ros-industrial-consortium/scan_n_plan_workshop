@@ -64,8 +64,8 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   return BT::NodeStatus::SUCCESS;
 }
 
-sensor_msgs::msg::JointState jointTrajectoryPointToJointState(trajectory_msgs::msg::JointTrajectory jt,
-                                                              trajectory_msgs::msg::JointTrajectoryPoint jtp)
+sensor_msgs::msg::JointState jointTrajectoryPointToJointState(const trajectory_msgs::msg::JointTrajectory& jt,
+                                                              const trajectory_msgs::msg::JointTrajectoryPoint& jtp)
 {
   sensor_msgs::msg::JointState js;
   js.name = jt.joint_names;
