@@ -195,6 +195,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   bt_factory.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
   bt_factory.registerNodeType<ReverseTrajectoryNode>("ReverseTrajectory");
   bt_factory.registerNodeType<CombineTrajectoriesNode>("CombineTrajectories");
+  bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", bt_node_);
 
   BT::RosNodeParams ros_params;
   ros_params.nh = bt_node_;
@@ -213,7 +214,6 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
   bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
-  bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", ros_params);
   bt_factory.registerNodeType<GetCurrentJointStateNode>("GetCurrentJointState", ros_params);
   // Short-running services
   bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);

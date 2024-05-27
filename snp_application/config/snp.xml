@@ -85,9 +85,11 @@
     <Sequence>
       <TriggerService name="Enable Robot"
                       service_name="robot_enable"/>
+      <GetCurrentJointState topic_name="/joint_states"
+                            current_state="{current_state}"/>
       <UpdateTrajectoryStartState name="Update Trajectory Start State"
-                                  topic_name="/joint_states"
-                                  input="{trajectory}"
+                                  joint_state="{current_state}"
+                                  input_trajectory="{trajectory}"
                                   output="{updated_trajectory}"/>
       <FollowJointTrajectoryAction name="Execute Approach Motion"
                                    action_name="{follow_joint_trajectory_action}"
@@ -213,9 +215,11 @@
     <Sequence>
       <TriggerService name="Enable Robot"
                       service_name="robot_enable"/>
+      <GetCurrentJointState topic_name="/joint_states"
+                            current_state="{current_state}"/>
       <UpdateTrajectoryStartState name="Update Trajectory Start State"
-                                  topic_name="/joint_states"
-                                  input="{approach}"
+                                  joint_state="{current_state}"
+                                  input_trajectory="{approach}"
                                   output="{updated_approach}"/>
       <FollowJointTrajectoryAction name="Execute Scan Approach Motion"
                                    action_name="{follow_joint_trajectory_action}"
@@ -352,9 +356,9 @@
     </Action>
     <Action ID="UpdateTrajectoryStartState"
             editable="true">
-      <input_port name="topic_name"
-                  default="/joint_states"/>
-      <input_port name="input"
+      <input_port name="joint_state"
+                  default="{current_state}"/>
+      <input_port name="input_trajectory"
                   default="{trajectory}"/>
       <output_port name="output"
                    default="{trajectory}"/>

@@ -304,19 +304,25 @@ public:
   BT::NodeStatus onResultReceived(const WrappedResult& result) override;
 };
 
-class UpdateTrajectoryStartStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
+class UpdateTrajectoryStartStateNode : public BT::ControlNode
 {
 public:
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input";
+  inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "joint_state";
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input_trajectory";
   inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
-                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) });
+    return { BT::InputPort<sensor_msgs::msg::JointState>(START_JOINT_STATE_INPUT_PORT_KEY),
+             BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) };
   }
-  using BT::RosTopicSubNode<sensor_msgs::msg::JointState>::RosTopicSubNode;
+  explicit UpdateTrajectoryStartStateNode(const std::string& instance_name, const BT::NodeConfig& config,
+                                          rclcpp::Node::SharedPtr node);
 
-  BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
+protected:
+  BT::NodeStatus tick() override;
+
+  rclcpp::Node::SharedPtr node_;
 };
 
 class ReverseTrajectoryNode : public BT::ControlNode

@@ -83,8 +83,8 @@
             <input_port name="service_name"/>
         </Action>
         <Action ID="UpdateTrajectoryStartState" editable="true">
-            <input_port name="topic_name" default="/joint_states"/>
-            <input_port name="input" default="{trajectory}"/>
+            <input_port name="joint_state" default="{current_state}"/>
+            <input_port name="input_trajectory" default="{trajectory}"/>
             <output_port name="output" default="{trajectory}"/>
         </Action>
         <SubTree ID="motion" editable="true">
