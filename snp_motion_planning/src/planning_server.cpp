@@ -190,7 +190,7 @@ createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>&
   return cmds;
 }
 
-tesseract_planning::JointWaypoint rosJointStateToJointWaypoint(sensor_msgs::msg::JointState& js)
+tesseract_planning::JointWaypoint rosJointStateToJointWaypoint(const sensor_msgs::msg::JointState& js)
 {
   tesseract_planning::JointWaypoint jwp;
   jwp.setNames(js.name);
