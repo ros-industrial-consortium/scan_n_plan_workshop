@@ -27,7 +27,7 @@ static const std::string BT_FREESPACE_PARAM = "freespace_tree";
 static const std::string BT_SHORT_TIMEOUT_PARAM = "bt_short_timeout";
 static const std::string BT_LONG_TIMEOUT_PARAM = "bt_long_timeout";
 static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory_action";
-static const std::string HOME_STATE_BLACKBOARD_NAME = "home_state";
+static const std::string HOME_STATE_NAME = "home_state";
 
 class TPPDialog : public QDialog
 {
@@ -208,7 +208,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   sensor_msgs::msg::JointState home_state;
   home_state.name = snp_application::get_parameter<std::vector<std::string>>(bt_node_, HOME_STATE_JOINT_NAMES_PARAM);
   home_state.position = snp_application::get_parameter<std::vector<double>>(bt_node_, HOME_STATE_JOINT_VALUES_PARAM);
-  board_->set(HOME_STATE_BLACKBOARD_NAME, home_state);
+  board_->set(HOME_STATE_NAME, home_state);
 
   // Publishers/Subscribers
   bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
