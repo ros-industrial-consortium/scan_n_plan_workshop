@@ -102,12 +102,13 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
     auto bt_tree_name = snp_application::get_parameter<std::string>(bt_node_, BT_PARAM);
     if (bt_tree_name.empty())
-      throw std::runtime_error("Parameter '" + BT_PARAM + "' is not set");
+      QMessageBox::warning(this, QString::fromStdString("Error"),
+                           QString::fromStdString("Parameter '" + BT_PARAM + "' is not set"));
 
     runTreeWithThread(bt_tree_name);
   });
 
-  // Start
+  // Go Home
   connect(ui_->push_button_home, &QPushButton::clicked, [this]() {
     ui_->push_button_start->setEnabled(false);
     ui_->push_button_reset->setEnabled(true);
@@ -117,7 +118,8 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
     auto bt_tree_name = snp_application::get_parameter<std::string>(bt_node_, BT_FREESPACE_PARAM);
     if (bt_tree_name.empty())
-      throw std::runtime_error("Parameter '" + BT_FREESPACE_PARAM + "' is not set");
+      QMessageBox::warning(this, QString::fromStdString("Error"),
+                           QString::fromStdString("Parameter '" + BT_FREESPACE_PARAM + "' is not set"));
 
     runTreeWithThread(bt_tree_name);
   });
