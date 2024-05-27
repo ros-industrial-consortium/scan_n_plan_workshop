@@ -631,8 +631,7 @@ BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg:
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
-  sensor_msgs::msg::JointState js = *last_msg;
-  BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, js);
+  BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, *last_msg);
 
   return BT::NodeStatus::SUCCESS;
 }
