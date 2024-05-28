@@ -147,6 +147,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   board_->set("tpp", static_cast<QAbstractButton*>(ui_->push_button_tpp));
   board_->set("plan", static_cast<QAbstractButton*>(ui_->push_button_motion_plan));
   board_->set("execute", static_cast<QAbstractButton*>(ui_->push_button_motion_execution));
+  board_->set("tpp_config", static_cast<QAbstractButton*>(ui_->tool_button_tpp));
 }
 
 BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ros_long_timeout)
