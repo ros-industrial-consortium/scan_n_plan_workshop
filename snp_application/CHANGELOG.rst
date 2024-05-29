@@ -2,8 +2,8 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.6.0 (2024-05-29)
+------------------
 * Merge pull request `#111 <https://github.com/marip8/scan_n_plan_workshop/issues/111>`_ from DavidSpielman/feature/rerun_toolpaths
   Added Freespace Motion Plan
 * Catch exceptions in connect functions

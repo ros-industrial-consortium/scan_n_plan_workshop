@@ -2,8 +2,8 @@
 Changelog for package snp_tpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.6.0 (2024-05-29)
+------------------
 * Merge pull request `#114 <https://github.com/marip8/scan_n_plan_workshop/issues/114>`_ from BryanMqz/global-branch
   Scan N' Plan update that complies with multiple polygon selection tool
 * Ran clang-format
