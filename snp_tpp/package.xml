@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>snp_tpp</name>
-  <version>0.0.0</version>
+  <version>4.5.0</version>
   <description>
     Scan N Plan Tool Path Planning Package
     This package contains a ROS2 wrapper around the ROS-Industrial Noether library.  This exposes
