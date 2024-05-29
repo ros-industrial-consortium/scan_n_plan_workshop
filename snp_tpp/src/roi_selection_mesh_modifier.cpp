@@ -4,39 +4,41 @@
 #else
 #include <tf2_eigen/tf2_eigen.h>
 #endif
-#include <tf2/time.h>
 
 namespace snp_tpp
 {
 ROISelectionMeshModifier::ROISelectionMeshModifier(rclcpp::Node::SharedPtr node,
                                                    noether::ExtrudedPolygonSubMeshExtractor extractor,
-                                                   std::vector<geometry_msgs::msg::PointStamped> boundary)
-  : boundary_(std::move(boundary)), extractor_(std::move(extractor)), buffer_(node->get_clock()), listener_(buffer_)
+                                                   std::vector<geometry_msgs::msg::PolygonStamped> boundaries)
+  : boundaries_(std::move(boundaries)), extractor_(std::move(extractor)), buffer_(node->get_clock()), listener_(buffer_)
 {
 }
 
 std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::PolygonMesh& mesh) const
 {
-  if (boundary_.size() < 3)
+  std::vector<pcl::PolygonMesh> modified_meshes;
+
+  for (const geometry_msgs::msg::PolygonStamped& polygon : boundaries_)
   {
-    return { mesh };
-  }
-  else
-  {
-    Eigen::MatrixX3d boundary(boundary_.size(), 3);
+    if (polygon.polygon.points.size() < 3)
+      continue;
+
+    Eigen::MatrixX3d boundary(polygon.polygon.points.size(), 3);
     for (Eigen::Index i = 0; i < boundary.rows(); ++i)
     {
       // Lookup transform between mesh header and
       Eigen::Isometry3d transform = tf2::transformToEigen(buffer_.lookupTransform(
-          mesh.header.frame_id, boundary_[i].header.frame_id, tf2::TimePointZero, std::chrono::seconds(3)));
+          mesh.header.frame_id, polygon.header.frame_id, tf2::TimePointZero, std::chrono::seconds(3)));
 
-      Eigen::Vector3d v;
-      tf2::fromMsg(boundary_[i].point, v);
-      boundary.row(i) = transform * v;
+      Eigen::Vector3f v(polygon.polygon.points[i].x, polygon.polygon.points[i].y, polygon.polygon.points[i].z);
+
+      boundary.row(i) = transform * v.cast<double>();
     }
 
-    return { extractor_.extract(mesh, boundary) };
+    modified_meshes.push_back(extractor_.extract(mesh, boundary));
   }
+
+  return modified_meshes;
 }
 
 }  // namespace snp_tpp

@@ -12,8 +12,8 @@
     version: 6e1eadada1f86b716a6fcef0ae5ffb291f9b5e66
 - git:
     local-name: rviz_polygon_selection_tool
-    uri: https://github.com/marip8/rviz_polygon_selection_tool.git
-    version: c2bff22f4990f04b8b10d64bbbd832618e0b0c02
+    uri: https://github.com/swri-robotics/rviz_polygon_selection_tool.git
+    version: 1.0.0
 - git:
     local-name: BehaviorTree.CPP
     uri: https://github.com/BehaviorTree/BehaviorTree.CPP.git
