@@ -100,29 +100,33 @@
       </Progress>
       <Progress start="60"
                 end="80">
-        <Sequence>
-          <SetPage index="1">
-            <ButtonApproval name="Approve Motion Plan Generation"
-                            approve_button="plan"
-                            disapprove_button="back"
-                            _description="Press next to generate a motion plan for the tool path"/>
-          </SetPage>
-          <GenerateMotionPlanService name="Generate Process Motion Plan"
-                                     service_name="generate_motion_plan"
-                                     tool_paths="{tool_paths}"
-                                     approach="{approach}"
-                                     process="{process}"
-                                     departure="{departure}"/>
-          <CombineTrajectories first="{approach}"
-                               second="{process}"
-                               output="{trajectory}"/>
-          <CombineTrajectories first="{trajectory}"
-                               second="{departure}"
-                               output="{trajectory}"/>
-          <MotionPlanPub name="Publish Process Motion Plan"
-                         topic_name="motion_plan"
-                         trajectory="{trajectory}"/>
-        </Sequence>
+        <ReactiveSequence>
+          <ButtonMonitor name="Tool Path Configuration Changed"
+                         button="tpp_config"/>
+          <Sequence>
+            <SetPage index="1">
+              <ButtonApproval name="Approve Motion Plan Generation"
+                              approve_button="plan"
+                              disapprove_button="back"
+                              _description="Press next to generate a motion plan for the tool path"/>
+            </SetPage>
+            <GenerateMotionPlanService name="Generate Process Motion Plan"
+                                       service_name="generate_motion_plan"
+                                       tool_paths="{tool_paths}"
+                                       approach="{approach}"
+                                       process="{process}"
+                                       departure="{departure}"/>
+            <CombineTrajectories first="{approach}"
+                                 second="{process}"
+                                 output="{trajectory}"/>
+            <CombineTrajectories first="{trajectory}"
+                                 second="{departure}"
+                                 output="{trajectory}"/>
+            <MotionPlanPub name="Publish Process Motion Plan"
+                           topic_name="motion_plan"
+                           trajectory="{trajectory}"/>
+          </Sequence>
+        </ReactiveSequence>
       </Progress>
       <Progress start="80"
                 end="100">
