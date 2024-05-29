@@ -2,6 +2,13 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#121 <https://github.com/marip8/scan_n_plan_workshop/issues/121>`_ from marip8/fix/bt-node-types
+  Changed custom nodes from control to action nodes
+* Changed custom nodes from control to action nodes
+* Contributors: Michael Ripperger
+
 4.6.0 (2024-05-29)
 ------------------
 * Merge pull request `#111 <https://github.com/marip8/scan_n_plan_workshop/issues/111>`_ from DavidSpielman/feature/rerun_toolpaths

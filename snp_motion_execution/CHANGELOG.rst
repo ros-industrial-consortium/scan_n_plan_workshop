@@ -2,6 +2,9 @@
 Changelog for package snp_motion_execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 4.6.0 (2024-05-29)
 ------------------
 
