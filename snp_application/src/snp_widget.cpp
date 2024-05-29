@@ -100,12 +100,14 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
     ui_->stacked_widget->setCurrentIndex(0);
     ui_->group_box_operation->setEnabled(true);
 
-    auto bt_tree_name = snp_application::get_parameter<std::string>(bt_node_, BT_PARAM);
-    if (bt_tree_name.empty())
-      QMessageBox::warning(this, QString::fromStdString("Error"),
-                           QString::fromStdString("Parameter '" + BT_PARAM + "' is not set"));
-
-    runTreeWithThread(bt_tree_name);
+    try
+    {
+      runTreeWithThread(snp_application::get_parameter<std::string>(bt_node_, BT_PARAM));
+    }
+    catch (const std::exception& ex)
+    {
+      QMessageBox::warning(this, "Error", ex.what());
+    }
   });
 
   // Go Home
@@ -116,12 +118,14 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
     ui_->stacked_widget->setCurrentIndex(0);
     ui_->group_box_operation->setEnabled(true);
 
-    auto bt_tree_name = snp_application::get_parameter<std::string>(bt_node_, BT_FREESPACE_PARAM);
-    if (bt_tree_name.empty())
-      QMessageBox::warning(this, QString::fromStdString("Error"),
-                           QString::fromStdString("Parameter '" + BT_FREESPACE_PARAM + "' is not set"));
-
-    runTreeWithThread(bt_tree_name);
+    try
+    {
+      runTreeWithThread(snp_application::get_parameter<std::string>(bt_node_, BT_FREESPACE_PARAM));
+    }
+    catch (const std::exception& ex)
+    {
+      QMessageBox::warning(this, "Error", ex.what());
+    }
   });
 
   // Move the text edit scroll bar to the maximum limit whenever it is resized
