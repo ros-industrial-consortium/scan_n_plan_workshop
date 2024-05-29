@@ -444,7 +444,7 @@ BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedRe
 UpdateTrajectoryStartStateNode::UpdateTrajectoryStartStateNode(const std::string& instance_name,
                                                                const BT::NodeConfig& config,
                                                                rclcpp::Node::SharedPtr node)
-  : BT::ControlNode(instance_name, config), node_(node)
+  : BT::ActionNodeBase(instance_name, config), node_(node)
 {
 }
 
@@ -528,6 +528,10 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
+void UpdateTrajectoryStartStateNode::halt()
+{
+}
+
 /**
  * @details Adapted from
  * https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L77C4-L96
@@ -564,7 +568,7 @@ trajectory_msgs::msg::JointTrajectory reverseTrajectory(const trajectory_msgs::m
 }
 
 ReverseTrajectoryNode::ReverseTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config)
-  : BT::ControlNode(instance_name, config)
+  : BT::ActionNodeBase(instance_name, config)
 {
 }
 
@@ -595,8 +599,12 @@ BT::NodeStatus ReverseTrajectoryNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
+void ReverseTrajectoryNode::halt()
+{
+}
+
 CombineTrajectoriesNode::CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config)
-  : BT::ControlNode(instance_name, config)
+  : BT::ActionNodeBase(instance_name, config)
 {
 }
 
@@ -638,6 +646,10 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
   }
 
   return BT::NodeStatus::SUCCESS;
+}
+
+void CombineTrajectoriesNode::halt()
+{
 }
 
 BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
