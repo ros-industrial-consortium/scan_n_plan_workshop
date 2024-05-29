@@ -13,6 +13,7 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
+#include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/generate_scan_motion_plan.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -26,6 +27,9 @@ static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
 static const std::string START_STATE_REPLACEMENT_TOLERANCE_PARAM = "start_state_replacement_tolerance";
+// Home state
+static const std::string HOME_STATE_JOINT_VALUES_PARAM = "home_state_joint_values";
+static const std::string HOME_STATE_JOINT_NAMES_PARAM = "home_state_joint_names";
 //   Industrial Reconstruction
 static const std::string IR_TSDF_VOXEL_PARAM = "ir.tsdf.voxel_length";
 static const std::string IR_TSDF_SDF_PARAM = "ir.tsdf.sdf_trunc";
@@ -186,6 +190,25 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+class GenerateFreespaceMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>
+{
+public:
+  inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "start_joint_state";
+  inline static std::string GOAL_JOINT_STATE_INPUT_PORT_KEY = "goal_joint_state";
+  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "trajectory";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({ BT::InputPort<sensor_msgs::msg::JointState>(START_JOINT_STATE_INPUT_PORT_KEY),
+                                BT::InputPort<sensor_msgs::msg::JointState>(GOAL_JOINT_STATE_INPUT_PORT_KEY),
+                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) });
+  }
+
+  using SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>::SnpRosServiceNode;
+
+  bool setRequest(typename Request::SharedPtr& request) override;
+  BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+};
+
 class GenerateScanMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
 {
 public:
@@ -281,19 +304,25 @@ public:
   BT::NodeStatus onResultReceived(const WrappedResult& result) override;
 };
 
-class UpdateTrajectoryStartStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
+class UpdateTrajectoryStartStateNode : public BT::ControlNode
 {
 public:
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input";
+  inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "joint_state";
+  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input_trajectory";
   inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
-                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) });
+    return { BT::InputPort<sensor_msgs::msg::JointState>(START_JOINT_STATE_INPUT_PORT_KEY),
+             BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_OUTPUT_PORT_KEY) };
   }
-  using BT::RosTopicSubNode<sensor_msgs::msg::JointState>::RosTopicSubNode;
+  explicit UpdateTrajectoryStartStateNode(const std::string& instance_name, const BT::NodeConfig& config,
+                                          rclcpp::Node::SharedPtr node);
 
-  BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
+protected:
+  BT::NodeStatus tick() override;
+
+  rclcpp::Node::SharedPtr node_;
 };
 
 class ReverseTrajectoryNode : public BT::ControlNode
@@ -326,6 +355,19 @@ public:
   explicit CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config);
 
   BT::NodeStatus tick() override;
+};
+
+class GetCurrentJointStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
+{
+public:
+  inline static std::string JOINT_STATE_OUTPUT_PORT_KEY = "current_state";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({ BT::OutputPort<sensor_msgs::msg::JointState>(JOINT_STATE_OUTPUT_PORT_KEY) });
+  }
+  using BT::RosTopicSubNode<sensor_msgs::msg::JointState>::RosTopicSubNode;
+
+  BT::NodeStatus onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg) override;
 };
 
 /**

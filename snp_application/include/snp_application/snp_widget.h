@@ -23,7 +23,7 @@ public:
   explicit SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent = nullptr);
 
 protected:
-  void runTreeWithThread();
+  void runTreeWithThread(const std::string& bt_tree_name);
 
   virtual BT::BehaviorTreeFactory createBTFactory(int ros_short_timeout, int ros_long_timeout);
   QStackedWidget* getStackedWidget();

@@ -24,6 +24,12 @@
             <input_port name="action_name" default="follow_joint_trajectory"/>
             <input_port name="trajectory" default="{trajectory}"/>
         </Action>
+        <Action ID="GenerateFreespaceMotionPlanService" editable="true">
+            <input_port name="service_name" default="generate_freespace_motion_plan"/>
+            <input_port name="start_joint_state" default="{start_joint_state}"/>
+            <input_port name="goal_joint_state" default="{goal_joint_state}"/>
+            <output_port name="trajectory" default="{trajectory}"/>
+        </Action>
         <Action ID="GenerateMotionPlanService" editable="true">
             <input_port name="service_name" default="generate_motion_plan"/>
             <input_port name="tool_paths" default="{tool_paths}"/>
@@ -40,6 +46,10 @@
         <Action ID="GenerateToolPathsService" editable="true">
             <input_port name="service_name" default="generate_tool_paths"/>
             <input_port name="tool_paths" default="{tool_paths}"/>
+        </Action>
+        <Action ID="GetCurrentJointState" editable="true">
+            <input_port name="topic_name" default="/joint_states"/>
+            <output_port name="current_state" default="{current_state}"/>
         </Action>
         <Action ID="MotionPlanPub" editable="true">
             <input_port name="topic_name"/>
@@ -73,8 +83,8 @@
             <input_port name="service_name"/>
         </Action>
         <Action ID="UpdateTrajectoryStartState" editable="true">
-            <input_port name="topic_name" default="/joint_states"/>
-            <input_port name="input" default="{trajectory}"/>
+            <input_port name="joint_state" default="{current_state}"/>
+            <input_port name="input_trajectory" default="{trajectory}"/>
             <output_port name="output" default="{trajectory}"/>
         </Action>
         <SubTree ID="motion" editable="true">

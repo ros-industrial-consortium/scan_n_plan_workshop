@@ -64,6 +64,42 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   return BT::NodeStatus::SUCCESS;
 }
 
+sensor_msgs::msg::JointState jointTrajectoryPointToJointState(const trajectory_msgs::msg::JointTrajectory& jt,
+                                                              const trajectory_msgs::msg::JointTrajectoryPoint& jtp)
+{
+  sensor_msgs::msg::JointState js;
+  js.name = jt.joint_names;
+  js.position = jtp.positions;
+  return js;
+}
+
+bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
+{
+  request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
+  request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
+
+  request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
+  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
+  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
+
+  return true;
+}
+
+BT::NodeStatus GenerateFreespaceMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
+{
+  if (!response->success)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // Set output
+  setOutput(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
+
+  return BT::NodeStatus::SUCCESS;
+}
+
 bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
 {
   return true;
@@ -371,6 +407,10 @@ bool MotionPlanPubNode::setMessage(trajectory_msgs::msg::JointTrajectory& msg)
 bool FollowJointTrajectoryActionNode::setGoal(Goal& goal)
 {
   goal.trajectory = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, TRAJECTORY_INPUT_PORT_KEY);
+  for (auto& point : goal.trajectory.points)
+  {
+    point.effort.clear();
+  }
   return true;
 }
 
@@ -401,18 +441,36 @@ BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedRe
   return status;
 }
 
-BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
+UpdateTrajectoryStartStateNode::UpdateTrajectoryStartStateNode(const std::string& instance_name,
+                                                               const BT::NodeConfig& config,
+                                                               rclcpp::Node::SharedPtr node)
+  : BT::ControlNode(instance_name, config), node_(node)
 {
-  BT::Expected<trajectory_msgs::msg::JointTrajectory> input =
+}
+
+BT::NodeStatus UpdateTrajectoryStartStateNode::tick()
+{
+  BT::Expected<trajectory_msgs::msg::JointTrajectory> trajectory_input =
       getInput<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY);
-  if (!input)
+  if (!trajectory_input)
   {
     std::stringstream ss;
-    ss << "Failed to get required input value: '" << input.error() << "'";
+    ss << "Failed to get required trajectory_input value: '" << trajectory_input.error() << "'";
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
-  trajectory_msgs::msg::JointTrajectory trajectory = input.value();
+  trajectory_msgs::msg::JointTrajectory trajectory = trajectory_input.value();
+
+  BT::Expected<sensor_msgs::msg::JointState> joint_state_input =
+      getInput<sensor_msgs::msg::JointState>(START_JOINT_STATE_INPUT_PORT_KEY);
+  if (!joint_state_input)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required joint_state_input value: '" << joint_state_input.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  sensor_msgs::msg::JointState joint_state = joint_state_input.value();
 
   // Get the tolerance from parameter
   auto tolerance = get_parameter<double>(node_, START_STATE_REPLACEMENT_TOLERANCE_PARAM);
@@ -430,8 +488,8 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
     for (std::size_t i = 0; i < trajectory.joint_names.size(); ++i)
     {
       const std::string& name = trajectory.joint_names[i];
-      auto it = std::find(last_msg->name.begin(), last_msg->name.end(), name);
-      if (it == last_msg->name.end())
+      auto it = std::find(joint_state.name.begin(), joint_state.name.end(), name);
+      if (it == joint_state.name.end())
       {
         std::stringstream ss;
         ss << "Failed to find joint '" << name << "' in latest joint state message";
@@ -439,10 +497,10 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
         return BT::NodeStatus::FAILURE;
       }
 
-      auto idx = std::distance(last_msg->name.begin(), it);
+      auto idx = std::distance(joint_state.name.begin(), it);
 
       // Check tolerance
-      const double diff = std::abs(start_point.positions[i] - last_msg->position[idx]);
+      const double diff = std::abs(start_point.positions[i] - joint_state.position[idx]);
       if (diff > tolerance)
       {
         std::stringstream ss;
@@ -452,7 +510,7 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::onTick(const typename sensor_msgs
         return BT::NodeStatus::FAILURE;
       }
 
-      start_point.positions[i] = last_msg->position[idx];
+      start_point.positions[i] = joint_state.position[idx];
     }
 
     trajectory.points[0] = start_point;
@@ -578,6 +636,20 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
+{
+  if (!last_msg)
+  {
+    std::stringstream ss;
+    ss << "Failed to find a joint state";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, *last_msg);
 
   return BT::NodeStatus::SUCCESS;
 }
