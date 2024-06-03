@@ -19,9 +19,9 @@ Framework for developing and operating simple Scan 'N Plan applications in which
 
 1. Install the ROS2 dependencies
     ```bash
-    cd <snpd_workspace>
-    vcs import < src/scan_n_plan_workshop/dependencies_tesseract.repos
-    vcs import < src/scan_n_plan_workshop/dependencies.repos
+    cd <snp_workspace>
+    vcs import src < src/scan_n_plan_workshop/dependencies_tesseract.repos
+    vcs import src < src/scan_n_plan_workshop/dependencies.repos
     rosdep install --from-paths src --ignore-src -r -y
     ```
 
