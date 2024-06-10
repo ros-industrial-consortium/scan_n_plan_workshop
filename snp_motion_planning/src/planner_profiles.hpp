@@ -3,6 +3,7 @@
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 #include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
+#include <tesseract_motion_planners/descartes/descartes_vertex_evaluator.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
@@ -33,6 +34,43 @@ struct ExplicitCollisionPair
   std::string second;
   /** @brief Minimum allowable contact distance between the two links */
   double distance;
+};
+
+class RobotConfigurationVertexEvaluator : public tesseract_planning::DescartesVertexEvaluator
+{
+public:
+  using tesseract_planning::DescartesVertexEvaluator::DescartesVertexEvaluator;
+
+  bool operator()(const Eigen::Ref<const Eigen::VectorXd>& joint_values) const override
+  {
+    bool valid = true;
+    // Robot Front or Back
+    valid &= joint_values(0) > -M_PI / 2.0;
+    valid &= joint_values(0) < M_PI / 2.0;
+    // Elbow Up
+    valid &= joint_values(2) < M_PI / 2.0;
+    return valid;
+  }
+};
+
+class CompositeVertexEvaluator : public tesseract_planning::DescartesVertexEvaluator
+{
+public:
+  CompositeVertexEvaluator(std::vector<tesseract_planning::DescartesVertexEvaluator::Ptr>&& evaluators)
+    : evaluators_(std::move(evaluators))
+  {
+  }
+
+  bool operator()(const Eigen::Ref<const Eigen::VectorXd>& joint_values) const override
+  {
+    return std::all_of(evaluators_.begin(), evaluators_.end(),
+                       [&joint_values](const tesseract_planning::DescartesVertexEvaluator::Ptr& ve) {
+                         return ve->operator()(joint_values);
+                       });
+  }
+
+private:
+  const std::vector<tesseract_planning::DescartesVertexEvaluator::Ptr> evaluators_;
 };
 
 template <typename FloatType>
@@ -85,9 +123,15 @@ createDescartesPlanProfile(FloatType min_contact_distance = static_cast<FloatTyp
         //            std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>(wrist_mask));
 
         return eval;
-      };
+  };
 
-  profile->vertex_evaluator = nullptr;
+  profile->vertex_evaluator = [](const tesseract_planning::DescartesProblem<FloatType>& prob) {
+    std::vector<tesseract_planning::DescartesVertexEvaluator::Ptr> evaluators;
+    evaluators.push_back(std::make_shared<RobotConfigurationVertexEvaluator>());
+    evaluators.push_back(std::make_shared<tesseract_planning::DescartesJointLimitsVertexEvaluator>(
+        prob.manip->getLimits().joint_limits));
+    return std::make_shared<CompositeVertexEvaluator>(std::move(evaluators));
+  };
 
   profile->target_pose_sampler =
       std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 10.0 * M_PI / 180.0);
