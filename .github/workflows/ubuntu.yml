@@ -25,7 +25,7 @@ jobs:
       matrix:
         distro: [foxy, humble, rolling]
     container:
-      image: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.21
+      image: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.22
       env:
         CCACHE_DIR: ${{ github.workspace }}/${{ matrix.distro }}/.ccache
         DEBIAN_FRONTEND: noninteractive
@@ -37,7 +37,7 @@ jobs:
           path: target_ws/src
 
       - name: Build and Tests
-        uses: tesseract-robotics/colcon-action@v6
+        uses: tesseract-robotics/colcon-action@v8
         with:
           before-script: source /opt/tesseract_ros2/install/setup.bash
           ccache-prefix: ${{ matrix.distro }}

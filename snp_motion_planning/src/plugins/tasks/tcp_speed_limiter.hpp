@@ -4,6 +4,7 @@
 #include <tesseract_kinematics/core/utils.h>
 #include <tesseract_time_parameterization/core/trajectory_container.h>
 #include <tesseract_environment/environment.h>
+#include <tesseract_state_solver/state_solver.h>
 
 namespace snp_motion_planning
 {
