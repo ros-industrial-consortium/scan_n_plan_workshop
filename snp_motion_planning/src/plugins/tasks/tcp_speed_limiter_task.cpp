@@ -100,7 +100,7 @@ protected:
     auto flattened = ci.flatten(tesseract_planning::moveFilter);
     if (flattened.empty())
     {
-      info->message = "TCP speed limiter task found no MoveInstructions to process";
+      info->status_message = "TCP speed limiter task found no MoveInstructions to process";
       info->return_value = 1;
       return info;
     }
@@ -116,12 +116,12 @@ protected:
     }
     catch (const std::exception& ex)
     {
-      info->message = ex.what();
+      info->status_message = ex.what();
       return info;
     }
 
     info->color = "green";
-    info->message = "TCP speed limiter task succeeded";
+    info->status_message = "TCP speed limiter task succeeded";
     context.data_storage->setData(output_keys_[0], input_data_poly);
     info->return_value = 1;
     return info;

@@ -99,8 +99,8 @@ protected:
     if (input_data_poly.isNull() ||
         input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
-      info->message = "Input results to kinimatic limits check must be a composite instruction";
-      CONSOLE_BRIDGE_logError("%s", info->message.c_str());
+      info->status_message = "Input results to kinimatic limits check must be a composite instruction";
+      CONSOLE_BRIDGE_logError("%s", info->status_message.c_str());
       return info;
     }
 
@@ -119,7 +119,7 @@ protected:
     auto flattened = ci.flatten(tesseract_planning::moveFilter);
     if (flattened.empty())
     {
-      info->message = "Kinematic limits check found no MoveInstructions to process";
+      info->status_message = "Kinematic limits check found no MoveInstructions to process";
       info->return_value = 1;
       return info;
     }
@@ -140,11 +140,11 @@ protected:
 
       if (cur_composite_profile->check_position)
       {
-        if (!tesseract_common::satisfiesPositionLimits<double>(joint_pos, motion_group->getLimits().joint_limits))
+        if (!tesseract_common::satisfiesLimits<double>(joint_pos, motion_group->getLimits().joint_limits))
         {
           std::stringstream ss;
           ss << "Joint position limit violation(s) at waypoint " << i;
-          info->message = ss.str();
+          info->status_message = ss.str();
           return 0;
         }
       }
@@ -160,7 +160,7 @@ protected:
           std::stringstream ss;
           ss << "Joint velocity limit violation(s) at waypoint " << i << ": "
              << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
-          info->message = ss.str();
+          info->status_message = ss.str();
 
           return 0;
         }
@@ -178,7 +178,7 @@ protected:
           std::stringstream ss;
           ss << "Joint acceleration limit violation(s) at waypoint " << i << ": "
              << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
-          info->message = ss.str();
+          info->status_message = ss.str();
 
           return 0;
         }
@@ -187,7 +187,7 @@ protected:
 
     info->color = "green";
     info->return_value = 1;
-    info->message = "Kinematic limits check succeeded";
+    info->status_message = "Kinematic limits check succeeded";
     return info;
   }
 
