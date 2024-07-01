@@ -151,15 +151,10 @@ protected:
 
       if (cur_composite_profile->check_velocity)
       {
-        // Check for joint velocity limit violations
-        Eigen::Array<bool, Eigen::Dynamic, 1> vel_limit_violations =
-            motion_group->getLimits().velocity_limits.array() < joint_vel.array().abs();
-        if (vel_limit_violations.any())
+        if (!tesseract_common::satisfiesLimits<double>(joint_vel, motion_group->getLimits().velocity_limits))
         {
-          Eigen::ArrayXd capacity = 100.0 * joint_vel.array().abs() / motion_group->getLimits().velocity_limits.array();
           std::stringstream ss;
-          ss << "Joint velocity limit violation(s) at waypoint " << i << ": "
-             << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
+          ss << "Joint velocity limit violation(s) at waypoint " << i;
           info->status_message = ss.str();
 
           return 0;
@@ -169,15 +164,10 @@ protected:
       if (cur_composite_profile->check_acceleration)
       {
         // Check for joint velocity acceleration limit violations
-        Eigen::Array<bool, Eigen::Dynamic, 1> acc_limit_violations =
-            motion_group->getLimits().acceleration_limits.array() < joint_acc.array().abs();
-        if (acc_limit_violations.any())
+        if (!tesseract_common::satisfiesLimits<double>(joint_acc, motion_group->getLimits().acceleration_limits))
         {
-          Eigen::ArrayXd capacity =
-              100.0 * joint_acc.array().abs() / motion_group->getLimits().acceleration_limits.array();
           std::stringstream ss;
-          ss << "Joint acceleration limit violation(s) at waypoint " << i << ": "
-             << capacity.transpose().format(Eigen::IOFormat(4, 0, " ", "\n", "[", "]")) << " (%% capacity)";
+          ss << "Joint acceleration limit violation(s) at waypoint " << i;
           info->status_message = ss.str();
 
           return 0;
