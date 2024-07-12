@@ -134,8 +134,27 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile(
 std::shared_ptr<tesseract_planning::TrajOptPlanProfile> createTrajOptToolZFreePlanProfile()
 {
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
-  //  profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 5.0);
-  //  profile->cartesian_coeff(5) = 0.0;
+  Eigen::VectorXd cart_coeff = Eigen::VectorXd::Constant(6, 1, 2.5);
+  cart_coeff(5) = 0.0; // Set yaw to no cost
+  Eigen::VectorXd cart_tolerance = Eigen::VectorXd::Zero(6);
+  cart_tolerance << 0.01, 0.01, 0.01, 0.05, 0.05, 0.05; // x, y, z, roll, pitch, yaw
+
+  profile->cartesian_cost_config.enabled = true;
+  profile->cartesian_cost_config.use_tolerance_override = false;
+  profile->cartesian_cost_config.coeff = cart_coeff;
+
+  profile->cartesian_constraint_config.enabled = true;
+  profile->cartesian_constraint_config.use_tolerance_override = true;
+  profile->cartesian_constraint_config.lower_tolerance = -1 * cart_tolerance;
+  profile->cartesian_constraint_config.upper_tolerance = cart_tolerance;
+  profile->cartesian_constraint_config.coeff = cart_coeff;
+
+  profile->joint_cost_config.enabled = false;
+  profile->joint_cost_config.coeff = Eigen::VectorXd::Constant(1, 1, 5);
+
+  profile->joint_constraint_config.enabled = true;
+  profile->joint_constraint_config.coeff = Eigen::VectorXd::Constant(1, 1, 5);
+
   return profile;
 }
 
