@@ -101,7 +101,8 @@ protected:
     if (input_data_poly.isNull() ||
         input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
-      info->status_message = "Input results to constant TCP speed time parameterization must be a composite instruction";
+      info->status_message = "Input results to constant TCP speed time parameterization must be a composite "
+                             "instruction";
       CONSOLE_BRIDGE_logError("%s", info->status_message.c_str());
       return info;
     }
