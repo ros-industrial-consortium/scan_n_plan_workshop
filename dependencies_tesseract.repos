@@ -5,23 +5,23 @@
 - git:
     local-name: tesseract
     uri: https://github.com/ros-industrial-consortium/tesseract.git
-    version: a6bfa924a1470aa49783ce08581a4a767adae194
+    version: 0.22.2
 - git:
     local-name: trajopt
     uri: https://github.com/ros-industrial-consortium/trajopt_ros.git
-    version: 4f094b292f50116db6e15b1577b981fb8e2eb558
+    version: 0.22.0
 - git:
     local-name: tesseract_planning
     uri: https://github.com/ros-industrial-consortium/tesseract_planning.git
-    version: 28752ea64738aeea1034039e9eb747bfbb5e1fe6
+    version: 0.22.1
 - git:
     local-name: tesseract_qt
     uri: https://github.com/tesseract-robotics/tesseract_qt.git
-    version: ed4dd2ab49c4f7bcbd7fc29b82d49f32147a292f
+    version: 0.22.1
 - git:
     local-name: tesseract_ros2
     uri: https://github.com/tesseract-robotics/tesseract_ros2.git
-    version: 19707ba162ec8b38a07845c5c5bafc45828fe858
+    version: 0.22.0
 - git:
     local-name: descartes_light
     uri: https://github.com/swri-robotics/descartes_light.git
