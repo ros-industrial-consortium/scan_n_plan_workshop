@@ -41,6 +41,7 @@
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
+#include <trajopt_common/eigen_conversions.hpp>
 #if __has_include(<tf2_eigen/tf2_eigen.hpp>)
 #include <tf2_eigen/tf2_eigen.hpp>
 #else
@@ -78,6 +79,7 @@ static const std::string LVS_PARAM = "contact_check_lvs_distance";
 static const std::string MIN_CONTACT_DIST_PARAM = "min_contact_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
 static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
+static const std::string TRAJOPT_CARTESIAN_TOLERANCE_PARAM = "cartesian_tolerance";
 
 // Topics
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
@@ -242,6 +244,7 @@ public:
     node_->declare_parameter<double>(MIN_CONTACT_DIST_PARAM, 0.0);
     node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
     node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
+    node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_TOLERANCE_PARAM, { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
@@ -415,6 +418,9 @@ private:
       // Get the default minimum distance allowable between any two links
       auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
 
+      auto cart_tolerance_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_TOLERANCE_PARAM);
+      Eigen::VectorXd cart_tolerance = trajopt_common::toVectorXd(cart_tolerance_vector);
+
       // Create a list of collision pairs between the scan link and the specified links where the minimum contact
       // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
       // very close to the scan but still should not contact it
@@ -432,8 +438,8 @@ private:
         profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
         profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
-      profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                                                                       createTrajOptToolZFreePlanProfile());
+      profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(
+          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile(cart_tolerance));
       profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
           TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
       profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
