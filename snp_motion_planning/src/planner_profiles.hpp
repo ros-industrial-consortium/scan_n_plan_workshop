@@ -139,7 +139,9 @@ createTrajOptToolZFreePlanProfile(const Eigen::VectorXd& cart_tolerance = Eigen:
   cart_coeff(5) = 0.0;  // Set yaw to no cost
 
   profile->cartesian_cost_config.enabled = true;
-  profile->cartesian_cost_config.use_tolerance_override = false;
+  profile->cartesian_cost_config.use_tolerance_override = true;
+  profile->cartesian_cost_config.lower_tolerance = Eigen::VectorXd::Zero(6);
+  profile->cartesian_cost_config.upper_tolerance = Eigen::VectorXd::Zero(6);
   profile->cartesian_cost_config.coeff = cart_coeff;
 
   profile->cartesian_constraint_config.enabled = true;
