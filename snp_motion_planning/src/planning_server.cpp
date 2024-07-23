@@ -80,6 +80,7 @@ static const std::string MIN_CONTACT_DIST_PARAM = "min_contact_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
 static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
 static const std::string TRAJOPT_CARTESIAN_TOLERANCE_PARAM = "cartesian_tolerance";
+static const std::string TRAJOPT_CARTESIAN_COEFFICIENT_PARAM = "cartesian_coefficient";
 
 // Topics
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
@@ -245,6 +246,8 @@ public:
     node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
     node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
     node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_TOLERANCE_PARAM, { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_COEFFICIENT_PARAM,
+                                                  { 2.5, 2.5, 2.5, 2.5, 2.5, 0.0 });
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
@@ -424,6 +427,12 @@ private:
                                  std::to_string(cart_tolerance_vector.size()));
       Eigen::VectorXd cart_tolerance = trajopt_common::toVectorXd(cart_tolerance_vector);
 
+      auto cart_coeff_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_COEFFICIENT_PARAM);
+      if (cart_coeff_vector.size() != 6)
+        throw std::runtime_error("Cartesian coefficient must be of size 6, given a vector of size " +
+                                 std::to_string(cart_coeff_vector.size()));
+      Eigen::VectorXd cart_coeff = trajopt_common::toVectorXd(cart_coeff_vector);
+
       // Create a list of collision pairs between the scan link and the specified links where the minimum contact
       // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
       // very close to the scan but still should not contact it
@@ -442,7 +451,7 @@ private:
         profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
       profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(
-          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile(cart_tolerance));
+          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
       profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
           TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
       profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(

@@ -132,11 +132,10 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile(
 }
 
 std::shared_ptr<tesseract_planning::TrajOptPlanProfile>
-createTrajOptToolZFreePlanProfile(const Eigen::VectorXd& cart_tolerance = Eigen::VectorXd::Zero(6))
+createTrajOptToolZFreePlanProfile(const Eigen::VectorXd& cart_tolerance = Eigen::VectorXd::Zero(6),
+                                  const Eigen::VectorXd& cart_coeff = Eigen::VectorXd::Constant(6, 1, 2.5))
 {
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
-  Eigen::VectorXd cart_coeff = Eigen::VectorXd::Constant(6, 1, 2.5);
-  cart_coeff(5) = 0.0;  // Set yaw to no cost
 
   profile->cartesian_cost_config.enabled = true;
   profile->cartesian_cost_config.use_tolerance_override = true;
