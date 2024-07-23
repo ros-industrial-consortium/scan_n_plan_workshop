@@ -419,6 +419,9 @@ private:
       auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
 
       auto cart_tolerance_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_TOLERANCE_PARAM);
+      if (cart_tolerance_vector.size() != 6)
+        throw std::runtime_error("Cartesian tolerance must be of size 6, given a vector of size " +
+                                 std::to_string(cart_tolerance_vector.size()));
       Eigen::VectorXd cart_tolerance = trajopt_common::toVectorXd(cart_tolerance_vector);
 
       // Create a list of collision pairs between the scan link and the specified links where the minimum contact
