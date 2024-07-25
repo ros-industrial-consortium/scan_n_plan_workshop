@@ -38,3 +38,7 @@
     local-name: taskflow
     uri: https://github.com/taskflow/taskflow.git
     version: v3.4.0
+- git:
+    local-name: ruckig
+    uri: https://github.com/pantor/ruckig.git
+    version: v0.9.2
