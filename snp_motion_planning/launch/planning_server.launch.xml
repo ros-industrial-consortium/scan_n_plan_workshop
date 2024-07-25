@@ -26,6 +26,8 @@
   <arg name="contact_check_lvs_distance" default="0.05"/>
   <arg name="ompl_max_planning_time" default="5.0"/>
   <arg name="tcp_max_speed" default="0.25"/>
+  <arg name="cartesian_tolerance" default="[0.01, 0.01, 0.01, 0.05, 0.05, 6.28]"/>
+  <arg name="cartesian_coefficient" default="[2.5, 2.5, 2.5, 2.5, 2.5, 0.0]"/>
 
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node" output="screen">
     <!-- General -->
@@ -53,5 +55,7 @@
     <param name="contact_check_lvs_distance" value="$(var contact_check_lvs_distance)"/>
     <param name="ompl_max_planning_time" value="$(var ompl_max_planning_time)"/>
     <param name="tcp_max_speed" value = "$(var tcp_max_speed)"/>
+    <param name="cartesian_tolerance" value="$(var cartesian_tolerance)"/>
+    <param name="cartesian_coefficient" value="$(var cartesian_coefficient)"/>
   </node>
 </launch>

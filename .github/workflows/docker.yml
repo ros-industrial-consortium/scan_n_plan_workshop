@@ -60,7 +60,7 @@ jobs:
           context: .
           file: docker/Dockerfile
           build-args: |
-            TAG=${{ matrix.distro }}-0.21
+            TAG=${{ matrix.distro }}-0.22
             ROS_DISTRO=${{ matrix.distro }}
           push: ${{ env.PUSH_DOCKER_IMAGE }}
           tags: ${{ steps.meta.outputs.tags }}

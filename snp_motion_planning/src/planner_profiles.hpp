@@ -3,6 +3,7 @@
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 #include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
+#include <tesseract_motion_planners/ompl/ompl_planner_configurator.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
@@ -130,11 +131,30 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile(
   return profile;
 }
 
-std::shared_ptr<tesseract_planning::TrajOptPlanProfile> createTrajOptToolZFreePlanProfile()
+std::shared_ptr<tesseract_planning::TrajOptPlanProfile>
+createTrajOptToolZFreePlanProfile(const Eigen::VectorXd& cart_tolerance = Eigen::VectorXd::Zero(6),
+                                  const Eigen::VectorXd& cart_coeff = Eigen::VectorXd::Constant(6, 1, 2.5))
 {
   auto profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
-  profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 5.0);
-  profile->cartesian_coeff(5) = 0.0;
+
+  profile->cartesian_cost_config.enabled = true;
+  profile->cartesian_cost_config.use_tolerance_override = true;
+  profile->cartesian_cost_config.lower_tolerance = Eigen::VectorXd::Zero(6);
+  profile->cartesian_cost_config.upper_tolerance = Eigen::VectorXd::Zero(6);
+  profile->cartesian_cost_config.coeff = cart_coeff;
+
+  profile->cartesian_constraint_config.enabled = true;
+  profile->cartesian_constraint_config.use_tolerance_override = true;
+  profile->cartesian_constraint_config.lower_tolerance = -1 * cart_tolerance;
+  profile->cartesian_constraint_config.upper_tolerance = cart_tolerance;
+  profile->cartesian_constraint_config.coeff = cart_coeff;
+
+  profile->joint_cost_config.enabled = false;
+  profile->joint_cost_config.coeff = Eigen::VectorXd::Constant(1, 1, 5);
+
+  profile->joint_constraint_config.enabled = true;
+  profile->joint_constraint_config.coeff = Eigen::VectorXd::Constant(1, 1, 5);
+
   return profile;
 }
 

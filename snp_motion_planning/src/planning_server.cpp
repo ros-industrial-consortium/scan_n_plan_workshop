@@ -17,16 +17,31 @@
 #include <tesseract_command_language/utils.h>
 #include <tesseract_geometry/geometries.h>
 #include <tesseract_geometry/mesh_parser.h>
+#include <tesseract_geometry/impl/octree_utils.h>
+#include <tesseract_environment/environment.h>
+#include <tesseract_environment/command.h>
+#include <tesseract_environment/commands.h>
+#include <tesseract_scene_graph/joint.h>
+#include <tesseract_scene_graph/graph.h>
+#include <tesseract_state_solver/state_solver.h>
+#include <tesseract_kinematics/core/joint_group.h>
 #include <tesseract_monitoring/environment_monitor.h>
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_rosutils/conversions.h>
 #include <tesseract_time_parameterization/isp/iterative_spline_parameterization.h>
+#include <tesseract_task_composer/core/task_composer_context.h>
+#include <tesseract_task_composer/core/task_composer_data_storage.h>
+#include <tesseract_task_composer/core/task_composer_executor.h>
+#include <tesseract_task_composer/core/task_composer_future.h>
+#include <tesseract_task_composer/core/task_composer_graph.h>
+#include <tesseract_task_composer/core/task_composer_node.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
 #include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
+#include <trajopt_common/eigen_conversions.hpp>
 #if __has_include(<tf2_eigen/tf2_eigen.hpp>)
 #include <tf2_eigen/tf2_eigen.hpp>
 #else
@@ -64,6 +79,8 @@ static const std::string LVS_PARAM = "contact_check_lvs_distance";
 static const std::string MIN_CONTACT_DIST_PARAM = "min_contact_distance";
 static const std::string OMPL_MAX_PLANNING_TIME_PARAM = "ompl_max_planning_time";
 static const std::string TCP_MAX_SPEED_PARAM = "tcp_max_speed";
+static const std::string TRAJOPT_CARTESIAN_TOLERANCE_PARAM = "cartesian_tolerance";
+static const std::string TRAJOPT_CARTESIAN_COEFFICIENT_PARAM = "cartesian_coefficient";
 
 // Topics
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
@@ -141,7 +158,7 @@ static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToConvexMesh(const
 
 static tesseract_geometry::Octree::Ptr
 scanMeshToOctree(const std::string& filename, const double resolution,
-                 const tesseract_geometry::Octree::SubType type = tesseract_geometry::Octree::SubType::SPHERE_INSIDE)
+                 const tesseract_geometry::OctreeSubType type = tesseract_geometry::OctreeSubType::SPHERE_INSIDE)
 {
   std::vector<tesseract_geometry::Mesh::Ptr> geometries =
       tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
@@ -228,6 +245,9 @@ public:
     node_->declare_parameter<double>(MIN_CONTACT_DIST_PARAM, 0.0);
     node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
     node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
+    node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_TOLERANCE_PARAM, { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_COEFFICIENT_PARAM,
+                                                  { 2.5, 2.5, 2.5, 2.5, 2.5, 0.0 });
 
     // Task composer
     node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
@@ -401,6 +421,18 @@ private:
       // Get the default minimum distance allowable between any two links
       auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
 
+      auto cart_tolerance_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_TOLERANCE_PARAM);
+      if (cart_tolerance_vector.size() != 6)
+        throw std::runtime_error("Cartesian tolerance must be of size 6, given a vector of size " +
+                                 std::to_string(cart_tolerance_vector.size()));
+      Eigen::VectorXd cart_tolerance = trajopt_common::toVectorXd(cart_tolerance_vector);
+
+      auto cart_coeff_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_COEFFICIENT_PARAM);
+      if (cart_coeff_vector.size() != 6)
+        throw std::runtime_error("Cartesian coefficient must be of size 6, given a vector of size " +
+                                 std::to_string(cart_coeff_vector.size()));
+      Eigen::VectorXd cart_coeff = trajopt_common::toVectorXd(cart_coeff_vector);
+
       // Create a list of collision pairs between the scan link and the specified links where the minimum contact
       // distance is 0.0, rather than `min_contact_dist` The assumption is that these links are anticipated to come
       // very close to the scan but still should not contact it
@@ -418,8 +450,8 @@ private:
         profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
         profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
-      profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                                                                       createTrajOptToolZFreePlanProfile());
+      profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(
+          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
       profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
           TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
       profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
