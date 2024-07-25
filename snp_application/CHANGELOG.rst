@@ -2,6 +2,9 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 4.6.1 (2024-05-29)
 ------------------
 * Merge pull request `#121 <https://github.com/marip8/scan_n_plan_workshop/issues/121>`_ from marip8/fix/bt-node-types
