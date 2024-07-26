@@ -304,7 +304,7 @@ public:
   BT::NodeStatus onResultReceived(const WrappedResult& result) override;
 };
 
-class UpdateTrajectoryStartStateNode : public BT::ActionNodeBase
+class UpdateTrajectoryStartStateNode : public BT::SyncActionNode
 {
 public:
   inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "joint_state";
@@ -321,11 +321,10 @@ public:
 
 protected:
   BT::NodeStatus tick() override;
-  void halt() override;
   rclcpp::Node::SharedPtr node_;
 };
 
-class ReverseTrajectoryNode : public BT::ActionNodeBase
+class ReverseTrajectoryNode : public BT::SyncActionNode
 {
 public:
   inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input";
@@ -339,10 +338,9 @@ public:
 
 protected:
   BT::NodeStatus tick() override;
-  void halt() override;
 };
 
-class CombineTrajectoriesNode : public BT::ActionNodeBase
+class CombineTrajectoriesNode : public BT::SyncActionNode
 {
 public:
   inline static std::string FIRST_TRAJECTORY_INPUT_PORT_KEY = "first";
@@ -358,7 +356,6 @@ public:
 
 protected:
   BT::NodeStatus tick() override;
-  void halt() override;
 };
 
 class GetCurrentJointStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
