@@ -32,7 +32,7 @@ task_composer_plugins:
       TaskflowExecutor:
         class: TaskflowTaskComposerExecutorFactory
         config:
-          threads: 2
+          threads: 8
   tasks:
     plugins:    
       SNPCartesianPipeline:
