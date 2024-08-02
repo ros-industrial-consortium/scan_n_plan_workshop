@@ -19,7 +19,7 @@ KinematicLimitsCheckTask: &limits_check
   class: KinematicLimitsCheckTaskFactory
   config:
     conditional: true
-    inputs: [speed_param_output_data]
+    inputs: [output_data]
     outputs: [output_data]
 
 # Task composer configuration
@@ -61,7 +61,7 @@ task_composer_plugins:
               config:
                 conditional: true
                 inputs: [trajopt_output_data]
-                outputs: [speed_param_output_data]
+                outputs: [output_data]
             KinematicLimitsCheckTask: *limits_check
           edges:
             - source: MinLengthTask
@@ -83,25 +83,25 @@ task_composer_plugins:
           nodes:
             DoneTask: *done
             ErrorTask: *error
-            MinLengthTask:
-              class: MinLengthTaskFactory
-              config:
-                conditional: true
-                inputs: [input_data]
-                outputs: [min_len_output_data]
-                format_result_as_input: false
             OMPLMotionPlannerTask:
               class: OMPLMotionPlannerTaskFactory
               config:
                 conditional: true
-                inputs: [min_len_output_data]
+                inputs: [input_data]
                 outputs: [ompl_output_data]
                 format_result_as_input: true
+            MinLengthTask:
+              class: MinLengthTaskFactory
+              config:
+                conditional: true
+                inputs: [ompl_output_data]
+                outputs: [min_len_output_data]
+                format_result_as_input: false
             TrajOptMotionPlannerTask:
               class: TrajOptMotionPlannerTaskFactory
               config:
                 conditional: true
-                inputs: [ompl_output_data]
+                inputs: [min_len_output_data]
                 outputs: [trajopt_output_data]
                 format_result_as_input: false
             DiscreteContactCheckTask:
@@ -114,12 +114,12 @@ task_composer_plugins:
               config:
                 conditional: true
                 inputs: [trajopt_output_data]
-                outputs: [speed_param_output_data]
+                outputs: [output_data]
             KinematicLimitsCheckTask: *limits_check
           edges:
-            - source: MinLengthTask
-              destinations: [ErrorTask, OMPLMotionPlannerTask]
             - source: OMPLMotionPlannerTask
+              destinations: [ErrorTask, MinLengthTask]
+            - source: MinLengthTask
               destinations: [ErrorTask, TrajOptMotionPlannerTask]
             - source: TrajOptMotionPlannerTask
               destinations: [ErrorTask, DiscreteContactCheckTask]
@@ -168,13 +168,13 @@ task_composer_plugins:
               config:
                 conditional: true
                 inputs: [trajopt_output_data]
-                outputs: [speed_param_output_data]
+                outputs: [output_data]
             IterativeSplineParameterizationTask_OMPL:
               class: IterativeSplineParameterizationTaskFactory
               config:
                 conditional: true
                 inputs: [ompl_output_data]
-                outputs: [speed_param_output_data]
+                outputs: [output_data]
             KinematicLimitsCheckTask: *limits_check
           edges:
             - source: MinLengthTask
@@ -227,7 +227,6 @@ task_composer_plugins:
                       - min_len_output_data
                       - trajopt_output_data
                       - ompl_output_data
-                      - speed_param_output_data
                 raster:
                   task: SNPCartesianPipeline
                   config:
@@ -239,7 +238,6 @@ task_composer_plugins:
                       - output_data
                       - min_len_output_data
                       - trajopt_output_data
-                      - speed_param_output_data
                 transition:
                   task: SNPTransitionPipeline
                   config:
@@ -252,7 +250,6 @@ task_composer_plugins:
                       - min_len_output_data
                       - trajopt_output_data
                       - ompl_output_data
-                      - speed_param_output_data
             TCPSpeedLimiterTask:
               class: TCPSpeedLimiterTaskFactory
               config:
