@@ -30,24 +30,44 @@ find_package(control_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(snp_tpp REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(tf2_eigen REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(trajectory_preview REQUIRED)
 
 add_library(
-  ${PROJECT_NAME}_widget SHARED
-  src/snp_widget.ui
-  src/snp_widget.cpp
-  # BT
-  src/bt/bt_thread.cpp
+  ${PROJECT_NAME}_bt_plugins SHARED
   src/bt/button_approval_node.cpp
   src/bt/button_monitor_node.cpp
   src/bt/progress_decorator_node.cpp
   src/bt/set_page_decorator_node.cpp
   src/bt/snp_bt_ros_nodes.cpp
   src/bt/snp_sequence_with_memory_node.cpp
+  src/bt/plugins.cpp)
+target_compile_definitions(${PROJECT_NAME}_bt_plugins PRIVATE BT_PLUGIN_EXPORT)
+target_include_directories(${PROJECT_NAME}_bt_plugins PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+                                                             "$<INSTALL_INTERFACE:include>" ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}_bt_plugins Qt5::Widgets)
+ament_target_dependencies(
+  ${PROJECT_NAME}_bt_plugins
+  behaviortree_cpp
+  behaviortree_ros2
+  industrial_reconstruction_msgs
+  rclcpp_action
+  control_msgs
+  sensor_msgs
+  geometry_msgs
+  snp_msgs
+  std_srvs
+  trajectory_msgs)
+
+# Widget
+add_library(
+  ${PROJECT_NAME}_widget SHARED
+  src/snp_widget.ui
+  src/snp_widget.cpp
+  # BT
+  src/bt/bt_thread.cpp
   src/bt/text_edit_logger.cpp)
 target_include_directories(
   ${PROJECT_NAME}_widget
@@ -60,17 +80,8 @@ ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
   behaviortree_ros2
-  industrial_reconstruction_msgs
-  rclcpp_action
-  rclcpp_components
-  control_msgs
   sensor_msgs
-  geometry_msgs
-  snp_msgs
   snp_tpp
-  std_srvs
-  tf2_eigen
-  trajectory_msgs
   trajectory_preview)
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
@@ -85,7 +96,8 @@ ament_target_dependencies(roscon_app rclcpp)
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include/)
 
 # Install the library(ies)
-install(TARGETS ${PROJECT_NAME}_widget ${PROJECT_NAME}_panel EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PROJECT_NAME}_bt_plugins ${PROJECT_NAME}_widget ${PROJECT_NAME}_panel EXPORT ${PROJECT_NAME}-targets
+        DESTINATION lib)
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
@@ -105,7 +117,6 @@ ament_export_dependencies(
   snp_msgs
   snp_tpp
   std_srvs
-  tf2_eigen
   trajectory_msgs
   trajectory_preview
   rviz_common
