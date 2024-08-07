@@ -30,9 +30,8 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   factory.registerNodeType<snp_application::MotionPlanPubNode>("MotionPlanPub", params);
   factory.registerNodeType<snp_application::FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", params);
   factory.registerNodeType<snp_application::GetCurrentJointStateNode>("GetCurrentJointState", params);
-  factory.registerNodeType<snp_application::GenerateFreespaceMotionPlanServiceNode>("GenerateFreespaceMotionPlanServic"
-                                                                                    "e",
-                                                                                    params);
+  factory.registerNodeType<snp_application::GenerateFreespaceMotionPlanServiceNode>(
+      "GenerateFreespaceMotionPlanService", params);
   factory.registerNodeType<snp_application::GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", params);
   factory.registerNodeType<snp_application::GenerateToolPathsServiceNode>("GenerateToolPathsService", params);
 
