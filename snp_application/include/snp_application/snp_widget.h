@@ -25,7 +25,7 @@ public:
 protected:
   void runTreeWithThread(const std::string& bt_tree_name);
 
-  virtual BT::BehaviorTreeFactory createBTFactory(int ros_short_timeout, int ros_long_timeout);
+  virtual BT::BehaviorTreeFactory createBTFactory(int ros_timeout);
   QStackedWidget* getStackedWidget();
   QTextEdit* getTextEdit();
 

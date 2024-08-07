@@ -78,7 +78,7 @@ bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::Shared
   request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
   request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
 
-  request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
+  request->motion_group = get_parameter<std::string>(node_, FREESPACE_MOTION_GROUP_PARAM);
   request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
   request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
   request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
@@ -444,7 +444,7 @@ BT::NodeStatus FollowJointTrajectoryActionNode::onResultReceived(const WrappedRe
 UpdateTrajectoryStartStateNode::UpdateTrajectoryStartStateNode(const std::string& instance_name,
                                                                const BT::NodeConfig& config,
                                                                rclcpp::Node::SharedPtr node)
-  : BT::ActionNodeBase(instance_name, config), node_(node)
+  : BT::SyncActionNode(instance_name, config), node_(node)
 {
 }
 
@@ -528,10 +528,6 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-void UpdateTrajectoryStartStateNode::halt()
-{
-}
-
 /**
  * @details Adapted from
  * https://github.com/a5-robotics/A5/blob/1c1b280970722c6b41d997f91ef50ff1571eeeac/a5_utils/src/trajectories/trajectories.cpp#L77C4-L96
@@ -568,7 +564,7 @@ trajectory_msgs::msg::JointTrajectory reverseTrajectory(const trajectory_msgs::m
 }
 
 ReverseTrajectoryNode::ReverseTrajectoryNode(const std::string& instance_name, const BT::NodeConfig& config)
-  : BT::ActionNodeBase(instance_name, config)
+  : BT::SyncActionNode(instance_name, config)
 {
 }
 
@@ -599,12 +595,8 @@ BT::NodeStatus ReverseTrajectoryNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-void ReverseTrajectoryNode::halt()
-{
-}
-
 CombineTrajectoriesNode::CombineTrajectoriesNode(const std::string& instance_name, const BT::NodeConfig& config)
-  : BT::ActionNodeBase(instance_name, config)
+  : BT::SyncActionNode(instance_name, config)
 {
 }
 
@@ -646,10 +638,6 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
   }
 
   return BT::NodeStatus::SUCCESS;
-}
-
-void CombineTrajectoriesNode::halt()
-{
 }
 
 BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg::JointState::SharedPtr& last_msg)
