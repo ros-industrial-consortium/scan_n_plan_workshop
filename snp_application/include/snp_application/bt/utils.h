@@ -20,6 +20,7 @@ T getBTInput(const BT::TreeNode* node, const std::string& port)
 
 // Parameters
 static const std::string MOTION_GROUP_PARAM = "motion_group";
+static const std::string FREESPACE_MOTION_GROUP_PARAM = "freespace_motion_group";
 static const std::string REF_FRAME_PARAM = "reference_frame";
 static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
