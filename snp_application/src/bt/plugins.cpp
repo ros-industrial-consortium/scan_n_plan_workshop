@@ -8,7 +8,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-template<typename T>
+template <typename T>
 void try_declare_parameter(rclcpp::Node::SharedPtr node, const std::string& key, const T& value)
 {
   if (!node->has_parameter(key))
@@ -37,8 +37,6 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   factory.registerNodeType<snp_application::MotionPlanPubNode>("MotionPlanPub", params);
   factory.registerNodeType<snp_application::FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", params);
   factory.registerNodeType<snp_application::GetCurrentJointStateNode>("GetCurrentJointState", params);
-  factory.registerNodeType<snp_application::GenerateFreespaceMotionPlanServiceNode>(
-      "GenerateFreespaceMotionPlanService", params);
   factory.registerNodeType<snp_application::GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", params);
   factory.registerNodeType<snp_application::GenerateToolPathsServiceNode>("GenerateToolPathsService", params);
 
@@ -53,7 +51,11 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   try_declare_parameter<std::string>(params.nh, TCP_FRAME_PARAM, "");
   factory.registerNodeType<snp_application::GenerateMotionPlanServiceNode>("GenerateMotionPlanService", params);
 
-  // Industrial reconstruction start  
+  try_declare_parameter<std::string>(params.nh, FREESPACE_MOTION_GROUP_PARAM, "");
+  factory.registerNodeType<snp_application::GenerateFreespaceMotionPlanServiceNode>(
+      "GenerateFreespaceMotionPlanService", params);
+
+  // Industrial reconstruction start
   try_declare_parameter<std::string>(params.nh, CAMERA_FRAME_PARAM, "");
   try_declare_parameter<float>(params.nh, IR_TSDF_VOXEL_PARAM, 0.01f);
   try_declare_parameter<float>(params.nh, IR_TSDF_SDF_PARAM, 0.03f);
