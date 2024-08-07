@@ -131,12 +131,6 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   });
 
   // Declare parameters
-  bt_node_->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
-  bt_node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
-  bt_node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
-  bt_node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
-  bt_node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
-  bt_node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
   bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
   bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, {});
   bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, {});
@@ -148,24 +142,6 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
   bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, {});
   bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, {});
-
-  bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
-  bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
-  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  bt_node_->declare_parameter<bool>(IR_LIVE_PARAM, true);
-  bt_node_->declare_parameter<int>(IR_MIN_FACES_PARAM, 0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);
-  bt_node_->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM, "");
 
   // Set the error message key in the blackboard
   board_->set(ERROR_MESSAGE_KEY, "");
