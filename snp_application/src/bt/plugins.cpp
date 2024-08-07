@@ -8,6 +8,13 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+template<typename T>
+void try_declare_parameter(rclcpp::Node::SharedPtr node, const std::string& key, const T& value)
+{
+  if (!node->has_parameter(key))
+    node->declare_parameter(key, value);
+}
+
 BT_REGISTER_NODES(factory)
 {
   factory.registerNodeType<snp_application::ButtonApprovalNode>("ButtonApproval");
@@ -37,37 +44,37 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
 
   // Nodes requiring parameters
   // Update trajectory start state
-  params.nh->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
+  try_declare_parameter<double>(params.nh, START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
   factory.registerNodeType<snp_application::UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", params.nh);
 
   // Motion plan generation
-  params.nh->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
-  params.nh->declare_parameter<std::string>(REF_FRAME_PARAM, "");
-  params.nh->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
+  try_declare_parameter<std::string>(params.nh, MOTION_GROUP_PARAM, "");
+  try_declare_parameter<std::string>(params.nh, REF_FRAME_PARAM, "");
+  try_declare_parameter<std::string>(params.nh, TCP_FRAME_PARAM, "");
   factory.registerNodeType<snp_application::GenerateMotionPlanServiceNode>("GenerateMotionPlanService", params);
 
-  // Industrial reconstruction start
-  params.nh->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
-  params.nh->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
-  params.nh->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
-  params.nh->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
-  params.nh->declare_parameter<float>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  params.nh->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  params.nh->declare_parameter<bool>(IR_LIVE_PARAM, true);
-  params.nh->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
-  params.nh->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
-  params.nh->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);
+  // Industrial reconstruction start  
+  try_declare_parameter<std::string>(params.nh, CAMERA_FRAME_PARAM, "");
+  try_declare_parameter<float>(params.nh, IR_TSDF_VOXEL_PARAM, 0.01f);
+  try_declare_parameter<float>(params.nh, IR_TSDF_SDF_PARAM, 0.03f);
+  try_declare_parameter<double>(params.nh, IR_TSDF_MIN_X_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_TSDF_MIN_Y_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_TSDF_MIN_Z_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_TSDF_MAX_X_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_TSDF_MAX_Y_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_TSDF_MAX_Z_PARAM, 0.0);
+  try_declare_parameter<float>(params.nh, IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
+  try_declare_parameter<float>(params.nh, IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
+  try_declare_parameter<bool>(params.nh, IR_LIVE_PARAM, true);
+  try_declare_parameter<double>(params.nh, IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
+  try_declare_parameter<double>(params.nh, IR_NORMAL_X_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_NORMAL_Y_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh, IR_NORMAL_Z_PARAM, 1.0);
   factory.registerNodeType<snp_application::StartReconstructionServiceNode>("StartReconstructionService", params);
 
   // Industrial reconstruction stop
-  params.nh->declare_parameter<int>(IR_MIN_FACES_PARAM, 0);
-  params.nh->declare_parameter<std::string>(MESH_FILE_PARAM, "");
-  params.nh->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM, "");
+  try_declare_parameter<int>(params.nh, IR_MIN_FACES_PARAM, 0);
+  try_declare_parameter<std::string>(params.nh, MESH_FILE_PARAM, "");
+  try_declare_parameter<std::string>(params.nh, IR_ARCHIVE_DIR_PARAM, "");
   factory.registerNodeType<snp_application::StopReconstructionServiceNode>("StopReconstructionService", params);
 }
