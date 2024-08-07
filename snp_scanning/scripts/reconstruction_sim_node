@@ -8,6 +8,7 @@ from industrial_reconstruction_msgs.srv import StopReconstruction
 from industrial_reconstruction.industrial_reconstruction import meshToRos
 from visualization_msgs.msg import Marker
 import shutil
+import os
 
 MESH_FILE_PARAMETER = "mesh_file"
 REFERENCE_FRAME_PARAMETER = "reference_frame"
@@ -36,6 +37,7 @@ class ReconstructionSimServer(Node):
         try:
             # Copy the mesh to the target destination
             mesh_file = self.get_parameter(MESH_FILE_PARAMETER).value
+            os.makedirs(os.path.dirname(mesh_file), exist_ok=True)
             shutil.copy2(mesh_file, request.mesh_filepath)
 
             # Publish the mesh visualization message
