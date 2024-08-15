@@ -2,8 +2,8 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.0.0 (2024-08-15)
+------------------
 * Behavior tree plugins (`#131 <https://github.com/marip8/scan_n_plan_workshop/issues/131>`_)
   * Updated to SyncActionNode
   * Updated BT nodes to be plugins; updated SNP widget to load BT plugins from list of specified libraries
