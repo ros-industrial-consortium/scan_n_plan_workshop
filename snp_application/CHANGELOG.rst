@@ -2,6 +2,18 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Behavior tree plugins (`#131 <https://github.com/marip8/scan_n_plan_workshop/issues/131>`_)
+  * Updated to SyncActionNode
+  * Updated BT nodes to be plugins; updated SNP widget to load BT plugins from list of specified libraries
+  * Move the declaration of parameters needed by the BT into the plugin declaration
+  * Increase clang format penalty for breaking raw strings
+  * Updated broken raw string
+  * Check if parameter has already been declared before declaring
+  * Added parameter for freespace motion group
+* Contributors: Michael Ripperger
+
 4.7.0 (2024-07-25)
 ------------------
 

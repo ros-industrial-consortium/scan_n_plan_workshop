@@ -2,6 +2,23 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Working build for latest version of tesseract (`#115 <https://github.com/marip8/scan_n_plan_workshop/issues/115>`_)
+  * Working build for latest version of tesseract (fwd declaration)
+  * Update plugin status_message fields
+  * Fix vel and acc limit checking
+  * Update pipelines
+  * Clang formatting
+  * Switch deps to tagged versions
+  * Fix new trajopt plan parameters
+  * clang formatting
+  * Make cartesian tolerance a ROS parameter
+  * Use tolerance override and set to zeros for cartesian cost
+  * Check cartesian tolerance vector size
+  * Add TrajOpt Cartesian coeff as a ROS param
+* Contributors: Tyler Marr
+
 4.7.0 (2024-07-25)
 ------------------
 
