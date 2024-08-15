@@ -2,32 +2,29 @@
 #include "ui_snp_widget.h"
 // BT
 #include <snp_application/bt/bt_thread.h>
-#include <snp_application/bt/button_approval_node.h>
-#include <snp_application/bt/button_monitor_node.h>
-#include <snp_application/bt/progress_decorator_node.h>
-#include <snp_application/bt/set_page_decorator_node.h>
-#include <snp_application/bt/snp_bt_ros_nodes.h>
-#include <snp_application/bt/snp_sequence_with_memory_node.h>
 #include <snp_application/bt/text_edit_logger.h>
 #include <snp_application/bt/utils.h>
 
 #include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_ros2/plugins.hpp>
 #include <boost_plugin_loader/plugin_loader.h>
 #include <QMessageBox>
 #include <QTextStream>
 #include <QScrollBar>
 #include <QTextEdit>
 #include <QStackedWidget>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <snp_tpp/tpp_widget.h>
 #include <trajectory_preview/trajectory_preview_widget.h>
 
-static const std::string BT_FILES_PARAM = "bt_files";
-static const std::string BT_PARAM = "tree";
-static const std::string BT_FREESPACE_PARAM = "freespace_tree";
-static const std::string BT_SHORT_TIMEOUT_PARAM = "bt_short_timeout";
-static const std::string BT_LONG_TIMEOUT_PARAM = "bt_long_timeout";
-static const std::string FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory_action";
-static const std::string HOME_STATE_NAME = "home_state";
+static const char* BT_FILES_PARAM = "bt_files";
+static const char* BT_PLUGIN_LIBS_PARAM = "bt_plugin_libs";
+static const char* BT_ROS_PLUGIN_LIBS_PARAM = "bt_ros_plugin_libs";
+static const char* BT_PARAM = "tree";
+static const char* BT_FREESPACE_PARAM = "freespace_tree";
+static const char* BT_TIMEOUT_PARAM = "bt_timeout";
+static const char* FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory_action";
+static const char* HOME_STATE_NAME = "home_state";
 
 class TPPDialog : public QDialog
 {
@@ -134,16 +131,11 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   });
 
   // Declare parameters
-  bt_node_->declare_parameter<std::string>(MOTION_GROUP_PARAM, "");
-  bt_node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
-  bt_node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
-  bt_node_->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
-  bt_node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
-  bt_node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
   bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, {});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, {});
   bt_node_->declare_parameter<std::string>(BT_PARAM, "");
-  bt_node_->declare_parameter<int>(BT_SHORT_TIMEOUT_PARAM, 5);    // seconds
-  bt_node_->declare_parameter<int>(BT_LONG_TIMEOUT_PARAM, 6000);  // seconds
+  bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
   bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
 
   // Home state
@@ -151,30 +143,12 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, {});
   bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, {});
 
-  bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
-  bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
-  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  bt_node_->declare_parameter<bool>(IR_LIVE_PARAM, true);
-  bt_node_->declare_parameter<int>(IR_MIN_FACES_PARAM, 0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);
-  bt_node_->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM, "");
-
   // Set the error message key in the blackboard
   board_->set(ERROR_MESSAGE_KEY, "");
 
   // Populate the blackboard with buttons
-  board_->set(SetPageDecoratorNode::STACKED_WIDGET_KEY, ui_->stacked_widget);
-  board_->set(ProgressDecoratorNode::PROGRESS_BAR_KEY, ui_->progress_bar);
+  board_->set("stacked_widget", ui_->stacked_widget);
+  board_->set("progress_bar", ui_->progress_bar);
   board_->set("reset", static_cast<QAbstractButton*>(ui_->push_button_reset));
   board_->set("halt", static_cast<QAbstractButton*>(ui_->push_button_halt));
 
@@ -186,25 +160,28 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   board_->set("tpp_config", static_cast<QAbstractButton*>(ui_->tool_button_tpp));
 }
 
-BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ros_long_timeout)
+BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_timeout)
 {
   BT::BehaviorTreeFactory bt_factory;
 
-  // Register custom nodes
-  bt_factory.registerNodeType<ButtonMonitorNode>("ButtonMonitor");
-  bt_factory.registerNodeType<ButtonApprovalNode>("ButtonApproval");
-  bt_factory.registerNodeType<ProgressDecoratorNode>("Progress");
-  bt_factory.registerNodeType<SetPageDecoratorNode>("SetPage");
-  bt_factory.registerNodeType<SNPSequenceWithMemory>("SNPSequenceWithMemory");
-  bt_factory.registerNodeType<RosSpinnerNode>("RosSpinner", bt_node_);
-  bt_factory.registerNodeType<ReverseTrajectoryNode>("ReverseTrajectory");
-  bt_factory.registerNodeType<CombineTrajectoriesNode>("CombineTrajectories");
-  bt_factory.registerNodeType<UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", bt_node_);
+  // Register non-ROS plugins
+  {
+    auto bt_plugins = get_parameter<std::vector<std::string>>(bt_node_, BT_PLUGIN_LIBS_PARAM);
+    for (const std::string& plugin : bt_plugins)
+      bt_factory.registerFromPlugin(std::filesystem::path(plugin));
+  }
 
-  BT::RosNodeParams ros_params;
-  ros_params.nh = bt_node_;
-  ros_params.wait_for_server_timeout = std::chrono::seconds(0);
-  ros_params.server_timeout = std::chrono::seconds(ros_short_timeout);
+  // Register ROS plugins
+  {
+    BT::RosNodeParams ros_params;
+    ros_params.nh = bt_node_;
+    ros_params.wait_for_server_timeout = std::chrono::seconds(0);
+    ros_params.server_timeout = std::chrono::seconds(ros_timeout);
+
+    auto bt_ros_plugins = get_parameter<std::vector<std::string>>(bt_node_, BT_ROS_PLUGIN_LIBS_PARAM);
+    for (const std::string& plugin : bt_ros_plugins)
+      RegisterRosNode(bt_factory, std::filesystem::path(plugin), ros_params);
+  }
 
   // Get joint trajectory action topic name from parameter and store it in the blackboard
   board_->set(FOLLOW_JOINT_TRAJECTORY_ACTION,
@@ -214,24 +191,6 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_short_timeout, int ro
   home_state.name = snp_application::get_parameter<std::vector<std::string>>(bt_node_, HOME_STATE_JOINT_NAMES_PARAM);
   home_state.position = snp_application::get_parameter<std::vector<double>>(bt_node_, HOME_STATE_JOINT_VALUES_PARAM);
   board_->set(HOME_STATE_NAME, home_state);
-
-  // Publishers/Subscribers
-  bt_factory.registerNodeType<ToolPathsPubNode>("ToolPathsPub", ros_params);
-  bt_factory.registerNodeType<MotionPlanPubNode>("MotionPlanPub", ros_params);
-  bt_factory.registerNodeType<GetCurrentJointStateNode>("GetCurrentJointState", ros_params);
-  // Short-running services
-  bt_factory.registerNodeType<TriggerServiceNode>("TriggerService", ros_params);
-  bt_factory.registerNodeType<GenerateToolPathsServiceNode>("GenerateToolPathsService", ros_params);
-  bt_factory.registerNodeType<StartReconstructionServiceNode>("StartReconstructionService", ros_params);
-  bt_factory.registerNodeType<StopReconstructionServiceNode>("StopReconstructionService", ros_params);
-
-  // Long-running services/actions
-  ros_params.server_timeout = std::chrono::seconds(ros_long_timeout);
-  bt_factory.registerNodeType<ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", ros_params);
-  bt_factory.registerNodeType<GenerateMotionPlanServiceNode>("GenerateMotionPlanService", ros_params);
-  bt_factory.registerNodeType<GenerateFreespaceMotionPlanServiceNode>("GenerateFreespaceMotionPlanService", ros_params);
-  bt_factory.registerNodeType<GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", ros_params);
-  bt_factory.registerNodeType<FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", ros_params);
 
   return bt_factory;
 }
@@ -243,12 +202,11 @@ void SNPWidget::runTreeWithThread(const std::string& bt_tree_name)
     auto* thread = new BTThread(this);
 
     // Create the BT factory
-    BT::BehaviorTreeFactory bt_factory = createBTFactory(get_parameter<int>(bt_node_, BT_SHORT_TIMEOUT_PARAM),
-                                                         get_parameter<int>(bt_node_, BT_LONG_TIMEOUT_PARAM));
+    BT::BehaviorTreeFactory bt_factory = createBTFactory(get_parameter<int>(bt_node_, BT_TIMEOUT_PARAM));
 
     auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
     if (bt_files.empty())
-      throw std::runtime_error("Parameter '" + BT_FILES_PARAM + "' is empty");
+      throw std::runtime_error("Parameter '" + std::string(BT_FILES_PARAM) + "' is empty");
 
     for (const std::string& file : bt_files)
       bt_factory.registerBehaviorTreeFromFile(file);
