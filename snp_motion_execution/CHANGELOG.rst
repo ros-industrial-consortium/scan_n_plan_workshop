@@ -2,8 +2,8 @@
 Changelog for package snp_motion_execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.0.1 (2024-08-16)
+------------------
 * Added controller_manager dependency to package.xml of snp_motion_execution (`#135 <https://github.com/marip8/scan_n_plan_workshop/issues/135>`_)
 * Contributors: Michael Ripperger
 
