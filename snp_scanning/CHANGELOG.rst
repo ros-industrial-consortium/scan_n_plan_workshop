@@ -2,6 +2,11 @@
 Changelog for package snp_scanning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Install open3d dependency via apt (`#136 <https://github.com/marip8/scan_n_plan_workshop/issues/136>`_)
+* Contributors: Michael Ripperger
+
 5.0.1 (2024-08-16)
 ------------------
 
