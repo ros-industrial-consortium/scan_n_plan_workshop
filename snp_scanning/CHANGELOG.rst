@@ -2,6 +2,9 @@
 Changelog for package snp_scanning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 5.0.0 (2024-08-15)
 ------------------
 * Create directory before saving mesh to it (`#132 <https://github.com/marip8/scan_n_plan_workshop/issues/132>`_)

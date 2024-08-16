@@ -2,6 +2,9 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 5.0.0 (2024-08-15)
 ------------------
 * Behavior tree plugins (`#131 <https://github.com/marip8/scan_n_plan_workshop/issues/131>`_)

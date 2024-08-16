@@ -2,6 +2,9 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 5.0.0 (2024-08-15)
 ------------------
 * Working build for latest version of tesseract (`#115 <https://github.com/marip8/scan_n_plan_workshop/issues/115>`_)
