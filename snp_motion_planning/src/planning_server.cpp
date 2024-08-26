@@ -545,8 +545,7 @@ private:
     // Save results dot graph
     std::filesystem::path results_dot("Results.dot");
     std::ofstream tc_out_results(debug_directory / results_dot);
-          static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr,
-                                                                                result->context->task_infos.getInfoMap());
+    task->dump(tc_out_results, nullptr, result->context->task_infos.getInfoMap());
   }
 
   tesseract_planning::CompositeInstruction plan(const tesseract_planning::CompositeInstruction& program,
