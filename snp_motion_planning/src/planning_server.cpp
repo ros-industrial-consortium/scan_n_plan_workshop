@@ -518,29 +518,47 @@ private:
     // Add debug trajectories to be plottable
     auto all_data = result->context->data_storage->getData();
 
-    // Sort data keys for easier debugging
-    std::vector<std::string> data_keys;
-    for (const auto & pair : all_data) {
-      data_keys.push_back(pair.first);
-    }
-    std::sort(data_keys.begin(), data_keys.end());
-
     // Store each intermediate CI
-    for (const auto & key : data_keys) {
-      auto ci_debug =
-        result->context->data_storage->getData(key).as<tesseract_planning::CompositeInstruction>();
+    std::map<std::string, tesseract_msgs::msg::Trajectory> debug_traj_map;
+    for (const auto& pair : all_data)
+    {
+      // Store CI key as a string
+      std::string key = pair.first;
 
-      // Save all raw CI's to aid with debugging if necessary
+      auto ci_debug = result->context->data_storage->getData(key).as<tesseract_planning::CompositeInstruction>();
+
+      // Save all raw CIs to files to aid with debugging if necessary
       std::filesystem::path intermediate_ci_dir = debug_directory / std::filesystem::path("intermediate_ci");
       std::filesystem::create_directories(intermediate_ci_dir);
-      tesseract_common::Serialization::toArchiveFileXML(
-        ci_debug,
-        intermediate_ci_dir / std::filesystem::path(key +".xml"));
+      tesseract_common::Serialization::toArchiveFileXML(ci_debug,
+                                                        intermediate_ci_dir / std::filesystem::path(key + ".xml"));
 
+      // Check if any CIs with this description have been seen before
+      if (debug_traj_map.find(ci_debug.getDescription()) == debug_traj_map.end())
+      {
+        // Initialize Trajectory msg for CIs with this description
+        tesseract_msgs::msg::Trajectory traj_msg;
+        tesseract_rosutils::toMsg(traj_msg.environment, env_);
+        traj_msg.ns = "DEBUG_" + time_stamp;
+        traj_msg.description = ci_debug.getDescription();
+        debug_traj_map[ci_debug.getDescription()] = traj_msg;
+      }
+
+      // Make tesseract joint trajectory msg for plotting
       tesseract_common::JointTrajectory traj_debug = toJointTrajectory(ci_debug);
       traj_debug.description = key;
-      plotter_->plotTrajectory(traj_debug, "DEBUG_" + time_stamp, key);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      tesseract_msgs::msg::JointTrajectory jt_msg;
+      tesseract_rosutils::toMsg(jt_msg, traj_debug);
+      // Add this message to the map, corresponding to other CIs with matching descriptions
+      debug_traj_map[ci_debug.getDescription()].joint_trajectories.push_back(jt_msg);
+    }
+
+    // Plot all the data
+    for (const auto& entry : debug_traj_map)
+    {
+      plotter_->plotTrajectory(entry.second);
+      // Add delay to deal with ROS plotting using message interface to avoid losing data
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     // Save results dot graph
