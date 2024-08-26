@@ -538,8 +538,9 @@ private:
         intermediate_ci_dir / std::filesystem::path(key +".xml"));
 
       tesseract_common::JointTrajectory traj_debug = toJointTrajectory(ci_debug);
-      plotter_->plotTrajectory(traj_debug, "DEBUG_" + time_stamp, key);
       traj_debug.description = key;
+      plotter_->plotTrajectory(traj_debug, "DEBUG_" + time_stamp, key);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     // Save results dot graph
