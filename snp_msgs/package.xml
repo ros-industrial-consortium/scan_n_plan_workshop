@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>snp_msgs</name>
-  <version>5.0.2</version>
+  <version>5.0.3</version>
   <description>
     The SNP Msgs package contains custom messages used by the scan n plan demo system.
   </description>
