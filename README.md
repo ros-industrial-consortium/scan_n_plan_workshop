@@ -9,8 +9,8 @@ Framework for developing and operating simple Scan 'N Plan applications in which
 
 ## Core Packages
 
-- **snp_application** - Contains a GUI application Qt widget, behavior tree plugins and behavior tree configuration files
-- **snp_motion_execution** - Contains files to simulate robotic motion in `rviz`
+- **snp_application** - Contains a GUI application `Qt` widget, behavior tree plugins, and behavior tree configuration files
+- **snp_motion_execution** - Contains files to simulate robotic motion
 - **snp_motion_planning** - Contains a planning server based on `tesseract` for generating freespace and process motions; contains custom `tesseract` inverse kinematics plugins, planning task plugins, and planner profiles.
 - **snp_msgs** - Contains ROS message and service definitions generating tool paths and motion plans, and executing robot trajectories
 - **snp_scanning** - Contains files to convert a yaml file into a robot scan path and to simulate industrial reconstruction
