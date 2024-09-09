@@ -7,6 +7,15 @@ Framework for developing and operating simple Scan 'N Plan applications in which
 - Plans robot motions to execute the tool path
 - Executes the process path
 
+## Core Packages
+
+- **snp_application** - Contains a GUI application `Qt` widget, behavior tree plugins, and behavior tree configuration files
+- **snp_motion_execution** - Contains files to simulate robotic motion
+- **snp_motion_planning** - Contains a planning server based on `tesseract` for generating freespace and process motions; contains custom `tesseract` inverse kinematics plugins, planning task plugins, and planner profiles
+- **snp_msgs** - Contains ROS message and service definitions generating tool paths and motion plans, and executing robot trajectories
+- **snp_scanning** - Contains files to convert a YAML file into a robot scan path and to simulate `industrial_reconstruction`
+- **snp_tpp** - Contains custom tool path planning GUI widgets and source code for the region of interest selection mesh modifier and SNP-specific raster tool path planner 
+
 ## Build Setup
 
 1. Install the source dependencies after cloning this repository into a `colcon` workspace
