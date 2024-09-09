@@ -13,7 +13,7 @@ Framework for developing and operating simple Scan 'N Plan applications in which
 - **snp_motion_execution** - Contains files to simulate robotic motion
 - **snp_motion_planning** - Contains a planning server based on `tesseract` for generating freespace and process motions; contains custom `tesseract` inverse kinematics plugins, planning task plugins, and planner profiles.
 - **snp_msgs** - Contains ROS message and service definitions generating tool paths and motion plans, and executing robot trajectories
-- **snp_scanning** - Contains files to convert a yaml file into a robot scan path and to simulate industrial reconstruction
+- **snp_scanning** - Contains files to convert a YAML file into a robot scan path and to simulate `industrial_reconstruction`
 - **snp_tpp** - Contains custom tool path planning GUI widgets and source code for the region of interest selection mesh modifier and SNP-specific raster tool path planner 
 
 ## Build Setup
