@@ -9,12 +9,12 @@ Framework for developing and operating simple Scan 'N Plan applications in which
 
 ## Core Packages
 
-- **snp_application** - Contains GUI application Qt widget and behavior tree plugin/configuration files
-- **snp_motion_execution** - Contains files to simulate robotic motion in Rviz
-- **snp_motion_planning** - Contains kinematic plugins, task configurations, planner parameters, and service calls necessary for motion planning using Tesseract
-- **snp_msgs** - Contains ROS message and service definitions for toolpaths used in Noether, generating toolpaths and motion plans, and executing motion plans using Tesseract
+- **snp_application** - Contains a GUI application Qt widget, behavior tree plugins and behavior tree configuration files
+- **snp_motion_execution** - Contains files to simulate robotic motion in `rviz`
+- **snp_motion_planning** - Contains a planning server based on `tesseract` for generating freespace and process motions; contains custom `tesseract` inverse kinematics plugins, planning task plugins, and planner profiles.
+- **snp_msgs** - Contains ROS message and service definitions generating tool paths and motion plans, and executing robot trajectories
 - **snp_scanning** - Contains files to convert a yaml file into a robot scan path and to simulate industrial reconstruction
-- **snp_tpp** - Contains GUI widgets and source code for the region of interest selection mesh modifier and the SNP raster planner 
+- **snp_tpp** - Contains custom tool path planning GUI widgets and source code for the region of interest selection mesh modifier and SNP-specific raster tool path planner 
 
 ## Build Setup
 
