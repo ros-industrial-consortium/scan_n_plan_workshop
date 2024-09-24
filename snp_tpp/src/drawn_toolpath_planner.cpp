@@ -50,7 +50,6 @@ double computeLength(vtkPoints* points)
 
 namespace snp_tpp
 {
-
 DrawnToolpathPlanner::DrawnToolpathPlanner(rclcpp::Node::SharedPtr node,
                                            std::vector<geometry_msgs::msg::PolygonStamped> boundaries)
   : boundaries_(std::move(boundaries)), buffer_(node->get_clock()), listener_(buffer_)
