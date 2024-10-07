@@ -1,10 +1,11 @@
 #include <snp_tpp/drawn_toolpath_planner.h>
 
-#include <noether_tpp/tool_path_planners/raster/raster_utils.h>
+#include <noether_tpp/utils.h>
 
 #include <pcl/conversions.h>
 #include <pcl/common/pca.h>
 #include <pcl/io/vtk_lib_io.h>
+#include <pcl/surface/vtk_smoothing/vtk_utils.h>
 
 #include <vtkPlane.h>
 #include <vtkCutter.h>
@@ -24,29 +25,6 @@
 #include <Eigen/Geometry>
 
 #include <tf2_eigen/tf2_eigen.h>
-
-double computeLength(vtkPoints* points)
-{
-  double total_length = 0.0;
-  vtkIdType num_points = points->GetNumberOfPoints();
-
-  if (num_points < 2)
-  {
-    return total_length;  // No length to compute if less than 2 points
-  }
-
-  for (vtkIdType i = 0; i < num_points - 1; ++i)
-  {
-    double p0[3], p1[3];
-    points->GetPoint(i, p0);
-    points->GetPoint(i + 1, p1);
-
-    double segment_length = std::sqrt(vtkMath::Distance2BetweenPoints(p0, p1));
-    total_length += segment_length;
-  }
-
-  return total_length;
-}
 
 namespace snp_tpp
 {
@@ -71,8 +49,14 @@ void DrawnToolpathPlanner::setSearchRadius(const double search_radius)
 
 noether::ToolPaths DrawnToolpathPlanner::plan(const pcl::PolygonMesh& mesh) const
 {
-  // Convert mesh to VTK format
-  vtkSmartPointer<vtkPolyData> mesh_data = noether::convertMeshToVTKPolyData(mesh);
+  if (!noether::hasNormals(mesh))
+    throw std::runtime_error("Mesh does not have vertex normals");
+
+  // Convert input mesh to VTK type & calculate normals if necessary
+  vtkSmartPointer<vtkPolyData> mesh_data = vtkSmartPointer<vtkPolyData>::New();
+  pcl::VTKUtils::mesh2vtk(mesh, mesh_data);
+  mesh_data->BuildLinks();
+  mesh_data->BuildCells();
 
   // Build locators
   vtkSmartPointer<vtkKdTreePointLocator> kd_tree = vtkSmartPointer<vtkKdTreePointLocator>::New();
@@ -144,7 +128,7 @@ noether::ToolPaths DrawnToolpathPlanner::plan(const pcl::PolygonMesh& mesh) cons
     }
 
     // Check segment length
-    double line_length = computeLength(waypoints);
+    double line_length = noether::computeLength(waypoints);
     if (line_length < min_segment_size_)
       continue;
 
