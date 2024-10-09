@@ -137,6 +137,12 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
     return BT::NodeStatus::FAILURE;
   }
 
+  if (response->tool_paths.empty())
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, "Tool paths are empty! Check tool path planner parameters.");
+    return BT::NodeStatus::FAILURE;
+  }
+
   // Copy the tool paths
   std::vector<snp_msgs::msg::ToolPath> tool_paths = response->tool_paths;
 
