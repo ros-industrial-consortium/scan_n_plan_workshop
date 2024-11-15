@@ -88,10 +88,33 @@ TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, boost_plugin_loader::PluginLo
   if (!config_file.empty())
     pipeline_widget_->configure(QString::fromStdString(config_file));
 
+  param_callback_ =
+      node->add_on_set_parameters_callback(std::bind(&TPPWidget::parametersCallback, this, std::placeholders::_1));
+
   connect(load_action, &QAction::triggered, pipeline_widget_,
           &noether::ConfigurableTPPPipelineWidget::onLoadConfiguration);
   connect(save_action, &QAction::triggered, pipeline_widget_,
           &noether::ConfigurableTPPPipelineWidget::onSaveConfiguration);
+}
+
+rcl_interfaces::msg::SetParametersResult TPPWidget::parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+
+  for (const auto& param : parameters)
+  {
+    if (param.get_name() == "config_file")
+    {
+      const std::string config_file = param.as_string();
+      if (!config_file.empty())
+      {
+        pipeline_widget_->configure(QString::fromStdString(config_file));
+      }
+    }
+  }
+
+  return result;
 }
 
 void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::SharedPtr req,
