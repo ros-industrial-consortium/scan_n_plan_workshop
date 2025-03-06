@@ -71,7 +71,7 @@ createDescartesPlanProfile(FloatType min_contact_distance = static_cast<FloatTyp
 
   // Use the default state and edge evaluators
   profile->state_evaluator = nullptr;
-  profile->edge_evaluator = [](const tesseract_planning::DescartesProblem<FloatType> & /*prob*/) ->
+  profile->edge_evaluator = [](const tesseract_planning::DescartesProblem<FloatType>& /*prob*/) ->
       typename descartes_light::EdgeEvaluator<FloatType>::Ptr {
         auto eval = std::make_shared<descartes_light::CompoundEdgeEvaluator<FloatType>>();
 
