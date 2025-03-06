@@ -37,11 +37,11 @@ jobs:
           path: target_ws/src
 
       - name: Build and Tests
-        uses: tesseract-robotics/colcon-action@v8
+        uses: tesseract-robotics/colcon-action@v11
         with:
           before-script: source /opt/tesseract_ros2/install/setup.bash
           ccache-prefix: ${{ matrix.distro }}
           vcs-file: dependencies.repos
-          rosdep-install-args: '--skip-keys libvtk'
+          rosdep-install-args: '-iry --skip-keys libvtk'
           target-path: target_ws/src
           target-args: --cmake-args -DCMAKE_BUILD_TYPE=Debug
