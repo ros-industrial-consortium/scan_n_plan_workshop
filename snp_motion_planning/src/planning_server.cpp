@@ -8,6 +8,7 @@
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
+#include <tesseract_collision/vhacd/convex_decomposition_vhacd.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_command_language/cartesian_waypoint.h>
@@ -62,6 +63,7 @@ static const std::string VERBOSE_PARAM = "verbose";
 //   Scan link
 static const std::string COLLISION_OBJECT_TYPE_PARAM = "collision_object_type";
 static const std::string OCTREE_RESOLUTION_PARAM = "octree_resolution";
+static const std::string MAX_CONVEX_HULLS = "max_convex_hulls";
 //   Task composer
 static const std::string TASK_COMPOSER_CONFIG_FILE_PARAM = "task_composer_config_file";
 static const std::string RASTER_TASK_NAME_PARAM = "raster_task_name";
@@ -176,6 +178,27 @@ scanMeshToOctree(const std::string& filename, const double resolution,
   return std::make_shared<tesseract_geometry::Octree>(octree, type);
 }
 
+static std::vector<tesseract_geometry::Geometry::Ptr> scanMeshToConvexDecomposition(const std::string& filename,
+                                                                                    const uint32_t max_convex_hulls)
+{
+  std::vector<tesseract_geometry::Mesh::Ptr> meshes =
+      tesseract_geometry::createMeshFromPath<tesseract_geometry::Mesh>(filename);
+
+  tesseract_collision::VHACDParameters params;
+  params.max_convex_hulls = max_convex_hulls;
+
+  tesseract_collision::ConvexDecompositionVHACD chull_decomp(params);
+  std::vector<tesseract_geometry::Geometry::Ptr> geos;
+  for (const tesseract_geometry::Mesh::Ptr& mesh : meshes)
+  {
+    std::vector<tesseract_geometry::ConvexMesh::Ptr> chulls =
+        chull_decomp.compute(*mesh->getVertices(), *mesh->getFaces());
+    geos.insert(geos.end(), chulls.begin(), chulls.end());
+  }
+
+  return geos;
+}
+
 static tesseract_environment::Commands
 createScanAdditionCommands(const std::vector<tesseract_geometry::Geometry::Ptr>& geos, const std::string& mesh_frame,
                            const std::vector<std::string>& touch_links)
@@ -230,7 +253,8 @@ public:
     node_->declare_parameter(VERBOSE_PARAM, false);
     node_->declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, {});
     node_->declare_parameter<std::vector<std::string>>(SCAN_REDUCED_CONTACT_LINKS_PARAM, {});
-    node_->declare_parameter(OCTREE_RESOLUTION_PARAM, 0.010);
+    node_->declare_parameter<double>(OCTREE_RESOLUTION_PARAM, 0.010);
+    node_->declare_parameter<int>(MAX_CONVEX_HULLS, 64);
     node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");
 
     // Profiles
@@ -384,6 +408,11 @@ private:
         if (octree_resolution < std::numeric_limits<double>::epsilon())
           throw std::runtime_error("Octree resolution must be > 0.0");
         collision_objects = { scanMeshToOctree(mesh_filename, octree_resolution) };
+      }
+      else if (collision_object_type == "convex_decomposition")
+      {
+        auto max_convex_hulls = static_cast<uint32_t>(get<int>(node_, MAX_CONVEX_HULLS));
+        collision_objects = scanMeshToConvexDecomposition(mesh_filename, max_convex_hulls);
       }
       else
       {
