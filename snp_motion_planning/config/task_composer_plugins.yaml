@@ -183,6 +183,23 @@ task_composer_plugins:
           nodes:
             DoneTask: *done
             ErrorTask: *error
+            ProcessInputTask:
+              class: ProcessPlanningInputTaskFactory
+              config:
+                conditional: false
+                inputs:
+                  planning_input: planning_input
+                outputs:
+                  program: input_data
+            FormatInputTask:
+              class: FormatPlanningInputTaskFactory
+              config:
+                conditional: false
+                inputs:
+                  program: input_data
+                  environment: environment
+                outputs:
+                  program: input_data
             SimpleMotionPlannerTask:
               class: SimpleMotionPlannerTaskFactory
               config:
@@ -237,6 +254,10 @@ task_composer_plugins:
                 outputs:
                   program: output_data
           edges:
+            - source: ProcessInputTask
+              destinations: [FormatInputTask]
+            - source: FormatInputTask
+              destinations: [SimpleMotionPlannerTask]
             - source: SimpleMotionPlannerTask
               destinations: [ErrorTask, DescartesMotionPlannerTask]
             - source: DescartesMotionPlannerTask

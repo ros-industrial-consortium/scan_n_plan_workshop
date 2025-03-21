@@ -82,9 +82,9 @@ IKFAST_COMPILE_ASSERT(IKFAST_VERSION == 0x1000004a);
 #ifndef isinf
 #define isinf _isinf
 #endif
-//#ifndef isfinite
-//#define isfinite _isfinite
-//#endif
+// #ifndef isfinite
+// #define isfinite _isfinite
+// #endif
 #endif  // _MSC_VER
 
 // lapack routines

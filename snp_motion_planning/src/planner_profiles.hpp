@@ -1,10 +1,12 @@
 #pragma once
 
+#include <thread>
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 #include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
+#include <tesseract_motion_planners/descartes/profile/descartes_ladder_graph_solver_profile.h>
 #include <tesseract_motion_planners/ompl/ompl_planner_configurator.h>
-#include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
+#include <tesseract_motion_planners/ompl/profile/ompl_real_vector_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
@@ -37,13 +39,27 @@ struct ExplicitCollisionPair
 };
 
 template <typename FloatType>
+typename tesseract_planning::DescartesLadderGraphSolverProfile<FloatType>::Ptr createDescartesSolverProfile()
+{
+  auto profile = std::make_shared<tesseract_planning::DescartesLadderGraphSolverProfile<FloatType>>();
+  profile->num_threads = static_cast<int>(std::thread::hardware_concurrency());
+  return profile;
+}
+
+template <typename FloatType>
 typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr
 createDescartesPlanProfile(FloatType min_contact_distance = static_cast<FloatType>(0.0),
                            const std::vector<ExplicitCollisionPair>& unique_collision_pairs = {})
 {
   auto profile = std::make_shared<tesseract_planning::DescartesDefaultPlanProfile<FloatType>>();
-  profile->num_threads = static_cast<int>(std::thread::hardware_concurrency());
   profile->use_redundant_joint_solutions = false;
+
+  // Tool pose sampler
+  profile->target_pose_fixed = false;
+  profile->target_pose_sample_axis = Eigen::Vector3d::UnitZ();
+  profile->target_pose_sample_resolution = 10.0 * M_PI / 180.0;
+  profile->target_pose_sample_min = -M_PI;
+  profile->target_pose_sample_max = M_PI - profile->target_pose_sample_resolution;
 
   // Collision checking
   profile->allow_collision = false;
@@ -69,34 +85,10 @@ createDescartesPlanProfile(FloatType min_contact_distance = static_cast<FloatTyp
     profile->edge_collision_check_config.contact_manager_config.margin_data.setPairCollisionMargin(
         pair.first, pair.second, pair.distance);
 
-  // Use the default state and edge evaluators
-  profile->state_evaluator = nullptr;
-  profile->edge_evaluator = [](const tesseract_planning::DescartesProblem<FloatType>& /*prob*/) ->
-      typename descartes_light::EdgeEvaluator<FloatType>::Ptr {
-        auto eval = std::make_shared<descartes_light::CompoundEdgeEvaluator<FloatType>>();
-
-        // Nominal Euclidean distance
-        eval->evaluators.push_back(std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>());
-
-        // Penalize wrist motion
-        //        Eigen::Matrix<FloatType, Eigen::Dynamic, 1> wrist_mask(prob.manip->numJoints());
-        //        FloatType weight = static_cast<FloatType>(5.0);
-        //        wrist_mask << 0.0, 0.0, 0.0, weight, weight, weight;
-        //        eval->evaluators.push_back(
-        //            std::make_shared<descartes_light::EuclideanDistanceEdgeEvaluator<FloatType>>(wrist_mask));
-
-        return eval;
-      };
-
-  profile->vertex_evaluator = nullptr;
-
-  profile->target_pose_sampler =
-      std::bind(tesseract_planning::sampleToolZAxis, std::placeholders::_1, 10.0 * M_PI / 180.0);
-
   return profile;
 }
 
-tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile(
+tesseract_planning::OMPLRealVectorPlanProfile::Ptr createOMPLProfile(
     const double min_contact_distance = 0.0, const std::vector<ExplicitCollisionPair>& unique_collision_pairs = {})
 {
   // OMPL freespace and transition profiles
@@ -105,17 +97,17 @@ tesseract_planning::OMPLDefaultPlanProfile::Ptr createOMPLProfile(
   auto range = Eigen::VectorXd::LinSpaced(n, 0.05, 0.5);
 
   // Add as many planners as available threads so mulitple OMPL plans can happen in parallel
-  auto profile = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
-  profile->planning_time = 5.0;
-  profile->max_solutions = 1;
+  auto profile = std::make_shared<tesseract_planning::OMPLRealVectorPlanProfile>();
+  profile->solver_config.planning_time = 5.0;
+  profile->solver_config.max_solutions = 1;
 
-  profile->planners.clear();
-  profile->planners.reserve(static_cast<std::size_t>(n));
+  profile->solver_config.planners.clear();
+  profile->solver_config.planners.reserve(static_cast<std::size_t>(n));
   for (Eigen::Index i = 0; i < n; ++i)
   {
     auto rrt = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
     rrt->range = range(i);
-    profile->planners.push_back(rrt);
+    profile->solver_config.planners.push_back(rrt);
   }
 
   // Collision checking
@@ -171,7 +163,7 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
   profile->contact_test_type = tesseract_collision::ContactTestType::CLOSEST;
 
   profile->collision_cost_config.enabled = true;
-  profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
+  profile->collision_cost_config.type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
   profile->collision_cost_config.safety_margin = min_contact_distance;
   profile->collision_cost_config.safety_margin_buffer = std::max(0.020, 2 * min_contact_distance);
   profile->collision_cost_config.coeff = 10.0;

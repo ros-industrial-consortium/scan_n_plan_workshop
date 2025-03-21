@@ -1,39 +1,39 @@
 - git:
     local-name: ros_industrial_cmake_boilerplate
     uri: https://github.com/ros-industrial/ros_industrial_cmake_boilerplate.git
-    version: 0.6.2
+    version: 0.7.3
 - git:
     local-name: tesseract
     uri: https://github.com/ros-industrial-consortium/tesseract.git
-    version: 0.22.3
+    version: 0.29.1
 - git:
     local-name: trajopt
     uri: https://github.com/ros-industrial-consortium/trajopt_ros.git
-    version: 0.22.1
+    version: 0.29.1
 - git:
     local-name: tesseract_planning
     uri: https://github.com/ros-industrial-consortium/tesseract_planning.git
-    version: 0.22.2
+    version: 0.29.1
 - git:
     local-name: tesseract_qt
     uri: https://github.com/tesseract-robotics/tesseract_qt.git
-    version: 0.22.2
+    version: 0.29.1
 - git:
     local-name: tesseract_ros2
     uri: https://github.com/tesseract-robotics/tesseract_ros2.git
-    version: 0.22.1
+    version: 0.29.2
 - git:
     local-name: descartes_light
     uri: https://github.com/swri-robotics/descartes_light.git
-    version: 0.4.3
+    version: 0.4.6
 - git:
     local-name: opw_kinematics
     uri: https://github.com/Jmeyer1292/opw_kinematics.git
-    version: 0.5.0
+    version: 0.5.2
 - git:
     local-name: ifopt
     uri: https://github.com/ethz-adrl/ifopt.git
-    version: 2.1.3
+    version: 2.1.4
 - git:
     local-name: taskflow
     uri: https://github.com/taskflow/taskflow.git
