@@ -117,6 +117,22 @@ rcl_interfaces::msg::SetParametersResult TPPWidget::parametersCallback(const std
   return result;
 }
 
+/**
+ * @details Adapted from https://en.cppreference.com/w/cpp/error/throw_with_nested
+ */
+static void printException(const std::exception& e, std::ostream& ss, int level = 0)
+{
+  ss << std::string(level * 4, ' ') << e.what() << '\n';
+  try
+  {
+    std::rethrow_if_nested(e);
+  }
+  catch (const std::exception& nested_exception)
+  {
+    printException(nested_exception, ss, level + 1);
+  }
+}
+
 void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::SharedPtr req,
                          const snp_msgs::srv::GenerateToolPaths::Response::SharedPtr res)
 {
@@ -144,7 +160,9 @@ void TPPWidget::callback(const snp_msgs::srv::GenerateToolPaths::Request::Shared
   }
   catch (const std::exception& ex)
   {
-    res->message = ex.what();
+    std::stringstream ss;
+    printException(ex, ss);
+    res->message = ss.str();
     res->success = false;
   }
 }
