@@ -447,8 +447,10 @@ private:
                                createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                createTrajOptProfile(min_contact_dist, collision_pairs));
-      profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
-                               createDescartesPlanProfile<float>(min_contact_dist, collision_pairs));
+      profile_dict->addProfile(
+          DESCARTES_DEFAULT_NAMESPACE, PROFILE,
+          createDescartesPlanProfile<float>(static_cast<float>(min_contact_dist), collision_pairs));
+      profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesSolverProfile<float>());
       profile_dict->addProfile(MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
                                std::make_shared<tesseract_planning::MinLengthProfile>(6));
       auto velocity_scaling_factor =
