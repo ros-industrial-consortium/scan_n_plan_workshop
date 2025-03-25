@@ -101,6 +101,7 @@ protected:
     auto env_poly = getData(*context.data_storage, INPUT_ENVIRONMENT_PORT);
     if (env_poly.getType() != std::type_index(typeid(std::shared_ptr<const tesseract_environment::Environment>)))
     {
+      info.color = "red";
       info.status_message =
           "Input data " + input_keys_.get(INPUT_ENVIRONMENT_PORT) + " is missing or of incorrect type";
       CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
@@ -112,6 +113,7 @@ protected:
     auto input_data_poly = getData(*context.data_storage, INOUT_PROGRAM_PORT);
     if (input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
+      info.color = "red";
       info.status_message = "Input data " + input_keys_.get(INOUT_PROGRAM_PORT) + " is missing or of incorrect type";
       CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
@@ -124,6 +126,7 @@ protected:
     if (profiles_poly.isNull() ||
         profiles_poly.getType() != std::type_index(typeid(std::shared_ptr<tesseract_planning::ProfileDictionary>)))
     {
+      info.color = "red";
       info.status_message = "Input data " + input_keys_.get(INPUT_PROFILES_PORT) + " is missing or of incorrect type";
       CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
@@ -140,7 +143,7 @@ protected:
     auto flattened = ci.flatten(tesseract_planning::moveFilter);
     if (flattened.empty())
     {
-      info.color = "green";
+      info.color = "yellow";
       info.status_message = "TCP speed limiter task found no MoveInstructions to process";
       info.status_code = 1;
       info.return_value = 1;

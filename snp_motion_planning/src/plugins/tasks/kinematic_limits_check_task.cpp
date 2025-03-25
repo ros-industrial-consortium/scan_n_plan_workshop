@@ -107,10 +107,9 @@ protected:
     auto env_poly = getData(*context.data_storage, INPUT_ENVIRONMENT_PORT);
     if (env_poly.getType() != std::type_index(typeid(std::shared_ptr<const tesseract_environment::Environment>)))
     {
-      info.status_code = 0;
+      info.color = "red";
       info.status_message = "Input data '" + input_keys_.get(INPUT_ENVIRONMENT_PORT) + "' is not correct type";
       CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
-      info.return_value = 0;
       return info;
     }
 
@@ -119,6 +118,7 @@ protected:
     auto input_data_poly = getData(*context.data_storage, INOUT_PROGRAM_PORT);
     if (input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
+      info.color = "red";
       info.status_message = "Input to KinematicLimitsCheckTask must be a composite instruction";
       CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
@@ -137,6 +137,7 @@ protected:
     auto flattened = ci.flatten(tesseract_planning::moveFilter);
     if (flattened.empty())
     {
+      info.color = "yellow";
       info.status_message = "Kinematic limits check found no MoveInstructions to process";
       info.status_code = 1;
       info.return_value = 1;
@@ -166,8 +167,6 @@ protected:
           ss << "Joint position limit violation(s) at waypoint " << i;
           info.color = "red";
           info.status_message = ss.str();
-          info.status_code = 0;
-          info.return_value = 0;
           return info;
         }
       }
@@ -184,8 +183,6 @@ protected:
 
           info.color = "red";
           info.status_message = ss.str();
-          info.status_code = 0;
-          info.return_value = 0;
           return info;
         }
       }
@@ -202,8 +199,6 @@ protected:
 
           info.color = "red";
           info.status_message = ss.str();
-          info.status_code = 0;
-          info.return_value = 0;
           return info;
         }
       }
