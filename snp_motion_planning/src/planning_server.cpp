@@ -437,22 +437,32 @@ private:
           collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
       }
 
+      // Simple planner
       profile_dict->addProfile(SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
+
+      // OMPL
       {
         auto profile = createOMPLProfile(min_contact_dist, collision_pairs);
         profile->solver_config.planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
         profile_dict->addProfile(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
+
+      // TrajOpt
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                createTrajOptProfile(min_contact_dist, collision_pairs));
+
+      // Descartes
       profile_dict->addProfile(
           DESCARTES_DEFAULT_NAMESPACE, PROFILE,
           createDescartesPlanProfile<float>(static_cast<float>(min_contact_dist), collision_pairs));
       profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesSolverProfile<float>());
+
+      // Min length
       profile_dict->addProfile(MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
                                std::make_shared<tesseract_planning::MinLengthProfile>(6));
+
       auto velocity_scaling_factor =
           clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
       auto acceleration_scaling_factor =
