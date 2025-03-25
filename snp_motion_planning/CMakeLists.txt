@@ -37,7 +37,6 @@ add_library(
   src/plugins/tasks/kinematic_limits_check_task.cpp
   src/plugins/tasks/tcp_speed_limiter_profile.cpp
   src/plugins/tasks/tcp_speed_limiter_task.cpp)
-ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_tasks
   tesseract::tesseract_common
@@ -45,6 +44,8 @@ target_link_libraries(
   tesseract::tesseract_task_composer
   tesseract::tesseract_kinematics_kdl
   tesseract::tesseract_time_parameterization_core
+  tesseract::tesseract_environment
+  tesseract::tesseract_motion_planners_core
   yaml-cpp)
 
 # Planning server
