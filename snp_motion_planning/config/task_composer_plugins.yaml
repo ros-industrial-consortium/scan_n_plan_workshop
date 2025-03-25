@@ -1,10 +1,10 @@
 # Anchors
 
-foo: &raw_inputs
+raw: &raw_inputs
   program: input_data
   environment: environment
   profiles: profiles
-bar: &mod_inputs
+mod: &mod_inputs
   program: output_data
   environment: environment
   profiles: profiles
