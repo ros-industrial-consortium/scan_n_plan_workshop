@@ -463,7 +463,8 @@ private:
       {
         auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
         for (const std::string& link : scan_contact_links)
-          collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
+          if (!link.empty())
+            collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
       }
 
       // Simple planner
