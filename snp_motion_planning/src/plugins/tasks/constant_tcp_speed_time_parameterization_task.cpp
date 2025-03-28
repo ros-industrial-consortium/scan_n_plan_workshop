@@ -4,7 +4,6 @@
 #include <tesseract_task_composer/core/task_composer_plugin_factory_utils.h>
 
 #include <tesseract_common/macros.h>
-#include <console_bridge/console.h>
 #include <boost/serialization/string.hpp>
 
 #include <tesseract_motion_planners/planner_utils.h>
@@ -107,7 +106,6 @@ protected:
     {
       info.color = "red";
       info.status_message = "Input data '" + input_keys_.get(INPUT_ENVIRONMENT_PORT) + "' is not correct type";
-      CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
     }
 
@@ -118,7 +116,6 @@ protected:
     {
       info.color = "red";
       info.status_message = "Input to KinematicLimitsCheckTask must be a composite instruction";
-      CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
     }
 

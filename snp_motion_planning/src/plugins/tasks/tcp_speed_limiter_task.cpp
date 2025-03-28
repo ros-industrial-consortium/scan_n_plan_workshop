@@ -4,7 +4,6 @@
 #include <tesseract_task_composer/core/task_composer_plugin_factory_utils.h>
 
 #include <tesseract_common/macros.h>
-#include <console_bridge/console.h>
 #include <boost/serialization/string.hpp>
 
 #include <tesseract_motion_planners/planner_utils.h>
@@ -104,7 +103,6 @@ protected:
       info.color = "red";
       info.status_message =
           "Input data " + input_keys_.get(INPUT_ENVIRONMENT_PORT) + " is missing or of incorrect type";
-      CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
     }
     auto env = env_poly.as<std::shared_ptr<const tesseract_environment::Environment>>();
@@ -115,7 +113,6 @@ protected:
     {
       info.color = "red";
       info.status_message = "Input data " + input_keys_.get(INOUT_PROGRAM_PORT) + " is missing or of incorrect type";
-      CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
     }
     auto& ci = input_data_poly.as<tesseract_planning::CompositeInstruction>();
@@ -128,7 +125,6 @@ protected:
     {
       info.color = "red";
       info.status_message = "Input data " + input_keys_.get(INPUT_PROFILES_PORT) + " is missing or of incorrect type";
-      CONSOLE_BRIDGE_logError("%s", info.status_message.c_str());
       return info;
     }
     auto profiles = profiles_poly.as<std::shared_ptr<tesseract_planning::ProfileDictionary>>();
