@@ -25,7 +25,7 @@ jobs:
       matrix:
         distro: [foxy, humble, rolling]
     container:
-      image: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.22
+      image: ghcr.io/tesseract-robotics/tesseract_ros2:${{ matrix.distro }}-0.29
       env:
         CCACHE_DIR: ${{ github.workspace }}/${{ matrix.distro }}/.ccache
         DEBIAN_FRONTEND: noninteractive

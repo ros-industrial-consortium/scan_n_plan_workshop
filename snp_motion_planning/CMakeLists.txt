@@ -28,15 +28,35 @@ find_package(tesseract_kinematics REQUIRED)
 find_package(LAPACK REQUIRED) # Requried for ikfast
 find_package(yaml-cpp REQUIRED)
 
+# Libraries
+add_library(
+  ${PROJECT_NAME}_tasks SHARED
+  src/plugins/tasks/constant_tcp_speed_time_parameterization_profile.cpp
+  src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp
+  src/plugins/tasks/kinematic_limits_check_profile.cpp
+  src/plugins/tasks/kinematic_limits_check_task.cpp
+  src/plugins/tasks/tcp_speed_limiter_profile.cpp
+  src/plugins/tasks/tcp_speed_limiter_task.cpp)
+target_link_libraries(
+  ${PROJECT_NAME}_tasks
+  tesseract::tesseract_common
+  tesseract::tesseract_command_language
+  tesseract::tesseract_task_composer
+  tesseract::tesseract_kinematics_kdl
+  tesseract::tesseract_time_parameterization_core
+  tesseract::tesseract_environment
+  tesseract::tesseract_motion_planners_core
+  yaml-cpp)
+
 # Planning server
 add_executable(${PROJECT_NAME}_node src/planning_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node ${ROS2_DEPS})
 target_link_libraries(
   ${PROJECT_NAME}_node
+  ${PROJECT_NAME}_tasks
   tesseract::tesseract_common
   tesseract::tesseract_command_language
   tesseract::tesseract_task_composer
-  tesseract::tesseract_task_composer_planning
   tesseract::tesseract_task_composer_planning_nodes
   tesseract::tesseract_motion_planners_core
   tesseract::tesseract_motion_planners_simple
@@ -52,20 +72,6 @@ add_library(${PROJECT_NAME}_plugins SHARED src/plugins/kinematics/motoman_hc10_i
 target_link_libraries(${PROJECT_NAME}_plugins PUBLIC ${LAPACK_LIBRARIES} tesseract::tesseract_common
                                                      tesseract::tesseract_kinematics_ikfast)
 target_include_directories(${PROJECT_NAME}_plugins SYSTEM PUBLIC ${LAPACK_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
-
-add_library(
-  ${PROJECT_NAME}_tasks SHARED
-  src/plugins/tasks/constant_tcp_speed_time_parameterization_task.cpp src/plugins/tasks/kinematic_limits_check_task.cpp
-  src/plugins/tasks/tcp_speed_limiter_task.cpp)
-ament_target_dependencies(${PROJECT_NAME}_tasks ${ROS2_DEPS})
-target_link_libraries(
-  ${PROJECT_NAME}_tasks
-  tesseract::tesseract_common
-  tesseract::tesseract_command_language
-  tesseract::tesseract_task_composer
-  tesseract::tesseract_kinematics_kdl
-  tesseract::tesseract_time_parameterization_core
-  yaml-cpp)
 
 # Install the executable(s)
 install(TARGETS ${PROJECT_NAME}_node DESTINATION lib/${PROJECT_NAME})

@@ -243,7 +243,7 @@ private:
     return q_dot_dot;
   }
 
-  tesseract_kinematics::JointGroup::UPtr motion_group;
+  tesseract_kinematics::JointGroup::ConstPtr motion_group;
   KDL::Chain kdl_chain_;
   const std::string tcp;
   const double max_translational_vel;

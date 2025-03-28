@@ -1,7 +1,7 @@
 #include "planner_profiles.hpp"
-#include "plugins/tasks/constant_tcp_speed_time_parameterization_profile.hpp"
-#include "plugins/tasks/kinematic_limits_check_profile.hpp"
-#include "plugins/tasks/tcp_speed_limiter_profile.hpp"
+#include "plugins/tasks/constant_tcp_speed_time_parameterization_profile.h"
+#include "plugins/tasks/kinematic_limits_check_profile.h"
+#include "plugins/tasks/tcp_speed_limiter_profile.h"
 
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
@@ -37,8 +37,8 @@
 #include <tesseract_task_composer/core/task_composer_future.h>
 #include <tesseract_task_composer/core/task_composer_graph.h>
 #include <tesseract_task_composer/core/task_composer_node.h>
+#include <tesseract_task_composer/core/task_composer_log.h>
 #include <tesseract_task_composer/core/task_composer_plugin_factory.h>
-#include <tesseract_task_composer/planning/planning_task_composer_problem.h>
 #include <tesseract_task_composer/planning/profiles/iterative_spline_parameterization_profile.h>
 #include <tesseract_task_composer/planning/profiles/min_length_profile.h>
 #include <trajopt_common/eigen_conversions.hpp>
@@ -292,8 +292,7 @@ private:
   {
     std::vector<std::string> joint_names = env_->getJointGroup(info.manipulator)->getJointNames();
 
-    tesseract_planning::CompositeInstruction program(PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED,
-                                                     info);
+    tesseract_planning::CompositeInstruction program(PROFILE, info);
 
     // Define the current state
     tesseract_planning::StateWaypoint current_state(joint_names, env_->getCurrentJointValues(joint_names));
@@ -304,15 +303,13 @@ private:
       from_start.setDescription("approach");
 
       // Define a move to the start waypoint
-      from_start.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{ current_state },
-                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
+      from_start.push_back(tesseract_planning::MoveInstruction(
+          current_state, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
 
       // Define the target first waypoint
       tesseract_planning::CartesianWaypoint wp1 = raster_strips.at(0).at(0);
-      from_start.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::CartesianWaypointPoly{ wp1 },
-                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
+      from_start.push_back(
+          tesseract_planning::MoveInstruction(wp1, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
 
       // Add the composite to the program
       program.push_back(from_start);
@@ -328,9 +325,8 @@ private:
       for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
       {
         tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
-        raster_segment.appendMoveInstruction(
-            tesseract_planning::MoveInstruction(tesseract_planning::CartesianWaypointPoly{ wp },
-                                                tesseract_planning::MoveInstructionType::LINEAR, PROFILE, info));
+        raster_segment.push_back(
+            tesseract_planning::MoveInstruction(wp, tesseract_planning::MoveInstructionType::LINEAR, PROFILE, info));
       }
       program.push_back(raster_segment);
 
@@ -338,15 +334,14 @@ private:
       if (rs < raster_strips.size() - 1)
       {
         tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
-        tesseract_planning::CartesianWaypointPoly twp_poly{ twp };
 
         tesseract_planning::MoveInstruction transition_instruction1(
-            twp_poly, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info);
+            twp, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info);
         transition_instruction1.setDescription("Transition #" + std::to_string(rs + 1));
 
         tesseract_planning::CompositeInstruction transition(PROFILE);
         transition.setDescription("Transition #" + std::to_string(rs + 1));
-        transition.appendMoveInstruction(transition_instruction1);
+        transition.push_back(transition_instruction1);
 
         program.push_back(transition);
       }
@@ -356,9 +351,8 @@ private:
     {
       tesseract_planning::CompositeInstruction to_end(PROFILE);
       to_end.setDescription("to_end");
-      to_end.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::StateWaypointPoly{ current_state },
-                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
+      to_end.push_back(tesseract_planning::MoveInstruction(
+          current_state, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, info));
       program.push_back(to_end);
     }
 
@@ -443,37 +437,46 @@ private:
           collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
       }
 
-      profile_dict->addProfile<tesseract_planning::SimplePlannerPlanProfile>(SIMPLE_DEFAULT_NAMESPACE, PROFILE,
-                                                                             createSimplePlannerProfile());
+      // Simple planner
+      profile_dict->addProfile(SIMPLE_DEFAULT_NAMESPACE, PROFILE, createSimplePlannerProfile());
+
+      // OMPL
       {
         auto profile = createOMPLProfile(min_contact_dist, collision_pairs);
-        profile->planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
-        profile_dict->addProfile<tesseract_planning::OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
+        profile->solver_config.planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
+        profile_dict->addProfile(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
-      profile_dict->addProfile<tesseract_planning::TrajOptPlanProfile>(
-          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
-      profile_dict->addProfile<tesseract_planning::TrajOptCompositeProfile>(
-          TRAJOPT_DEFAULT_NAMESPACE, PROFILE, createTrajOptProfile(min_contact_dist, collision_pairs));
-      profile_dict->addProfile<tesseract_planning::DescartesPlanProfile<float>>(
-          DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesPlanProfile<float>(min_contact_dist, collision_pairs));
-      profile_dict->addProfile<tesseract_planning::MinLengthProfile>(
-          MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE, std::make_shared<tesseract_planning::MinLengthProfile>(6));
+
+      // TrajOpt
+      profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
+                               createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
+      profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
+                               createTrajOptProfile(min_contact_dist, collision_pairs));
+
+      // Descartes
+      profile_dict->addProfile(
+          DESCARTES_DEFAULT_NAMESPACE, PROFILE,
+          createDescartesPlanProfile<float>(static_cast<float>(min_contact_dist), collision_pairs));
+      profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesSolverProfile<float>());
+
+      // Min length
+      profile_dict->addProfile(MIN_LENGTH_DEFAULT_NAMESPACE, PROFILE,
+                               std::make_shared<tesseract_planning::MinLengthProfile>(6));
+
       auto velocity_scaling_factor =
           clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
       auto acceleration_scaling_factor =
           clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
 
       // ISP profile
-      profile_dict->addProfile<tesseract_planning::IterativeSplineParameterizationProfile>(
-          ISP_DEFAULT_NAMESPACE, PROFILE,
-          std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(velocity_scaling_factor,
-                                                                                       acceleration_scaling_factor));
+      profile_dict->addProfile(ISP_DEFAULT_NAMESPACE, PROFILE,
+                               std::make_shared<tesseract_planning::IterativeSplineParameterizationProfile>(
+                                   velocity_scaling_factor, acceleration_scaling_factor));
 
       // Discrete contact check profile
       auto contact_check_lvs = get<double>(node_, LVS_PARAM);
-      profile_dict->addProfile<tesseract_planning::ContactCheckProfile>(
-          CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-          createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
+      profile_dict->addProfile(CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+                               createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
 
       // Constant TCP time parameterization profile
       auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
@@ -482,21 +485,18 @@ private:
       auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
       auto cart_time_param_profile = std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
           vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
-      profile_dict->addProfile<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
-          CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
+      profile_dict->addProfile(CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
 
       // Kinematic limit check
       auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
       auto kin_limit_check_profile =
           std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
-      profile_dict->addProfile<snp_motion_planning::KinematicLimitsCheckProfile>(KINEMATIC_LIMITS_CHECK_TASK_NAME,
-                                                                                 PROFILE, kin_limit_check_profile);
+      profile_dict->addProfile(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE, kin_limit_check_profile);
 
       // TCP speed limit task
       double tcp_max_speed = get<double>(node_, TCP_MAX_SPEED_PARAM);  // m/s
       auto tcp_speed_limiter_profile = std::make_shared<snp_motion_planning::TCPSpeedLimiterProfile>(tcp_max_speed);
-      profile_dict->addProfile<snp_motion_planning::TCPSpeedLimiterProfile>(TCP_SPEED_LIMITER_TASK_NAME, PROFILE,
-                                                                            tcp_speed_limiter_profile);
+      profile_dict->addProfile(TCP_SPEED_LIMITER_TASK_NAME, PROFILE, tcp_speed_limiter_profile);
     }
 
     return profile_dict;
@@ -509,7 +509,7 @@ private:
     // Set up task composer problem
     auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
     const YAML::Node task_composer_config = YAML::LoadFile(task_composer_config_file);
-    tesseract_planning::TaskComposerPluginFactory factory(task_composer_config);
+    tesseract_planning::TaskComposerPluginFactory factory(task_composer_config, *env_->getResourceLocator());
 
     auto executor = factory.createTaskComposerExecutor("TaskflowExecutor");
     tesseract_planning::TaskComposerNode::UPtr task = factory.createTaskComposerNode(task_name);
@@ -522,13 +522,10 @@ private:
       task->dump(tc_out_data);
     }
 
-    const std::string input_key = task->getInputKeys().front();
-    const std::string output_key = task->getOutputKeys().front();
     auto task_data = std::make_shared<tesseract_planning::TaskComposerDataStorage>();
-    task_data->setData(input_key, program);
-    tesseract_planning::TaskComposerProblem::Ptr problem =
-        std::make_shared<tesseract_planning::PlanningTaskComposerProblem>(env_, profile_dict);
-    problem->dotgraph = true;
+    task_data->setData("planning_input", program);
+    task_data->setData("environment", std::shared_ptr<const tesseract_environment::Environment>(env_));
+    task_data->setData("profiles", profile_dict);
 
     // Update log level for debugging
     auto log_level = console_bridge::getLogLevel();
@@ -550,15 +547,21 @@ private:
     }
 
     // Run problem
-    tesseract_planning::TaskComposerFuture::UPtr result = executor->run(*task, problem, task_data);
+    tesseract_planning::TaskComposerLog log(program.getDescription());
+    log.initial_data = *task_data;
+    tesseract_planning::TaskComposerFuture::UPtr result = executor->run(*task, task_data, true);
     result->wait();
+    log.context = result->context;
 
     // Save the output dot graph
-    {
-      std::ofstream tc_out_results(tesseract_common::getTempPath() + task_name + "_results.dot");
-      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(tc_out_results, nullptr,
-                                                                            result->context->task_infos.getInfoMap());
-    }
+    std::stringstream dotgraph_ss;
+    static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(dotgraph_ss, nullptr,
+                                                                          result->context->task_infos.getInfoMap());
+    log.dotgraph = dotgraph_ss.str();
+
+    // Save task composer log
+    const std::string log_filepath = tesseract_common::getTempPath() + task_name + "_log";
+    tesseract_common::Serialization::toArchiveFileBinary<tesseract_planning::TaskComposerLog>(log, log_filepath);
 
     // Reset the log level
     console_bridge::setLogLevel(log_level);
@@ -569,7 +572,8 @@ private:
 
     // Get results of successful plan
     tesseract_planning::CompositeInstruction program_results =
-        result->context->data_storage->getData(output_key).as<tesseract_planning::CompositeInstruction>();
+        result->context->data_storage->getData(task->getOutputKeys().get("program"))
+            .as<tesseract_planning::CompositeInstruction>();
 
     // Send joint trajectory to Tesseract plotter widget
     plotter_->plotTrajectory(toJointTrajectory(program_results), *env_->getStateSolver());
@@ -666,21 +670,18 @@ private:
       manip_info.tcp_frame = req->tcp_frame;
       manip_info.working_frame = req->mesh_frame;
 
-      tesseract_planning::CompositeInstruction freespace_program(
-          PROFILE, tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
+      tesseract_planning::CompositeInstruction freespace_program(PROFILE, manip_info);
 
       tesseract_planning::JointWaypoint wp1 = rosJointStateToJointWaypoint(req->js1);
       tesseract_planning::JointWaypoint wp2 = rosJointStateToJointWaypoint(req->js2);
 
       // Define a freespace move to the first waypoint
-      freespace_program.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{ wp1 },
-                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+      freespace_program.push_back(tesseract_planning::MoveInstruction(
+          wp1, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Define a freespace move to the second waypoint
-      freespace_program.appendMoveInstruction(
-          tesseract_planning::MoveInstruction(tesseract_planning::JointWaypointPoly{ wp2 },
-                                              tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
+      freespace_program.push_back(tesseract_planning::MoveInstruction(
+          wp2, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
 
       // Add the scan link to the planning environment
       if (!req->mesh_filename.empty())
