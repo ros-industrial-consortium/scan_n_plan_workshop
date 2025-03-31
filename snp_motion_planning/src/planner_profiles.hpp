@@ -164,10 +164,6 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
 
   profile->contact_test_type = tesseract_collision::ContactTestType::CLOSEST;
 
-  profile->collision_cost_config.enabled = true;
-  profile->collision_cost_config.coeff = 10.0;
-  profile->collision_cost_config.type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
-
   /* Safety margin notes:
    *   - A non-zero cost for distance to collision is computed only when the distance to collision < safety margin
    *   - The gradient of the collision cost is computed when the distance to collision is < safety margin + safety
@@ -176,20 +172,57 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile> createTrajOp
    * computed to prevent optimization instability, but the computed collision cost will be zero
    *
    * Therefore, we should set the safety margin relatively high such that non-zero collision costs are computed and
-   * drive the robot away from collision. We should also make the safety margin buffer roughly the same size as the
-   * safety margin to ensure that the optimization does not move in the direction of collision even when the cost is
-   * zero.
+   * drive the robot away from collision. We can make the safety margin buffer a fixed size (usually 2cm is appropriate) as the
+   * safety margin to ensure that the optimization does not move in the direction of collision even when the cost is zero.
    */
-  profile->collision_cost_config.safety_margin = 0.05;
-  profile->collision_cost_config.safety_margin_buffer = 0.05;
 
-  profile->special_collision_cost =
-      std::make_shared<trajopt_common::SafetyMarginData>(min_contact_distance, profile->collision_cost_config.coeff);
-  for (const ExplicitCollisionPair& pair : unique_collision_pairs)
-    profile->special_collision_cost->setPairSafetyMarginData(pair.first, pair.second, pair.distance,
-                                                             profile->collision_cost_config.coeff);
+  // Collision cost
+  profile->collision_cost_config.enabled = true;
+  if (profile->collision_cost_config.enabled)
+  {
+    profile->collision_cost_config.coeff = 10.0;
+    profile->collision_cost_config.type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
 
-  profile->collision_constraint_config.enabled = false;
+    // Use a relatively large safety margin to drive the robot away from collision
+    profile->collision_cost_config.safety_margin = std::max(0.025, min_contact_distance);
+    // Use a small, fixed-size buffer beyond the defined margin to continue calculating collision avoidance gradients even when the collision avoidance cost is zero
+    profile->collision_cost_config.safety_margin_buffer = 0.025;
+
+    if (!unique_collision_pairs.empty())
+    {
+      profile->special_collision_cost =
+          std::make_shared<trajopt_common::SafetyMarginData>(profile->collision_cost_config.safety_margin, profile->collision_cost_config.coeff);
+
+      // Populate the special collision cost
+      for (const ExplicitCollisionPair& pair : unique_collision_pairs)
+        profile->special_collision_cost->setPairSafetyMarginData(pair.first, pair.second, pair.distance,
+                                                                 profile->collision_cost_config.coeff);
+    }
+  }
+
+  // Collision constraint
+  profile->collision_constraint_config.enabled = true;
+  if (profile->collision_constraint_config.enabled)
+  {
+    profile->collision_constraint_config.coeff = 10.0;
+    profile->collision_constraint_config.type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
+
+    // Use a minimal safety margin, such that the constraint is only violated (and therefore a cost produced) when the robot is actually considered to be in collision
+    profile->collision_constraint_config.safety_margin = min_contact_distance;
+    // Use a small, fixed-size buffer beyond the defined margin to continue calculating collision avoidance gradients even when the collision avoidance cost is zero
+    profile->collision_constraint_config.safety_margin_buffer = 0.025;
+
+    if(!unique_collision_pairs.empty())
+    {
+      profile->special_collision_constraint =
+          std::make_shared<trajopt_common::SafetyMarginData>(min_contact_distance, profile->collision_constraint_config.coeff);
+
+      // Populate the special collision constraint
+      for (const ExplicitCollisionPair& pair : unique_collision_pairs)
+        profile->special_collision_constraint->setPairSafetyMarginData(pair.first, pair.second, pair.distance,
+                                                                       profile->collision_constraint_config.coeff);
+    }
+  }
 
   return profile;
 }
