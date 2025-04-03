@@ -505,7 +505,8 @@ private:
                                    velocity_scaling_factor, acceleration_scaling_factor));
 
       // Discrete contact check profile
-      profile_dict->addProfile(CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+      profile_dict->addProfile(
+          CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
           createContactCheckProfile(longest_valid_segment_length, min_contact_dist, collision_pairs));
 
       // Constant TCP time parameterization profile
