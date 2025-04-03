@@ -23,6 +23,7 @@ endforeach()
 
 find_package(descartes_light REQUIRED)
 find_package(tesseract_command_language REQUIRED)
+find_package(tesseract_collision REQUIRED COMPONENTS vhacd)
 find_package(tesseract_task_composer REQUIRED)
 find_package(tesseract_kinematics REQUIRED)
 find_package(LAPACK REQUIRED) # Requried for ikfast
@@ -55,6 +56,7 @@ target_link_libraries(
   ${PROJECT_NAME}_node
   ${PROJECT_NAME}_tasks
   tesseract::tesseract_common
+  tesseract::tesseract_collision_vhacd_convex_decomposition
   tesseract::tesseract_command_language
   tesseract::tesseract_task_composer
   tesseract::tesseract_task_composer_planning_nodes

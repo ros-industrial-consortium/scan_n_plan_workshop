@@ -10,6 +10,7 @@
   <!-- Scan Link -->
   <arg name="collision_object_type" default="convex_mesh" description="Collision model representation for scan mesh (convex_mesh, mesh, octree)"/>
   <arg name="octree_resolution" default="0.010"/>
+  <arg name="max_convex_hulls" default="64"/>
   <!-- Task Composer -->
   <arg name="task_composer_config_file" default="$(find-pkg-share snp_motion_planning)/config/task_composer_plugins.yaml"/>
   <arg name="raster_task_name" default="SNPPipeline"/>
@@ -39,6 +40,7 @@
     <!-- Scan Link -->
     <param name="collision_object_type" value="$(var collision_object_type)"/>
     <param name="octree_resolution" value="$(var octree_resolution)"/>
+    <param name="max_convex_hulls" value="$(var max_convex_hulls)"/>
     <!-- Task Composer -->
     <param name="task_composer_config_file" value="$(var task_composer_config_file)"/>
     <param name="raster_task_name" value="$(var raster_task_name)"/>
