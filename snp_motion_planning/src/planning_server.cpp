@@ -443,6 +443,7 @@ private:
     {
       // Get the default minimum distance allowable between any two links
       auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
+      auto longest_valid_segment_length = get<double>(node_, LVS_PARAM);
 
       auto cart_tolerance_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_TOLERANCE_PARAM);
       if (cart_tolerance_vector.size() != 6)
@@ -463,7 +464,8 @@ private:
       {
         auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
         for (const std::string& link : scan_contact_links)
-          collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
+          if (!link.empty())
+            collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
       }
 
       // Simple planner
@@ -471,7 +473,7 @@ private:
 
       // OMPL
       {
-        auto profile = createOMPLProfile(min_contact_dist, collision_pairs);
+        auto profile = createOMPLProfile(min_contact_dist, collision_pairs, longest_valid_segment_length);
         profile->solver_config.planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
         profile_dict->addProfile(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
@@ -480,12 +482,12 @@ private:
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                               createTrajOptProfile(min_contact_dist, collision_pairs));
+                               createTrajOptProfile(min_contact_dist, collision_pairs, longest_valid_segment_length));
 
       // Descartes
-      profile_dict->addProfile(
-          DESCARTES_DEFAULT_NAMESPACE, PROFILE,
-          createDescartesPlanProfile<float>(static_cast<float>(min_contact_dist), collision_pairs));
+      profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
+                               createDescartesPlanProfile<float>(static_cast<float>(min_contact_dist), collision_pairs,
+                                                                 longest_valid_segment_length));
       profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesSolverProfile<float>());
 
       // Min length
@@ -503,9 +505,9 @@ private:
                                    velocity_scaling_factor, acceleration_scaling_factor));
 
       // Discrete contact check profile
-      auto contact_check_lvs = get<double>(node_, LVS_PARAM);
-      profile_dict->addProfile(CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
-                               createContactCheckProfile(contact_check_lvs, min_contact_dist, collision_pairs));
+      profile_dict->addProfile(
+          CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
+          createContactCheckProfile(longest_valid_segment_length, min_contact_dist, collision_pairs));
 
       // Constant TCP time parameterization profile
       auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
