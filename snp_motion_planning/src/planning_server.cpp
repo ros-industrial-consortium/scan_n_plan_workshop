@@ -6,6 +6,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
+#include <snp_msgs/srv/add_scan_link.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_collision/vhacd/convex_decomposition_vhacd.h>
@@ -91,6 +92,7 @@ static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 static const std::string PLANNING_SERVICE = "generate_motion_plan";
 static const std::string FREESPACE_PLANNING_SERVICE = "generate_freespace_motion_plan";
 static const std::string REMOVE_SCAN_LINK_SERVICE = "remove_scan_link";
+static const std::string ADD_SCAN_LINK_SERVICE = "add_scan_link";
 
 tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& paths)
 {
@@ -306,6 +308,9 @@ public:
     remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
         REMOVE_SCAN_LINK_SERVICE,
         std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
+    add_scan_link_server_ = node_->create_service<snp_msgs::srv::AddScanLink>(
+        ADD_SCAN_LINK_SERVICE,
+        std::bind(&PlanningServer::addScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
 
     RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
   }
@@ -393,9 +398,6 @@ private:
   {
     // Add the scan as a collision object to the environment
     {
-      // Remove any previously added collision object
-      removeScanLink();
-
       auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
       std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
       if (collision_object_type == "convex_mesh")
@@ -433,6 +435,21 @@ private:
   void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
   {
     removeScanLink();
+  }
+
+  void addScanLinkCallback(const snp_msgs::srv::AddScanLink::Request::SharedPtr req,
+                           snp_msgs::srv::AddScanLink::Response::SharedPtr res)
+  {
+    try
+    {
+      addScanLink(req->mesh_filename, req->mesh_frame);
+      res->success = true;
+    }
+    catch (const std::exception& ex)
+    {
+      res->message = ex.what();
+      res->success = false;
+    }
   }
 
   tesseract_planning::ProfileDictionary::Ptr createProfileDictionary()
@@ -647,10 +664,6 @@ private:
       // Set up composite instruction and environment
       tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
 
-      // Add the scan link to the planning environment
-      if (!req->mesh_filename.empty())
-        addScanLink(req->mesh_filename, req->mesh_frame);
-
       // Invoke the planner
       auto pd = createProfileDictionary();
       auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
@@ -708,7 +721,7 @@ private:
       tesseract_common::ManipulatorInfo manip_info;
       manip_info.manipulator = req->motion_group;
       manip_info.tcp_frame = req->tcp_frame;
-      manip_info.working_frame = req->mesh_frame;
+      manip_info.working_frame = env_->getJointGroup(req->motion_group)->getBaseLinkName();
 
       tesseract_planning::CompositeInstruction freespace_program(PROFILE, manip_info);
 
@@ -722,10 +735,6 @@ private:
       // Define a freespace move to the second waypoint
       freespace_program.push_back(tesseract_planning::MoveInstruction(
           wp2, tesseract_planning::MoveInstructionType::FREESPACE, PROFILE, manip_info));
-
-      // Add the scan link to the planning environment
-      if (!req->mesh_filename.empty())
-        addScanLink(req->mesh_filename, req->mesh_frame);
 
       // Invoke the planner
       auto pd = createProfileDictionary();
@@ -754,6 +763,7 @@ private:
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr raster_server_;
   rclcpp::Service<snp_msgs::srv::GenerateFreespaceMotionPlan>::SharedPtr freespace_server_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
+  rclcpp::Service<snp_msgs::srv::AddScanLink>::SharedPtr add_scan_link_server_;
 };
 
 int main(int argc, char** argv)
