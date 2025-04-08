@@ -32,6 +32,7 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
 
   factory.registerNodeType<snp_application::RosSpinnerNode>("RosSpinner", params.nh);
   factory.registerNodeType<snp_application::TriggerServiceNode>("TriggerService", params);
+  factory.registerNodeType<snp_application::EmptyServiceNode>("EmptyService", params);
   factory.registerNodeType<snp_application::ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", params);
   factory.registerNodeType<snp_application::ToolPathsPubNode>("ToolPathsPub", params);
   factory.registerNodeType<snp_application::MotionPlanPubNode>("MotionPlanPub", params);
@@ -49,6 +50,7 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   try_declare_parameter<std::string>(params.nh, MOTION_GROUP_PARAM, "");
   try_declare_parameter<std::string>(params.nh, REF_FRAME_PARAM, "");
   try_declare_parameter<std::string>(params.nh, TCP_FRAME_PARAM, "");
+  factory.registerNodeType<snp_application::AddScanLinkServiceNode>("AddScanLinkService", params);
   factory.registerNodeType<snp_application::GenerateMotionPlanServiceNode>("GenerateMotionPlanService", params);
 
   try_declare_parameter<std::string>(params.nh, FREESPACE_MOTION_GROUP_PARAM, "");

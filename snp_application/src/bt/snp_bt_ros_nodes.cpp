@@ -19,6 +19,16 @@ BT::NodeStatus TriggerServiceNode::onResponseReceived(const typename Response::S
   return BT::NodeStatus::SUCCESS;
 }
 
+bool EmptyServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
+{
+  return true;
+}
+
+BT::NodeStatus EmptyServiceNode::onResponseReceived(const typename Response::SharedPtr& /*response*/)
+{
+  return BT::NodeStatus::SUCCESS;
+}
+
 bool ExecuteMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   request->motion_plan = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, MOTION_PLAN_INPUT_PORT_KEY);
@@ -42,8 +52,6 @@ bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& requ
 
   request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
   request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
-  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
 
   return true;
 }
@@ -64,6 +72,24 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   return BT::NodeStatus::SUCCESS;
 }
 
+bool AddScanLinkServiceNode::setRequest(typename Request::SharedPtr& request)
+{
+  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
+  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  return true;
+}
+
+BT::NodeStatus AddScanLinkServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
+{
+  if (!response->success)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
+    return BT::NodeStatus::FAILURE;
+  }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
 sensor_msgs::msg::JointState jointTrajectoryPointToJointState(const trajectory_msgs::msg::JointTrajectory& jt,
                                                               const trajectory_msgs::msg::JointTrajectoryPoint& jtp)
 {
@@ -79,8 +105,6 @@ bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::Shared
   request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
 
   request->motion_group = get_parameter<std::string>(node_, FREESPACE_MOTION_GROUP_PARAM);
-  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
   request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
 
   return true;
