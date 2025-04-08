@@ -10,11 +10,6 @@ snp_msgs/ToolPath[] tool_paths
 string motion_group
 string tcp_frame
 
-# Mesh - this is the scanned mesh which toolpaths were generated on.  Any path generated should be
-# checked for collision against this mesh to ensure we don't hit it by mistake.
-string mesh_filename # Optional - If left empty then no mesh will be added
-string mesh_frame
-
 ---
 # Response
 
