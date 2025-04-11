@@ -3,6 +3,9 @@
     <include path="snp.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
+        <Action ID="AddScanLinkService" editable="true">
+            <input_port name="service_name" default="add_scan_link"/>
+        </Action>
         <Action ID="ButtonApproval" editable="true">
             <input_port name="approve_button"/>
             <input_port name="disapprove_button"/>
@@ -14,6 +17,9 @@
             <input_port name="first"/>
             <input_port name="second"/>
             <output_port name="output"/>
+        </Action>
+        <Action ID="EmptyService" editable="true">
+            <input_port name="service_name"/>
         </Action>
         <Action ID="ExecuteMotionPlanService" editable="true">
             <input_port name="service_name" default="execute_motion_plan"/>
