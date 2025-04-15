@@ -24,6 +24,7 @@ find_package(sensor_msgs REQUIRED)
 rosidl_generate_interfaces(
   ${PROJECT_NAME}
   "msg/ToolPath.msg"
+  "srv/AddScanLink.srv"
   "srv/ExecuteMotionPlan.srv"
   "srv/GenerateMotionPlan.srv"
   "srv/GenerateToolPaths.srv"

@@ -16,7 +16,9 @@
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/generate_scan_motion_plan.hpp>
 #include <snp_msgs/srv/generate_tool_paths.hpp>
+#include <snp_msgs/srv/add_scan_link.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <std_srvs/srv/empty.hpp>
 
 namespace snp_application
 {
@@ -106,6 +108,16 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+class EmptyServiceNode : public SnpRosServiceNode<std_srvs::srv::Empty>
+{
+public:
+  using SnpRosServiceNode<std_srvs::srv::Empty>::providedPorts;
+  using SnpRosServiceNode<std_srvs::srv::Empty>::SnpRosServiceNode;
+
+  bool setRequest(typename Request::SharedPtr& request) override;
+  BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+};
+
 class ExecuteMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::ExecuteMotionPlan>
 {
 public:
@@ -139,6 +151,16 @@ public:
   }
 
   using SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>::SnpRosServiceNode;
+
+  bool setRequest(typename Request::SharedPtr& request) override;
+  BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+};
+
+class AddScanLinkServiceNode : public SnpRosServiceNode<snp_msgs::srv::AddScanLink>
+{
+public:
+  using SnpRosServiceNode<snp_msgs::srv::AddScanLink>::providedPorts;
+  using SnpRosServiceNode<snp_msgs::srv::AddScanLink>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
