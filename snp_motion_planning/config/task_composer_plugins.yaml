@@ -188,7 +188,7 @@ task_composer_plugins:
               config:
                 conditional: false
                 inputs:
-                  planning_input: planning_input
+                  planning_input: input_data
                 outputs:
                   program: input_data
             FormatInputTask:

@@ -554,7 +554,7 @@ private:
     }
 
     auto task_data = std::make_shared<tesseract_planning::TaskComposerDataStorage>();
-    task_data->setData("planning_input", program);
+    task_data->setData("input_data", program);
     task_data->setData("environment", std::shared_ptr<const tesseract_environment::Environment>(env_));
     task_data->setData("profiles", profile_dict);
 
@@ -584,15 +584,24 @@ private:
     result->wait();
     log.context = result->context;
 
-    // Save the output dot graph
-    std::stringstream dotgraph_ss;
-    static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(dotgraph_ss, nullptr,
-                                                                          result->context->task_infos.getInfoMap());
-    log.dotgraph = dotgraph_ss.str();
+    // Save the full log, including the output dot graph
+    {
+      std::stringstream dotgraph_ss;
+      static_cast<const tesseract_planning::TaskComposerGraph&>(*task).dump(dotgraph_ss, nullptr,
+                                                                            result->context->task_infos.getInfoMap());
 
-    // Save task composer log
-    const std::string log_filepath = tesseract_common::getTempPath() + task_name + "_log";
-    tesseract_common::Serialization::toArchiveFileBinary<tesseract_planning::TaskComposerLog>(log, log_filepath);
+      // Save the dot graph to a separate file for convenience
+      {
+        std::ofstream output_graph(tesseract_common::getTempPath() + task_name + "_results.dot");
+        output_graph << dotgraph_ss.str();
+      }
+
+      log.dotgraph = dotgraph_ss.str();
+
+      // Save task composer log
+      const std::string log_filepath = tesseract_common::getTempPath() + task_name + "_log";
+      tesseract_common::Serialization::toArchiveFileBinary<tesseract_planning::TaskComposerLog>(log, log_filepath);
+    }
 
     // Reset the log level
     console_bridge::setLogLevel(log_level);

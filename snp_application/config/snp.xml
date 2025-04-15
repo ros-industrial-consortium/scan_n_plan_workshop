@@ -5,19 +5,10 @@
       <ReactiveSequence>
         <RosSpinner/>
         <ButtonMonitor name="Reset"
-                       button="reset"
+                       button="halt"
                        _description="Sequence has been reset to start state"/>
-        <KeepRunningUntilFailure>
-          <ForceSuccess>
-            <ReactiveSequence>
-              <ButtonMonitor name="Halt"
-                             button="halt"
-                             _description="Current task has been halted"/>
-              <SubTree ID="go_home_process"
-                       _autoremap="true"/>
-            </ReactiveSequence>
-          </ForceSuccess>
-        </KeepRunningUntilFailure>
+        <SubTree ID="go_home_process"
+                 _autoremap="true"/>
       </ReactiveSequence>
     </ForceSuccess>
   </BehaviorTree>
