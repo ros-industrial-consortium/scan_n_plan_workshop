@@ -63,6 +63,7 @@ public:
                                const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
     : tesseract_planning::TaskComposerTask(std::move(name), ports(), config)
   {
+    validatePorts();
   }
 
   ~TCPSpeedLimiterTask() override = default;
@@ -161,7 +162,7 @@ protected:
       return info;
     }
 
-    context.data_storage->setData(INOUT_PROGRAM_PORT, input_data_poly);
+    setData(*context.data_storage, INOUT_PROGRAM_PORT, input_data_poly);
 
     info.color = "green";
     info.status_message = "TCP speed limiter task succeeded";
