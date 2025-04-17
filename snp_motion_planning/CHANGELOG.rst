@@ -2,8 +2,8 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+6.0.0 (2025-04-17)
+------------------
 * Revised motion planning pipelines to not overwrite keys; combined freespace and transition pipelines; updated freespace pipeline to be more robust to failure (`#164 <https://github.com/marip8/scan_n_plan_workshop/issues/164>`_)
 * Add service for adding scan link to motion planning environment (`#163 <https://github.com/marip8/scan_n_plan_workshop/issues/163>`_)
 * Fix go home freespace planning (`#162 <https://github.com/marip8/scan_n_plan_workshop/issues/162>`_)

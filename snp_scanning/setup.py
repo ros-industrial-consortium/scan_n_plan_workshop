@@ -4,7 +4,7 @@ package_name = 'snp_scanning'
 
 setup(
     name=package_name,
-    version='5.0.3',
+    version='6.0.0',
     packages=[],
     data_files=[
         ('share/ament_index/resource_index/packages',
