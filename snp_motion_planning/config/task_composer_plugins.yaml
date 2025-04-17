@@ -16,7 +16,7 @@ MinLengthTask: &min_length
   config:
     conditional: true
     inputs:
-      program: input_data
+      program: input_program
       environment: environment
       profiles: profiles
     outputs:
@@ -28,7 +28,7 @@ KinematicLimitsCheckTask: &limits_check
   config:
     conditional: true
     inputs:
-      program: output_data
+      program: output_program
       environment: environment
       profiles: profiles
 
@@ -49,9 +49,9 @@ task_composer_plugins:
         class: GraphTaskFactory
         config:
           inputs:
-            program: input_data
+            program: input_program
           outputs:
-            program: output_data
+            program: output_program
           nodes:
             DoneTask: *done
             ErrorTask: *error
@@ -84,7 +84,7 @@ task_composer_plugins:
                   environment: environment
                   profiles: profiles
                 outputs:
-                  program: output_data
+                  program: output_program
             KinematicLimitsCheckTask: *limits_check
           edges:
             - source: MinLengthTask
@@ -102,9 +102,9 @@ task_composer_plugins:
         class: GraphTaskFactory
         config:
           inputs:
-            program: input_data
+            program: input_program
           outputs:
-            program: output_data
+            program: output_program
           nodes:
             DoneTask: *done
             ErrorTask: *error
@@ -138,7 +138,7 @@ task_composer_plugins:
                 inputs:
                   keys: [trajopt_output]
                 outputs:
-                  keys: [output_data]
+                  keys: [output_program]
             OMPLMotionPlannerTask:
               class: OMPLMotionPlannerTaskFactory
               config:
@@ -166,7 +166,7 @@ task_composer_plugins:
                 inputs:
                   programs: [ompl_output]
                 outputs:
-                  programs: [output_data]
+                  programs: [output_program]
             TrajOptOMPLMotionPlannerTask:
               class: TrajOptMotionPlannerTaskFactory
               config:
@@ -196,17 +196,17 @@ task_composer_plugins:
                 inputs:
                   keys: [trajopt_ompl_output]
                 outputs:
-                  keys: [output_data]
+                  keys: [output_program]
             IterativeSplineParameterizationTask:
               class: IterativeSplineParameterizationTaskFactory
               config:
                 conditional: true
                 inputs:
-                  program: output_data
+                  program: output_program
                   environment: environment
                   profiles: profiles
                 outputs:
-                  program: output_data
+                  program: output_program
             KinematicLimitsCheckTask: *limits_check
           edges:
             - source: MinLengthTask
@@ -238,9 +238,9 @@ task_composer_plugins:
         class: GraphTaskFactory
         config:
           inputs:
-            program: input_data
+            program: input_program
           outputs:
-            program: output_data
+            program: output_program
           nodes:
             DoneTask: *done
             ErrorTask: *error
@@ -249,16 +249,16 @@ task_composer_plugins:
               config:
                 conditional: false
                 inputs:
-                  program: input_data
+                  program: input_program
                   environment: environment
                 outputs:
-                  program: input_data
+                  program: input_program
             SimpleMotionPlannerTask:
               class: SimpleMotionPlannerTaskFactory
               config:
                 conditional: true
                 inputs:
-                  program: input_data
+                  program: input_program
                   environment: environment
                   profiles: profiles
                 outputs:
@@ -288,30 +288,30 @@ task_composer_plugins:
                   task: SNPFreespacePipeline
                   config:
                     indexing:
-                      - input_data
+                      - input_program
                       - min_length_output
                       - trajopt_output
                       - ompl_output
                       - trajopt_ompl_output
-                      - output_data
+                      - output_program
                 raster:
                   task: SNPCartesianPipeline
                   config:
                     indexing:
-                      - input_data
+                      - input_program
                       - min_length_output
                       - trajopt_output
-                      - output_data
+                      - output_program
                 transition:
                   task: SNPFreespacePipeline
                   config:
                     indexing:
-                      - input_data
+                      - input_program
                       - min_length_output
                       - trajopt_output
                       - ompl_output
                       - trajopt_ompl_output
-                      - output_data
+                      - output_program
             TCPSpeedLimiterTask:
               class: TCPSpeedLimiterTaskFactory
               config:
@@ -321,7 +321,7 @@ task_composer_plugins:
                   environment: environment
                   profiles: profiles
                 outputs:
-                  program: output_data
+                  program: output_program
           edges:
             - source: FormatInputTask
               destinations: [SimpleMotionPlannerTask]

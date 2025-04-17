@@ -571,7 +571,7 @@ private:
     }
 
     auto task_data = std::make_shared<tesseract_planning::TaskComposerDataStorage>();
-    task_data->setData("input_data", program);
+    task_data->setData("input_program", program);
     task_data->setData("environment", std::shared_ptr<const tesseract_environment::Environment>(env_));
     task_data->setData("profiles", profile_dict);
 
