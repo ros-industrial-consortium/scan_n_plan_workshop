@@ -65,6 +65,7 @@ public:
       const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
     : tesseract_planning::TaskComposerTask(std::move(name), ports(), config)
   {
+    validatePorts();
   }
 
   ~ConstantTCPSpeedTimeParameterizationTask() override = default;

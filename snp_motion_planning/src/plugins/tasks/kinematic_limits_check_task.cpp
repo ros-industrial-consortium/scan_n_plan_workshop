@@ -20,7 +20,7 @@
 #include <tesseract_task_composer/core/task_composer_task_plugin_factory.h>
 
 // Requried
-const std::string INOUT_PROGRAM_PORT = "program";
+const std::string INPUT_PROGRAM_PORT = "program";
 const std::string INPUT_ENVIRONMENT_PORT = "environment";
 const std::string INPUT_PROFILES_PORT = "profiles";
 
@@ -40,14 +40,12 @@ public:
   }
 
   explicit KinematicLimitsCheckTask(std::string name, std::string input_program_key, std::string input_environment_key,
-                                    std::string input_profiles_key, std::string output_program_key,
-                                    bool is_conditional = true)
+                                    std::string input_profiles_key, bool is_conditional = true)
     : tesseract_planning::TaskComposerTask(std::move(name), KinematicLimitsCheckTask::ports(), is_conditional)
   {
-    input_keys_.add(INOUT_PROGRAM_PORT, std::move(input_program_key));
+    input_keys_.add(INPUT_PROGRAM_PORT, std::move(input_program_key));
     input_keys_.add(INPUT_ENVIRONMENT_PORT, std::move(input_environment_key));
     input_keys_.add(INPUT_PROFILES_PORT, std::move(input_profiles_key));
-    output_keys_.add(INOUT_PROGRAM_PORT, std::move(output_program_key));
     validatePorts();
   }
 
@@ -55,6 +53,7 @@ public:
                                     const tesseract_planning::TaskComposerPluginFactory& /*plugin_factory*/)
     : tesseract_planning::TaskComposerTask(std::move(name), KinematicLimitsCheckTask::ports(), config)
   {
+    validatePorts();
   }
 
   ~KinematicLimitsCheckTask() override = default;
@@ -113,7 +112,7 @@ protected:
 
     auto env = env_poly.as<std::shared_ptr<const tesseract_environment::Environment>>();
 
-    auto input_data_poly = getData(*context.data_storage, INOUT_PROGRAM_PORT);
+    auto input_data_poly = getData(*context.data_storage, INPUT_PROGRAM_PORT);
     if (input_data_poly.getType() != std::type_index(typeid(tesseract_planning::CompositeInstruction)))
     {
       info.color = "red";
