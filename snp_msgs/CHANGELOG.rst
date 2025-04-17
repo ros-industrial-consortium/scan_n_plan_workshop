@@ -2,6 +2,11 @@
 Changelog for package snp_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add service for adding scan link to motion planning environment (`#163 <https://github.com/marip8/scan_n_plan_workshop/issues/163>`_)
+* Contributors: Michael Ripperger
+
 5.0.3 (2024-09-09)
 ------------------
 

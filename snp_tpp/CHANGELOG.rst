@@ -2,6 +2,13 @@
 Changelog for package snp_tpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Print nested exceptions from TPP widget for better error reporting (`#159 <https://github.com/marip8/scan_n_plan_workshop/issues/159>`_)
+* Add parameter callback when config_file changed (`#145 <https://github.com/marip8/scan_n_plan_workshop/issues/145>`_)
+* Add load/save toolbar to snp_tpp widget (`#138 <https://github.com/marip8/scan_n_plan_workshop/issues/138>`_)
+* Contributors: Michael Ripperger, Tyler Marr
+
 5.0.3 (2024-09-09)
 ------------------
 

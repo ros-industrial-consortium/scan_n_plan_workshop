@@ -2,6 +2,21 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Revised motion planning pipelines to not overwrite keys; combined freespace and transition pipelines; updated freespace pipeline to be more robust to failure (`#164 <https://github.com/marip8/scan_n_plan_workshop/issues/164>`_)
+* Add service for adding scan link to motion planning environment (`#163 <https://github.com/marip8/scan_n_plan_workshop/issues/163>`_)
+* Fix go home freespace planning (`#162 <https://github.com/marip8/scan_n_plan_workshop/issues/162>`_)
+* Planner Profile Update (`#161 <https://github.com/marip8/scan_n_plan_workshop/issues/161>`_)
+  * Updated Trajopt profiles to remove velocity smoothing and correctly utilize safety margin and safety margin buffer
+  * Skip addition of empty links to reduced contact collision pairs
+  * Updated trajopt profile special collision costs; added collision as a constraint in trajopt profile
+  * Added LVS length argument to all custom profile generator functions
+  * Removed unnecessary default values in profile generation functions
+* Added convex hull decomposition method for scan mesh (`#160 <https://github.com/marip8/scan_n_plan_workshop/issues/160>`_)
+* Upgrades to Tesseract Version 0.29.X. (`#158 <https://github.com/marip8/scan_n_plan_workshop/issues/158>`_)
+* Contributors: Levi Armstrong, Michael Ripperger
+
 5.0.3 (2024-09-09)
 ------------------
 

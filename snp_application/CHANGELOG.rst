@@ -2,6 +2,14 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add service for adding scan link to motion planning environment (`#163 <https://github.com/marip8/scan_n_plan_workshop/issues/163>`_)
+* Fix go home freespace planning (`#162 <https://github.com/marip8/scan_n_plan_workshop/issues/162>`_)
+* Updated BT to prevent rescan after tpp failure (`#155 <https://github.com/marip8/scan_n_plan_workshop/issues/155>`_)
+* Added check in BT for empty tool paths (`#144 <https://github.com/marip8/scan_n_plan_workshop/issues/144>`_)
+* Contributors: David Spielman, Michael Ripperger
+
 5.0.3 (2024-09-09)
 ------------------
 
