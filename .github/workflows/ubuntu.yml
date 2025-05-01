@@ -42,6 +42,6 @@ jobs:
           before-script: source /opt/tesseract_ros2/install/setup.bash
           ccache-prefix: ${{ matrix.distro }}
           vcs-file: dependencies.repos
-          rosdep-install-args: '-iry --skip-keys libvtk'
+          rosdep-install-args: -iry --skip-keys "libvtk python3-open3d"
           target-path: target_ws/src
           target-args: --cmake-args -DCMAKE_BUILD_TYPE=Debug
