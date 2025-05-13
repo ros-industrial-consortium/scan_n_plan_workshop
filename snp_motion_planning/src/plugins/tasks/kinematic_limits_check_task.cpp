@@ -121,8 +121,8 @@ protected:
     }
 
     // Get Composite Profile
-    auto profiles = getData(*context.data_storage, INPUT_PROFILES_PORT)
-                        .as<std::shared_ptr<tesseract_planning::ProfileDictionary>>();
+    auto profiles =
+        getData(*context.data_storage, INPUT_PROFILES_PORT).as<std::shared_ptr<tesseract_common::ProfileDictionary>>();
     auto& ci = input_data_poly.as<tesseract_planning::CompositeInstruction>();
     auto cur_composite_profile = tesseract_planning::getProfile<KinematicLimitsCheckProfile>(
         ns_, ci.getProfile(ns_), *profiles, std::make_shared<KinematicLimitsCheckProfile>());

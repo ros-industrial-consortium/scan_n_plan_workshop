@@ -120,4 +120,4 @@ public:
 
 }  // namespace tesseract_kinematics
 
-TESSERACT_ADD_PLUGIN(tesseract_kinematics::IKFastInvKinFactory, MotomanHC10InvKinFactory)
+TESSERACT_ADD_INV_KIN_PLUGIN(tesseract_kinematics::IKFastInvKinFactory, MotomanHC10InvKinFactory)

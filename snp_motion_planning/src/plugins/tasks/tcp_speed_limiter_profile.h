@@ -2,13 +2,13 @@
 
 #include <memory>
 #include <string>
-#include <tesseract_command_language/profile.h>
+#include <tesseract_common/profile.h>
 
 static const std::string TCP_SPEED_LIMITER_TASK_NAME = "TCPSpeedLimiterTask";
 
 namespace snp_motion_planning
 {
-struct TCPSpeedLimiterProfile : public tesseract_planning::Profile
+struct TCPSpeedLimiterProfile : public tesseract_common::Profile
 {
   using Ptr = std::shared_ptr<TCPSpeedLimiterProfile>;
   using ConstPtr = std::shared_ptr<const TCPSpeedLimiterProfile>;
