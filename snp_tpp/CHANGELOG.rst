@@ -2,6 +2,9 @@
 Changelog for package snp_tpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 6.0.0 (2025-04-17)
 ------------------
 * Print nested exceptions from TPP widget for better error reporting (`#159 <https://github.com/marip8/scan_n_plan_workshop/issues/159>`_)
