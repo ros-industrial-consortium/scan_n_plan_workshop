@@ -74,7 +74,13 @@ TPPWidget::TPPWidget(rclcpp::Node::SharedPtr node, boost_plugin_loader::PluginLo
 
   layout->addWidget(tool_bar);
 
-  pipeline_widget_ = new noether::ConfigurableTPPPipelineWidget(std::move(loader), this);
+  // Set the default configuration file directory for the tool path planner
+  std::string default_configuration_file_directory;
+  node->declare_parameter("default_configuration_file_directory", default_configuration_file_directory);
+  node->get_parameter("default_configuration_file_directory", default_configuration_file_directory);
+
+  pipeline_widget_ =
+      new noether::ConfigurableTPPPipelineWidget(std::move(loader), default_configuration_file_directory, this);
   layout->addWidget(pipeline_widget_);
 
   // Set up the ROS interfaces
