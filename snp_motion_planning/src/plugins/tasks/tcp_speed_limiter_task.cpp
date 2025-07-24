@@ -122,13 +122,13 @@ protected:
     // Get the profile dictionary input
     auto profiles_poly = getData(*context.data_storage, INPUT_PROFILES_PORT);
     if (profiles_poly.isNull() ||
-        profiles_poly.getType() != std::type_index(typeid(std::shared_ptr<tesseract_planning::ProfileDictionary>)))
+        profiles_poly.getType() != std::type_index(typeid(std::shared_ptr<tesseract_common::ProfileDictionary>)))
     {
       info.color = "red";
       info.status_message = "Input data " + input_keys_.get(INPUT_PROFILES_PORT) + " is missing or of incorrect type";
       return info;
     }
-    auto profiles = profiles_poly.as<std::shared_ptr<tesseract_planning::ProfileDictionary>>();
+    auto profiles = profiles_poly.as<std::shared_ptr<tesseract_common::ProfileDictionary>>();
 
     // Get Composite Profile
     std::string profile = ci.getProfile(ns_);
