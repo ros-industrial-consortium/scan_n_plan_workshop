@@ -36,7 +36,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="double_spin_box_rotation_offset">
+         <widget class="noether::AngleDoubleSpinBox" name="double_spin_box_rotation_offset">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -59,7 +59,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="double_spin_box_point_spacing">
+         <widget class="noether::DistanceDoubleSpinBox" name="double_spin_box_point_spacing">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -82,7 +82,7 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="double_spin_box_line_spacing">
+         <widget class="noether::DistanceDoubleSpinBox" name="double_spin_box_line_spacing">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -102,7 +102,7 @@
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="double_spin_box_min_segment_length">
+         <widget class="noether::DistanceDoubleSpinBox" name="double_spin_box_min_segment_length">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -137,6 +137,18 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>noether::DistanceDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header location="global">noether_gui/widgets/distance_double_spin_box.h</header>
+  </customwidget>
+  <customwidget>
+   <class>noether::AngleDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header location="global">noether_gui/widgets/angle_double_spin_box.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
