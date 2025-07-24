@@ -19,12 +19,12 @@
      <item row="2" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Plane distance threshold (m)</string>
+        <string>Plane distance threshold</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QDoubleSpinBox" name="plane_distance_threshold">
+      <widget class="noether::DistanceDoubleSpinBox" name="plane_distance_threshold">
        <property name="decimals">
         <number>3</number>
        </property>
@@ -47,12 +47,12 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>Cluster tolerance (m)</string>
+         <string>Cluster tolerance</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="cluster_tolerance">
+       <widget class="noether::DistanceDoubleSpinBox" name="cluster_tolerance">
         <property name="decimals">
          <number>3</number>
         </property>
@@ -119,6 +119,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>noether::DistanceDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header location="global">noether_gui/widgets/distance_double_spin_box.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -9,7 +9,7 @@ namespace snp_tpp
 {
 struct ROISelectionMeshModifierWidgetPlugin : public noether::MeshModifierWidgetPlugin
 {
-  QWidget* create(QWidget* parent, const YAML::Node& config = {}) const override
+  noether::MeshModifierWidget* create(QWidget* parent, const YAML::Node& config = {}) const override
   {
     auto widget = new ROISelectionMeshModifierWidget(parent);
 
@@ -24,7 +24,7 @@ struct ROISelectionMeshModifierWidgetPlugin : public noether::MeshModifierWidget
 // Raster Tool Path Planners
 struct SNPRasterPlannerWidgetPlugin : public noether::ToolPathPlannerWidgetPlugin
 {
-  QWidget* create(QWidget* parent = nullptr, const YAML::Node& config = {}) const override final
+  noether::ToolPathPlannerWidget* create(QWidget* parent = nullptr, const YAML::Node& config = {}) const override final
   {
     auto widget = new SNPRasterPlannerWidget(parent);
 
