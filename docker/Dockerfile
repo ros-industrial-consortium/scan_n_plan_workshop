@@ -16,7 +16,8 @@ RUN --mount=type=bind,target=${WORKSPACE_DIR}/src/snp \
   && rosdep install \
     --from-paths ${WORKSPACE_DIR}/src \
     -iry \
-    --skip-keys libvtk
+    --skip-keys libvtk \
+    --include-eol-distros
 
 # Build the repository
 # Bind mount the source directory so as not to unnecessarily copy source code into the docker image
