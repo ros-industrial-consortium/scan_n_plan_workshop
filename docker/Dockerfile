@@ -1,6 +1,9 @@
 ARG TAG
 FROM ghcr.io/tesseract-robotics/tesseract_ros2:${TAG}
 
+# Redeclare TAG argument for use later
+ARG TAG
+
 SHELL ["/bin/bash", "-c"]
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -16,7 +19,10 @@ RUN --mount=type=bind,target=${WORKSPACE_DIR}/src/snp \
   && rosdep install \
     --from-paths ${WORKSPACE_DIR}/src \
     -iry \
-    --skip-keys libvtk
+    --skip-keys libvtk python3-open3d
+
+# Install open3d
+RUN if [[ "${TAG}" < "jazzy" ]] ; then apt install -y -qq python3-open3d ; else python3 -m pip install open3d ; fi
 
 # Build the repository
 # Bind mount the source directory so as not to unnecessarily copy source code into the docker image
