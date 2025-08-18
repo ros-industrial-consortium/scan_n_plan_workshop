@@ -3,16 +3,60 @@ import rclpy
 from rclpy.node import Node
 import sys
 import open3d
-from industrial_reconstruction_msgs.srv import StartReconstruction
-from industrial_reconstruction_msgs.srv import StopReconstruction
+from industrial_reconstruction_msgs.srv import StartReconstruction, StopReconstruction
 from industrial_reconstruction.industrial_reconstruction import meshToRos
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 import shutil
 import os
 
 MESH_FILE_PARAMETER = "mesh_file"
 REFERENCE_FRAME_PARAMETER = "reference_frame"
 MESH_TOPIC = "mesh"
+
+def build_wireframe_marker(o3d_mesh,
+                           frame_id: str,
+                           line_width: float = 0.002,
+                           rgba=(0.0, 0.0, 0.0, 1.0),
+                           ns: str = "recon_wire",
+                           marker_id: int = 1) -> Marker:
+    """
+    Create a LINE_LIST marker from an Open3D TriangleMesh by drawing unique edges.
+    """
+    # Extract vertices and triangles as numpy arrays
+    verts = o3d_mesh.vertices
+    tris = o3d_mesh.triangles
+
+    # Collect unique edges (as sorted vertex index tuples)
+    edges = set()
+    for t in tris:
+        i0, i1, i2 = int(t[0]), int(t[1]), int(t[2])
+        e01 = (min(i0, i1), max(i0, i1))
+        e12 = (min(i1, i2), max(i1, i2))
+        e20 = (min(i2, i0), max(i2, i0))
+        edges.add(e01); edges.add(e12); edges.add(e20)
+
+    # Build the marker
+    m = Marker()
+    m.header.frame_id = frame_id
+    m.type = Marker.LINE_LIST
+    m.action = Marker.ADD
+    m.ns = ns
+    m.id = marker_id
+    m.scale.x = float(line_width)  # width in meters
+    m.color.r, m.color.g, m.color.b, m.color.a = map(float, rgba)
+    m.pose.orientation.w = 1.0  # identity pose
+
+    # Push line segments as point pairs
+    for (a, b) in edges:
+        pa = verts[a]
+        pb = verts[b]
+        p1 = Point(x=float(pa[0]), y=float(pa[1]), z=float(pa[2]))
+        p2 = Point(x=float(pb[0]), y=float(pb[1]), z=float(pb[2]))
+        m.points.append(p1)
+        m.points.append(p2)
+
+    return m
 
 
 class ReconstructionSimServer(Node):
@@ -22,6 +66,7 @@ class ReconstructionSimServer(Node):
         self.start_srv = self.create_service(StartReconstruction, "start_reconstruction", self.start_cb)
         self.stop_srv = self.create_service(StopReconstruction, "stop_reconstruction", self.stop_cb)
 
+        # One publisher is fine—publish multiple markers with different ns/id
         self.scan_mesh_pub = self.create_publisher(Marker, MESH_TOPIC, 100)
 
         self.mesh_file_parameter = self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING).value
@@ -40,10 +85,32 @@ class ReconstructionSimServer(Node):
             os.makedirs(os.path.dirname(mesh_file), exist_ok=True)
             shutil.copy2(mesh_file, request.mesh_filepath)
 
-            # Publish the mesh visualization message
-            msg = meshToRos(open3d.io.read_triangle_mesh(mesh_file))
-            msg.header.frame_id = self.get_parameter(REFERENCE_FRAME_PARAMETER).value
-            self.scan_mesh_pub.publish(msg)
+            # Load mesh once
+            o3d_mesh = open3d.io.read_triangle_mesh(mesh_file)
+
+            # Publish the filled mesh (surface)
+            surf_marker = meshToRos(o3d_mesh)
+            surf_marker.header.frame_id = self.get_parameter(REFERENCE_FRAME_PARAMETER).value
+            # Make sure this surface marker has a stable namespace/id
+            if not surf_marker.ns:
+                surf_marker.ns = "recon_surface"
+            # If id is unset (0 is fine), keep it; otherwise force 0 to avoid clashing with wireframe
+            surf_marker.id = 0
+            # Optional: a touch of transparency can improve depth perception
+            if surf_marker.color.a == 0.0:
+                surf_marker.color.a = 0.95
+            self.scan_mesh_pub.publish(surf_marker)
+
+            # Publish the wireframe overlay
+            wire_marker = build_wireframe_marker(
+                o3d_mesh=o3d_mesh,
+                frame_id=surf_marker.header.frame_id,
+                line_width=0.002,                # tweak to taste
+                rgba=(0.0, 0.0, 0.0, 1.0),       # black edges
+                ns="recon_wire",
+                marker_id=1
+            )
+            self.scan_mesh_pub.publish(wire_marker)
 
             response.success = True
             response.message = f'Scanning simulation complete; mesh saved to "{mesh_file}"'
