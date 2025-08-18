@@ -109,9 +109,6 @@ tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& p
         Eigen::Isometry3d p;
         tf2::fromMsg(pose, p);
 
-        // Rotate the pose 180 degrees about the x-axis such that the z-axis faces into the part
-        p *= Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
-
         seg.push_back(p);
       }
       tps.push_back(seg);
