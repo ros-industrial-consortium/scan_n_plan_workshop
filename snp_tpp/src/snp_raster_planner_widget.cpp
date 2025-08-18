@@ -35,8 +35,8 @@ void SNPRasterPlannerWidget::save(YAML::Node& config) const
 
 noether::ToolPathPlanner::ConstPtr SNPRasterPlannerWidget::create() const
 {
-  auto dir_gen = std::make_unique<noether::PrincipalAxisDirectionGenerator>(
-      M_PI * ui_->double_spin_box_rotation_offset->value() / 180.0);
+  auto dir_gen =
+      std::make_unique<noether::PrincipalAxisDirectionGenerator>(ui_->double_spin_box_rotation_offset->value());
   auto orig_gen = std::make_unique<noether::CentroidOriginGenerator>();
   auto planner = std::make_unique<noether::PlaneSlicerRasterPlanner>(std::move(dir_gen), std::move(orig_gen));
   planner->setLineSpacing(ui_->double_spin_box_line_spacing->value());
