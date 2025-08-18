@@ -2,8 +2,8 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+7.0.0 (2025-08-18)
+------------------
 * Removed the 180 degree rotation of the tool path waypoints in the motion planner (`#175 <https://github.com/marip8/scan_n_plan_workshop/issues/175>`_)
 * Contributors: Michael Ripperger
 

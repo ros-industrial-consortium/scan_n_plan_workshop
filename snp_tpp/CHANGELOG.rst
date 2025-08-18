@@ -2,8 +2,8 @@
 Changelog for package snp_tpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+7.0.0 (2025-08-18)
+------------------
 * Remove TPP Widget Angle Conversion (`#174 <https://github.com/marip8/scan_n_plan_workshop/issues/174>`_)
   * removed angle coefficients from double_spin_box in the SNPRatherPlannerWidget to comply with Noether's new unit double spin boxes
   * Ran clang-format
