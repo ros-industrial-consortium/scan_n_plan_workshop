@@ -2,6 +2,20 @@
 Changelog for package snp_tpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Remove TPP Widget Angle Conversion (`#174 <https://github.com/marip8/scan_n_plan_workshop/issues/174>`_)
+  * removed angle coefficients from double_spin_box in the SNPRatherPlannerWidget to comply with Noether's new unit double spin boxes
+  * Ran clang-format
+  * Specify version of clang-format
+  ---------
+  Co-authored-by: Jakob Hamilton <jdham@iastate.edu>
+* Update Noether version (`#171 <https://github.com/marip8/scan_n_plan_workshop/issues/171>`_)
+* Setting the default recipe filepath based on parameter (`#169 <https://github.com/marip8/scan_n_plan_workshop/issues/169>`_)
+  * Setting the default tpp config filepath based on parameter
+  * Updated Noether version in dependencies.repos
+* Contributors: David Spielman, Michael Ripperger
+
 6.0.1 (2025-06-17)
 ------------------
 
