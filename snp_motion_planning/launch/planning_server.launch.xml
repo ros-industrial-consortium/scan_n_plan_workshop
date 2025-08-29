@@ -32,8 +32,8 @@
 
   <node pkg="snp_motion_planning" exec="snp_motion_planning_node" output="screen">
     <!-- General -->
-    <param name="robot_description" value="$(var robot_description)"/>
-    <param name="robot_description_semantic" value="$(var robot_description_semantic)"/>
+    <param name="robot_description" type="str" value="$(var robot_description)"/>
+    <param name="robot_description_semantic" type="str" value="$(var robot_description_semantic)"/>
     <param name="verbose" value="$(var verbose)"/>
     <param name="scan_disabled_contact_links" value="$(var scan_disabled_contact_links)"/>
     <param name="scan_reduced_contact_links" value="$(var scan_reduced_contact_links)"/>
