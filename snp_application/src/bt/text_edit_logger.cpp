@@ -81,7 +81,6 @@ void TextEditLogger::callback(BT::Duration /*timestamp*/, const BT::TreeNode& no
 
   if (!message.isEmpty())
   {
-    log_->textCursor().movePosition(QTextCursor::End);
     QMetaObject::invokeMethod(log_, "append", Qt::QueuedConnection, Q_ARG(QString, message));
   }
 }
