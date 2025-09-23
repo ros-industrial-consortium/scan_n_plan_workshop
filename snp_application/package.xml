@@ -24,6 +24,7 @@
   <depend>rviz_common</depend>
   <depend>pluginlib</depend>
   <depend>trajectory_preview</depend>
+  <depend>noether_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <!-- TODO: replace with more targeted set of linters

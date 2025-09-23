@@ -1,6 +1,7 @@
 #include <snp_application/bt/snp_bt_ros_nodes.h>
 
 #include <geometry_msgs/msg/pose_array.hpp>
+#include <yaml-cpp/yaml.h>
 
 namespace snp_application
 {
@@ -145,15 +146,24 @@ BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typen
   return BT::NodeStatus::SUCCESS;
 }
 
-bool GenerateToolPathsServiceNode::setRequest(typename Request::SharedPtr& request)
+bool PlanToolPathServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->mesh_filename = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
+  try
+  {
+    request->config = get_parameter<std::string>(node_.lock(), TPP_CONFIG_FILE_PARAM);
+    request->mesh_file = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
+    request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
 
-  return true;
+    return true;
+  }
+  catch (const std::exception& ex)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, ex.what());
+    return false;
+  }
 }
 
-BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
+BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
   if (!response->success)
   {
@@ -163,27 +173,34 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
 
   if (response->tool_paths.empty())
   {
-    config().blackboard->set(ERROR_MESSAGE_KEY, "Tool paths are empty! Check tool path planner parameters.");
+    config().blackboard->set(ERROR_MESSAGE_KEY, "No tool paths generated");
     return BT::NodeStatus::FAILURE;
   }
 
-  // Copy the tool paths
-  std::vector<snp_msgs::msg::ToolPath> tool_paths = response->tool_paths;
-
-  // Get the reference frame for the poses
-  auto ref_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
-
-  // Set the reference frame in each pose array
-  for (snp_msgs::msg::ToolPath& tp : tool_paths)
+  // Flatten the tool paths into a single pose array
+  std::vector<snp_msgs::msg::ToolPath> out;
+  for (const noether_ros::msg::ToolPaths& tool_paths : response->tool_paths)
   {
-    for (geometry_msgs::msg::PoseArray& arr : tp.segments)
+    for (const noether_ros::msg::ToolPath& tool_path : tool_paths.tool_paths)
     {
-      arr.header.frame_id = ref_frame;
+      snp_msgs::msg::ToolPath snp_tool_path;
+      snp_tool_path.segments.reserve(tool_path.segments.size());
+
+      for (geometry_msgs::msg::PoseArray segment : tool_path.segments)
+        snp_tool_path.segments.emplace_back(segment);
+
+      out.push_back(snp_tool_path);
     }
   }
 
-  // Set output
-  setOutput(TOOL_PATHS_OUTPUT_PORT_KEY, tool_paths);
+  BT::Result output = setOutput(TOOL_PATHS_OUTPUT_PORT_KEY, out);
+  if (!output)
+  {
+    std::stringstream ss;
+    ss << "Failed to set required output value: '" << output.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
 
   return BT::NodeStatus::SUCCESS;
 }

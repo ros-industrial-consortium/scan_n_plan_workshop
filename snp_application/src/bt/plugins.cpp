@@ -39,13 +39,16 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   factory.registerNodeType<snp_application::FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", params);
   factory.registerNodeType<snp_application::GetCurrentJointStateNode>("GetCurrentJointState", params);
   factory.registerNodeType<snp_application::GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", params);
-  factory.registerNodeType<snp_application::GenerateToolPathsServiceNode>("GenerateToolPathsService", params);
 
   // Nodes requiring parameters
   // Update trajectory start state
   try_declare_parameter<double>(params.nh.lock(), START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
   factory.registerNodeType<snp_application::UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState",
                                                                             params.nh.lock());
+
+  // Tool path generation
+  try_declare_parameter<std::string>(params.nh.lock(), TPP_CONFIG_FILE_PARAM, "");
+  factory.registerNodeType<snp_application::PlanToolPathServiceNode>("PlanToolPathService", params);
 
   // Motion plan generation
   try_declare_parameter<std::string>(params.nh.lock(), MOTION_GROUP_PARAM, "");
