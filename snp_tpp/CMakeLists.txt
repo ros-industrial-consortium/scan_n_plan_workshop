@@ -73,5 +73,11 @@ ament_export_dependencies(
   snp_msgs
   tf2_eigen)
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  add_subdirectory(test)
+endif()
+
 ament_environment_hooks("${CMAKE_CURRENT_SOURCE_DIR}/hooks/noether_plugin_libs.dsv.in")
 ament_package()
