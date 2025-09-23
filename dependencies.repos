@@ -5,7 +5,11 @@
 - git:
     local-name: noether
     uri: https://github.com/ros-industrial/noether.git
-    version: 38872b1c05d3c84c2fbad85e4c6a7f7edb600852
+    version: 6073b4500410c2acf188ec12c4564972057ed6ab
+- git:
+    local-name: noether_ros2
+    uri: https://github.com/ros-industrial/noether_ros2.git
+    version: 0.1.0
 - git:
     local-name: industrial_reconstruction
     uri: https://github.com/ros-industrial/industrial_reconstruction.git
