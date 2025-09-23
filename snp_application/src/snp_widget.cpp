@@ -6,14 +6,20 @@
 #include <snp_application/bt/utils.h>
 
 #include <behaviortree_ros2/plugins.hpp>
-#include <boost_plugin_loader/plugin_loader.h>
+#include <filesystem>
+#include <noether_gui/widgets/configurable_tpp_pipeline_widget.h>
 #include <QMessageBox>
 #include <QTextStream>
 #include <QScrollBar>
 #include <QTextEdit>
+#include <QToolBar>
+#include <QAction>
+#include <QIcon>
+#include <QSettings>
 #include <QStackedWidget>
+#include <QCloseEvent>
+#include <QShowEvent>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <snp_tpp/tpp_widget.h>
 #include <trajectory_preview/trajectory_preview_widget.h>
 
 static const char* BT_FILES_PARAM = "bt_files";
@@ -28,24 +34,65 @@ static const char* HOME_STATE_NAME = "home_state";
 class TPPDialog : public QDialog
 {
 public:
-  TPPDialog(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr) : QDialog(parent)
+  TPPDialog(rclcpp::Node::SharedPtr node, QWidget* parent = nullptr)
+    : QDialog(parent), factory_(std::make_shared<noether::WidgetFactory>()), node_(node)
   {
     setWindowTitle("Tool Path Planner");
 
     // Set non-modal, so it can launch the load and save dialogs within itself
     setModal(false);
 
-    boost_plugin_loader::PluginLoader loader;
-    loader.search_libraries.insert(NOETHER_GUI_PLUGINS);
-    loader.search_libraries.insert(SNP_TPP_GUI_PLUGINS);
-    loader.search_libraries_env = NOETHER_GUI_PLUGIN_LIBS_ENV;
-    loader.search_paths_env = NOETHER_GUI_PLUGIN_PATHS_ENV;
+    auto tpp_config_file = snp_application::get_parameter<std::string>(node_, snp_application::TPP_CONFIG_FILE_PARAM);
+    widget_ = new noether::ConfigurableTPPPipelineWidget(
+        factory_, std::filesystem::path(tpp_config_file).parent_path().string(), this);
+    widget_->configure(QString::fromStdString(tpp_config_file));
 
-    auto* widget = new snp_tpp::TPPWidget(node, std::move(loader), this);
+    // Add tool bar with save and load actions
+    auto tool_bar = new QToolBar(this);
+    auto action_load = tool_bar->addAction(QIcon::fromTheme("document-open"), "Load");
+    auto action_save = tool_bar->addAction(QIcon::fromTheme("document-save"), "Save");
+    connect(action_load, &QAction::triggered, widget_, &noether::ConfigurableTPPPipelineWidget::onLoadConfiguration);
+    connect(action_save, &QAction::triggered, widget_, &noether::ConfigurableTPPPipelineWidget::onSaveConfiguration);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(widget);
+    layout->addWidget(tool_bar);
+    layout->addWidget(widget_);
   }
+
+  void showEvent(QShowEvent* event) override
+  {
+    QSettings settings;
+    QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
+
+    // Configure the widget from file specified in the parameter
+    auto tpp_config_file = snp_application::get_parameter<std::string>(node_, snp_application::TPP_CONFIG_FILE_PARAM);
+    widget_->configure(QString::fromStdString(tpp_config_file));
+
+    event->accept();
+  }
+
+  void closeEvent(QCloseEvent* event) override
+  {
+    switch (QMessageBox::question(this, "Exit", "Save before exiting?"))
+    {
+      case QMessageBox::StandardButton::Yes:
+        widget_->onSaveConfiguration(true);
+        break;
+      default:
+        break;
+    }
+
+    QSettings settings;
+    QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
+    node_->set_parameter(rclcpp::Parameter(snp_application::TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
+
+    event->accept();
+  }
+
+protected:
+  std::shared_ptr<noether::WidgetFactory> factory_;
+  noether::ConfigurableTPPPipelineWidget* widget_;
+  rclcpp::Node::SharedPtr node_;
 };
 
 namespace snp_application
@@ -53,10 +100,22 @@ namespace snp_application
 SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   : QWidget(parent)
   , bt_node_(std::make_shared<rclcpp::Node>("snp_application_bt"))
-  , tpp_node_(std::make_shared<rclcpp::Node>("snp_application_tpp"))
   , ui_(new Ui::SNPWidget())
   , board_(BT::Blackboard::create())
 {
+  // Declare parameters
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, std::vector<std::string>{});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
+  bt_node_->declare_parameter<std::string>(BT_PARAM, "");
+  bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
+  bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
+  bt_node_->declare_parameter<std::string>(TPP_CONFIG_FILE_PARAM, "");
+  // Home state
+  bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
+  bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, std::vector<double>{});
+  bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, std::vector<std::string>{});
+
   ui_->setupUi(this);
   ui_->group_box_operation->setEnabled(false);
   ui_->push_button_reset->setEnabled(false);
@@ -64,11 +123,9 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
   // Add the TPP widget
   {
-    auto* tpp_dialog = new TPPDialog(tpp_node_, this);
+    auto* tpp_dialog = new TPPDialog(bt_node_, this);
     tpp_dialog->hide();
     connect(ui_->tool_button_tpp, &QToolButton::clicked, tpp_dialog, &QWidget::show);
-    tpp_node_executor_.add_node(tpp_node_);
-    tpp_node_future_ = std::async(std::launch::async, [this]() { tpp_node_executor_.spin(); });
   }
 
   // Add the trajectory preview widget
@@ -128,19 +185,6 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   connect(ui_->text_edit_log->verticalScrollBar(), &QScrollBar::rangeChanged, [this]() {
     ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
   });
-
-  // Declare parameters
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, std::vector<std::string>{});
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
-  bt_node_->declare_parameter<std::string>(BT_PARAM, "");
-  bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
-  bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
-
-  // Home state
-  bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
-  bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, std::vector<double>{});
-  bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, std::vector<std::string>{});
 
   // Set the error message key in the blackboard
   board_->set(ERROR_MESSAGE_KEY, "");
