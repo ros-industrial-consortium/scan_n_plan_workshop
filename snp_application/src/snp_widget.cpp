@@ -130,17 +130,17 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   });
 
   // Declare parameters
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, {});
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, {});
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, {});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, std::vector<std::string>{});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
+  bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
   bt_node_->declare_parameter<std::string>(BT_PARAM, "");
   bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
   bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
 
   // Home state
   bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
-  bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, {});
-  bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, {});
+  bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, std::vector<double>{});
+  bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, std::vector<std::string>{});
 
   // Set the error message key in the blackboard
   board_->set(ERROR_MESSAGE_KEY, "");
