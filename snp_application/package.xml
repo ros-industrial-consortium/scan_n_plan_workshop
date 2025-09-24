@@ -16,7 +16,6 @@
   <depend>behaviortree_ros2</depend>
   <depend>control_msgs</depend>
   <depend>snp_msgs</depend>
-  <depend>snp_tpp</depend>
   <depend>industrial_reconstruction_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
@@ -24,6 +23,7 @@
   <depend>rviz_common</depend>
   <depend>pluginlib</depend>
   <depend>trajectory_preview</depend>
+  <depend>noether_gui</depend>
   <depend>noether_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>

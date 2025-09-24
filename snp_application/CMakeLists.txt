@@ -28,7 +28,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
-find_package(snp_tpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
@@ -84,7 +83,6 @@ ament_target_dependencies(
   behaviortree_cpp
   behaviortree_ros2
   sensor_msgs
-  snp_tpp
   trajectory_preview)
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
@@ -118,11 +116,11 @@ ament_export_dependencies(
   sensor_msgs
   geometry_msgs
   snp_msgs
-  snp_tpp
   std_srvs
   trajectory_msgs
   trajectory_preview
   rviz_common
   pluginlib
+  noether_gui
   noether_ros)
 ament_package()
