@@ -28,14 +28,17 @@ find_package(rviz_polygon_selection_tool REQUIRED)
 find_package(snp_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
 # Custom mesh modifier
-qt5_wrap_ui(${PROJECT_NAME}_ui_mocs ui/roi_selection_mesh_modifier_widget.ui ui/snp_raster_planner_widget.ui)
 add_library(
   ${PROJECT_NAME} SHARED
   src/roi_selection_mesh_modifier.cpp
   src/roi_selection_mesh_modifier_widget.cpp
   src/snp_raster_planner_widget.cpp
-  ${${PROJECT_NAME}_ui_mocs})
+)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                          "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" "$<INSTALL_INTERFACE:include>")
