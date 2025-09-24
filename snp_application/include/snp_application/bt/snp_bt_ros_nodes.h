@@ -31,7 +31,7 @@ public:
   inline BT::NodeStatus onFailure(BT::ServiceNodeErrorCode error) override
   {
     std::stringstream ss;
-    ss << "Service '" << BT::RosServiceNode<T>::prev_service_name_ << "'";
+    ss << "Service '" << BT::RosServiceNode<T>::service_name_ << "'";
 
     switch (error)
     {
@@ -66,7 +66,7 @@ public:
   inline BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override
   {
     std::stringstream ss;
-    ss << "Action '" << BT::RosActionNode<T>::prev_action_name_ << "' failed: '";
+    ss << "Action '" << BT::RosActionNode<T>::action_name_ << "' failed: '";
 
     switch (error)
     {
