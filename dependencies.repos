@@ -17,11 +17,11 @@
 - git:
     local-name: BehaviorTree.CPP
     uri: https://github.com/BehaviorTree/BehaviorTree.CPP.git
-    version: 4.4.3
+    version: 4.7.2
 - git:
     local-name: BehaviorTree.ROS2
-    uri: https://github.com/marip8/BehaviorTree.ROS2.git
-    version: fd9e565591b019fc55d579577737d7879a88a4a0
+    uri: https://github.com/BehaviorTree/BehaviorTree.ROS2.git
+    version: 7a6ace6424adaa81737b95d20d81e1e8c0782ed7
 - git:
     local-name: trajectory_preview
     uri: https://github.com/marip8/trajectory_preview.git

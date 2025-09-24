@@ -30,7 +30,7 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
 {
   using namespace snp_application;
 
-  factory.registerNodeType<snp_application::RosSpinnerNode>("RosSpinner", params.nh);
+  factory.registerNodeType<snp_application::RosSpinnerNode>("RosSpinner", params.nh.lock());
   factory.registerNodeType<snp_application::TriggerServiceNode>("TriggerService", params);
   factory.registerNodeType<snp_application::EmptyServiceNode>("EmptyService", params);
   factory.registerNodeType<snp_application::ExecuteMotionPlanServiceNode>("ExecuteMotionPlanService", params);
@@ -43,42 +43,43 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
 
   // Nodes requiring parameters
   // Update trajectory start state
-  try_declare_parameter<double>(params.nh, START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
-  factory.registerNodeType<snp_application::UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState", params.nh);
+  try_declare_parameter<double>(params.nh.lock(), START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
+  factory.registerNodeType<snp_application::UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState",
+                                                                            params.nh.lock());
 
   // Motion plan generation
-  try_declare_parameter<std::string>(params.nh, MOTION_GROUP_PARAM, "");
-  try_declare_parameter<std::string>(params.nh, REF_FRAME_PARAM, "");
-  try_declare_parameter<std::string>(params.nh, TCP_FRAME_PARAM, "");
+  try_declare_parameter<std::string>(params.nh.lock(), MOTION_GROUP_PARAM, "");
+  try_declare_parameter<std::string>(params.nh.lock(), REF_FRAME_PARAM, "");
+  try_declare_parameter<std::string>(params.nh.lock(), TCP_FRAME_PARAM, "");
   factory.registerNodeType<snp_application::AddScanLinkServiceNode>("AddScanLinkService", params);
   factory.registerNodeType<snp_application::GenerateMotionPlanServiceNode>("GenerateMotionPlanService", params);
 
-  try_declare_parameter<std::string>(params.nh, FREESPACE_MOTION_GROUP_PARAM, "");
+  try_declare_parameter<std::string>(params.nh.lock(), FREESPACE_MOTION_GROUP_PARAM, "");
   factory.registerNodeType<snp_application::GenerateFreespaceMotionPlanServiceNode>(
       "GenerateFreespaceMotionPlanService", params);
 
   // Industrial reconstruction start
-  try_declare_parameter<std::string>(params.nh, CAMERA_FRAME_PARAM, "");
-  try_declare_parameter<float>(params.nh, IR_TSDF_VOXEL_PARAM, 0.01f);
-  try_declare_parameter<float>(params.nh, IR_TSDF_SDF_PARAM, 0.03f);
-  try_declare_parameter<double>(params.nh, IR_TSDF_MIN_X_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_TSDF_MIN_Y_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_TSDF_MIN_Z_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_TSDF_MAX_X_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_TSDF_MAX_Y_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_TSDF_MAX_Z_PARAM, 0.0);
-  try_declare_parameter<float>(params.nh, IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  try_declare_parameter<float>(params.nh, IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  try_declare_parameter<bool>(params.nh, IR_LIVE_PARAM, true);
-  try_declare_parameter<double>(params.nh, IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
-  try_declare_parameter<double>(params.nh, IR_NORMAL_X_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_NORMAL_Y_PARAM, 0.0);
-  try_declare_parameter<double>(params.nh, IR_NORMAL_Z_PARAM, 1.0);
+  try_declare_parameter<std::string>(params.nh.lock(), CAMERA_FRAME_PARAM, "");
+  try_declare_parameter<float>(params.nh.lock(), IR_TSDF_VOXEL_PARAM, 0.01f);
+  try_declare_parameter<float>(params.nh.lock(), IR_TSDF_SDF_PARAM, 0.03f);
+  try_declare_parameter<double>(params.nh.lock(), IR_TSDF_MIN_X_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_TSDF_MIN_Y_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_TSDF_MIN_Z_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_TSDF_MAX_X_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_TSDF_MAX_Y_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_TSDF_MAX_Z_PARAM, 0.0);
+  try_declare_parameter<float>(params.nh.lock(), IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
+  try_declare_parameter<float>(params.nh.lock(), IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
+  try_declare_parameter<bool>(params.nh.lock(), IR_LIVE_PARAM, true);
+  try_declare_parameter<double>(params.nh.lock(), IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_NORMAL_X_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_NORMAL_Y_PARAM, 0.0);
+  try_declare_parameter<double>(params.nh.lock(), IR_NORMAL_Z_PARAM, 1.0);
   factory.registerNodeType<snp_application::StartReconstructionServiceNode>("StartReconstructionService", params);
 
   // Industrial reconstruction stop
-  try_declare_parameter<int>(params.nh, IR_MIN_FACES_PARAM, 0);
-  try_declare_parameter<std::string>(params.nh, MESH_FILE_PARAM, "");
-  try_declare_parameter<std::string>(params.nh, IR_ARCHIVE_DIR_PARAM, "");
+  try_declare_parameter<int>(params.nh.lock(), IR_MIN_FACES_PARAM, 0);
+  try_declare_parameter<std::string>(params.nh.lock(), MESH_FILE_PARAM, "");
+  try_declare_parameter<std::string>(params.nh.lock(), IR_ARCHIVE_DIR_PARAM, "");
   factory.registerNodeType<snp_application::StopReconstructionServiceNode>("StopReconstructionService", params);
 }

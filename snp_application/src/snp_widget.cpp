@@ -5,7 +5,6 @@
 #include <snp_application/bt/text_edit_logger.h>
 #include <snp_application/bt/utils.h>
 
-#include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_ros2/plugins.hpp>
 #include <boost_plugin_loader/plugin_loader.h>
 #include <QMessageBox>
@@ -161,15 +160,15 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   board_->set("skip_scan", false);
 }
 
-BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_timeout)
+std::unique_ptr<BT::BehaviorTreeFactory> SNPWidget::createBTFactory(int ros_timeout)
 {
-  BT::BehaviorTreeFactory bt_factory;
+  auto bt_factory = std::make_unique<BT::BehaviorTreeFactory>();
 
   // Register non-ROS plugins
   {
     auto bt_plugins = get_parameter<std::vector<std::string>>(bt_node_, BT_PLUGIN_LIBS_PARAM);
     for (const std::string& plugin : bt_plugins)
-      bt_factory.registerFromPlugin(std::filesystem::path(plugin));
+      bt_factory->registerFromPlugin(std::filesystem::path(plugin));
   }
 
   // Register ROS plugins
@@ -181,7 +180,7 @@ BT::BehaviorTreeFactory SNPWidget::createBTFactory(int ros_timeout)
 
     auto bt_ros_plugins = get_parameter<std::vector<std::string>>(bt_node_, BT_ROS_PLUGIN_LIBS_PARAM);
     for (const std::string& plugin : bt_ros_plugins)
-      RegisterRosNode(bt_factory, std::filesystem::path(plugin), ros_params);
+      RegisterRosNode(*bt_factory, std::filesystem::path(plugin), ros_params);
   }
 
   // Get joint trajectory action topic name from parameter and store it in the blackboard
@@ -203,16 +202,17 @@ void SNPWidget::runTreeWithThread(const std::string& bt_tree_name)
     auto* thread = new BTThread(this);
 
     // Create the BT factory
-    BT::BehaviorTreeFactory bt_factory = createBTFactory(get_parameter<int>(bt_node_, BT_TIMEOUT_PARAM));
+    std::unique_ptr<BT::BehaviorTreeFactory> bt_factory =
+        createBTFactory(get_parameter<int>(bt_node_, BT_TIMEOUT_PARAM));
 
     auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
     if (bt_files.empty())
       throw std::runtime_error("Parameter '" + std::string(BT_FILES_PARAM) + "' is empty");
 
     for (const std::string& file : bt_files)
-      bt_factory.registerBehaviorTreeFromFile(file);
+      bt_factory->registerBehaviorTreeFromFile(file);
 
-    thread->tree = bt_factory.createTree(bt_tree_name, board_);
+    thread->tree = bt_factory->createTree(bt_tree_name, board_);
     logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
 
     connect(thread, &BTThread::finished, [thread, this]() {

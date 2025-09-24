@@ -50,8 +50,8 @@ bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& requ
 {
   request->tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
 
-  request->motion_group = get_parameter<std::string>(node_, MOTION_GROUP_PARAM);
-  request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
+  request->motion_group = get_parameter<std::string>(node_.lock(), MOTION_GROUP_PARAM);
+  request->tcp_frame = get_parameter<std::string>(node_.lock(), TCP_FRAME_PARAM);
 
   return true;
 }
@@ -74,8 +74,8 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
 
 bool AddScanLinkServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  request->mesh_filename = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
+  request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
   return true;
 }
 
@@ -104,8 +104,8 @@ bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::Shared
   request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
   request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
 
-  request->motion_group = get_parameter<std::string>(node_, FREESPACE_MOTION_GROUP_PARAM);
-  request->tcp_frame = get_parameter<std::string>(node_, TCP_FRAME_PARAM);
+  request->motion_group = get_parameter<std::string>(node_.lock(), FREESPACE_MOTION_GROUP_PARAM);
+  request->tcp_frame = get_parameter<std::string>(node_.lock(), TCP_FRAME_PARAM);
 
   return true;
 }
@@ -147,8 +147,8 @@ BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typen
 
 bool GenerateToolPathsServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->mesh_filename = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  request->mesh_filename = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
+  request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
 
   return true;
 }
@@ -171,7 +171,7 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
   std::vector<snp_msgs::msg::ToolPath> tool_paths = response->tool_paths;
 
   // Get the reference frame for the poses
-  auto ref_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
+  auto ref_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
 
   // Set the reference frame in each pose array
   for (snp_msgs::msg::ToolPath& tp : tool_paths)
@@ -190,19 +190,19 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->tracking_frame = get_parameter<std::string>(node_, CAMERA_FRAME_PARAM);
-  request->relative_frame = get_parameter<std::string>(node_, REF_FRAME_PARAM);
-  request->tsdf_params.voxel_length = get_parameter_or<float>(node_, IR_TSDF_VOXEL_PARAM, 0.01f);
-  request->tsdf_params.sdf_trunc = get_parameter_or<float>(node_, IR_TSDF_SDF_PARAM, 0.03f);
-  request->tsdf_params.min_box_values.x = get_parameter_or<double>(node_, IR_TSDF_MIN_X_PARAM, 0.0);
-  request->tsdf_params.min_box_values.y = get_parameter_or<double>(node_, IR_TSDF_MIN_Y_PARAM, 0.0);
-  request->tsdf_params.min_box_values.z = get_parameter_or<double>(node_, IR_TSDF_MIN_Z_PARAM, 0.0);
-  request->tsdf_params.max_box_values.x = get_parameter_or<double>(node_, IR_TSDF_MAX_X_PARAM, 0.0);
-  request->tsdf_params.max_box_values.y = get_parameter_or<double>(node_, IR_TSDF_MAX_Y_PARAM, 0.0);
-  request->tsdf_params.max_box_values.z = get_parameter_or<double>(node_, IR_TSDF_MAX_Z_PARAM, 0.0);
-  request->rgbd_params.depth_scale = get_parameter_or<float>(node_, IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  request->rgbd_params.depth_trunc = get_parameter_or<float>(node_, IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  request->live = get_parameter_or<bool>(node_, IR_LIVE_PARAM, true);
+  request->tracking_frame = get_parameter<std::string>(node_.lock(), CAMERA_FRAME_PARAM);
+  request->relative_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
+  request->tsdf_params.voxel_length = get_parameter_or<float>(node_.lock(), IR_TSDF_VOXEL_PARAM, 0.01f);
+  request->tsdf_params.sdf_trunc = get_parameter_or<float>(node_.lock(), IR_TSDF_SDF_PARAM, 0.03f);
+  request->tsdf_params.min_box_values.x = get_parameter_or<double>(node_.lock(), IR_TSDF_MIN_X_PARAM, 0.0);
+  request->tsdf_params.min_box_values.y = get_parameter_or<double>(node_.lock(), IR_TSDF_MIN_Y_PARAM, 0.0);
+  request->tsdf_params.min_box_values.z = get_parameter_or<double>(node_.lock(), IR_TSDF_MIN_Z_PARAM, 0.0);
+  request->tsdf_params.max_box_values.x = get_parameter_or<double>(node_.lock(), IR_TSDF_MAX_X_PARAM, 0.0);
+  request->tsdf_params.max_box_values.y = get_parameter_or<double>(node_.lock(), IR_TSDF_MAX_Y_PARAM, 0.0);
+  request->tsdf_params.max_box_values.z = get_parameter_or<double>(node_.lock(), IR_TSDF_MAX_Z_PARAM, 0.0);
+  request->rgbd_params.depth_scale = get_parameter_or<float>(node_.lock(), IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
+  request->rgbd_params.depth_trunc = get_parameter_or<float>(node_.lock(), IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
+  request->live = get_parameter_or<bool>(node_.lock(), IR_LIVE_PARAM, true);
 
   return true;
 }
@@ -220,17 +220,17 @@ BT::NodeStatus StartReconstructionServiceNode::onResponseReceived(const typename
 
 bool StopReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->archive_directory = get_parameter_or<std::string>(node_, IR_ARCHIVE_DIR_PARAM, "");
-  request->mesh_filepath = get_parameter<std::string>(node_, MESH_FILE_PARAM);
-  request->min_num_faces = get_parameter<int>(node_, IR_MIN_FACES_PARAM);
+  request->archive_directory = get_parameter_or<std::string>(node_.lock(), IR_ARCHIVE_DIR_PARAM, "");
+  request->mesh_filepath = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
+  request->min_num_faces = get_parameter<int>(node_.lock(), IR_MIN_FACES_PARAM);
 
   try
   {
     industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
-    norm_filt.angle = get_parameter<double>(node_, IR_NORMAL_ANGLE_TOL_PARAM);
-    norm_filt.normal_direction.x = get_parameter<double>(node_, IR_NORMAL_X_PARAM);
-    norm_filt.normal_direction.y = get_parameter<double>(node_, IR_NORMAL_Y_PARAM);
-    norm_filt.normal_direction.z = get_parameter<double>(node_, IR_NORMAL_Z_PARAM);
+    norm_filt.angle = get_parameter<double>(node_.lock(), IR_NORMAL_ANGLE_TOL_PARAM);
+    norm_filt.normal_direction.x = get_parameter<double>(node_.lock(), IR_NORMAL_X_PARAM);
+    norm_filt.normal_direction.y = get_parameter<double>(node_.lock(), IR_NORMAL_Y_PARAM);
+    norm_filt.normal_direction.z = get_parameter<double>(node_.lock(), IR_NORMAL_Z_PARAM);
 
     // Do not add a normal filter if the angle is less than 0.0
     if (norm_filt.angle > 0.0)

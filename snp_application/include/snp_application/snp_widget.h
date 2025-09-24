@@ -1,6 +1,7 @@
 #pragma once
 
 #include <behaviortree_cpp/blackboard.h>
+#include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/abstract_logger.h>
 #include <QWidget>
 #include <rclcpp/node.hpp>
@@ -25,7 +26,7 @@ public:
 protected:
   void runTreeWithThread(const std::string& bt_tree_name);
 
-  virtual BT::BehaviorTreeFactory createBTFactory(int ros_timeout);
+  virtual std::unique_ptr<BT::BehaviorTreeFactory> createBTFactory(int ros_timeout);
   QStackedWidget* getStackedWidget();
   QTextEdit* getTextEdit();
 
