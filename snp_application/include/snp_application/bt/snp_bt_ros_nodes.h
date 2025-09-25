@@ -55,6 +55,18 @@ public:
 
     return BT::NodeStatus::FAILURE;
   }
+
+  template <typename OutputT>
+  inline BT::NodeStatus setOutputAndCheck(const std::string& key, const OutputT& value)
+  {
+    BT::Result output = BT::RosServiceNode<T>::setOutput(key, value);
+    if (!output)
+    {
+      this->config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
+      return BT::NodeStatus::FAILURE;
+    }
+    return BT::NodeStatus::SUCCESS;
+  }
 };
 
 template <typename T>
@@ -95,6 +107,18 @@ public:
     this->config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
 
     return BT::NodeStatus::FAILURE;
+  }
+
+  template <typename OutputT>
+  inline BT::NodeStatus setOutputAndCheck(const std::string& key, const OutputT& value)
+  {
+    BT::Result output = BT::RosServiceNode<T>::setOutput(key, value);
+    if (!output)
+    {
+      this->config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
+      return BT::NodeStatus::FAILURE;
+    }
+    return BT::NodeStatus::SUCCESS;
   }
 };
 

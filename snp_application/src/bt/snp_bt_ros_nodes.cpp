@@ -1,8 +1,5 @@
 #include <snp_application/bt/snp_bt_ros_nodes.h>
 
-#include <geometry_msgs/msg/pose_array.hpp>
-#include <yaml-cpp/yaml.h>
-
 namespace snp_application
 {
 bool TriggerServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
@@ -66,11 +63,14 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   }
 
   // Set output
-  setOutput(APPROACH_OUTPUT_PORT_KEY, response->approach);
-  setOutput(PROCESS_OUTPUT_PORT_KEY, response->process);
-  setOutput(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
+  BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
+  BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
+  BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
 
-  return BT::NodeStatus::SUCCESS;
+  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
+    return BT::NodeStatus::SUCCESS;
+
+  return BT::NodeStatus::FAILURE;
 }
 
 bool AddScanLinkServiceNode::setRequest(typename Request::SharedPtr& request)
@@ -120,9 +120,7 @@ BT::NodeStatus GenerateFreespaceMotionPlanServiceNode::onResponseReceived(const 
   }
 
   // Set output
-  setOutput(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
-
-  return BT::NodeStatus::SUCCESS;
+  return setOutputAndCheck(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
 }
 
 bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
@@ -139,11 +137,14 @@ BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typen
   }
 
   // Set output
-  setOutput(APPROACH_OUTPUT_PORT_KEY, response->approach);
-  setOutput(PROCESS_OUTPUT_PORT_KEY, response->process);
-  setOutput(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
+  BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
+  BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
+  BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
 
-  return BT::NodeStatus::SUCCESS;
+  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
+    return BT::NodeStatus::SUCCESS;
+
+  return BT::NodeStatus::FAILURE;
 }
 
 bool PlanToolPathServiceNode::setRequest(typename Request::SharedPtr& request)
@@ -173,7 +174,7 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
 
   if (response->tool_paths.empty())
   {
-    config().blackboard->set(ERROR_MESSAGE_KEY, "No tool paths generated");
+    config().blackboard->set(ERROR_MESSAGE_KEY, "Tool paths are empty! Check tool path planner parameters.");
     return BT::NodeStatus::FAILURE;
   }
 
@@ -193,16 +194,7 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
     }
   }
 
-  BT::Result output = setOutput(TOOL_PATHS_OUTPUT_PORT_KEY, out);
-  if (!output)
-  {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
-    return BT::NodeStatus::FAILURE;
-  }
-
-  return BT::NodeStatus::SUCCESS;
+  return setOutputAndCheck(TOOL_PATHS_OUTPUT_PORT_KEY, out);
 }
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
@@ -566,9 +558,7 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::tick()
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, trajectory);
   if (!output)
   {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 
@@ -633,9 +623,7 @@ BT::NodeStatus ReverseTrajectoryNode::tick()
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
   if (!output)
   {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 
@@ -678,9 +666,7 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
   if (!output)
   {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 
@@ -696,7 +682,14 @@ BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg:
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
+
   BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, *last_msg);
+
+  if (!output)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
+    return BT::NodeStatus::FAILURE;
+  }
 
   return BT::NodeStatus::SUCCESS;
 }
