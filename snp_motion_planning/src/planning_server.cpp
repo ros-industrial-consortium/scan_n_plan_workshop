@@ -246,8 +246,8 @@ public:
     node_->declare_parameter("robot_description", "");
     node_->declare_parameter("robot_description_semantic", "");
     node_->declare_parameter(VERBOSE_PARAM, false);
-    node_->declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, {});
-    node_->declare_parameter<std::vector<std::string>>(SCAN_REDUCED_CONTACT_LINKS_PARAM, {});
+    node_->declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, std::vector<std::string>{});
+    node_->declare_parameter<std::vector<std::string>>(SCAN_REDUCED_CONTACT_LINKS_PARAM, std::vector<std::string>{});
     node_->declare_parameter<double>(OCTREE_RESOLUTION_PARAM, 0.010);
     node_->declare_parameter<int>(MAX_CONVEX_HULLS, 64);
     node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");

@@ -2,50 +2,48 @@
 #include "ui_snp_raster_planner_widget.h"
 
 #include <noether_gui/utils.h>
-
-#include <noether_tpp/tool_path_planners/raster/direction_generators/principal_axis_direction_generator.h>
-#include <noether_tpp/tool_path_planners/raster/origin_generators/centroid_origin_generator.h>
-#include <noether_tpp/tool_path_planners/raster/plane_slicer_raster_planner.h>
-
-#include <yaml-cpp/yaml.h>
+#include <noether_tpp/serialization.h>
 
 namespace snp_tpp
 {
 SNPRasterPlannerWidget::SNPRasterPlannerWidget(QWidget* parent)
-  : noether::ToolPathPlannerWidget(parent), ui_(new Ui::SNPRasterPlanner())
+  : noether::BaseWidget(parent), ui_(new Ui::SNPRasterPlanner())
 {
   ui_->setupUi(this);
 }
 
 void SNPRasterPlannerWidget::configure(const YAML::Node& config)
 {
-  ui_->double_spin_box_rotation_offset->setValue(noether::getEntry<double>(config, "rotation_offset"));
-  ui_->double_spin_box_point_spacing->setValue(noether::getEntry<double>(config, "point_spacing"));
-  ui_->double_spin_box_line_spacing->setValue(noether::getEntry<double>(config, "line_spacing"));
-  ui_->double_spin_box_min_segment_length->setValue(noether::getEntry<double>(config, "min_segment_length"));
+  {
+    auto dir_gen_config = YAML::getMember<YAML::Node>(config, "direction_generator");
+    ui_->double_spin_box_rotation_offset->setValue(YAML::getMember<double>(dir_gen_config, "rotation_offset"));
+  }
+  ui_->double_spin_box_point_spacing->setValue(YAML::getMember<double>(config, "point_spacing"));
+  ui_->double_spin_box_line_spacing->setValue(YAML::getMember<double>(config, "line_spacing"));
+  ui_->double_spin_box_min_segment_length->setValue(YAML::getMember<double>(config, "min_segment_size"));
 }
 
 void SNPRasterPlannerWidget::save(YAML::Node& config) const
 {
-  config["rotation_offset"] = ui_->double_spin_box_rotation_offset->value();
-  config["point_spacing"] = ui_->double_spin_box_point_spacing->value();
+  config["name"] = "PlaneSlicer";
+  config["gui_plugin_name"] = "SNPRaster";
+  {
+    YAML::Node dir_gen_config;
+    dir_gen_config["name"] = "PrincipalAxis";
+    dir_gen_config["rotation_offset"] = ui_->double_spin_box_rotation_offset->value();
+    config["direction_generator"] = dir_gen_config;
+  }
+  {
+    YAML::Node origin_gen_config;
+    origin_gen_config["name"] = "Centroid";
+    config["origin_generator"] = origin_gen_config;
+  }
   config["line_spacing"] = ui_->double_spin_box_line_spacing->value();
-  config["min_segment_length"] = ui_->double_spin_box_min_segment_length->value();
-}
-
-noether::ToolPathPlanner::ConstPtr SNPRasterPlannerWidget::create() const
-{
-  auto dir_gen =
-      std::make_unique<noether::PrincipalAxisDirectionGenerator>(ui_->double_spin_box_rotation_offset->value());
-  auto orig_gen = std::make_unique<noether::CentroidOriginGenerator>();
-  auto planner = std::make_unique<noether::PlaneSlicerRasterPlanner>(std::move(dir_gen), std::move(orig_gen));
-  planner->setLineSpacing(ui_->double_spin_box_line_spacing->value());
-  planner->setPointSpacing(ui_->double_spin_box_point_spacing->value());
-  planner->setMinHoleSize(0.1);
-  planner->setSearchRadius(0.1);
-  planner->setMinSegmentSize(ui_->double_spin_box_min_segment_length->value());
-
-  return planner;
+  config["point_spacing"] = ui_->double_spin_box_point_spacing->value();
+  config["min_hole_size"] = 0.1;
+  config["search_radius"] = 0.1;
+  config["min_segment_size"] = ui_->double_spin_box_min_segment_length->value();
+  config["bidirectional"] = true;
 }
 
 }  // namespace snp_tpp

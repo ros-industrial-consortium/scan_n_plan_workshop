@@ -28,12 +28,13 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(snp_msgs REQUIRED)
-find_package(snp_tpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(trajectory_preview REQUIRED)
+find_package(noether_gui REQUIRED)
+find_package(noether_ros REQUIRED)
 
 add_library(
   ${PROJECT_NAME}_bt_plugins SHARED
@@ -59,7 +60,8 @@ ament_target_dependencies(
   geometry_msgs
   snp_msgs
   std_srvs
-  trajectory_msgs)
+  trajectory_msgs
+  noether_ros)
 
 # Widget
 add_library(
@@ -75,13 +77,12 @@ target_include_directories(
          "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
          "$<INSTALL_INTERFACE:include>"
          ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets noether::noether_gui)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
   behaviortree_ros2
   sensor_msgs
-  snp_tpp
   trajectory_preview)
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
@@ -115,10 +116,11 @@ ament_export_dependencies(
   sensor_msgs
   geometry_msgs
   snp_msgs
-  snp_tpp
   std_srvs
   trajectory_msgs
   trajectory_preview
   rviz_common
-  pluginlib)
+  pluginlib
+  noether_gui
+  noether_ros)
 ament_package()
