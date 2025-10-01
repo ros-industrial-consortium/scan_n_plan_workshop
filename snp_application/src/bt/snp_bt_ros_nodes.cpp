@@ -1,7 +1,5 @@
 #include <snp_application/bt/snp_bt_ros_nodes.h>
 
-#include <geometry_msgs/msg/pose_array.hpp>
-
 namespace snp_application
 {
 bool TriggerServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
@@ -65,11 +63,14 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   }
 
   // Set output
-  setOutput(APPROACH_OUTPUT_PORT_KEY, response->approach);
-  setOutput(PROCESS_OUTPUT_PORT_KEY, response->process);
-  setOutput(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
+  BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
+  BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
+  BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
 
-  return BT::NodeStatus::SUCCESS;
+  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
+    return BT::NodeStatus::SUCCESS;
+
+  return BT::NodeStatus::FAILURE;
 }
 
 bool AddScanLinkServiceNode::setRequest(typename Request::SharedPtr& request)
@@ -119,9 +120,7 @@ BT::NodeStatus GenerateFreespaceMotionPlanServiceNode::onResponseReceived(const 
   }
 
   // Set output
-  setOutput(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
-
-  return BT::NodeStatus::SUCCESS;
+  return setOutputAndCheck(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
 }
 
 bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
@@ -138,22 +137,34 @@ BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typen
   }
 
   // Set output
-  setOutput(APPROACH_OUTPUT_PORT_KEY, response->approach);
-  setOutput(PROCESS_OUTPUT_PORT_KEY, response->process);
-  setOutput(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
+  BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
+  BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
+  BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
 
-  return BT::NodeStatus::SUCCESS;
+  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
+    return BT::NodeStatus::SUCCESS;
+
+  return BT::NodeStatus::FAILURE;
 }
 
-bool GenerateToolPathsServiceNode::setRequest(typename Request::SharedPtr& request)
+bool PlanToolPathServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->mesh_filename = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
+  try
+  {
+    request->config = get_parameter<std::string>(node_.lock(), TPP_CONFIG_FILE_PARAM);
+    request->mesh_file = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
+    request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
 
-  return true;
+    return true;
+  }
+  catch (const std::exception& ex)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, ex.what());
+    return false;
+  }
 }
 
-BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
+BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
 {
   if (!response->success)
   {
@@ -167,25 +178,23 @@ BT::NodeStatus GenerateToolPathsServiceNode::onResponseReceived(const typename R
     return BT::NodeStatus::FAILURE;
   }
 
-  // Copy the tool paths
-  std::vector<snp_msgs::msg::ToolPath> tool_paths = response->tool_paths;
-
-  // Get the reference frame for the poses
-  auto ref_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
-
-  // Set the reference frame in each pose array
-  for (snp_msgs::msg::ToolPath& tp : tool_paths)
+  // Convert to the SNP definition of tool paths
+  std::vector<snp_msgs::msg::ToolPath> out;
+  for (const noether_ros::msg::ToolPaths& tool_paths : response->tool_paths)
   {
-    for (geometry_msgs::msg::PoseArray& arr : tp.segments)
+    for (const noether_ros::msg::ToolPath& tool_path : tool_paths.tool_paths)
     {
-      arr.header.frame_id = ref_frame;
+      snp_msgs::msg::ToolPath snp_tool_path;
+      snp_tool_path.segments.reserve(tool_path.segments.size());
+
+      for (geometry_msgs::msg::PoseArray segment : tool_path.segments)
+        snp_tool_path.segments.emplace_back(segment);
+
+      out.push_back(snp_tool_path);
     }
   }
 
-  // Set output
-  setOutput(TOOL_PATHS_OUTPUT_PORT_KEY, tool_paths);
-
-  return BT::NodeStatus::SUCCESS;
+  return setOutputAndCheck(TOOL_PATHS_OUTPUT_PORT_KEY, out);
 }
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
@@ -549,9 +558,7 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::tick()
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, trajectory);
   if (!output)
   {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 
@@ -616,9 +623,7 @@ BT::NodeStatus ReverseTrajectoryNode::tick()
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
   if (!output)
   {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 
@@ -661,9 +666,7 @@ BT::NodeStatus CombineTrajectoriesNode::tick()
   BT::Result output = setOutput(TRAJECTORY_OUTPUT_PORT_KEY, out);
   if (!output)
   {
-    std::stringstream ss;
-    ss << "Failed to set required output value: '" << output.error() << "'";
-    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 
@@ -679,7 +682,14 @@ BT::NodeStatus GetCurrentJointStateNode::onTick(const typename sensor_msgs::msg:
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
+
   BT::Result output = setOutput(JOINT_STATE_OUTPUT_PORT_KEY, *last_msg);
+
+  if (!output)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
+    return BT::NodeStatus::FAILURE;
+  }
 
   return BT::NodeStatus::SUCCESS;
 }

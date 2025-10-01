@@ -4,8 +4,9 @@
   <name>snp_scanning</name>
   <version>7.0.0</version>
   <description>SNP scanning package</description>
-  <maintainer email="tyler.marr@swri.org">Tyler Marr</maintainer>
-  <license>BSD</license>
+  <maintainer email="michael.ripperger@swri.org">Michael Ripperger</maintainer>
+  <author email="tyler.marr@swri.org">Tyler Marr</author>
+  <license>Apache 2.0</license>
 
   <exec_depend>industrial_reconstruction_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>

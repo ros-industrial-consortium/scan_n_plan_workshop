@@ -4,8 +4,9 @@
   <name>snp_motion_execution</name>
   <version>7.0.0</version>
   <description>SNP motion execution package</description>
-  <maintainer email="lcbw99@gmail.com">lbayewallace</maintainer>
-  <license>BSD</license>
+  <maintainer email="michael.ripperger@swri.org">Michael Ripperger</maintainer>
+  <author email="lcbw99@gmail.com">lbayewallace</author>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>

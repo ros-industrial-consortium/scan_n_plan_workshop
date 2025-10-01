@@ -49,10 +49,6 @@
             <output_port name="process" default="{scan_process}"/>
             <output_port name="departure" default="{scan_departure}"/>
         </Action>
-        <Action ID="GenerateToolPathsService" editable="true">
-            <input_port name="service_name" default="generate_tool_paths"/>
-            <input_port name="tool_paths" default="{tool_paths}"/>
-        </Action>
         <Action ID="GetCurrentJointState" editable="true">
             <input_port name="topic_name" default="/joint_states"/>
             <output_port name="current_state" default="{current_state}"/>
@@ -60,6 +56,10 @@
         <Action ID="MotionPlanPub" editable="true">
             <input_port name="topic_name"/>
             <input_port name="trajectory"/>
+        </Action>
+        <Action ID="PlanToolPathService" editable="true">
+            <input_port name="service_name" default="plan_tool_path"/>
+            <output_port name="tool_paths" default="{tool_paths}"/>
         </Action>
         <Action ID="ProcessNode" editable="true"/>
         <Decorator ID="Progress" editable="true">

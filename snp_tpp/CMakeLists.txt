@@ -15,84 +15,63 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(noether_tpp REQUIRED)
-find_package(noether_gui REQUIRED)
-find_package(PCL REQUIRED)
+set(ROS2_DEPS
+    geometry_msgs
+    noether_tpp
+    noether_gui
+    PCL
+    rclcpp
+    rviz_polygon_selection_tool
+    snp_msgs
+    tf2_eigen)
 
 find_package(ament_cmake REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rviz_polygon_selection_tool REQUIRED)
-find_package(snp_msgs REQUIRED)
-find_package(tf2_eigen REQUIRED)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+foreach(dep ${ROS2_DEPS})
+  find_package(${dep} REQUIRED)
+endforeach()
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 # Custom mesh modifier
-qt5_wrap_ui(${PROJECT_NAME}_ui_mocs ui/roi_selection_mesh_modifier_widget.ui ui/snp_raster_planner_widget.ui)
-qt5_wrap_cpp(${PROJECT_NAME}_mocs include/${PROJECT_NAME}/roi_selection_mesh_modifier_widget.h
-             include/${PROJECT_NAME}/snp_raster_planner_widget.h)
-add_library(
-  ${PROJECT_NAME}_mesh_modifier SHARED
-  src/roi_selection_mesh_modifier.cpp
-  src/roi_selection_mesh_modifier_widget.cpp
-  src/snp_raster_planner_widget.cpp
-  ${${PROJECT_NAME}_ui_mocs}
-  ${${PROJECT_NAME}_mocs})
+add_library(${PROJECT_NAME} SHARED src/roi_selection_mesh_modifier.cpp src/roi_selection_mesh_modifier_widget.cpp
+                                   src/snp_raster_planner_widget.cpp)
 target_include_directories(
-  ${PROJECT_NAME}_mesh_modifier PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                       "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" "$<INSTALL_INTERFACE:include>")
-target_link_libraries(${PROJECT_NAME}_mesh_modifier noether::noether_tpp noether::noether_gui)
+  ${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+                         "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" "$<INSTALL_INTERFACE:include>")
+target_link_libraries(${PROJECT_NAME} noether::noether_tpp noether::noether_gui)
 ament_target_dependencies(
-  ${PROJECT_NAME}_mesh_modifier
+  ${PROJECT_NAME}
   geometry_msgs
   rviz_polygon_selection_tool
   rclcpp
   snp_msgs
   tf2_eigen)
 
-# Noether plugin library
+# Noether plugin libraries
 add_library(${PROJECT_NAME}_plugins SHARED src/plugins.cpp)
-target_link_libraries(${PROJECT_NAME}_plugins ${PROJECT_NAME}_mesh_modifier)
+target_link_libraries(${PROJECT_NAME}_plugins ${PROJECT_NAME})
 
-# Custom TPP widget
-qt5_wrap_cpp(${PROJECT_NAME}_widget_mocs include/${PROJECT_NAME}/tpp_widget.h)
-add_library(${PROJECT_NAME}_widget SHARED src/tpp_widget.cpp ${${PROJECT_NAME}_widget_mocs})
-target_include_directories(
-  ${PROJECT_NAME}_widget PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" "$<INSTALL_INTERFACE:include>")
-target_link_libraries(${PROJECT_NAME}_widget noether::noether_gui ${PCL_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME}_widget snp_msgs tf2_eigen)
-target_compile_definitions(${PROJECT_NAME}_widget PUBLIC SNP_TPP_GUI_PLUGINS="${PROJECT_NAME}_plugins")
-
-# TPP GUI application
-add_executable(${PROJECT_NAME}_app src/tpp_app.cpp)
-target_link_libraries(${PROJECT_NAME}_app ${PROJECT_NAME}_widget)
-ament_target_dependencies(${PROJECT_NAME}_app rclcpp)
+add_library(${PROJECT_NAME}_widget_plugins SHARED src/widget_plugins.cpp)
+target_link_libraries(${PROJECT_NAME}_widget_plugins ${PROJECT_NAME})
 
 # Install the headers
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
 
-# Install the executables
-install(TARGETS ${PROJECT_NAME}_app DESTINATION lib/${PROJECT_NAME})
-
 # Install the library(ies)
-install(TARGETS ${PROJECT_NAME}_mesh_modifier ${PROJECT_NAME}_plugins ${PROJECT_NAME}_widget
-        EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_plugins ${PROJECT_NAME}_widget_plugins EXPORT ${PROJECT_NAME}-targets
+        DESTINATION lib)
+
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
-ament_export_dependencies(
-  noether_tpp
-  noether_gui
-  PCL
-  geometry_msgs
-  rviz_polygon_selection_tool
-  rclcpp
-  snp_msgs
-  tf2_eigen)
+ament_export_dependencies(${ROS2_DEPS})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  add_subdirectory(test)
 endif()
 
+ament_environment_hooks("${CMAKE_CURRENT_SOURCE_DIR}/hooks/noether_plugin_libs.dsv.in")
 ament_package()

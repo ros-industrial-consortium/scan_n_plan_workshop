@@ -1,0 +1,2 @@
+prepend-non-duplicate;NOETHER_PLUGIN_LIBS;lib/@PROJECT_NAME@_plugins
+prepend-non-duplicate;NOETHER_PLUGIN_LIBS;lib/@PROJECT_NAME@_widget_plugins

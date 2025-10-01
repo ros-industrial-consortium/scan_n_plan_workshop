@@ -5,8 +5,6 @@
 #include <behaviortree_cpp/loggers/abstract_logger.h>
 #include <QWidget>
 #include <rclcpp/node.hpp>
-#include <rclcpp_action/client.hpp>
-#include <rclcpp/executors/single_threaded_executor.hpp>
 
 namespace Ui
 {
@@ -31,9 +29,6 @@ protected:
   QTextEdit* getTextEdit();
 
   rclcpp::Node::SharedPtr bt_node_;
-  rclcpp::Node::SharedPtr tpp_node_;
-  rclcpp::executors::SingleThreadedExecutor tpp_node_executor_;
-  std::future<void> tpp_node_future_;
   Ui::SNPWidget* ui_;
   BT::Blackboard::Ptr board_;
   std::shared_ptr<BT::StatusChangeLogger> logger_;
