@@ -178,7 +178,7 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
     return BT::NodeStatus::FAILURE;
   }
 
-  // Flatten the tool paths into a single pose array
+  // Convert to the SNP definition of tool paths
   std::vector<snp_msgs::msg::ToolPath> out;
   for (const noether_ros::msg::ToolPaths& tool_paths : response->tool_paths)
   {
