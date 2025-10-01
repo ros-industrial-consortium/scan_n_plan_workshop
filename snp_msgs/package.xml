@@ -7,7 +7,7 @@
     The SNP Msgs package contains custom messages used by the scan n plan demo system.
   </description>
   <maintainer email="david.merz@swri.org">David Merz, Jr.</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache 2.0</license>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
   <buildtool_depend>ament_cmake</buildtool_depend>

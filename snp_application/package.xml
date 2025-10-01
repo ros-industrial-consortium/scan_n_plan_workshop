@@ -6,25 +6,31 @@
   <description>
     GUI application to run Scan-N-Plan for ROSCon 2021 workshop.
   </description>
-  <maintainer email="reid.christopher@swri.org">Reid Christopher</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="michael.ripperger@swri.org">Michael Ripperger</maintainer>
+  <author email="reid.christopher@swri.org">Reid Christopher</author>
+  <license>Apache 2.0n</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>rclcpp</depend>
   <depend>behaviortree_cpp</depend>
   <depend>behaviortree_ros2</depend>
   <depend>control_msgs</depend>
-  <depend>snp_msgs</depend>
-  <depend>industrial_reconstruction_msgs</depend>
-  <depend>sensor_msgs</depend>
+  <depend>Eigen3</depend>
   <depend>geometry_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>rviz_common</depend>
-  <depend>pluginlib</depend>
-  <depend>trajectory_preview</depend>
+  <depend>industrial_reconstruction_msgs</depend>
+  <depend>libqt5-widgets</depend>
   <depend>noether_gui</depend>
   <depend>noether_ros</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>rclcpp_components</depend>
+  <depend>rviz_common</depend>
+  <depend>sensor_msgs</depend>
+  <depend>snp_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>trajectory_preview</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <!-- TODO: replace with more targeted set of linters
