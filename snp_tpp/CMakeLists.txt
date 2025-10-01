@@ -15,30 +15,29 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(noether_tpp REQUIRED)
-find_package(noether_gui REQUIRED)
-find_package(PCL REQUIRED)
+set(ROS2_DEPS
+    geometry_msgs
+    noether_tpp
+    noether_gui
+    PCL
+    rclcpp
+    rviz_polygon_selection_tool
+    snp_msgs
+    tf2_eigen)
 
 find_package(ament_cmake REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rviz_polygon_selection_tool REQUIRED)
-find_package(snp_msgs REQUIRED)
-find_package(tf2_eigen REQUIRED)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+foreach(dep ${ROS2_DEPS})
+  find_package(${dep} REQUIRED)
+endforeach()
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Custom mesh modifier
-add_library(
-  ${PROJECT_NAME} SHARED
-  src/roi_selection_mesh_modifier.cpp
-  src/roi_selection_mesh_modifier_widget.cpp
-  src/snp_raster_planner_widget.cpp
-)
+add_library(${PROJECT_NAME} SHARED src/roi_selection_mesh_modifier.cpp src/roi_selection_mesh_modifier_widget.cpp
+                                   src/snp_raster_planner_widget.cpp)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                          "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" "$<INSTALL_INTERFACE:include>")
@@ -66,15 +65,7 @@ install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_plugins ${PROJECT_NAME}_widget_p
         DESTINATION lib)
 
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
-ament_export_dependencies(
-  noether_tpp
-  noether_gui
-  PCL
-  geometry_msgs
-  rviz_polygon_selection_tool
-  rclcpp
-  snp_msgs
-  tf2_eigen)
+ament_export_dependencies(${ROS2_DEPS})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
