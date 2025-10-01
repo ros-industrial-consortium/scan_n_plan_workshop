@@ -1,7 +1,7 @@
 - git:
     local-name: boost_plugin_loader
     uri: https://github.com/tesseract-robotics/boost_plugin_loader.git
-    version: 0.2.2
+    version: 0.3.2
 - git:
     local-name: noether
     uri: https://github.com/ros-industrial/noether.git
@@ -9,7 +9,7 @@
 - git:
     local-name: noether_ros2
     uri: https://github.com/ros-industrial/noether_ros2.git
-    version: 0.1.0
+    version: 0.1.1
 - git:
     local-name: industrial_reconstruction
     uri: https://github.com/ros-industrial/industrial_reconstruction.git
