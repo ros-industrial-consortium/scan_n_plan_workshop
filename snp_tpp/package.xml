@@ -14,15 +14,15 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>ros_industrial_cmake_boilerplate</build_depend>
   <depend>geometry_msgs</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>libqt5-widgets</depend>
   <depend>noether_tpp</depend>
   <depend>noether_gui</depend>
   <depend>rclcpp</depend>
+  <depend>rviz_polygon_selection_tool</depend>
   <depend>snp_msgs</depend>
   <depend>tf2_eigen</depend>
-  <depend>boost_plugin_loader</depend>
-  <depend>rviz_polygon_selection_tool</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <!-- TODO: replace with more targeted set of linters

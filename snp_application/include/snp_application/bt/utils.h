@@ -25,6 +25,7 @@ static const std::string REF_FRAME_PARAM = "reference_frame";
 static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
+static const std::string TPP_CONFIG_FILE_PARAM = "tpp_config_file";
 static const std::string START_STATE_REPLACEMENT_TOLERANCE_PARAM = "start_state_replacement_tolerance";
 // Home state
 static const std::string HOME_STATE_JOINT_VALUES_PARAM = "home_state_joint_values";

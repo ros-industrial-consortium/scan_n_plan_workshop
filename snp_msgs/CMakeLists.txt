@@ -27,7 +27,6 @@ rosidl_generate_interfaces(
   "srv/AddScanLink.srv"
   "srv/ExecuteMotionPlan.srv"
   "srv/GenerateMotionPlan.srv"
-  "srv/GenerateToolPaths.srv"
   "srv/GenerateScanMotionPlan.srv"
   "srv/GenerateFreespaceMotionPlan.srv"
   DEPENDENCIES

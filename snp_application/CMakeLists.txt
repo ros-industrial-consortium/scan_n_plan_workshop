@@ -14,26 +14,31 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Eigen3 REQUIRED)
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(behaviortree_cpp REQUIRED)
-find_package(behaviortree_ros2 REQUIRED)
+set(ROS2_DEPS
+    behaviortree_cpp
+    behaviortree_ros2
+    control_msgs
+    Eigen3
+    geometry_msgs
+    industrial_reconstruction_msgs
+    noether_gui
+    noether_ros
+    pluginlib
+    rclcpp
+    rclcpp_action
+    rclcpp_components
+    rviz_common
+    sensor_msgs
+    snp_msgs
+    std_srvs
+    trajectory_msgs
+    trajectory_preview)
 
 find_package(ament_cmake REQUIRED)
-find_package(industrial_reconstruction_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rclcpp_action REQUIRED)
-find_package(rclcpp_components REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(control_msgs REQUIRED)
-find_package(snp_msgs REQUIRED)
-find_package(snp_tpp REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(trajectory_msgs REQUIRED)
-find_package(rviz_common REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(trajectory_preview REQUIRED)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+foreach(dep ${ROS2_DEPS})
+  find_package(${dep} REQUIRED)
+endforeach()
 
 add_library(
   ${PROJECT_NAME}_bt_plugins SHARED
@@ -52,11 +57,12 @@ ament_target_dependencies(
   ${PROJECT_NAME}_bt_plugins
   behaviortree_cpp
   behaviortree_ros2
-  industrial_reconstruction_msgs
-  rclcpp_action
   control_msgs
-  sensor_msgs
   geometry_msgs
+  industrial_reconstruction_msgs
+  noether_ros
+  rclcpp_action
+  sensor_msgs
   snp_msgs
   std_srvs
   trajectory_msgs)
@@ -75,13 +81,12 @@ target_include_directories(
          "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
          "$<INSTALL_INTERFACE:include>"
          ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME}_widget Qt5::Widgets noether::noether_gui)
 ament_target_dependencies(
   ${PROJECT_NAME}_widget
   behaviortree_cpp
   behaviortree_ros2
   sensor_msgs
-  snp_tpp
   trajectory_preview)
 
 add_library(${PROJECT_NAME}_panel SHARED src/snp_panel.cpp)
@@ -105,20 +110,5 @@ install(TARGETS roscon_app DESTINATION lib/${PROJECT_NAME}/)
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME}/)
 
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
-ament_export_dependencies(
-  behaviortree_cpp
-  behaviortree_ros2
-  industrial_reconstruction_msgs
-  rclcpp_action
-  rclcpp_components
-  control_msgs
-  sensor_msgs
-  geometry_msgs
-  snp_msgs
-  snp_tpp
-  std_srvs
-  trajectory_msgs
-  trajectory_preview
-  rviz_common
-  pluginlib)
+ament_export_dependencies(${ROS2_DEPS})
 ament_package()
