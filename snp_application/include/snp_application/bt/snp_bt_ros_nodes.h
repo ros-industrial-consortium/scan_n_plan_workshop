@@ -12,13 +12,14 @@
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <noether_ros/srv/plan_tool_path.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <snp_application/trajectory_msgs_yaml.h>
 #include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
-#include <snp_msgs/srv/generate_scan_motion_plan.hpp>
 #include <snp_msgs/srv/add_scan_link.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <std_srvs/srv/empty.hpp>
+#include <yaml-cpp/yaml.h>
 
 namespace snp_application
 {
@@ -163,12 +164,14 @@ class GenerateMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::Ge
 {
 public:
   inline static std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
+  inline static std::string TCP_FRAME_INPUT_PORT_KEY = "tcp_frame";
   inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
   inline static std::string PROCESS_OUTPUT_PORT_KEY = "process";
   inline static std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY),
+                                BT::InputPort<std::string>(TCP_FRAME_INPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) });
@@ -209,23 +212,24 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
-class GenerateScanMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
+class GenerateTrajectoryFromFileNode : public BT::SyncActionNode
 {
 public:
+  inline static std::string FILE_NAME_INPUT_PORT_KEY = "file";
   inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
   inline static std::string PROCESS_OUTPUT_PORT_KEY = "process";
   inline static std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
-                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
-                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) });
+    return { BT::InputPort(FILE_NAME_INPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) };
   }
+  explicit GenerateTrajectoryFromFileNode(const std::string& instance_name, const BT::NodeConfig& config);
 
-  using SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>::SnpRosServiceNode;
-
-  bool setRequest(typename Request::SharedPtr& request) override;
-  BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+protected:
+  BT::NodeStatus tick() override;
 };
 
 class PlanToolPathServiceNode : public SnpRosServiceNode<noether_ros::srv::PlanToolPath>
@@ -234,7 +238,10 @@ public:
   inline static std::string TOOL_PATHS_OUTPUT_PORT_KEY = "tool_paths";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::OutputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_OUTPUT_PORT_KEY) });
+    return providedBasicPorts({ BT::InputPort<std::string>(TPP_CONFIG_FILE_PARAM),
+                                BT::InputPort<std::string>(MESH_FILE_PARAM),
+                                BT::InputPort<std::string>(REF_FRAME_PARAM),
+                                BT::OutputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_OUTPUT_PORT_KEY) });
   }
 
   using SnpRosServiceNode<noether_ros::srv::PlanToolPath>::SnpRosServiceNode;

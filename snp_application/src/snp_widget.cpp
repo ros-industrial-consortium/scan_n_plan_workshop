@@ -111,6 +111,12 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
   bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
   bt_node_->declare_parameter<std::string>(TPP_CONFIG_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_MESH_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_REF_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_CONFIG_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_TCP_FRAME_PARAM, "");
+  bt_node_->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
   // Home state
   bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
   bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, std::vector<double>{});
@@ -235,6 +241,15 @@ std::unique_ptr<BT::BehaviorTreeFactory> SNPWidget::createBTFactory(int ros_time
   home_state.name = snp_application::get_parameter<std::vector<std::string>>(bt_node_, HOME_STATE_JOINT_NAMES_PARAM);
   home_state.position = snp_application::get_parameter<std::vector<double>>(bt_node_, HOME_STATE_JOINT_VALUES_PARAM);
   board_->set(HOME_STATE_NAME, home_state);
+
+  // Set scan toolpath generation parameters
+  board_->set(SCAN_TRAJ_FILE_PARAM, snp_application::get_parameter<std::string>(bt_node_, SCAN_TRAJ_FILE_PARAM));
+  board_->set(SCAN_CONFIG_FILE_PARAM, snp_application::get_parameter<std::string>(bt_node_, SCAN_CONFIG_FILE_PARAM));
+  board_->set(SCAN_MESH_FILE_PARAM, snp_application::get_parameter<std::string>(bt_node_, SCAN_MESH_FILE_PARAM));
+  board_->set(SCAN_REF_FRAME_PARAM, snp_application::get_parameter<std::string>(bt_node_, SCAN_REF_FRAME_PARAM));
+  board_->set(SCAN_TCP_FRAME_PARAM, snp_application::get_parameter<std::string>(bt_node_, SCAN_TCP_FRAME_PARAM));
+
+  board_->set(TCP_FRAME_PARAM, snp_application::get_parameter<std::string>(bt_node_, TCP_FRAME_PARAM));
 
   return bt_factory;
 }

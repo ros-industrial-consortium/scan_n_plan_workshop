@@ -15,6 +15,5 @@ setup(
     zip_safe=True,
     scripts=[
         'scripts/reconstruction_sim_node',
-        'scripts/scan_motion_plan_from_file_node',
     ],
 )

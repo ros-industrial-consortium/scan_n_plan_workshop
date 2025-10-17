@@ -3,6 +3,11 @@
     <include path="snp.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
+        <Action ID="AddJointsToTrajectory" editable="true">
+            <input_port name="topic_name" default="/joint_states"/>
+            <input_port name="input"/>
+            <output_port name="output"/>
+        </Action>
         <Action ID="AddScanLinkService" editable="true">
             <input_port name="service_name" default="add_scan_link"/>
         </Action>
@@ -38,13 +43,14 @@
         </Action>
         <Action ID="GenerateMotionPlanService" editable="true">
             <input_port name="service_name" default="generate_motion_plan"/>
+            <input_port name="tcp_frame" default="{tcp_frame}"/>
             <input_port name="tool_paths" default="{tool_paths}"/>
             <output_port name="approach" default="{approach}"/>
             <output_port name="process" default="{process}"/>
             <output_port name="departure" default="{departure}"/>
         </Action>
-        <Action ID="GenerateScanMotionPlanService" editable="true">
-            <input_port name="service_name" default="generate_scan_motion_plan"/>
+        <Action ID="GenerateTrajectoryFromFile" editable="true">
+            <input_port name="file" default="{scan_trajectory_file}"/>
             <output_port name="approach" default="{scan_approach}"/>
             <output_port name="process" default="{scan_process}"/>
             <output_port name="departure" default="{scan_departure}"/>
@@ -57,8 +63,15 @@
             <input_port name="topic_name"/>
             <input_port name="trajectory"/>
         </Action>
+        <Action ID="PlanToolPath" editable="true">
+            <input_port name="service_name" default="plan_tool_path"/>
+            <output_port name="tool_path" default="{tool_paths}"/>
+        </Action>
         <Action ID="PlanToolPathService" editable="true">
             <input_port name="service_name" default="plan_tool_path"/>
+            <input_port name="tpp_config_file" default="{tpp_config_file}"/>
+            <input_port name="mesh_file" default="{mesh_file}"/>
+            <input_port name="reference_frame" default="{reference_frame}"/>
             <output_port name="tool_paths" default="{tool_paths}"/>
         </Action>
         <Action ID="ProcessNode" editable="true"/>
@@ -95,6 +108,11 @@
         </Action>
         <SubTree ID="motion" editable="true">
             <input_port name="trajectory"/>
+        </SubTree>
+        <SubTree ID="process_pub" editable="true">
+            <input_port name="approach" default="{approach}"/>
+            <input_port name="process" default="{process}"/>
+            <input_port name="departure" default="{departure}"/>
         </SubTree>
         <SubTree ID="scan" editable="true">
             <input_port name="approach" default="{approach}"/>

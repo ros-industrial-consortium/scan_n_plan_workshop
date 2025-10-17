@@ -26,6 +26,12 @@ static const std::string TCP_FRAME_PARAM = "tcp_frame";
 static const std::string CAMERA_FRAME_PARAM = "camera_frame";
 static const std::string MESH_FILE_PARAM = "mesh_file";
 static const std::string TPP_CONFIG_FILE_PARAM = "tpp_config_file";
+static const std::string USE_NOETHER_SCAN_TRAJ_PARAM = "noether_scan_traj";
+static const std::string SCAN_TRAJ_FILE_PARAM = "scan_trajectory_file";
+static const std::string SCAN_MESH_FILE_PARAM = "scan_mesh_file";
+static const std::string SCAN_REF_FRAME_PARAM = "scan_reference_frame";
+static const std::string SCAN_CONFIG_FILE_PARAM = "scan_tpp_config_file";
+static const std::string SCAN_TCP_FRAME_PARAM = "scan_tcp_frame";
 static const std::string START_STATE_REPLACEMENT_TOLERANCE_PARAM = "start_state_replacement_tolerance";
 // Home state
 static const std::string HOME_STATE_JOINT_VALUES_PARAM = "home_state_joint_values";
