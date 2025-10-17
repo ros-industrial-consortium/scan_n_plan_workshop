@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+  <BehaviorTree ID="generate_scan_motion_plan_with_noether">
+    <Sequence>
+      <PlanToolPathService service_name="plan_tool_path"
+                           tpp_config_file="{tpp_config_file}"
+                           mesh_file="{mesh_file}"
+                           reference_frame="{reference_frame}"
+                           tool_paths="{tool_paths}"/>
+      <ToolPathsPub topic_name="tool_paths"
+                    tool_paths="{tool_paths}"/>
+      <GenerateMotionPlanService service_name="generate_motion_plan"
+                                 tcp_frame="{tcp_frame}"
+                                 tool_paths="{tool_paths}"
+                                 approach="{approach}"
+                                 process="{process}"
+                                 departure="{departure}"/>
+      <AddJointsToTrajectory topic_name="/joint_states"
+                             input="{scan_approach}"
+                             output="{scan_approach}"/>
+      <AddJointsToTrajectory topic_name="/joint_states"
+                             input="{scan_process}"
+                             output="{scan_process}"/>
+      <AddJointsToTrajectory topic_name="/joint_states"
+                             input="{scan_departure}"
+                             output="{scan_departure}"/>
+    </Sequence>
+  </BehaviorTree>
+
   <BehaviorTree ID="go_home_main">
     <ForceSuccess>
       <ReactiveSequence>
@@ -110,11 +137,10 @@
                             disapprove_button="back"
                             _description="Press next to generate a motion plan for part scanning"/>
           </SetPage>
-          <GenerateScanMotionPlanService name="Generate Scan Motion Plan"
-                                         service_name="generate_scan_motion_plan"
-                                         approach="{scan_approach}"
-                                         process="{scan_process}"
-                                         departure="{scan_departure}"/>
+          <GenerateTrajectoryFromFile file="{scan_trajectory_file}"
+                                      approach="{scan_approach}"
+                                      process="{scan_process}"
+                                      departure="{scan_departure}"/>
           <CombineTrajectories first="{scan_approach}"
                                second="{scan_process}"
                                output="{scan_trajectory}"/>
@@ -277,6 +303,13 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
+    <Action ID="AddJointsToTrajectory"
+            editable="true">
+      <input_port name="topic_name"
+                  default="/joint_states"/>
+      <input_port name="input"/>
+      <output_port name="output"/>
+    </Action>
     <Action ID="AddScanLinkService"
             editable="true">
       <input_port name="service_name"
@@ -353,10 +386,10 @@
       <output_port name="departure"
                    default="{departure}"/>
     </Action>
-    <Action ID="GenerateScanMotionPlanService"
+    <Action ID="GenerateTrajectoryFromFile"
             editable="true">
-      <input_port name="service_name"
-                  default="generate_scan_motion_plan"/>
+      <input_port name="file"
+                  default="{scan_trajectory_file}"/>
       <output_port name="approach"
                    default="{scan_approach}"/>
       <output_port name="process"
@@ -385,6 +418,19 @@
       <input_port name="mesh_file"
                   default="{mesh_file}"/>
       <input_port name="mesh_frame"
+                  default="{reference_frame}"/>
+      <output_port name="tool_paths"
+                   default="{tool_paths}"/>
+    </Action>
+    <Action ID="PlanToolPathService"
+            editable="true">
+      <input_port name="service_name"
+                  default="plan_tool_path"/>
+      <input_port name="tpp_config_file"
+                  default="{tpp_config_file}"/>
+      <input_port name="mesh_file"
+                  default="{mesh_file}"/>
+      <input_port name="reference_frame"
                   default="{reference_frame}"/>
       <output_port name="tool_paths"
                    default="{tool_paths}"/>

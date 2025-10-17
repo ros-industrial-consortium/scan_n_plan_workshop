@@ -18,6 +18,7 @@ BT_REGISTER_NODES(factory)
   factory.registerNodeType<snp_application::SNPSequenceWithMemory>("SNPSequenceWithMemory");
   factory.registerNodeType<snp_application::ReverseTrajectoryNode>("ReverseTrajectory");
   factory.registerNodeType<snp_application::CombineTrajectoriesNode>("CombineTrajectories");
+  factory.registerNodeType<snp_application::GenerateTrajectoryFromFileNode>("GenerateTrajectoryFromFile");
 }
 
 BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory, const BT::RosNodeParams& params)
@@ -31,7 +32,6 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   factory.registerNodeType<snp_application::MotionPlanPubNode>("MotionPlanPub", params);
   factory.registerNodeType<snp_application::FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", params);
   factory.registerNodeType<snp_application::GetCurrentJointStateNode>("GetCurrentJointState", params);
-  factory.registerNodeType<snp_application::GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", params);
   factory.registerNodeType<snp_application::UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState",
                                                                             params.nh.lock());
   factory.registerNodeType<snp_application::PlanToolPathServiceNode>("PlanToolPathService", params);
