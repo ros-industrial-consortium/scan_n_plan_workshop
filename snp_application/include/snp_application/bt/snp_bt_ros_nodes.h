@@ -12,7 +12,6 @@
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <noether_ros/srv/plan_tool_path.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <snp_msgs/srv/execute_motion_plan.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/generate_scan_motion_plan.hpp>
@@ -137,23 +136,6 @@ class EmptyServiceNode : public SnpRosServiceNode<std_srvs::srv::Empty>
 public:
   using SnpRosServiceNode<std_srvs::srv::Empty>::providedPorts;
   using SnpRosServiceNode<std_srvs::srv::Empty>::SnpRosServiceNode;
-
-  bool setRequest(typename Request::SharedPtr& request) override;
-  BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
-};
-
-class ExecuteMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::ExecuteMotionPlan>
-{
-public:
-  inline static std::string MOTION_PLAN_INPUT_PORT_KEY = "motion_plan";
-  inline static std::string USE_TOOL_INPUT_PORT_KEY = "use_tool";
-  inline static BT::PortsList providedPorts()
-  {
-    return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(MOTION_PLAN_INPUT_PORT_KEY),
-                                BT::InputPort<bool>(USE_TOOL_INPUT_PORT_KEY) });
-  }
-
-  using SnpRosServiceNode<snp_msgs::srv::ExecuteMotionPlan>::SnpRosServiceNode;
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
