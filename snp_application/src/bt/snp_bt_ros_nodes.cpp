@@ -49,7 +49,7 @@ bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& requ
   request->tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
 
   request->motion_group = get_parameter<std::string>(node_.lock(), MOTION_GROUP_PARAM);
-  request->tcp_frame = get_parameter<std::string>(node_.lock(), TCP_FRAME_PARAM);
+  request->tcp_frame = getInput<std::string>(TCP_FRAME_PARAM).value();
 
   return true;
 }
@@ -123,37 +123,86 @@ BT::NodeStatus GenerateFreespaceMotionPlanServiceNode::onResponseReceived(const 
   return setOutputAndCheck(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
 }
 
-bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
+std::vector<trajectory_msgs::msg::JointTrajectory> toTrajectory(std::string file_name)
 {
-  return true;
-}
+  YAML::Node scan_traj_node = YAML::LoadFile(file_name);
+  auto full_trajectory_points = scan_traj_node.as<trajectory_msgs::msg::JointTrajectory>();
 
-BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
-{
-  if (!response->success)
+  // Approach
+  trajectory_msgs::msg::JointTrajectory approach_trajectory;
+  approach_trajectory.header = full_trajectory_points.header;
+  approach_trajectory.joint_names = full_trajectory_points.joint_names;
+  for (size_t i = 0; i < 2; ++i)
   {
-    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
-    return BT::NodeStatus::FAILURE;
+    approach_trajectory.points.push_back(full_trajectory_points.points[i]);
   }
 
-  // Set output
-  BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
-  BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
-  BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
+  // Process
+  trajectory_msgs::msg::JointTrajectory process_trajectory;
+  process_trajectory.header = full_trajectory_points.header;
+  process_trajectory.joint_names = full_trajectory_points.joint_names;
+  for (size_t i = 1; i < full_trajectory_points.points.size() - 1; ++i)
+  {
+    process_trajectory.points.push_back(full_trajectory_points.points[i]);
+  }
 
-  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
-    return BT::NodeStatus::SUCCESS;
+  // Departure
+  trajectory_msgs::msg::JointTrajectory departure_trajectory;
+  departure_trajectory.header = full_trajectory_points.header;
+  departure_trajectory.joint_names = full_trajectory_points.joint_names;
+  for (size_t i = full_trajectory_points.points.size() - 2; i < full_trajectory_points.points.size(); ++i)
+  {
+    departure_trajectory.points.push_back(full_trajectory_points.points[i]);
+  }
 
-  return BT::NodeStatus::FAILURE;
+  std::vector<trajectory_msgs::msg::JointTrajectory> scan_traj_vector{ approach_trajectory, process_trajectory,
+                                                                       departure_trajectory };
+  return scan_traj_vector;
+}
+
+GenerateTrajectoryFromFileNode::GenerateTrajectoryFromFileNode(const std::string& instance_name,
+                                                               const BT::NodeConfig& config)
+  : BT::SyncActionNode(instance_name, config)
+{
+}
+
+BT::NodeStatus GenerateTrajectoryFromFileNode::tick()
+{
+  BT::Expected<std::string> input = getInput<std::string>(FILE_NAME_INPUT_PORT_KEY);
+  if (!input)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required input value: '" << input.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  std::string in = input.value();
+
+  std::vector<trajectory_msgs::msg::JointTrajectory> out = toTrajectory(in);
+
+  const BT::Result output_1 = setOutput(APPROACH_OUTPUT_PORT_KEY, out[0]);
+  const BT::Result output_2 = setOutput(PROCESS_OUTPUT_PORT_KEY, out[1]);
+  const BT::Result output_3 = setOutput(DEPARTURE_OUTPUT_PORT_KEY, out[2]);
+
+  const std::vector<BT::Result> outputs{ output_1, output_2, output_3 };
+
+  for (const auto& output : outputs)
+    if (!output)
+    {
+      config().blackboard->set(ERROR_MESSAGE_KEY, output.get_unexpected().error());
+      return BT::NodeStatus::FAILURE;
+    }
+
+  return BT::NodeStatus::SUCCESS;
 }
 
 bool PlanToolPathServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   try
   {
-    request->config = get_parameter<std::string>(node_.lock(), TPP_CONFIG_FILE_PARAM);
-    request->mesh_file = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
-    request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
+    request->config = getInput<std::string>(TPP_CONFIG_FILE_PARAM).value();
+    request->mesh_file = getInput<std::string>(MESH_FILE_PARAM).value();
+    request->mesh_frame = getInput<std::string>(REF_FRAME_PARAM).value();
 
     return true;
   }
