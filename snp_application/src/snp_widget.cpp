@@ -110,6 +110,8 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   bt_node_->declare_parameter<std::string>(BT_PARAM, "");
   bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
   bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
+  bt_node_->declare_parameter<std::string>(MESH_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(REF_FRAME_PARAM, "");
   bt_node_->declare_parameter<std::string>(TPP_CONFIG_FILE_PARAM, "");
   bt_node_->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM, "");
   bt_node_->declare_parameter<std::string>(SCAN_MESH_FILE_PARAM, "");
@@ -250,6 +252,9 @@ std::unique_ptr<BT::BehaviorTreeFactory> SNPWidget::createBTFactory(int ros_time
   board_->set(SCAN_TCP_FRAME_PARAM, snp_application::get_parameter<std::string>(bt_node_, SCAN_TCP_FRAME_PARAM));
 
   board_->set(TCP_FRAME_PARAM, snp_application::get_parameter<std::string>(bt_node_, TCP_FRAME_PARAM));
+  board_->set(TPP_CONFIG_FILE_PARAM, snp_application::get_parameter<std::string>(bt_node_, TPP_CONFIG_FILE_PARAM));
+  board_->set(MESH_FILE_PARAM, snp_application::get_parameter<std::string>(bt_node_, MESH_FILE_PARAM));
+  board_->set(REF_FRAME_PARAM, snp_application::get_parameter<std::string>(bt_node_, REF_FRAME_PARAM));
 
   return bt_factory;
 }
