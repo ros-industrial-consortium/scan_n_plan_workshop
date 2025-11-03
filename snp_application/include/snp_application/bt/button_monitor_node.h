@@ -9,6 +9,7 @@ namespace snp_application
  * @brief Condition node that monitors the state of a Qt button.
  * @details A pointer to the monitored button (QAbstractButton*) is provided via the blackboard using the key defined in
  * the input port. When the button is clicked, the node returns failure the next time it is checked.
+ * @ingroup bt_plugins
  */
 class ButtonMonitorNode : public BT::ConditionNode
 {

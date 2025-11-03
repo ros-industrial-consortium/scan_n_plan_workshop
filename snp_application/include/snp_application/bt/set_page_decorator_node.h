@@ -8,6 +8,7 @@ namespace snp_application
  * @brief Decorator node that sets the page of a Qt stacked widget
  * @details A pointer to a stacked widget (QStackedWidget*) is provided via the blackboard.
  * When the node is entered, the page of the stacked widget is set to the index provided in the "index" input port
+ * @ingroup bt_plugins
  */
 class SetPageDecoratorNode : public BT::DecoratorNode
 {
