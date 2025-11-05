@@ -21,11 +21,6 @@
         <Action ID="EmptyService" editable="true">
             <input_port name="service_name"/>
         </Action>
-        <Action ID="ExecuteMotionPlanService" editable="true">
-            <input_port name="service_name" default="execute_motion_plan"/>
-            <input_port name="motion_plan" default="{motion_plan}"/>
-            <input_port name="use_tool" default="false"/>
-        </Action>
         <Action ID="FollowJointTrajectoryAction" editable="true">
             <input_port name="action_name" default="follow_joint_trajectory"/>
             <input_port name="trajectory" default="{trajectory}"/>

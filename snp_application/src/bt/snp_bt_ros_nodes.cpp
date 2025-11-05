@@ -27,23 +27,6 @@ BT::NodeStatus EmptyServiceNode::onResponseReceived(const typename Response::Sha
   return BT::NodeStatus::SUCCESS;
 }
 
-bool ExecuteMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
-{
-  request->motion_plan = getBTInput<trajectory_msgs::msg::JointTrajectory>(this, MOTION_PLAN_INPUT_PORT_KEY);
-  request->use_tool = getBTInput<bool>(this, USE_TOOL_INPUT_PORT_KEY);
-  return true;
-}
-
-BT::NodeStatus ExecuteMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
-{
-  if (!response->success)
-  {
-    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
-    return BT::NodeStatus::FAILURE;
-  }
-  return BT::NodeStatus::SUCCESS;
-}
-
 bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   request->tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
