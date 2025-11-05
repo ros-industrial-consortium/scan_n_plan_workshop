@@ -44,6 +44,7 @@ add_library(
   ${PROJECT_NAME}_bt_plugins SHARED
   src/bt/button_approval_node.cpp
   src/bt/button_monitor_node.cpp
+  src/bt/extract_approach_process_departure_trajectories_node.cpp
   src/bt/load_trajectory_from_file_node.cpp
   src/bt/progress_decorator_node.cpp
   src/bt/set_page_decorator_node.cpp

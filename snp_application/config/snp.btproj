@@ -31,6 +31,12 @@
             <input_port name="motion_plan" default="{motion_plan}"/>
             <input_port name="use_tool" default="false"/>
         </Action>
+        <Action ID="ExtractApproachProcessDepartureTrajectories" editable="true">
+            <input_port name="trajectory" default="{trajectory}"/>
+            <output_port name="approach" default="{approach}"/>
+            <output_port name="process" default="{process}"/>
+            <output_port name="departure" default="{departure}"/>
+        </Action>
         <Action ID="FollowJointTrajectoryAction" editable="true">
             <input_port name="action_name" default="follow_joint_trajectory"/>
             <input_port name="trajectory" default="{trajectory}"/>
@@ -49,15 +55,13 @@
             <output_port name="process" default="{process}"/>
             <output_port name="departure" default="{departure}"/>
         </Action>
-        <Action ID="LoadTrajectoryFromFile" editable="true">
-            <input_port name="file" default="{scan_trajectory_file}"/>
-            <output_port name="approach" default="{scan_approach}"/>
-            <output_port name="process" default="{scan_process}"/>
-            <output_port name="departure" default="{scan_departure}"/>
-        </Action>
         <Action ID="GetCurrentJointState" editable="true">
             <input_port name="topic_name" default="/joint_states"/>
             <output_port name="current_state" default="{current_state}"/>
+        </Action>
+        <Action ID="LoadTrajectoryFromFile" editable="true">
+            <input_port name="file" default="{trajectory_file}"/>
+            <output_port name="trajectory" default="{trajectory}"/>
         </Action>
         <Action ID="MotionPlanPub" editable="true">
             <input_port name="topic_name"/>
