@@ -1,5 +1,6 @@
 #include <snp_application/bt/button_approval_node.h>
 #include <snp_application/bt/button_monitor_node.h>
+#include <snp_application/bt/load_trajectory_from_file_node.h>
 #include <snp_application/bt/progress_decorator_node.h>
 #include <snp_application/bt/set_page_decorator_node.h>
 #include <snp_application/bt/snp_bt_ros_nodes.h>
@@ -19,12 +20,12 @@ BT_REGISTER_NODES(factory)
 {
   factory.registerNodeType<snp_application::ButtonApprovalNode>("ButtonApproval");
   factory.registerNodeType<snp_application::ButtonMonitorNode>("ButtonMonitor");
+  factory.registerNodeType<snp_application::LoadTrajectoryFromFileNode>("LoadTrajectoryFromFile");
   factory.registerNodeType<snp_application::ProgressDecoratorNode>("Progress");
   factory.registerNodeType<snp_application::SetPageDecoratorNode>("SetPage");
   factory.registerNodeType<snp_application::SNPSequenceWithMemory>("SNPSequenceWithMemory");
   factory.registerNodeType<snp_application::ReverseTrajectoryNode>("ReverseTrajectory");
   factory.registerNodeType<snp_application::CombineTrajectoriesNode>("CombineTrajectories");
-  factory.registerNodeType<snp_application::GenerateTrajectoryFromFileNode>("GenerateTrajectoryFromFile");
 }
 
 BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory, const BT::RosNodeParams& params)
