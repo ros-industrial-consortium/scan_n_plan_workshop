@@ -12,13 +12,11 @@
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <noether_ros/srv/plan_tool_path.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <snp_application/trajectory_msgs_yaml.h>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/add_scan_link.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <std_srvs/srv/empty.hpp>
-#include <yaml-cpp/yaml.h>
 
 namespace snp_application
 {
@@ -237,26 +235,6 @@ public:
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
-};
-
-class GenerateTrajectoryFromFileNode : public BT::SyncActionNode
-{
-public:
-  inline static std::string FILE_NAME_INPUT_PORT_KEY = "file";
-  inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
-  inline static std::string PROCESS_OUTPUT_PORT_KEY = "process";
-  inline static std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
-  inline static BT::PortsList providedPorts()
-  {
-    return { BT::InputPort(FILE_NAME_INPUT_PORT_KEY),
-             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
-             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
-             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) };
-  }
-  explicit GenerateTrajectoryFromFileNode(const std::string& instance_name, const BT::NodeConfig& config);
-
-protected:
-  BT::NodeStatus tick() override;
 };
 
 /**

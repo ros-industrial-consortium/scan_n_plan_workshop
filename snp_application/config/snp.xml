@@ -110,7 +110,7 @@
                             disapprove_button="back"
                             _description="Press next to generate a motion plan for part scanning"/>
           </SetPage>
-          <GenerateTrajectoryFromFile file="{scan_trajectory_file}"
+          <LoadTrajectoryFromFile file="{scan_trajectory_file}"
                                       approach="{scan_approach}"
                                       process="{scan_process}"
                                       departure="{scan_departure}"/>
@@ -352,7 +352,7 @@
       <output_port name="departure"
                    default="{departure}"/>
     </Action>
-    <Action ID="GenerateTrajectoryFromFile"
+    <Action ID="LoadTrajectoryFromFile"
             editable="true">
       <input_port name="file"
                   default="{scan_trajectory_file}"/>

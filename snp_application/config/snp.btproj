@@ -49,7 +49,7 @@
             <output_port name="process" default="{process}"/>
             <output_port name="departure" default="{departure}"/>
         </Action>
-        <Action ID="GenerateTrajectoryFromFile" editable="true">
+        <Action ID="LoadTrajectoryFromFile" editable="true">
             <input_port name="file" default="{scan_trajectory_file}"/>
             <output_port name="approach" default="{scan_approach}"/>
             <output_port name="process" default="{scan_process}"/>
