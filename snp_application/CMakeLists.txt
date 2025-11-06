@@ -45,6 +45,7 @@ add_library(
   src/bt/button_approval_node.cpp
   src/bt/button_monitor_node.cpp
   src/bt/create_joint_state_message.cpp
+  src/bt/extract_approach_process_departure_trajectories_node.cpp
   src/bt/load_trajectory_from_file_node.cpp
   src/bt/progress_decorator_node.cpp
   src/bt/set_page_decorator_node.cpp
