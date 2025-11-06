@@ -3,13 +3,13 @@
 #include <thread>
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 #include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
-#include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
+#include <tesseract_motion_planners/descartes/profile/descartes_default_move_profile.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_ladder_graph_solver_profile.h>
 #include <tesseract_motion_planners/ompl/ompl_planner_configurator.h>
-#include <tesseract_motion_planners/ompl/profile/ompl_real_vector_plan_profile.h>
-#include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
+#include <tesseract_motion_planners/ompl/profile/ompl_real_vector_move_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_move_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
-#include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
+#include <tesseract_motion_planners/simple/profile/simple_planner_lvs_move_profile.h>
 #include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 
 static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
@@ -47,12 +47,12 @@ typename tesseract_planning::DescartesLadderGraphSolverProfile<FloatType>::Ptr c
 }
 
 template <typename FloatType>
-typename tesseract_planning::DescartesDefaultPlanProfile<FloatType>::Ptr
-createDescartesPlanProfile(FloatType min_contact_distance,
+typename tesseract_planning::DescartesDefaultMoveProfile<FloatType>::Ptr
+createDescartesMoveProfile(FloatType min_contact_distance,
                            const std::vector<ExplicitCollisionPair>& unique_collision_pairs,
                            const FloatType longest_valid_segment_length)
 {
-  auto profile = std::make_shared<tesseract_planning::DescartesDefaultPlanProfile<FloatType>>();
+  auto profile = std::make_shared<tesseract_planning::DescartesDefaultMoveProfile<FloatType>>();
   profile->use_redundant_joint_solutions = false;
 
   // Tool pose sampler
@@ -66,32 +66,28 @@ createDescartesPlanProfile(FloatType min_contact_distance,
   profile->allow_collision = false;
   profile->enable_collision = true;
   profile->vertex_collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
-  profile->vertex_collision_check_config.contact_manager_config.margin_data.setDefaultCollisionMargin(
-      min_contact_distance);
   profile->vertex_collision_check_config.longest_valid_segment_length = longest_valid_segment_length;
 
-  profile->vertex_collision_check_config.contact_manager_config.margin_data_override_type =
-      tesseract_common::CollisionMarginOverrideType::MODIFY;
+  profile->vertex_contact_manager_config.default_margin = min_contact_distance;
+  profile->vertex_contact_manager_config.pair_margin_override_type =
+      tesseract_common::CollisionMarginPairOverrideType::MODIFY;
   for (const ExplicitCollisionPair& pair : unique_collision_pairs)
-    profile->vertex_collision_check_config.contact_manager_config.margin_data.setPairCollisionMargin(
-        pair.first, pair.second, pair.distance);
+    profile->vertex_contact_manager_config.pair_margin_data.setCollisionMargin(pair.first, pair.second, pair.distance);
 
   profile->enable_edge_collision = false;
   profile->edge_collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
-  profile->edge_collision_check_config.contact_manager_config.margin_data.setDefaultCollisionMargin(
-      min_contact_distance);
   profile->edge_collision_check_config.longest_valid_segment_length = longest_valid_segment_length;
 
-  profile->edge_collision_check_config.contact_manager_config.margin_data_override_type =
-      tesseract_common::CollisionMarginOverrideType::MODIFY;
+  profile->edge_contact_manager_config.default_margin = min_contact_distance;
+  profile->edge_contact_manager_config.pair_margin_override_type =
+      tesseract_common::CollisionMarginPairOverrideType::MODIFY;
   for (const ExplicitCollisionPair& pair : unique_collision_pairs)
-    profile->edge_collision_check_config.contact_manager_config.margin_data.setPairCollisionMargin(
-        pair.first, pair.second, pair.distance);
+    profile->edge_contact_manager_config.pair_margin_data.setCollisionMargin(pair.first, pair.second, pair.distance);
 
   return profile;
 }
 
-tesseract_planning::OMPLRealVectorPlanProfile::Ptr
+tesseract_planning::OMPLRealVectorMoveProfile::Ptr
 createOMPLProfile(const double min_contact_distance, const std::vector<ExplicitCollisionPair>& unique_collision_pairs,
                   const double longest_valid_segment_length)
 {
@@ -101,7 +97,7 @@ createOMPLProfile(const double min_contact_distance, const std::vector<ExplicitC
   auto range = Eigen::VectorXd::LinSpaced(n, 0.05, 0.5);
 
   // Add as many planners as available threads so mulitple OMPL plans can happen in parallel
-  auto profile = std::make_shared<tesseract_planning::OMPLRealVectorPlanProfile>();
+  auto profile = std::make_shared<tesseract_planning::OMPLRealVectorMoveProfile>();
   profile->solver_config.planning_time = 5.0;
   profile->solver_config.max_solutions = 1;
 
@@ -116,23 +112,21 @@ createOMPLProfile(const double min_contact_distance, const std::vector<ExplicitC
 
   // Collision checking
   profile->collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
-  profile->collision_check_config.contact_manager_config.margin_data.setDefaultCollisionMargin(min_contact_distance);
-  profile->collision_check_config.contact_manager_config.margin_data_override_type =
-      tesseract_common::CollisionMarginOverrideType::MODIFY;
+  profile->contact_manager_config.default_margin = min_contact_distance;
+  profile->contact_manager_config.pair_margin_override_type = tesseract_common::CollisionMarginPairOverrideType::MODIFY;
   profile->collision_check_config.longest_valid_segment_length = longest_valid_segment_length;
 
   for (const ExplicitCollisionPair& pair : unique_collision_pairs)
-    profile->collision_check_config.contact_manager_config.margin_data.setPairCollisionMargin(pair.first, pair.second,
-                                                                                              pair.distance);
+    profile->contact_manager_config.pair_margin_data.setCollisionMargin(pair.first, pair.second, pair.distance);
 
   return profile;
 }
 
-std::shared_ptr<tesseract_planning::TrajOptPlanProfile>
-createTrajOptToolZFreePlanProfile(const Eigen::VectorXd& cart_tolerance = Eigen::VectorXd::Zero(6),
+std::shared_ptr<tesseract_planning::TrajOptMoveProfile>
+createTrajOptToolZFreeMoveProfile(const Eigen::VectorXd& cart_tolerance = Eigen::VectorXd::Zero(6),
                                   const Eigen::VectorXd& cart_coeff = Eigen::VectorXd::Constant(6, 1, 2.5))
 {
-  auto profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
+  auto profile = std::make_shared<tesseract_planning::TrajOptDefaultMoveProfile>();
 
   profile->cartesian_cost_config.enabled = true;
   profile->cartesian_cost_config.use_tolerance_override = true;
@@ -168,8 +162,6 @@ createTrajOptProfile(double min_contact_distance, const std::vector<ExplicitColl
   profile->smooth_jerks = true;
   profile->jerk_coeff = Eigen::VectorXd::Constant(1, 1, 50.0);
 
-  profile->contact_test_type = tesseract_collision::ContactTestType::CLOSEST;
-
   /* Safety margin notes:
    *   - A non-zero cost for distance to collision is computed only when the distance to collision < safety margin
    *   - The gradient of the collision cost is computed when the distance to collision is < safety margin + safety
@@ -185,27 +177,31 @@ createTrajOptProfile(double min_contact_distance, const std::vector<ExplicitColl
 
   // Collision cost
   profile->collision_cost_config.enabled = true;
+  constexpr double kCollisionCoeff{ 10.0 };
+  // Use a relatively large safety margin to drive the robot away from collision
+  constexpr double kCostMinimumDefaultMargin{ 0.025 };
+  // Use a small, fixed-size buffer beyond the defined margin to continue calculating collision avoidance gradients
+  // even when the collision avoidance cost is zero
+  constexpr double kCollisionMarginBuffer{ 0.025 };
   if (profile->collision_cost_config.enabled)
   {
-    profile->collision_cost_config.coeff = 10.0;
-    profile->collision_cost_config.type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
-    profile->longest_valid_segment_length = longest_valid_segment_length;
+    profile->collision_cost_config.collision_check_config.contact_request.type =
+        tesseract_collision::ContactTestType::CLOSEST;
+    profile->collision_cost_config.collision_check_config.type =
+        tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
+    profile->collision_cost_config.collision_check_config.longest_valid_segment_length = longest_valid_segment_length;
 
-    // Use a relatively large safety margin to drive the robot away from collision
-    profile->collision_cost_config.safety_margin = std::max(0.025, min_contact_distance);
-    // Use a small, fixed-size buffer beyond the defined margin to continue calculating collision avoidance gradients
-    // even when the collision avoidance cost is zero
-    profile->collision_cost_config.safety_margin_buffer = 0.025;
+    profile->collision_cost_config.collision_coeff_data = trajopt_common::CollisionCoeffData(kCollisionCoeff);
+    profile->collision_cost_config.collision_margin_buffer = kCollisionMarginBuffer;
 
+    profile->collision_cost_config.contact_manager_config.default_margin =
+        std::max(kCostMinimumDefaultMargin, min_contact_distance);
     if (!unique_collision_pairs.empty())
     {
-      profile->special_collision_cost = std::make_shared<trajopt_common::SafetyMarginData>(
-          profile->collision_cost_config.safety_margin, profile->collision_cost_config.coeff);
-
       // Populate the special collision cost
       for (const ExplicitCollisionPair& pair : unique_collision_pairs)
-        profile->special_collision_cost->setPairSafetyMarginData(pair.first, pair.second, pair.distance,
-                                                                 profile->collision_cost_config.coeff);
+        profile->collision_cost_config.contact_manager_config.pair_margin_data.setCollisionMargin(
+            pair.first, pair.second, pair.distance);
     }
   }
 
@@ -213,34 +209,32 @@ createTrajOptProfile(double min_contact_distance, const std::vector<ExplicitColl
   profile->collision_constraint_config.enabled = true;
   if (profile->collision_constraint_config.enabled)
   {
-    profile->collision_constraint_config.coeff = 10.0;
-    profile->collision_constraint_config.type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
+    profile->collision_constraint_config.collision_check_config.contact_request.type =
+        tesseract_collision::ContactTestType::CLOSEST;
+    profile->collision_constraint_config.collision_check_config.type =
+        tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
+    profile->collision_constraint_config.collision_check_config.longest_valid_segment_length =
+        longest_valid_segment_length;
 
-    // Use a minimal safety margin, such that the constraint is only violated (and therefore a cost produced) when the
-    // robot is actually considered to be in collision
-    profile->collision_constraint_config.safety_margin = min_contact_distance;
-    // Use a small, fixed-size buffer beyond the defined margin to continue calculating collision avoidance gradients
-    // even when the collision avoidance cost is zero
-    profile->collision_constraint_config.safety_margin_buffer = 0.025;
+    profile->collision_constraint_config.collision_coeff_data = trajopt_common::CollisionCoeffData(kCollisionCoeff);
+    profile->collision_constraint_config.collision_margin_buffer = kCollisionMarginBuffer;
 
+    profile->collision_constraint_config.contact_manager_config.default_margin = min_contact_distance;
     if (!unique_collision_pairs.empty())
     {
-      profile->special_collision_constraint = std::make_shared<trajopt_common::SafetyMarginData>(
-          min_contact_distance, profile->collision_constraint_config.coeff);
-
-      // Populate the special collision constraint
+      // Populate the special collision cost
       for (const ExplicitCollisionPair& pair : unique_collision_pairs)
-        profile->special_collision_constraint->setPairSafetyMarginData(pair.first, pair.second, pair.distance,
-                                                                       profile->collision_constraint_config.coeff);
+        profile->collision_constraint_config.contact_manager_config.pair_margin_data.setCollisionMargin(
+            pair.first, pair.second, pair.distance);
     }
   }
 
   return profile;
 }
 
-std::shared_ptr<tesseract_planning::SimplePlannerLVSPlanProfile> createSimplePlannerProfile()
+std::shared_ptr<tesseract_planning::SimplePlannerLVSMoveProfile> createSimplePlannerProfile()
 {
-  return std::make_shared<tesseract_planning::SimplePlannerLVSPlanProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 1);
+  return std::make_shared<tesseract_planning::SimplePlannerLVSMoveProfile>(5 * M_PI / 180, 0.1, 5 * M_PI / 180, 1);
 }
 
 tesseract_planning::ContactCheckProfile::Ptr
@@ -249,11 +243,10 @@ createContactCheckProfile(double longest_valid_segment_distance, double min_cont
 {
   auto profile =
       std::make_shared<tesseract_planning::ContactCheckProfile>(longest_valid_segment_distance, min_contact_distance);
-  profile->config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
-  profile->config.contact_manager_config.margin_data_override_type =
-      tesseract_common::CollisionMarginOverrideType::MODIFY;
+  profile->collision_check_config.contact_request.type = tesseract_collision::ContactTestType::FIRST;
+  profile->contact_manager_config.pair_margin_override_type = tesseract_common::CollisionMarginPairOverrideType::MODIFY;
   for (const ExplicitCollisionPair& pair : collision_pairs)
-    profile->config.contact_manager_config.margin_data.setPairCollisionMargin(pair.first, pair.second, pair.distance);
+    profile->contact_manager_config.pair_margin_data.setCollisionMargin(pair.first, pair.second, pair.distance);
 
   return profile;
 }

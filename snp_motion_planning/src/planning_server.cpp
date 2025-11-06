@@ -10,12 +10,12 @@
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_collision/vhacd/convex_decomposition_vhacd.h>
+#include <tesseract_common/profile_dictionary.h>
 #include <tesseract_command_language/composite_instruction.h>
 #include <tesseract_command_language/state_waypoint.h>
 #include <tesseract_command_language/cartesian_waypoint.h>
 #include <tesseract_command_language/joint_waypoint.h>
 #include <tesseract_command_language/move_instruction.h>
-#include <tesseract_command_language/profile_dictionary.h>
 #include <tesseract_command_language/utils.h>
 #include <tesseract_geometry/geometries.h>
 #include <tesseract_geometry/mesh_parser.h>
@@ -445,9 +445,9 @@ private:
     }
   }
 
-  tesseract_planning::ProfileDictionary::Ptr createProfileDictionary()
+  tesseract_common::ProfileDictionary::Ptr createProfileDictionary()
   {
-    tesseract_planning::ProfileDictionary::Ptr profile_dict = std::make_shared<tesseract_planning::ProfileDictionary>();
+    tesseract_common::ProfileDictionary::Ptr profile_dict = std::make_shared<tesseract_common::ProfileDictionary>();
 
     // Add custom profiles
     {
@@ -490,13 +490,13 @@ private:
 
       // TrajOpt
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
-                               createTrajOptToolZFreePlanProfile(cart_tolerance, cart_coeff));
+                               createTrajOptToolZFreeMoveProfile(cart_tolerance, cart_coeff));
       profile_dict->addProfile(TRAJOPT_DEFAULT_NAMESPACE, PROFILE,
                                createTrajOptProfile(min_contact_dist, collision_pairs, longest_valid_segment_length));
 
       // Descartes
       profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE,
-                               createDescartesPlanProfile<float>(static_cast<float>(min_contact_dist), collision_pairs,
+                               createDescartesMoveProfile<float>(static_cast<float>(min_contact_dist), collision_pairs,
                                                                  longest_valid_segment_length));
       profile_dict->addProfile(DESCARTES_DEFAULT_NAMESPACE, PROFILE, createDescartesSolverProfile<float>());
 
@@ -544,7 +544,7 @@ private:
   }
 
   tesseract_planning::CompositeInstruction plan(const tesseract_planning::CompositeInstruction& program,
-                                                tesseract_planning::ProfileDictionary::Ptr profile_dict,
+                                                tesseract_common::ProfileDictionary::Ptr profile_dict,
                                                 const std::string& task_name)
   {
     // Set up task composer problem
