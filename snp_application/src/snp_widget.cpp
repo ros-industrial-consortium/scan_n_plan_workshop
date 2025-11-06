@@ -22,15 +22,6 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <trajectory_preview/trajectory_preview_widget.h>
 
-static const char* BT_FILES_PARAM = "bt_files";
-static const char* BT_PLUGIN_LIBS_PARAM = "bt_plugin_libs";
-static const char* BT_ROS_PLUGIN_LIBS_PARAM = "bt_ros_plugin_libs";
-static const char* BT_PARAM = "tree";
-static const char* BT_FREESPACE_PARAM = "freespace_tree";
-static const char* BT_TIMEOUT_PARAM = "bt_timeout";
-static const char* FOLLOW_JOINT_TRAJECTORY_ACTION = "follow_joint_trajectory_action";
-static const char* HOME_STATE_NAME = "home_state";
-
 class TPPDialog : public QDialog
 {
 public:
@@ -42,7 +33,7 @@ public:
     // Set non-modal, so it can launch the load and save dialogs within itself
     setModal(false);
 
-    auto tpp_config_file = snp_application::get_parameter<std::string>(node_, snp_application::TPP_CONFIG_FILE_PARAM);
+    auto tpp_config_file = snp_application::get_parameter<std::string>(node_, PROCESS_TPP_CONFIG_FILE_PARAM);
     widget_ = new noether::ConfigurableTPPPipelineWidget(
         factory_, std::filesystem::path(tpp_config_file).parent_path().string(), this);
     widget_->configure(QString::fromStdString(tpp_config_file));
@@ -65,7 +56,7 @@ public:
     QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
 
     // Configure the widget from file specified in the parameter
-    auto tpp_config_file = snp_application::get_parameter<std::string>(node_, snp_application::TPP_CONFIG_FILE_PARAM);
+    auto tpp_config_file = snp_application::get_parameter<std::string>(node_, PROCESS_TPP_CONFIG_FILE_PARAM);
     widget_->configure(QString::fromStdString(tpp_config_file));
 
     event->accept();
@@ -84,7 +75,7 @@ public:
 
     QSettings settings;
     QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
-    node_->set_parameter(rclcpp::Parameter(snp_application::TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
+    node_->set_parameter(rclcpp::Parameter(PROCESS_TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
 
     event->accept();
   }
@@ -103,18 +94,97 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   , ui_(new Ui::SNPWidget())
   , board_(BT::Blackboard::create())
 {
+  auto fn = [this](const std::vector<rclcpp::Parameter>& parameters) -> rcl_interfaces::msg::SetParametersResult {
+    for (const auto& param : parameters)
+    {
+      switch (param.get_type())
+      {
+        case rcl_interfaces::msg::ParameterType::PARAMETER_BOOL:
+          board_->set(param.get_name(), param.as_bool());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER:
+          board_->set(param.get_name(), param.as_int());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE:
+          board_->set(param.get_name(), param.as_double());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_STRING:
+          board_->set(param.get_name(), param.as_string());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_BYTE_ARRAY:
+          board_->set(param.get_name(), param.as_byte_array());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_BOOL_ARRAY:
+          board_->set(param.get_name(), param.as_bool_array());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY:
+          board_->set(param.get_name(), param.as_integer_array());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE_ARRAY:
+          board_->set(param.get_name(), param.as_double_array());
+          break;
+        case rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY:
+          board_->set(param.get_name(), param.as_string_array());
+          break;
+        default:
+          continue;
+      }
+    }
+
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
+  };
+
+  bt_node_->add_on_set_parameters_callback(fn);
+
   // Declare parameters
+  // General BT parameters
   bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, std::vector<std::string>{});
   bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
   bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
   bt_node_->declare_parameter<std::string>(BT_PARAM, "");
-  bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
-  bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
-  bt_node_->declare_parameter<std::string>(TPP_CONFIG_FILE_PARAM, "");
-  // Home state
   bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
+  bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
+  // General
+  bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
+  bt_node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
+  // Motion groups
+  bt_node_->declare_parameter<std::string>(MOTION_GROUP_PROCESS_PARAM, "");
+  bt_node_->declare_parameter<std::string>(MOTION_GROUP_FREESPACE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(MOTION_GROUP_SCAN_PARAM, "");
+  // Frames
+  bt_node_->declare_parameter<std::string>(FRAME_REF_PARAM, "");
+  bt_node_->declare_parameter<std::string>(FRAME_TCP_PARAM, "");
+  bt_node_->declare_parameter<std::string>(FRAME_CAMERA_PARAM, "");
+  // Scan
+  bt_node_->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_MESH_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(SCAN_TPP_CONFIG_FILE_PARAM, "");
+  // Process
+  bt_node_->declare_parameter<std::string>(PROCESS_MESH_FILE_PARAM, "");
+  bt_node_->declare_parameter<std::string>(PROCESS_TPP_CONFIG_FILE_PARAM, "");
+  // Home state
   bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, std::vector<double>{});
   bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, std::vector<std::string>{});
+  // Industrial Reconstruction
+  bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
+  bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
+  bt_node_->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
+  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
+  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
+  bt_node_->declare_parameter<bool>(IR_LIVE_PARAM, true);
+  bt_node_->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
+  bt_node_->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
+  bt_node_->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);
+  bt_node_->declare_parameter<int>(IR_MIN_FACES_PARAM, 0);
+  bt_node_->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM, "");
 
   ui_->setupUi(this);
   ui_->group_box_operation->setEnabled(false);
@@ -226,15 +296,6 @@ std::unique_ptr<BT::BehaviorTreeFactory> SNPWidget::createBTFactory(int ros_time
     for (const std::string& plugin : bt_ros_plugins)
       RegisterRosNode(*bt_factory, std::filesystem::path(plugin), ros_params);
   }
-
-  // Get joint trajectory action topic name from parameter and store it in the blackboard
-  board_->set(FOLLOW_JOINT_TRAJECTORY_ACTION,
-              snp_application::get_parameter<std::string>(bt_node_, FOLLOW_JOINT_TRAJECTORY_ACTION));
-
-  sensor_msgs::msg::JointState home_state;
-  home_state.name = snp_application::get_parameter<std::vector<std::string>>(bt_node_, HOME_STATE_JOINT_NAMES_PARAM);
-  home_state.position = snp_application::get_parameter<std::vector<double>>(bt_node_, HOME_STATE_JOINT_VALUES_PARAM);
-  board_->set(HOME_STATE_NAME, home_state);
 
   return bt_factory;
 }
