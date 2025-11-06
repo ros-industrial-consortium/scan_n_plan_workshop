@@ -11,7 +11,7 @@ ButtonMonitorNode::ButtonMonitorNode(const std::string& name, const BT::NodeConf
   auto button_key = getBTInput<std::string>(this, BUTTON_PORT_KEY);
   auto* button = this->config().blackboard->get<QAbstractButton*>(button_key);
 
-  QObject::connect(button, &QAbstractButton::clicked, [this, button_key](const bool) { ok_ = false; });
+  QObject::connect(button, &QAbstractButton::clicked, [this](const bool) { ok_ = false; });
 }
 
 BT::NodeStatus ButtonMonitorNode::tick()
