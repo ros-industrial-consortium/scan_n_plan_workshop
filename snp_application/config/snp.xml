@@ -20,6 +20,10 @@
           <GetCurrentJointState name="Get Current Joint State"
                                 topic_name="/joint_states"
                                 current_state="{current_state}"/>
+          <CreateJointStateMessage name="Create Joint State Message"
+                                   joint_names="{home_state_joint_names}"
+                                   joint_positions="{home_state_joint_positions}"
+                                   joint_state="{home_state}"/>
           <GenerateFreespaceMotionPlanService name="Plan Motion"
                                               service_name="generate_freespace_motion_plan"
                                               motion_group="{freespace_motion_group}"
@@ -296,6 +300,15 @@
       <input_port name="first"/>
       <input_port name="second"/>
       <output_port name="output"/>
+    </Action>
+    <Action ID="CreateJointStateMessage"
+            editable="true">
+      <input_port name="joint_names"
+                  default="{joint_names}"/>
+      <input_port name="joint_positions"
+                  default="{joint_positions}"/>
+      <output_port name="joint_state"
+                   default="{joint_state}"/>
     </Action>
     <Action ID="EmptyService"
             editable="true">

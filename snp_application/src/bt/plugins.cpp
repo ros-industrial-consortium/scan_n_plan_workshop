@@ -1,5 +1,6 @@
 #include <snp_application/bt/button_approval_node.h>
 #include <snp_application/bt/button_monitor_node.h>
+#include <snp_application/bt/create_joint_state_message.h>
 #include <snp_application/bt/progress_decorator_node.h>
 #include <snp_application/bt/set_page_decorator_node.h>
 #include <snp_application/bt/snp_bt_ros_nodes.h>
@@ -11,6 +12,7 @@ BT_REGISTER_NODES(factory)
 {
   factory.registerNodeType<snp_application::ButtonApprovalNode>("ButtonApproval");
   factory.registerNodeType<snp_application::ButtonMonitorNode>("ButtonMonitor");
+  factory.registerNodeType<snp_application::CreateJointStateMessage>("CreateJointStateMessage");
   factory.registerNodeType<snp_application::ProgressDecoratorNode>("Progress");
   factory.registerNodeType<snp_application::SetPageDecoratorNode>("SetPage");
   factory.registerNodeType<snp_application::SNPSequenceWithMemory>("SNPSequenceWithMemory");

@@ -20,6 +20,11 @@
             <input_port name="second"/>
             <output_port name="output"/>
         </Action>
+        <Action ID="CreateJointStateMessage" editable="true">
+            <input_port name="joint_names" default="{joint_names}"/>
+            <input_port name="joint_positions" default="{joint_positions}"/>
+            <output_port name="joint_state" default="{joint_state}"/>
+        </Action>
         <Action ID="EmptyService" editable="true">
             <input_port name="service_name"/>
         </Action>
