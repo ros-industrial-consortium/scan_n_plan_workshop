@@ -166,12 +166,12 @@ public:
 class GenerateMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>
 {
 public:
-  inline static std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
-  inline static std::string MOTION_GROUP_INPUT_PORT_KEY = "motion_group";
-  inline static std::string TCP_FRAME_INPUT_PORT_KEY = "tcp_frame";
-  inline static std::string APPROACH_OUTPUT_PORT_KEY = "approach";
-  inline static std::string PROCESS_OUTPUT_PORT_KEY = "process";
-  inline static std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
+  inline static const std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
+  inline static const std::string MOTION_GROUP_INPUT_PORT_KEY = "motion_group";
+  inline static const std::string TCP_FRAME_INPUT_PORT_KEY = "tcp_frame";
+  inline static const std::string APPROACH_OUTPUT_PORT_KEY = "approach";
+  inline static const std::string PROCESS_OUTPUT_PORT_KEY = "process";
+  inline static const std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY),
@@ -197,8 +197,8 @@ public:
 class AddScanLinkServiceNode : public SnpRosServiceNode<snp_msgs::srv::AddScanLink>
 {
 public:
-  inline static std::string MESH_FILE_INPUT_PORT_KEY = "mesh_file";
-  inline static std::string MESH_FRAME_INPUT_PORT_KEY = "mesh_frame";
+  inline static const std::string MESH_FILE_INPUT_PORT_KEY = "mesh_file";
+  inline static const std::string MESH_FRAME_INPUT_PORT_KEY = "mesh_frame";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::string>(MESH_FILE_INPUT_PORT_KEY),
@@ -218,11 +218,11 @@ public:
 class GenerateFreespaceMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>
 {
 public:
-  inline static std::string MOTION_GROUP_INPUT_PORT_KEY = "motion_group";
-  inline static std::string TCP_FRAME_INPUT_PORT_KEY = "tcp_frame";
-  inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "start_joint_state";
-  inline static std::string GOAL_JOINT_STATE_INPUT_PORT_KEY = "goal_joint_state";
-  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "trajectory";
+  inline static const std::string MOTION_GROUP_INPUT_PORT_KEY = "motion_group";
+  inline static const std::string TCP_FRAME_INPUT_PORT_KEY = "tcp_frame";
+  inline static const std::string START_JOINT_STATE_INPUT_PORT_KEY = "start_joint_state";
+  inline static const std::string GOAL_JOINT_STATE_INPUT_PORT_KEY = "goal_joint_state";
+  inline static const std::string TRAJECTORY_OUTPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::string>(MOTION_GROUP_INPUT_PORT_KEY),
@@ -268,10 +268,10 @@ public:
 class PlanToolPathServiceNode : public SnpRosServiceNode<noether_ros::srv::PlanToolPath>
 {
 public:
-  inline static std::string CONFIG_FILE_INPUT_PORT_KEY = "config_file";
-  inline static std::string MESH_FILE_INPUT_PORT_KEY = "mesh_file";
-  inline static std::string MESH_FRAME_INPUT_PORT_KEY = "mesh_frame";
-  inline static std::string TOOL_PATHS_OUTPUT_PORT_KEY = "tool_paths";
+  inline static const std::string CONFIG_FILE_INPUT_PORT_KEY = "config_file";
+  inline static const std::string MESH_FILE_INPUT_PORT_KEY = "mesh_file";
+  inline static const std::string MESH_FRAME_INPUT_PORT_KEY = "mesh_frame";
+  inline static const std::string TOOL_PATHS_OUTPUT_PORT_KEY = "tool_paths";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::string>(CONFIG_FILE_INPUT_PORT_KEY),
@@ -294,19 +294,19 @@ class StartReconstructionServiceNode
   : public SnpRosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>
 {
 public:
-  inline static std::string CAMERA_FRAME_INPUT_PORT_KEY = "camera_frame";
-  inline static std::string REF_FRAME_INPUT_PORT_KEY = "ref_frame";
-  inline static std::string VOXEL_LENGTH_INPUT_PORT_KEY = "voxel_length";
-  inline static std::string SDF_TRUNC_INPUT_PORT_KEY = "sdf_trunc";
-  inline static std::string MIN_X_INPUT_PORT_KEY = "min_x";
-  inline static std::string MIN_Y_INPUT_PORT_KEY = "min_y";
-  inline static std::string MIN_Z_INPUT_PORT_KEY = "min_z";
-  inline static std::string MAX_X_INPUT_PORT_KEY = "max_x";
-  inline static std::string MAX_Y_INPUT_PORT_KEY = "max_y";
-  inline static std::string MAX_Z_INPUT_PORT_KEY = "max_z";
-  inline static std::string DEPTH_SCALE_INPUT_PORT_KEY = "depth_scale";
-  inline static std::string DEPTH_TRUNC_INPUT_PORT_KEY = "depth_trunc";
-  inline static std::string LIVE_RECONSTRUCTION_INPUT_PORT_KEY = "live_reconstruction";
+  inline static const std::string CAMERA_FRAME_INPUT_PORT_KEY = "camera_frame";
+  inline static const std::string REF_FRAME_INPUT_PORT_KEY = "ref_frame";
+  inline static const std::string VOXEL_LENGTH_INPUT_PORT_KEY = "voxel_length";
+  inline static const std::string SDF_TRUNC_INPUT_PORT_KEY = "sdf_trunc";
+  inline static const std::string MIN_X_INPUT_PORT_KEY = "min_x";
+  inline static const std::string MIN_Y_INPUT_PORT_KEY = "min_y";
+  inline static const std::string MIN_Z_INPUT_PORT_KEY = "min_z";
+  inline static const std::string MAX_X_INPUT_PORT_KEY = "max_x";
+  inline static const std::string MAX_Y_INPUT_PORT_KEY = "max_y";
+  inline static const std::string MAX_Z_INPUT_PORT_KEY = "max_z";
+  inline static const std::string DEPTH_SCALE_INPUT_PORT_KEY = "depth_scale";
+  inline static const std::string DEPTH_TRUNC_INPUT_PORT_KEY = "depth_trunc";
+  inline static const std::string LIVE_RECONSTRUCTION_INPUT_PORT_KEY = "live_reconstruction";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts(
@@ -332,13 +332,13 @@ public:
 class StopReconstructionServiceNode : public SnpRosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>
 {
 public:
-  inline static std::string ARCHIVE_DIRECTORY_INPUT_PORT_KEY = "archive_directory";
-  inline static std::string MESH_FILE_INPUT_PORT_KEY = "mesh_file";
-  inline static std::string MIN_FACES_INPUT_PORT_KEY = "min_faces";
-  inline static std::string NORMAL_ANGLE_TOLERANCE_INPUT_PORT_KEY = "normal_angle_tolerance";
-  inline static std::string NORMAL_X_INPUT_PORT_KEY = "normal_x";
-  inline static std::string NORMAL_Y_INPUT_PORT_KEY = "normal_y";
-  inline static std::string NORMAL_Z_INPUT_PORT_KEY = "normal_z";
+  inline static const std::string ARCHIVE_DIRECTORY_INPUT_PORT_KEY = "archive_directory";
+  inline static const std::string MESH_FILE_INPUT_PORT_KEY = "mesh_file";
+  inline static const std::string MIN_FACES_INPUT_PORT_KEY = "min_faces";
+  inline static const std::string NORMAL_ANGLE_TOLERANCE_INPUT_PORT_KEY = "normal_angle_tolerance";
+  inline static const std::string NORMAL_X_INPUT_PORT_KEY = "normal_x";
+  inline static const std::string NORMAL_Y_INPUT_PORT_KEY = "normal_y";
+  inline static const std::string NORMAL_Z_INPUT_PORT_KEY = "normal_z";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts(
@@ -361,7 +361,7 @@ public:
 class ToolPathsPubNode : public BT::RosTopicPubNode<geometry_msgs::msg::PoseArray>
 {
 public:
-  inline static std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
+  inline static const std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY) });
@@ -378,7 +378,7 @@ public:
 class MotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
 {
 public:
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
+  inline static const std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
@@ -395,7 +395,7 @@ public:
 class FollowJointTrajectoryActionNode : public SnpRosActionNode<control_msgs::action::FollowJointTrajectory>
 {
 public:
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
+  inline static const std::string TRAJECTORY_INPUT_PORT_KEY = "trajectory";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY) });
@@ -414,10 +414,10 @@ public:
 class UpdateTrajectoryStartStateNode : public BT::SyncActionNode
 {
 public:
-  inline static std::string START_JOINT_STATE_INPUT_PORT_KEY = "joint_state";
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input_trajectory";
-  inline static std::string REPLACEMENT_TOLERANCE_INPUT_KEY = "replacement_tolerance";
-  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
+  inline static const std::string START_JOINT_STATE_INPUT_PORT_KEY = "joint_state";
+  inline static const std::string TRAJECTORY_INPUT_PORT_KEY = "input_trajectory";
+  inline static const std::string REPLACEMENT_TOLERANCE_INPUT_KEY = "replacement_tolerance";
+  inline static const std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
   inline static BT::PortsList providedPorts()
   {
     return { BT::InputPort<sensor_msgs::msg::JointState>(START_JOINT_STATE_INPUT_PORT_KEY),
@@ -440,8 +440,8 @@ protected:
 class ReverseTrajectoryNode : public BT::SyncActionNode
 {
 public:
-  inline static std::string TRAJECTORY_INPUT_PORT_KEY = "input";
-  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
+  inline static const std::string TRAJECTORY_INPUT_PORT_KEY = "input";
+  inline static const std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
   inline static BT::PortsList providedPorts()
   {
     return { BT::InputPort<trajectory_msgs::msg::JointTrajectory>(TRAJECTORY_INPUT_PORT_KEY),
@@ -460,9 +460,9 @@ protected:
 class CombineTrajectoriesNode : public BT::SyncActionNode
 {
 public:
-  inline static std::string FIRST_TRAJECTORY_INPUT_PORT_KEY = "first";
-  inline static std::string SECOND_TRAJECTORY_INPUT_PORT_KEY = "second";
-  inline static std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
+  inline static const std::string FIRST_TRAJECTORY_INPUT_PORT_KEY = "first";
+  inline static const std::string SECOND_TRAJECTORY_INPUT_PORT_KEY = "second";
+  inline static const std::string TRAJECTORY_OUTPUT_PORT_KEY = "output";
   inline static BT::PortsList providedPorts()
   {
     return { BT::InputPort<trajectory_msgs::msg::JointTrajectory>(FIRST_TRAJECTORY_INPUT_PORT_KEY),
@@ -482,7 +482,7 @@ protected:
 class GetCurrentJointStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
 {
 public:
-  inline static std::string JOINT_STATE_OUTPUT_PORT_KEY = "current_state";
+  inline static const std::string JOINT_STATE_OUTPUT_PORT_KEY = "current_state";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::OutputPort<sensor_msgs::msg::JointState>(JOINT_STATE_OUTPUT_PORT_KEY) });
