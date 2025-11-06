@@ -22,6 +22,8 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <trajectory_preview/trajectory_preview_widget.h>
 
+using namespace snp_application;
+
 class TPPDialog : public QDialog
 {
 public:
@@ -88,103 +90,11 @@ protected:
 
 namespace snp_application
 {
-SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
-  : QWidget(parent)
-  , bt_node_(std::make_shared<rclcpp::Node>("snp_application_bt"))
-  , ui_(new Ui::SNPWidget())
-  , board_(BT::Blackboard::create())
+SNPWidget::SNPWidget(rclcpp::Node::SharedPtr node, BT::Blackboard::Ptr blackboard,
+                     BehaviorTreeFactoryGenerator bt_factory_generator, QWidget* parent)
+  : QWidget(parent), blackboard_(blackboard), bt_factory_generator_(bt_factory_generator), ui_(new Ui::SNPWidget())
 {
-  auto fn = [this](const std::vector<rclcpp::Parameter>& parameters) -> rcl_interfaces::msg::SetParametersResult {
-    for (const auto& param : parameters)
-    {
-      switch (param.get_type())
-      {
-        case rcl_interfaces::msg::ParameterType::PARAMETER_BOOL:
-          board_->set(param.get_name(), param.as_bool());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER:
-          board_->set(param.get_name(), param.as_int());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE:
-          board_->set(param.get_name(), param.as_double());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_STRING:
-          board_->set(param.get_name(), param.as_string());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_BYTE_ARRAY:
-          board_->set(param.get_name(), param.as_byte_array());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_BOOL_ARRAY:
-          board_->set(param.get_name(), param.as_bool_array());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY:
-          board_->set(param.get_name(), param.as_integer_array());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE_ARRAY:
-          board_->set(param.get_name(), param.as_double_array());
-          break;
-        case rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY:
-          board_->set(param.get_name(), param.as_string_array());
-          break;
-        default:
-          continue;
-      }
-    }
-
-    rcl_interfaces::msg::SetParametersResult result;
-    result.successful = true;
-    return result;
-  };
-
-  bt_node_->add_on_set_parameters_callback(fn);
-
-  // Declare parameters
-  // General BT parameters
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, std::vector<std::string>{});
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
-  bt_node_->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
-  bt_node_->declare_parameter<std::string>(BT_PARAM, "");
-  bt_node_->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
-  bt_node_->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
-  // General
-  bt_node_->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
-  bt_node_->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
-  // Motion groups
-  bt_node_->declare_parameter<std::string>(MOTION_GROUP_PROCESS_PARAM, "");
-  bt_node_->declare_parameter<std::string>(MOTION_GROUP_FREESPACE_PARAM, "");
-  bt_node_->declare_parameter<std::string>(MOTION_GROUP_SCAN_PARAM, "");
-  // Frames
-  bt_node_->declare_parameter<std::string>(FRAME_REF_PARAM, "");
-  bt_node_->declare_parameter<std::string>(FRAME_TCP_PARAM, "");
-  bt_node_->declare_parameter<std::string>(FRAME_CAMERA_PARAM, "");
-  // Scan
-  bt_node_->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM, "");
-  bt_node_->declare_parameter<std::string>(SCAN_MESH_FILE_PARAM, "");
-  bt_node_->declare_parameter<std::string>(SCAN_TPP_CONFIG_FILE_PARAM, "");
-  // Process
-  bt_node_->declare_parameter<std::string>(PROCESS_MESH_FILE_PARAM, "");
-  bt_node_->declare_parameter<std::string>(PROCESS_TPP_CONFIG_FILE_PARAM, "");
-  // Home state
-  bt_node_->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_VALUES_PARAM, std::vector<double>{});
-  bt_node_->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, std::vector<std::string>{});
-  // Industrial Reconstruction
-  bt_node_->declare_parameter<float>(IR_TSDF_VOXEL_PARAM, 0.01f);
-  bt_node_->declare_parameter<float>(IR_TSDF_SDF_PARAM, 0.03f);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
-  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  bt_node_->declare_parameter<float>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  bt_node_->declare_parameter<bool>(IR_LIVE_PARAM, true);
-  bt_node_->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
-  bt_node_->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);
-  bt_node_->declare_parameter<int>(IR_MIN_FACES_PARAM, 0);
-  bt_node_->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM, "");
+  using namespace snp_application;
 
   ui_->setupUi(this);
   ui_->group_box_operation->setEnabled(false);
@@ -193,7 +103,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
   // Add the TPP widget
   {
-    auto* tpp_dialog = new TPPDialog(bt_node_, this);
+    auto* tpp_dialog = new TPPDialog(node, this);
     tpp_dialog->hide();
     connect(ui_->tool_button_tpp, &QToolButton::clicked, tpp_dialog, &QWidget::show);
   }
@@ -201,7 +111,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   // Add the trajectory preview widget
   {
     auto* preview = new trajectory_preview::TrajectoryPreviewWidget(this);
-    preview->initializeROS(rviz_node, "motion_plan", "preview");
+    preview->initializeROS(node, "motion_plan", "preview");
 
     auto* layout = new QVBoxLayout(ui_->frame_preview_widget);
     layout->addWidget(preview);
@@ -215,7 +125,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   });
 
   // Start
-  connect(ui_->push_button_start, &QPushButton::clicked, [this]() {
+  connect(ui_->push_button_start, &QPushButton::clicked, [this, node]() {
     ui_->push_button_start->setEnabled(false);
     ui_->push_button_reset->setEnabled(true);
     ui_->push_button_home->setEnabled(false);
@@ -225,7 +135,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
     try
     {
-      runTreeWithThread(snp_application::get_parameter<std::string>(bt_node_, BT_PARAM));
+      runTreeWithThread(snp_application::get_parameter<std::string>(node, BT_PARAM));
     }
     catch (const std::exception& ex)
     {
@@ -234,7 +144,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
   });
 
   // Go Home
-  connect(ui_->push_button_home, &QPushButton::clicked, [this]() {
+  connect(ui_->push_button_home, &QPushButton::clicked, [this, node]() {
     ui_->push_button_start->setEnabled(false);
     ui_->push_button_reset->setEnabled(true);
     ui_->push_button_home->setEnabled(false);
@@ -243,7 +153,7 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
 
     try
     {
-      runTreeWithThread(snp_application::get_parameter<std::string>(bt_node_, BT_FREESPACE_PARAM));
+      runTreeWithThread(snp_application::get_parameter<std::string>(node, BT_FREESPACE_PARAM));
     }
     catch (const std::exception& ex)
     {
@@ -256,48 +166,19 @@ SNPWidget::SNPWidget(rclcpp::Node::SharedPtr rviz_node, QWidget* parent)
     ui_->text_edit_log->verticalScrollBar()->setSliderPosition(ui_->text_edit_log->verticalScrollBar()->maximum());
   });
 
-  // Set the error message key in the blackboard
-  board_->set(ERROR_MESSAGE_KEY, "");
-
   // Populate the blackboard with buttons
-  board_->set("stacked_widget", ui_->stacked_widget);
-  board_->set("progress_bar", ui_->progress_bar);
-  board_->set("reset", static_cast<QAbstractButton*>(ui_->push_button_reset));
-  board_->set("halt", static_cast<QAbstractButton*>(ui_->push_button_halt));
+  blackboard_->set("stacked_widget", ui_->stacked_widget);
+  blackboard_->set("progress_bar", ui_->progress_bar);
+  blackboard_->set("reset", static_cast<QAbstractButton*>(ui_->push_button_reset));
+  blackboard_->set("halt", static_cast<QAbstractButton*>(ui_->push_button_halt));
 
-  board_->set("back", static_cast<QAbstractButton*>(ui_->push_button_back));
-  board_->set("scan", static_cast<QAbstractButton*>(ui_->push_button_scan));
-  board_->set("tpp", static_cast<QAbstractButton*>(ui_->push_button_tpp));
-  board_->set("plan", static_cast<QAbstractButton*>(ui_->push_button_motion_plan));
-  board_->set("execute", static_cast<QAbstractButton*>(ui_->push_button_motion_execution));
-  board_->set("tpp_config", static_cast<QAbstractButton*>(ui_->tool_button_tpp));
-  board_->set("skip_scan", false);
-}
-
-std::unique_ptr<BT::BehaviorTreeFactory> SNPWidget::createBTFactory(int ros_timeout)
-{
-  auto bt_factory = std::make_unique<BT::BehaviorTreeFactory>();
-
-  // Register non-ROS plugins
-  {
-    auto bt_plugins = get_parameter<std::vector<std::string>>(bt_node_, BT_PLUGIN_LIBS_PARAM);
-    for (const std::string& plugin : bt_plugins)
-      bt_factory->registerFromPlugin(std::filesystem::path(plugin));
-  }
-
-  // Register ROS plugins
-  {
-    BT::RosNodeParams ros_params;
-    ros_params.nh = bt_node_;
-    ros_params.wait_for_server_timeout = std::chrono::seconds(0);
-    ros_params.server_timeout = std::chrono::seconds(ros_timeout);
-
-    auto bt_ros_plugins = get_parameter<std::vector<std::string>>(bt_node_, BT_ROS_PLUGIN_LIBS_PARAM);
-    for (const std::string& plugin : bt_ros_plugins)
-      RegisterRosNode(*bt_factory, std::filesystem::path(plugin), ros_params);
-  }
-
-  return bt_factory;
+  blackboard_->set("back", static_cast<QAbstractButton*>(ui_->push_button_back));
+  blackboard_->set("scan", static_cast<QAbstractButton*>(ui_->push_button_scan));
+  blackboard_->set("tpp", static_cast<QAbstractButton*>(ui_->push_button_tpp));
+  blackboard_->set("plan", static_cast<QAbstractButton*>(ui_->push_button_motion_plan));
+  blackboard_->set("execute", static_cast<QAbstractButton*>(ui_->push_button_motion_execution));
+  blackboard_->set("tpp_config", static_cast<QAbstractButton*>(ui_->tool_button_tpp));
+  blackboard_->set("skip_scan", false);
 }
 
 void SNPWidget::runTreeWithThread(const std::string& bt_tree_name)
@@ -307,17 +188,13 @@ void SNPWidget::runTreeWithThread(const std::string& bt_tree_name)
     auto* thread = new BTThread(this);
 
     // Create the BT factory
-    std::unique_ptr<BT::BehaviorTreeFactory> bt_factory =
-        createBTFactory(get_parameter<int>(bt_node_, BT_TIMEOUT_PARAM));
+    std::unique_ptr<BT::BehaviorTreeFactory> bt_factory = bt_factory_generator_();
 
-    auto bt_files = get_parameter<std::vector<std::string>>(bt_node_, BT_FILES_PARAM);
-    if (bt_files.empty())
-      throw std::runtime_error("Parameter '" + std::string(BT_FILES_PARAM) + "' is empty");
+    // Create the behavior tree
+    // Use the blackboard from the BT node directly because it can receive updates when ROS2 parameters are changed
+    thread->tree = bt_factory->createTree(bt_tree_name, blackboard_);
 
-    for (const std::string& file : bt_files)
-      bt_factory->registerBehaviorTreeFromFile(file);
-
-    thread->tree = bt_factory->createTree(bt_tree_name, board_);
+    // Create a logger to capture output from the behavior tree for display to the user through the text edit in the UI
     logger_ = std::make_shared<TextEditLogger>(thread->tree.rootNode(), ui_->text_edit_log);
 
     connect(thread, &BTThread::finished, [thread, this]() {

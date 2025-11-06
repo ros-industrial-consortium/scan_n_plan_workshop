@@ -70,6 +70,7 @@ ament_target_dependencies(
 # Widget
 add_library(
   ${PROJECT_NAME}_widget SHARED
+  src/snp_behavior_tree.cpp
   src/snp_widget.ui
   src/snp_widget.cpp
   # BT

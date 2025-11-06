@@ -14,11 +14,20 @@ public:
   {
     try
     {
-      auto rviz_node = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+      auto node = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
-      auto layout = new QVBoxLayout();
-      layout->addWidget(new snp_application::SNPWidget(rviz_node, this));
-      setLayout(layout);
+      // Create a BT blackboard
+      // This blackboard declares parameters in the node that correspond directly to entries required in the blackboard
+      // When the parameters are updated, the entries in the blackboard also get updated
+      auto blackboard = std::make_shared<SnpBlackboard>(node);
+
+      // Use a BT factory generation function that loads BT plugin libraries specified by ROS parameter and registers BT
+      // files specified by ROS parameter
+      BehaviorTreeFactoryGenerator bt_factory_gen = std::bind(generateBehaviorTreeFactory, node);
+
+      auto* widget = new snp_application::SNPWidget(node, blackboard, bt_factory_gen, this);
+      auto layout = new QVBoxLayout(this);
+      layout->addWidget(widget);
     }
     catch (const std::exception& ex)
     {
