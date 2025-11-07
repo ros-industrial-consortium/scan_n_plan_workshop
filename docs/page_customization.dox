@@ -1,0 +1,19 @@
+/**
+@page customization Customization
+
+@section behavior_tree Behavior Tree
+
+Scan-N-Plan application workflows are built using behavior trees.
+This repository provides many custom behavior tree nodes (e.g., capabilities) that can be used to construct custom application workflows.
+See @ref bt_plugins for more information about the behavior tree nodes provided in this repository.
+
+@section deployments Deployments
+
+Several complete Scan-N-Plan applications based on this repository can be found in the following repositories:
+
+- <a href="https://github.com/ros-industrial-consortium/snp_automate_2022">Automate 2022</a>
+- <a href="https://github.com/ros-industrial-consortium/snp_automate_2023">Automate 2023</a>
+- <a href="https://github.com/ros-industrial-consortium/snp_blending">Robotic Blending Milestone 5 (SwRI)</a>
+- <a href="https://github.com/ros-industrial-consortium/blending_m5_sfsa">Robotic Blending Milestone 5 (SFSA)</a>
+
+*/

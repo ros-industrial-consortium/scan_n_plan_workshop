@@ -1,0 +1,45 @@
+/**
+@page about About
+
+The term `Scan-N-Plan` generally describes a perception-driven approach for performing surface processing manufacturing tasks (e.g., painting, sanding, grinding) in a dynamic, unstructured environment using a robot.
+
+@section supporting_projects Supporting Projects
+
+This repository builds on capabilities from the following supporting projects:
+
+- Sensor Calibration
+  - <a href="https://github.com/ros-industrial/industrial_calibration">Industrial Calibration</a>
+  - <a href="https://github.com/ros-industrial/industrial_calibration_ros2">Industrial Calibration ROS2 </a>
+- Surface Reconstruction
+  - <a href="https://github.com/ros-industrial/industrial_reconstruction">Industrial Reconstruction</a>
+- Tool Path Planning
+  - <a href="https://github.com/ros-industrial/noether">Noether</a>
+- Motion Planning
+  - <a href="https://github.com/tesseract-robotics">Tesseract</a>
+  - <a href="https://github.com/tesseract-robotics/trajopt">Trajopt</a>
+  - <a href="https://github.com/ompl/ompl">OMPL</a>
+  - <a href="https://github.com/swri-robotics/descartes">Descartes</a>
+- Application
+  - <a href="https://github.com/BehaviorTree/BehaviorTree.CPP">BehaviorTree.CPP</a>
+  - <a href="https://github.com/BehaviorTree/BehaviorTree.ROS2">BehaviorTree.ROS2</a>
+
+@section history History
+
+The concept of `Scan-N-Plan` has gone through several iterations of development during the lifetime of the ROS-Industrial project.
+See the following projects for more details.
+
+- <a href="https://github.com/ros-industrial-attic/godel">Godel</a>
+  - ROS-I Consortium Blending FTP (2014 - 2017)
+    - Milestones 1, 2
+    - <a href="https://www.youtube.com/watch?v=C3J_1A_H3IE">Milestone 3</a>
+    - <a href="https://www.youtube.com/watch?v=PWCpehyKnTY&t=53s">Milestone 4</a>
+- <a href="https://github.com/a5-robotics/A5">A5</a>
+  - Advanced Automation for Agile Aerospace Applications, Milestones 1-2 (2017-2023)
+  - ARM Institute: <a href="https://arminstitute.org/news/project-highlight-mobile-autonomous-coating-application-for-aircraft-sustainment/">Mobile Autonomous Coating Application for Aircraft Sustainment</a>
+  - ARM Institute: <a href="https://arminstitute.org/news/project-highlight-autonomous-coating-with-realtime-control-and-inspection/">Autonomous Coating with Realtime Control and Inspection</a>
+- <a href="https://github.com/ros-industrial-consortium/scan_n_plan_workshop">Scan-N-Plan Workshop</a>
+  - ROSCon Workshop (2021)
+  - ROS-I Consortium Blending FTP (2023 - present)
+    - <a href="https://www.youtube.com/watch?v=ZXxll0hqFuE&t=1s">Milestone 5</a>
+
+*/

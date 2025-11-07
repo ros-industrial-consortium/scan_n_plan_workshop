@@ -1,0 +1,40 @@
+/**
+@page getting_started Getting Started
+
+Scan-N-Plan workshop is built on <a href="https://docs.ros.org/en/jazzy/index.html">ROS2</a>.
+First follow the <a href="https://docs.ros.org/en/jazzy/Installation.html">instructions for installing ROS2</a>.
+
+@section build_setup Build Setup
+
+First, create a `colcon` workspace (henceforth referred to as `<snp_workspace>`) and clone this repository into it.
+Navigate into the root of the workspace.
+
+@code{bash}
+cd <snp_workspace>
+@endcode
+
+Install the source dependencies using `vcs`.
+
+@code{bash}
+vcs import --shallow --debug src < src/scan_n_plan_workshop/dependencies_tesseract.repos
+vcs import --shallow --debug src < src/scan_n_plan_workshop/dependencies.repos
+@endcode
+
+Install the distributed dependencies using `rosdep`.
+
+@code{bash}
+source /opt/ros/<distro>/setup.bash
+rosdep install --from-paths src -iry
+@endcode
+
+@note Some `rosdep` dependencies specified by `tesseract` may be not resolved, but it is generally okay to ignore these if building with the command specified below.
+
+@section build Build
+
+Build the repository with the following command (including a few CMake arguments to ignore modules of `tesseract` that are not needed)
+
+@code{bash}
+colcon build --cmake-args -DTESSERACT_BUILD_FCL=OFF -DBUILD_RENDERING=OFF
+@endcode
+
+*/
