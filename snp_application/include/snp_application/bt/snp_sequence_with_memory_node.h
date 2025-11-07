@@ -25,6 +25,7 @@ namespace snp_application
  * halts or failures
  * @details In the case that a child node fails, the sequence re-enters at the node prior to the one that failed.
  * In the case that the sequence is halted, the sequence re-enters at the node where the sequence was halted
+ * @ingroup bt_plugins
  */
 class SNPSequenceWithMemory : public BT::ControlNode
 {

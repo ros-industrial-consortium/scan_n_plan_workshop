@@ -12,6 +12,7 @@ namespace snp_application
  * @details Pointers (QAbstractButton*) to the buttons are provided via the blackboard using the keys defined in the
  * input ports When the node is active and the "approve" button is pressed, the node returns success. When the node is
  * active and the "disapprove" button is pressed, the node returns failure.
+ * @ingroup bt_plugins
  */
 class ButtonApprovalNode : public BT::StatefulActionNode
 {

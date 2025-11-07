@@ -1,0 +1,36 @@
+/**
+@mainpage
+
+<a href="https://github.com/ros-industrial-consortium/scan_n_plan_workshop">Scan-N-Plan Workshop</a> provides a ROS2-based software framework for performing perception-based surface processing applications in which a robot:
+- Executes a scan path with a depth camera
+- Reconstructs the surface of the objects observed by the camera
+- Plans a tool path on the reconstructed surface
+- Plans robot motions to execute the tool path
+- Executes the process path
+
+@image html static/snp_automate_2023.png
+
+<b>ROS2 Support</b>
+
+| Distro  | Ubuntu  |
+| :------ | ------: |
+| Humble  |    ✅    |
+| Jazzy   |    ✅    |
+| Rolling |    ❌    |
+
+<b>Contents</b>
+
+- @subpage about
+- @subpage architecture
+- @subpage getting_started
+- @subpage customization
+
+*/
+
+// Define groups
+/**
+  @defgroup bt_plugins Behavior Tree Plugins
+  @{
+    @brief Behavior tree plugins for constructing Scan-N-Plan application workflows
+  @}
+*/

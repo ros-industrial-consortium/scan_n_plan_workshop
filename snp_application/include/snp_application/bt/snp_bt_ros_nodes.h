@@ -21,6 +21,11 @@
 
 namespace snp_application
 {
+/**
+ * @brief Wrapper around the ROS service node that writes error messages to the ERROR_MESSAGE_KEY in the behavior tree
+ * blackboard.
+ * @ingroup bt_plugins
+ */
 template <typename T>
 class SnpRosServiceNode : public BT::RosServiceNode<T>
 {
@@ -68,6 +73,11 @@ public:
   }
 };
 
+/**
+ * @brief Wrapper around the ROS action node that writes error messages to the ERROR_MESSAGE_KEY in the behavior tree
+ * blackboard.
+ * @ingroup bt_plugins
+ */
 template <typename T>
 class SnpRosActionNode : public BT::RosActionNode<T>
 {
@@ -121,6 +131,10 @@ public:
   }
 };
 
+/**
+ * @brief Calls a `std_srvs/Trigger` service
+ * @ingroup bt_plugins
+ */
 class TriggerServiceNode : public SnpRosServiceNode<std_srvs::srv::Trigger>
 {
 public:
@@ -131,6 +145,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `std_srvs/Empty` service
+ * @ingroup bt_plugins
+ */
 class EmptyServiceNode : public SnpRosServiceNode<std_srvs::srv::Empty>
 {
 public:
@@ -141,6 +159,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `snp_msgs/GenerateMotionPlan` service
+ * @ingroup bt_plugins
+ */
 class GenerateMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>
 {
 public:
@@ -162,6 +184,12 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `snp_msgs/AddScanLink` service
+ * @details The function of this service is to add a collision object (e.g., a surface reconstruction mesh) to the
+ * motion planning environment
+ * @ingroup bt_plugins
+ */
 class AddScanLinkServiceNode : public SnpRosServiceNode<snp_msgs::srv::AddScanLink>
 {
 public:
@@ -172,6 +200,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `snp_msgs/GenerateFreespaceMotionPlan` service
+ * @ingroup bt_plugins
+ */
 class GenerateFreespaceMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateFreespaceMotionPlan>
 {
 public:
@@ -191,6 +223,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `snp_msgs/GenerateScanMotionPlan` service
+ * @ingroup bt_plugins
+ */
 class GenerateScanMotionPlanServiceNode : public SnpRosServiceNode<snp_msgs::srv::GenerateScanMotionPlan>
 {
 public:
@@ -210,6 +246,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `noether_ros/PlanToolPath` service
+ * @ingroup bt_plugins
+ */
 class PlanToolPathServiceNode : public SnpRosServiceNode<noether_ros::srv::PlanToolPath>
 {
 public:
@@ -225,6 +265,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `industrial_reconstruction_msgs/StartReconstruction` service
+ * @ingroup bt_plugins
+ */
 class StartReconstructionServiceNode
   : public SnpRosServiceNode<industrial_reconstruction_msgs::srv::StartReconstruction>
 {
@@ -236,6 +280,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Calls a `industrial_reconstruction_msgs/StopReconstruction` service
+ * @ingroup bt_plugins
+ */
 class StopReconstructionServiceNode : public SnpRosServiceNode<industrial_reconstruction_msgs::srv::StopReconstruction>
 {
 public:
@@ -246,6 +294,10 @@ public:
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
 };
 
+/**
+ * @brief Publishes a `geometry_msgs/PoseArray` message (e.g., to visualize a tool path)
+ * @ingroup bt_plugins
+ */
 class ToolPathsPubNode : public BT::RosTopicPubNode<geometry_msgs::msg::PoseArray>
 {
 public:
@@ -259,6 +311,10 @@ public:
   bool setMessage(geometry_msgs::msg::PoseArray& msg) override;
 };
 
+/**
+ * @brief Publishes a `trajectory_msgs/JointTrajectory` message (e.g., for visualizing a planned motion)
+ * @ingroup bt_plugins
+ */
 class MotionPlanPubNode : public BT::RosTopicPubNode<trajectory_msgs::msg::JointTrajectory>
 {
 public:
@@ -272,6 +328,10 @@ public:
   bool setMessage(trajectory_msgs::msg::JointTrajectory& msg) override;
 };
 
+/**
+ * @brief Calls a `control_msgs/FollowJointTrajectory` action
+ * @ingroup bt_plugins
+ */
 class FollowJointTrajectoryActionNode : public SnpRosActionNode<control_msgs::action::FollowJointTrajectory>
 {
 public:
@@ -286,6 +346,11 @@ public:
   BT::NodeStatus onResultReceived(const WrappedResult& result) override;
 };
 
+/**
+ * @brief Updates the start state of the input trajectory with the current state of the robot, assuming the two are
+ * within some threshold of one another
+ * @ingroup bt_plugins
+ */
 class UpdateTrajectoryStartStateNode : public BT::SyncActionNode
 {
 public:
@@ -306,6 +371,10 @@ protected:
   rclcpp::Node::SharedPtr node_;
 };
 
+/**
+ * @brief Reverses a trajectory
+ * @ingroup bt_plugins
+ */
 class ReverseTrajectoryNode : public BT::SyncActionNode
 {
 public:
@@ -322,6 +391,10 @@ protected:
   BT::NodeStatus tick() override;
 };
 
+/**
+ * @brief Concatenates two trajectories into a single trajectory
+ * @ingroup bt_plugins
+ */
 class CombineTrajectoriesNode : public BT::SyncActionNode
 {
 public:
@@ -340,6 +413,10 @@ protected:
   BT::NodeStatus tick() override;
 };
 
+/**
+ * @brief Subscribes to a `sensor_msgs/JointState` topic to extract the current joint state of the robot
+ * @ingroup bt_plugins
+ */
 class GetCurrentJointStateNode : public BT::RosTopicSubNode<sensor_msgs::msg::JointState>
 {
 public:
@@ -355,6 +432,7 @@ public:
 
 /**
  * @brief Condition node for spinning the BT ROS node to keep it accessible for parameter updates, service calls, etc.
+ * @ingroup bt_plugins
  */
 class RosSpinnerNode : public BT::ConditionNode
 {

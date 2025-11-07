@@ -1,0 +1,34 @@
+/**
+@page architecture Architecture
+
+@image html static/architecture.png
+
+@section core_packages Core Packages
+
+@subsection snp_msgs snp_msgs
+
+Contains ROS2 message and service definitions generating tool paths and motion plans.
+
+@subsection snp_application snp_application
+
+Contains a GUI application `Qt` widget, behavior tree plugins, and behavior tree configuration files
+
+@subsection snp_tpp snp_tpp
+
+Contains custom tool path planning GUI widgets and source code for the region of interest selection mesh modifier and SNP-specific raster tool path planner
+
+@subsection snp_motion_planning snp_motion_planning
+
+Contains a planning server based on `tesseract` for generating freespace and process motions; contains custom `tesseract` inverse kinematics plugins, planning task plugins, and planner profiles
+
+@section simulation_packages Simulation Packages
+
+@subsection snp_motion_execution snp_motion_execution
+
+Contains files to simulate robotic motion
+
+@subsection snp_scanning snp_scanning
+
+Contains files to convert a YAML file into a robot scan path and to simulate `industrial_reconstruction`
+
+*/

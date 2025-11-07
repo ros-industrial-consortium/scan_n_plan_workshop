@@ -8,6 +8,7 @@ namespace snp_application
 {
 /**
  * @brief Logs a subset of node status changes to a Qt text edit widget
+ * @ingroup bt_plugins
  */
 class TextEditLogger : public BT::StatusChangeLogger
 {
