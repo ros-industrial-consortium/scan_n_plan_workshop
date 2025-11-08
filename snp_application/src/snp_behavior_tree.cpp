@@ -60,50 +60,50 @@ SnpBlackboard::SnpBlackboard(rclcpp::Node::SharedPtr node, BT::Blackboard::Ptr p
 
   // Declare parameters
   // General BT parameters
-  node->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM, std::vector<std::string>{});
-  node->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
-  node->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM, std::vector<std::string>{});
-  node->declare_parameter<std::string>(BT_PARAM, "");
-  node->declare_parameter<std::string>(BT_FREESPACE_PARAM, "");
-  node->declare_parameter<int>(BT_TIMEOUT_PARAM, 6000);  // seconds
+  node->declare_parameter<std::vector<std::string>>(BT_FILES_PARAM);
+  node->declare_parameter<std::vector<std::string>>(BT_PLUGIN_LIBS_PARAM);
+  node->declare_parameter<std::vector<std::string>>(BT_ROS_PLUGIN_LIBS_PARAM);
+  node->declare_parameter<std::string>(BT_PARAM);
+  node->declare_parameter<std::string>(BT_FREESPACE_PARAM);
+  node->declare_parameter<int>(BT_TIMEOUT_PARAM);  // seconds
   // General
-  node->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION, "follow_joint_trajectory");
-  node->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM, 1.0 * M_PI / 180.0);
+  node->declare_parameter<std::string>(FOLLOW_JOINT_TRAJECTORY_ACTION);
+  node->declare_parameter<double>(START_STATE_REPLACEMENT_TOLERANCE_PARAM);
   // Home state
-  node->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM, std::vector<std::string>{});
-  node->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_POSITIONS_PARAM, std::vector<double>{});
-  node->declare_parameter<std::string>(FREESPACE_MOTION_GROUP_PARAM, "");
+  node->declare_parameter<std::vector<std::string>>(HOME_STATE_JOINT_NAMES_PARAM);
+  node->declare_parameter<std::vector<double>>(HOME_STATE_JOINT_POSITIONS_PARAM);
+  node->declare_parameter<std::string>(FREESPACE_MOTION_GROUP_PARAM);
   // Frames
-  node->declare_parameter<std::string>(REF_FRAME_PARAM, "");
-  node->declare_parameter<std::string>(TCP_FRAME_PARAM, "");
-  node->declare_parameter<std::string>(CAMERA_FRAME_PARAM, "");
+  node->declare_parameter<std::string>(REF_FRAME_PARAM);
+  node->declare_parameter<std::string>(TCP_FRAME_PARAM);
+  node->declare_parameter<std::string>(CAMERA_FRAME_PARAM);
   // Scan
-  node->declare_parameter<std::string>(SCAN_MOTION_GROUP_PARAM, "");
-  node->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM, "");
-  node->declare_parameter<std::string>(SCAN_MESH_FILE_PARAM, "");
-  node->declare_parameter<std::string>(SCAN_TPP_CONFIG_FILE_PARAM, "");
+  node->declare_parameter<std::string>(SCAN_MOTION_GROUP_PARAM);
+  node->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM);
+  node->declare_parameter<std::string>(SCAN_MESH_FILE_PARAM);
+  node->declare_parameter<std::string>(SCAN_TPP_CONFIG_FILE_PARAM);
   // Process
-  node->declare_parameter<std::string>(PROCESS_MOTION_GROUP_PARAM, "");
-  node->declare_parameter<std::string>(PROCESS_MESH_FILE_PARAM, "");
-  node->declare_parameter<std::string>(PROCESS_TPP_CONFIG_FILE_PARAM, "");
+  node->declare_parameter<std::string>(PROCESS_MOTION_GROUP_PARAM);
+  node->declare_parameter<std::string>(PROCESS_MESH_FILE_PARAM);
+  node->declare_parameter<std::string>(PROCESS_TPP_CONFIG_FILE_PARAM);
   // Industrial Reconstruction
-  node->declare_parameter<double>(IR_TSDF_VOXEL_PARAM, 0.01);
-  node->declare_parameter<double>(IR_TSDF_SDF_PARAM, 0.03);
-  node->declare_parameter<double>(IR_TSDF_MIN_X_PARAM, 0.0);
-  node->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM, 0.0);
-  node->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM, 0.0);
-  node->declare_parameter<double>(IR_TSDF_MAX_X_PARAM, 0.0);
-  node->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM, 0.0);
-  node->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM, 0.0);
-  node->declare_parameter<double>(IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  node->declare_parameter<double>(IR_RGBD_DEPTH_TRUNC_PARAM, 1.1);
-  node->declare_parameter<bool>(IR_LIVE_PARAM, true);
-  node->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM, -1.0);
-  node->declare_parameter<double>(IR_NORMAL_X_PARAM, 0.0);
-  node->declare_parameter<double>(IR_NORMAL_Y_PARAM, 0.0);
-  node->declare_parameter<double>(IR_NORMAL_Z_PARAM, 1.0);
-  node->declare_parameter<long>(IR_MIN_FACES_PARAM, 0);
-  node->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM, "");
+  node->declare_parameter<double>(IR_TSDF_VOXEL_PARAM);
+  node->declare_parameter<double>(IR_TSDF_SDF_PARAM);
+  node->declare_parameter<double>(IR_TSDF_MIN_X_PARAM);
+  node->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM);
+  node->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM);
+  node->declare_parameter<double>(IR_TSDF_MAX_X_PARAM);
+  node->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM);
+  node->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM);
+  node->declare_parameter<double>(IR_RGBD_DEPTH_SCALE_PARAM);
+  node->declare_parameter<double>(IR_RGBD_DEPTH_TRUNC_PARAM);
+  node->declare_parameter<bool>(IR_LIVE_PARAM);
+  node->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM);
+  node->declare_parameter<double>(IR_NORMAL_X_PARAM);
+  node->declare_parameter<double>(IR_NORMAL_Y_PARAM);
+  node->declare_parameter<double>(IR_NORMAL_Z_PARAM);
+  node->declare_parameter<long>(IR_MIN_FACES_PARAM);
+  node->declare_parameter<std::string>(IR_ARCHIVE_DIR_PARAM);
 }
 
 std::unique_ptr<BT::BehaviorTreeFactory> generateBehaviorTreeFactory(rclcpp::Node::SharedPtr node)
