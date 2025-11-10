@@ -30,9 +30,8 @@ BT::NodeStatus EmptyServiceNode::onResponseReceived(const typename Response::Sha
 bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   request->tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
-
-  request->motion_group = get_parameter<std::string>(node_.lock(), MOTION_GROUP_PARAM);
-  request->tcp_frame = get_parameter<std::string>(node_.lock(), TCP_FRAME_PARAM);
+  request->motion_group = getBTInput<std::string>(this, MOTION_GROUP_INPUT_PORT_KEY);
+  request->tcp_frame = getBTInput<std::string>(this, TCP_FRAME_INPUT_PORT_KEY);
 
   return true;
 }
@@ -58,8 +57,8 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
 
 bool AddScanLinkServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->mesh_filename = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
-  request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
+  request->mesh_filename = getBTInput<std::string>(this, MESH_FILE_INPUT_PORT_KEY);
+  request->mesh_frame = getBTInput<std::string>(this, MESH_FRAME_INPUT_PORT_KEY);
   return true;
 }
 
@@ -85,11 +84,11 @@ sensor_msgs::msg::JointState jointTrajectoryPointToJointState(const trajectory_m
 
 bool GenerateFreespaceMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->js1 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
-  request->js2 = snp_application::getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
+  request->js1 = getBTInput<sensor_msgs::msg::JointState>(this, START_JOINT_STATE_INPUT_PORT_KEY);
+  request->js2 = getBTInput<sensor_msgs::msg::JointState>(this, GOAL_JOINT_STATE_INPUT_PORT_KEY);
 
-  request->motion_group = get_parameter<std::string>(node_.lock(), FREESPACE_MOTION_GROUP_PARAM);
-  request->tcp_frame = get_parameter<std::string>(node_.lock(), TCP_FRAME_PARAM);
+  request->motion_group = getBTInput<std::string>(this, MOTION_GROUP_INPUT_PORT_KEY);
+  request->tcp_frame = getBTInput<std::string>(this, TCP_FRAME_INPUT_PORT_KEY);
 
   return true;
 }
@@ -134,9 +133,9 @@ bool PlanToolPathServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   try
   {
-    request->config = get_parameter<std::string>(node_.lock(), TPP_CONFIG_FILE_PARAM);
-    request->mesh_file = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
-    request->mesh_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
+    request->config = getBTInput<std::string>(this, CONFIG_FILE_INPUT_PORT_KEY);
+    request->mesh_file = getBTInput<std::string>(this, MESH_FILE_INPUT_PORT_KEY);
+    request->mesh_frame = getBTInput<std::string>(this, MESH_FRAME_INPUT_PORT_KEY);
 
     return true;
   }
@@ -182,19 +181,19 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->tracking_frame = get_parameter<std::string>(node_.lock(), CAMERA_FRAME_PARAM);
-  request->relative_frame = get_parameter<std::string>(node_.lock(), REF_FRAME_PARAM);
-  request->tsdf_params.voxel_length = get_parameter_or<float>(node_.lock(), IR_TSDF_VOXEL_PARAM, 0.01f);
-  request->tsdf_params.sdf_trunc = get_parameter_or<float>(node_.lock(), IR_TSDF_SDF_PARAM, 0.03f);
-  request->tsdf_params.min_box_values.x = get_parameter_or<double>(node_.lock(), IR_TSDF_MIN_X_PARAM, 0.0);
-  request->tsdf_params.min_box_values.y = get_parameter_or<double>(node_.lock(), IR_TSDF_MIN_Y_PARAM, 0.0);
-  request->tsdf_params.min_box_values.z = get_parameter_or<double>(node_.lock(), IR_TSDF_MIN_Z_PARAM, 0.0);
-  request->tsdf_params.max_box_values.x = get_parameter_or<double>(node_.lock(), IR_TSDF_MAX_X_PARAM, 0.0);
-  request->tsdf_params.max_box_values.y = get_parameter_or<double>(node_.lock(), IR_TSDF_MAX_Y_PARAM, 0.0);
-  request->tsdf_params.max_box_values.z = get_parameter_or<double>(node_.lock(), IR_TSDF_MAX_Z_PARAM, 0.0);
-  request->rgbd_params.depth_scale = get_parameter_or<float>(node_.lock(), IR_RGBD_DEPTH_SCALE_PARAM, 1000.0);
-  request->rgbd_params.depth_trunc = get_parameter_or<float>(node_.lock(), IR_RGBD_DEPTH_TRUNC_PARAM, 1.1f);
-  request->live = get_parameter_or<bool>(node_.lock(), IR_LIVE_PARAM, true);
+  request->tracking_frame = getBTInput<std::string>(this, CAMERA_FRAME_INPUT_PORT_KEY);
+  request->relative_frame = getBTInput<std::string>(this, REF_FRAME_INPUT_PORT_KEY);
+  request->tsdf_params.voxel_length = getBTInput<double>(this, VOXEL_LENGTH_INPUT_PORT_KEY);
+  request->tsdf_params.sdf_trunc = getBTInput<double>(this, SDF_TRUNC_INPUT_PORT_KEY);
+  request->tsdf_params.min_box_values.x = getBTInput<double>(this, MIN_X_INPUT_PORT_KEY);
+  request->tsdf_params.min_box_values.y = getBTInput<double>(this, MIN_Y_INPUT_PORT_KEY);
+  request->tsdf_params.min_box_values.z = getBTInput<double>(this, MIN_Z_INPUT_PORT_KEY);
+  request->tsdf_params.max_box_values.x = getBTInput<double>(this, MAX_X_INPUT_PORT_KEY);
+  request->tsdf_params.max_box_values.y = getBTInput<double>(this, MAX_Y_INPUT_PORT_KEY);
+  request->tsdf_params.max_box_values.z = getBTInput<double>(this, MAX_Z_INPUT_PORT_KEY);
+  request->rgbd_params.depth_scale = getBTInput<double>(this, DEPTH_SCALE_INPUT_PORT_KEY);
+  request->rgbd_params.depth_trunc = getBTInput<double>(this, DEPTH_TRUNC_INPUT_PORT_KEY);
+  request->live = getBTInput<bool>(this, LIVE_RECONSTRUCTION_INPUT_PORT_KEY);
 
   return true;
 }
@@ -212,17 +211,17 @@ BT::NodeStatus StartReconstructionServiceNode::onResponseReceived(const typename
 
 bool StopReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->archive_directory = get_parameter_or<std::string>(node_.lock(), IR_ARCHIVE_DIR_PARAM, "");
-  request->mesh_filepath = get_parameter<std::string>(node_.lock(), MESH_FILE_PARAM);
-  request->min_num_faces = get_parameter<int>(node_.lock(), IR_MIN_FACES_PARAM);
+  request->archive_directory = getBTInput<std::string>(this, ARCHIVE_DIRECTORY_INPUT_PORT_KEY);
+  request->mesh_filepath = getBTInput<std::string>(this, MESH_FILE_INPUT_PORT_KEY);
+  request->min_num_faces = getBTInput<long>(this, MIN_FACES_INPUT_PORT_KEY);
 
   try
   {
     industrial_reconstruction_msgs::msg::NormalFilterParams norm_filt;
-    norm_filt.angle = get_parameter<double>(node_.lock(), IR_NORMAL_ANGLE_TOL_PARAM);
-    norm_filt.normal_direction.x = get_parameter<double>(node_.lock(), IR_NORMAL_X_PARAM);
-    norm_filt.normal_direction.y = get_parameter<double>(node_.lock(), IR_NORMAL_Y_PARAM);
-    norm_filt.normal_direction.z = get_parameter<double>(node_.lock(), IR_NORMAL_Z_PARAM);
+    norm_filt.angle = getBTInput<double>(this, NORMAL_ANGLE_TOLERANCE_INPUT_PORT_KEY);
+    norm_filt.normal_direction.x = getBTInput<double>(this, NORMAL_X_INPUT_PORT_KEY);
+    norm_filt.normal_direction.y = getBTInput<double>(this, NORMAL_Y_INPUT_PORT_KEY);
+    norm_filt.normal_direction.z = getBTInput<double>(this, NORMAL_Z_INPUT_PORT_KEY);
 
     // Do not add a normal filter if the angle is less than 0.0
     if (norm_filt.angle > 0.0)
@@ -495,7 +494,7 @@ BT::NodeStatus UpdateTrajectoryStartStateNode::tick()
   sensor_msgs::msg::JointState joint_state = joint_state_input.value();
 
   // Get the tolerance from parameter
-  auto tolerance = get_parameter<double>(node_, START_STATE_REPLACEMENT_TOLERANCE_PARAM);
+  auto tolerance = getBTInput<double>(this, REPLACEMENT_TOLERANCE_INPUT_KEY);
 
   // Replace the start state of the trajectory with the current joint state
   {

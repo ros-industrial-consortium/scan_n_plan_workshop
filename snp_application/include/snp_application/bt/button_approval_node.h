@@ -17,8 +17,8 @@ namespace snp_application
 class ButtonApprovalNode : public BT::StatefulActionNode
 {
 public:
-  inline static std::string APPROVE_BUTTON_PORT_KEY = "approve_button";
-  inline static std::string DISAPPROVE_BUTTON_PORT_KEY = "disapprove_button";
+  inline static const std::string APPROVE_BUTTON_PORT_KEY = "approve_button";
+  inline static const std::string DISAPPROVE_BUTTON_PORT_KEY = "disapprove_button";
   static BT::PortsList providedPorts()
   {
     return { BT::InputPort<std::string>(APPROVE_BUTTON_PORT_KEY),

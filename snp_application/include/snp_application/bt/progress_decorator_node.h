@@ -14,9 +14,9 @@ namespace snp_application
 class ProgressDecoratorNode : public BT::DecoratorNode
 {
 public:
-  inline static std::string PROGRESS_BAR_KEY = "progress_bar";
-  inline static std::string START_PORT_KEY = "start";
-  inline static std::string END_PORT_KEY = "end";
+  inline static const std::string PROGRESS_BAR_KEY = "progress_bar";
+  inline static const std::string START_PORT_KEY = "start";
+  inline static const std::string END_PORT_KEY = "end";
 
   static BT::PortsList providedPorts()
   {

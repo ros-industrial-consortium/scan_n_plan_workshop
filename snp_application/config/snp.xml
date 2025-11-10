@@ -3,7 +3,6 @@
   <BehaviorTree ID="go_home_main">
     <ForceSuccess>
       <ReactiveSequence>
-        <RosSpinner/>
         <ButtonMonitor name="Reset"
                        button="halt"
                        _description="Sequence has been reset to start state"/>
@@ -18,13 +17,22 @@
       <Progress start="0"
                 end="50">
         <Sequence>
-          <GetCurrentJointState topic_name="/joint_states"
+          <GetCurrentJointState name="Get Current Joint State"
+                                topic_name="/joint_states"
                                 current_state="{current_state}"/>
-          <GenerateFreespaceMotionPlanService service_name="generate_freespace_motion_plan"
+          <CreateJointStateMessage name="Create Joint State Message"
+                                   joint_names="{home_state_joint_names}"
+                                   joint_positions="{home_state_joint_positions}"
+                                   joint_state="{home_state}"/>
+          <GenerateFreespaceMotionPlanService name="Plan Motion"
+                                              service_name="generate_freespace_motion_plan"
+                                              motion_group="{freespace_motion_group}"
+                                              tcp_frame="{tcp_frame}"
                                               start_joint_state="{current_state}"
                                               goal_joint_state="{home_state}"
                                               trajectory="{trajectory}"/>
-          <MotionPlanPub topic_name="motion_plan"
+          <MotionPlanPub name="Display Motion Plan"
+                         topic_name="motion_plan"
                          trajectory="{trajectory}"/>
         </Sequence>
       </Progress>
@@ -53,7 +61,6 @@
   <BehaviorTree ID="main">
     <ForceSuccess>
       <ReactiveSequence>
-        <RosSpinner/>
         <ButtonMonitor name="Reset"
                        button="reset"
                        _description="Sequence has been reset to start state"/>
@@ -76,11 +83,13 @@
     <Sequence>
       <TriggerService name="Enable Robot"
                       service_name="robot_enable"/>
-      <GetCurrentJointState topic_name="/joint_states"
+      <GetCurrentJointState name="Get Current Joint State"
+                            topic_name="/joint_states"
                             current_state="{current_state}"/>
       <UpdateTrajectoryStartState name="Update Trajectory Start State"
                                   joint_state="{current_state}"
                                   input_trajectory="{trajectory}"
+                                  replacement_tolerance="{start_state_replacement_tolerance}"
                                   output="{updated_trajectory}"/>
       <FollowJointTrajectoryAction name="Execute Approach Motion"
                                    action_name="{follow_joint_trajectory_action}"
@@ -141,12 +150,14 @@
                             approve_button="tpp"
                             disapprove_button="back"
                             _description="Press next to create a tool path plan"
-                            _onFailure="skip_scan=false
-"/>
+                            _onFailure="skip_scan=false"/>
           </SetPage>
-          <PlanToolPath service_name="plan_tool_path"
-                        tool_path="{tool_paths}"
-                        _onFailure="skip_scan=True"/>
+          <PlanToolPathService name="Plan Tool Path"
+                               service_name="plan_tool_path"
+                               config_file="{process_tpp_config_file}"
+                               mesh_file="{process_mesh_file}"
+                               mesh_frame="{reference_frame}"
+                               tool_paths="{tool_paths}"/>
           <ToolPathsPub name="Publish Tool Paths"
                         topic_name="tool_paths"
                         tool_paths="{tool_paths}"/>
@@ -166,14 +177,18 @@
             </SetPage>
             <GenerateMotionPlanService name="Generate Process Motion Plan"
                                        service_name="generate_motion_plan"
+                                       motion_group="{process_motion_group}"
+                                       tcp_frame="{tcp_frame}"
                                        tool_paths="{tool_paths}"
                                        approach="{approach}"
                                        process="{process}"
                                        departure="{departure}"/>
-            <CombineTrajectories first="{approach}"
+            <CombineTrajectories name="Combine Trajectories"
+                                 first="{approach}"
                                  second="{process}"
                                  output="{trajectory}"/>
-            <CombineTrajectories first="{trajectory}"
+            <CombineTrajectories name="Combine Trajectories"
+                                 first="{trajectory}"
                                  second="{departure}"
                                  output="{trajectory}"/>
             <MotionPlanPub name="Publish Process Motion Plan"
@@ -206,28 +221,52 @@
 
   <BehaviorTree ID="scan">
     <Sequence>
-      <EmptyService name="Remove Scan Link"
-                    service_name="remove_scan_link"/>
       <TriggerService name="Enable Robot"
                       service_name="robot_enable"/>
-      <GetCurrentJointState topic_name="/joint_states"
+      <GetCurrentJointState name="Get Current Joint State"
+                            topic_name="/joint_states"
                             current_state="{current_state}"/>
       <UpdateTrajectoryStartState name="Update Trajectory Start State"
                                   joint_state="{current_state}"
                                   input_trajectory="{approach}"
+                                  replacement_tolerance="{start_state_replacement_tolerance}"
                                   output="{updated_approach}"/>
       <FollowJointTrajectoryAction name="Execute Scan Approach Motion"
                                    action_name="{follow_joint_trajectory_action}"
                                    trajectory="{updated_approach}"/>
       <StartReconstructionService name="Start Reconstruction"
-                                  service_name="start_reconstruction"/>
+                                  service_name="start_reconstruction"
+                                  camera_frame="{camera_frame}"
+                                  ref_frame="{reference_frame}"
+                                  voxel_length="{ir_voxel_length}"
+                                  sdf_trunc="{ir_sdf_trunc}"
+                                  min_x="{ir_min_x}"
+                                  min_y="{ir_min_y}"
+                                  min_z="{ir_min_z}"
+                                  max_x="{ir_max_x}"
+                                  max_y="{ir_max_y}"
+                                  max_z="{ir_max_z}"
+                                  depth_scale="{ir_depth_scale}"
+                                  depth_trunc="{ir_depth_trunc}"
+                                  live_reconstruction="{ir_live}"/>
       <FollowJointTrajectoryAction name="Execute Scan Motion"
                                    action_name="{follow_joint_trajectory_action}"
                                    trajectory="{process}"/>
       <StopReconstructionService name="Stop Reconstruction"
-                                 service_name="stop_reconstruction"/>
+                                 service_name="stop_reconstruction"
+                                 mesh_file="{process_mesh_file}"
+                                 min_faces="{ir_min_faces}"
+                                 normal_angle_tolerance="{ir_normal_angle_tol}"
+                                 normal_x="{ir_normal_x}"
+                                 normal_y="{ir_normal_y}"
+                                 normal_z="{ir_normal_z}"
+                                 archive_directory="{ir_archive_dir}"/>
+      <EmptyService name="Remove Scan Link"
+                    service_name="remove_scan_link"/>
       <AddScanLinkService name="Add Scan Link"
-                          service_name="add_scan_link"/>
+                          service_name="add_scan_link"
+                          mesh_file="{process_mesh_file}"
+                          mesh_frame="{reference_frame}"/>
       <FollowJointTrajectoryAction name="Execute Scan Departure Motion"
                                    action_name="{follow_joint_trajectory_action}"
                                    trajectory="{departure}"/>
@@ -242,6 +281,10 @@
             editable="true">
       <input_port name="service_name"
                   default="add_scan_link"/>
+      <input_port name="mesh_file"
+                  default="{mesh_file}"/>
+      <input_port name="mesh_frame"
+                  default="{mesh_frame}"/>
     </Action>
     <Action ID="ButtonApproval"
             editable="true">
@@ -258,6 +301,15 @@
       <input_port name="second"/>
       <output_port name="output"/>
     </Action>
+    <Action ID="CreateJointStateMessage"
+            editable="true">
+      <input_port name="joint_names"
+                  default="{joint_names}"/>
+      <input_port name="joint_positions"
+                  default="{joint_positions}"/>
+      <output_port name="joint_state"
+                   default="{joint_state}"/>
+    </Action>
     <Action ID="EmptyService"
             editable="true">
       <input_port name="service_name"/>
@@ -273,6 +325,10 @@
             editable="true">
       <input_port name="service_name"
                   default="generate_freespace_motion_plan"/>
+      <input_port name="motion_group"
+                  default="{freespace_motion_group}"/>
+      <input_port name="tcp_frame"
+                  default="{tcp_frame}"/>
       <input_port name="start_joint_state"
                   default="{start_joint_state}"/>
       <input_port name="goal_joint_state"
@@ -284,6 +340,10 @@
             editable="true">
       <input_port name="service_name"
                   default="generate_motion_plan"/>
+      <input_port name="motion_group"
+                  default="{motion_group}"/>
+      <input_port name="tcp_frame"
+                  default="{tcp_frame}"/>
       <input_port name="tool_paths"
                   default="{tool_paths}"/>
       <output_port name="approach"
@@ -316,11 +376,17 @@
       <input_port name="topic_name"/>
       <input_port name="trajectory"/>
     </Action>
-    <Action ID="PlanToolPath"
+    <Action ID="PlanToolPathService"
             editable="true">
       <input_port name="service_name"
                   default="plan_tool_path"/>
-      <output_port name="tool_path"
+      <input_port name="config_file"
+                  default="{tpp_config_file}"/>
+      <input_port name="mesh_file"
+                  default="{mesh_file}"/>
+      <input_port name="mesh_frame"
+                  default="{reference_frame}"/>
+      <output_port name="tool_paths"
                    default="{tool_paths}"/>
     </Action>
     <Decorator ID="Progress"
@@ -343,11 +409,51 @@
             editable="true">
       <input_port name="service_name"
                   default="start_reconstruction"/>
+      <input_port name="camera_frame"
+                  default="{camera_frame}"/>
+      <input_port name="ref_frame"
+                  default="{reference_frame}"/>
+      <input_port name="voxel_length"
+                  default="{ir_voxel_length}"/>
+      <input_port name="sdf_trunc"
+                  default="{ir_sdf_trunc}"/>
+      <input_port name="min_x"
+                  default="{ir_min_x}"/>
+      <input_port name="min_y"
+                  default="{ir_min_y}"/>
+      <input_port name="min_z"
+                  default="{ir_min_z}"/>
+      <input_port name="max_x"
+                  default="{ir_max_x}"/>
+      <input_port name="max_y"
+                  default="{ir_max_y}"/>
+      <input_port name="max_z"
+                  default="{ir_max_z}"/>
+      <input_port name="depth_scale"
+                  default="{ir_depth_scale}"/>
+      <input_port name="depth_trunc"
+                  default="{ir_depth_trunc}"/>
+      <input_port name="live_reconstruction"
+                  default="{ir_live}"/>
     </Action>
     <Action ID="StopReconstructionService"
             editable="true">
       <input_port name="service_name"
                   default="stop_reconstruction"/>
+      <input_port name="mesh_file"
+                  default="{mesh_file}"/>
+      <input_port name="min_faces"
+                  default="{ir_min_faces}"/>
+      <input_port name="normal_angle_tolerance"
+                  default="{ir_normal_angle_tol}"/>
+      <input_port name="normal_x"
+                  default="{ir_normal_x}"/>
+      <input_port name="normal_y"
+                  default="{ir_normal_y}"/>
+      <input_port name="normal_z"
+                  default="{ir_normal_z}"/>
+      <input_port name="archive_directory"
+                  default="{ir_archive_dir}"/>
     </Action>
     <Action ID="ToolPathsPub"
             editable="true">
@@ -366,6 +472,8 @@
                   default="{current_state}"/>
       <input_port name="input_trajectory"
                   default="{trajectory}"/>
+      <input_port name="replacement_tolerance"
+                  default="{start_state_replacement_tolerance}"/>
       <output_port name="output"
                    default="{trajectory}"/>
     </Action>

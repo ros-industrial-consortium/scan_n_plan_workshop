@@ -44,6 +44,7 @@ add_library(
   ${PROJECT_NAME}_bt_plugins SHARED
   src/bt/button_approval_node.cpp
   src/bt/button_monitor_node.cpp
+  src/bt/create_joint_state_message.cpp
   src/bt/progress_decorator_node.cpp
   src/bt/set_page_decorator_node.cpp
   src/bt/snp_bt_ros_nodes.cpp
@@ -70,6 +71,7 @@ ament_target_dependencies(
 # Widget
 add_library(
   ${PROJECT_NAME}_widget SHARED
+  src/snp_behavior_tree.cpp
   src/snp_widget.ui
   src/snp_widget.cpp
   # BT

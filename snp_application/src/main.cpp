@@ -21,7 +21,10 @@ int main(int argc, char* argv[])
     signal(SIGTERM, handleSignal);
 
     auto node = std::make_shared<rclcpp::Node>("snp_application");
-    snp_application::SNPWidget w(node);
+    auto blackboard = std::make_shared<snp_application::SnpBlackboard>(node);
+    snp_application::BehaviorTreeFactoryGenerator bt_factory_gen =
+        std::bind(snp_application::generateBehaviorTreeFactory, node);
+    snp_application::SNPWidget w(node, blackboard, bt_factory_gen);
     w.show();
 
     // Run the Qt application, which is also sychronous

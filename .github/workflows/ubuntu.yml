@@ -44,4 +44,4 @@ jobs:
           vcs-file: dependencies.repos
           rosdep-install-args: -iry --skip-keys "libvtk python3-open3d"
           target-path: target_ws/src
-          target-args: --cmake-args -DCMAKE_BUILD_TYPE=Debug
+          target-args: --cmake-args -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=ON
