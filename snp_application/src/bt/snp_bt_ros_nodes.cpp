@@ -105,30 +105,6 @@ BT::NodeStatus GenerateFreespaceMotionPlanServiceNode::onResponseReceived(const 
   return setOutputAndCheck(TRAJECTORY_OUTPUT_PORT_KEY, response->trajectory);
 }
 
-bool GenerateScanMotionPlanServiceNode::setRequest(typename Request::SharedPtr& /*request*/)
-{
-  return true;
-}
-
-BT::NodeStatus GenerateScanMotionPlanServiceNode::onResponseReceived(const typename Response::SharedPtr& response)
-{
-  if (!response->success)
-  {
-    config().blackboard->set(ERROR_MESSAGE_KEY, response->message);
-    return BT::NodeStatus::FAILURE;
-  }
-
-  // Set output
-  BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
-  BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
-  BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
-
-  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
-    return BT::NodeStatus::SUCCESS;
-
-  return BT::NodeStatus::FAILURE;
-}
-
 bool PlanToolPathServiceNode::setRequest(typename Request::SharedPtr& request)
 {
   try

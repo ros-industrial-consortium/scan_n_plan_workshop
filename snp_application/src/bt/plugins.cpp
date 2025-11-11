@@ -1,6 +1,8 @@
 #include <snp_application/bt/button_approval_node.h>
 #include <snp_application/bt/button_monitor_node.h>
 #include <snp_application/bt/create_joint_state_message.h>
+#include <snp_application/bt/extract_approach_process_departure_trajectories_node.h>
+#include <snp_application/bt/load_trajectory_from_file_node.h>
 #include <snp_application/bt/progress_decorator_node.h>
 #include <snp_application/bt/set_page_decorator_node.h>
 #include <snp_application/bt/snp_bt_ros_nodes.h>
@@ -13,6 +15,9 @@ BT_REGISTER_NODES(factory)
   factory.registerNodeType<snp_application::ButtonApprovalNode>("ButtonApproval");
   factory.registerNodeType<snp_application::ButtonMonitorNode>("ButtonMonitor");
   factory.registerNodeType<snp_application::CreateJointStateMessage>("CreateJointStateMessage");
+  factory.registerNodeType<snp_application::ExtractApproachProcessDepartureTrajectoriesNode>(
+      "ExtractApproachProcessDepartureTrajectories");
+  factory.registerNodeType<snp_application::LoadTrajectoryFromFileNode>("LoadTrajectoryFromFile");
   factory.registerNodeType<snp_application::ProgressDecoratorNode>("Progress");
   factory.registerNodeType<snp_application::SetPageDecoratorNode>("SetPage");
   factory.registerNodeType<snp_application::SNPSequenceWithMemory>("SNPSequenceWithMemory");
@@ -31,7 +36,6 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   factory.registerNodeType<snp_application::MotionPlanPubNode>("MotionPlanPub", params);
   factory.registerNodeType<snp_application::FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", params);
   factory.registerNodeType<snp_application::GetCurrentJointStateNode>("GetCurrentJointState", params);
-  factory.registerNodeType<snp_application::GenerateScanMotionPlanServiceNode>("GenerateScanMotionPlanService", params);
   factory.registerNodeType<snp_application::UpdateTrajectoryStartStateNode>("UpdateTrajectoryStartState",
                                                                             params.nh.lock());
   factory.registerNodeType<snp_application::PlanToolPathServiceNode>("PlanToolPathService", params);

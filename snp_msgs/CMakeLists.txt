@@ -26,7 +26,6 @@ rosidl_generate_interfaces(
   "msg/ToolPath.msg"
   "srv/AddScanLink.srv"
   "srv/GenerateMotionPlan.srv"
-  "srv/GenerateScanMotionPlan.srv"
   "srv/GenerateFreespaceMotionPlan.srv"
   DEPENDENCIES
   geometry_msgs
