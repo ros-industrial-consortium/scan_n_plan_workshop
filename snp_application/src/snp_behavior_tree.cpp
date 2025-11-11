@@ -77,6 +77,7 @@ SnpBlackboard::SnpBlackboard(rclcpp::Node::SharedPtr node, BT::Blackboard::Ptr p
   node->declare_parameter<std::string>(REF_FRAME_PARAM);
   node->declare_parameter<std::string>(TCP_FRAME_PARAM);
   node->declare_parameter<std::string>(CAMERA_FRAME_PARAM);
+  node->declare_parameter<std::string>(CAMERA_TCP_FRAME_PARAM);
   // Scan
   node->declare_parameter<std::string>(SCAN_MOTION_GROUP_PARAM);
   node->declare_parameter<std::string>(SCAN_TRAJ_FILE_PARAM);
