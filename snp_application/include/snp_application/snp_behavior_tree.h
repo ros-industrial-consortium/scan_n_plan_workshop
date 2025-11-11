@@ -24,6 +24,7 @@ inline const char* HOME_STATE_JOINT_POSITIONS_PARAM = "home_state_joint_position
 inline const char* REF_FRAME_PARAM = "reference_frame";
 inline const char* TCP_FRAME_PARAM = "tcp_frame";
 inline const char* CAMERA_FRAME_PARAM = "camera_frame";
+inline const char* CAMERA_TCP_FRAME_PARAM = "camera_tcp_frame";
 // Scan
 inline const char* SCAN_MOTION_GROUP_PARAM = "scan_motion_group";
 inline const char* SCAN_TRAJ_FILE_PARAM = "scan_trajectory_file";
