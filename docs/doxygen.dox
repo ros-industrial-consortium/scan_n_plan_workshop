@@ -33,4 +33,9 @@
   @{
     @brief Behavior tree plugins for constructing Scan-N-Plan application workflows
   @}
+  @defgroup bt_params Behavior Tree Parameters
+  @{
+    @brief ROS Parameters that are populated into a behavior tree blackboard using snp_application::SnpBlackboard
+    @details snp_application::SnpBlackboard declares these parameters and populates itself with their values, continuously monitoring changes to their values.
+  @}
 */
