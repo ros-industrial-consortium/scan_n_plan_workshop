@@ -90,14 +90,16 @@ SnpBlackboard::SnpBlackboard(rclcpp::Node::SharedPtr node, BT::Blackboard::Ptr p
   // Industrial Reconstruction
   node->declare_parameter<double>(IR_TSDF_VOXEL_PARAM);
   node->declare_parameter<double>(IR_TSDF_SDF_PARAM);
+  node->declare_parameter<double>(IR_RGBD_DEPTH_SCALE_PARAM);
+  node->declare_parameter<double>(IR_RGBD_DEPTH_TRUNC_PARAM);
+  node->declare_parameter<double>(IR_TRANSLATION_FILTER_DISTANCE);
+  node->declare_parameter<double>(IR_ROTATION_FILTER_DISTANCE);
   node->declare_parameter<double>(IR_TSDF_MIN_X_PARAM);
   node->declare_parameter<double>(IR_TSDF_MIN_Y_PARAM);
   node->declare_parameter<double>(IR_TSDF_MIN_Z_PARAM);
   node->declare_parameter<double>(IR_TSDF_MAX_X_PARAM);
   node->declare_parameter<double>(IR_TSDF_MAX_Y_PARAM);
   node->declare_parameter<double>(IR_TSDF_MAX_Z_PARAM);
-  node->declare_parameter<double>(IR_RGBD_DEPTH_SCALE_PARAM);
-  node->declare_parameter<double>(IR_RGBD_DEPTH_TRUNC_PARAM);
   node->declare_parameter<bool>(IR_LIVE_PARAM);
   node->declare_parameter<double>(IR_NORMAL_ANGLE_TOL_PARAM);
   node->declare_parameter<double>(IR_NORMAL_X_PARAM);

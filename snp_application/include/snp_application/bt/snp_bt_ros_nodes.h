@@ -274,24 +274,27 @@ public:
   inline static const std::string REF_FRAME_INPUT_PORT_KEY = "ref_frame";
   inline static const std::string VOXEL_LENGTH_INPUT_PORT_KEY = "voxel_length";
   inline static const std::string SDF_TRUNC_INPUT_PORT_KEY = "sdf_trunc";
+  inline static const std::string DEPTH_SCALE_INPUT_PORT_KEY = "depth_scale";
+  inline static const std::string DEPTH_TRUNC_INPUT_PORT_KEY = "depth_trunc";
+  inline static const std::string TRANSLATION_FILTER_DISTANCE_KEY = "translation_filter_distance";
+  inline static const std::string ROTATION_FILTER_DISTANCE_KEY = "rotation_filter_distance";
   inline static const std::string MIN_X_INPUT_PORT_KEY = "min_x";
   inline static const std::string MIN_Y_INPUT_PORT_KEY = "min_y";
   inline static const std::string MIN_Z_INPUT_PORT_KEY = "min_z";
   inline static const std::string MAX_X_INPUT_PORT_KEY = "max_x";
   inline static const std::string MAX_Y_INPUT_PORT_KEY = "max_y";
   inline static const std::string MAX_Z_INPUT_PORT_KEY = "max_z";
-  inline static const std::string DEPTH_SCALE_INPUT_PORT_KEY = "depth_scale";
-  inline static const std::string DEPTH_TRUNC_INPUT_PORT_KEY = "depth_trunc";
   inline static const std::string LIVE_RECONSTRUCTION_INPUT_PORT_KEY = "live_reconstruction";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts(
         { BT::InputPort<std::string>(CAMERA_FRAME_INPUT_PORT_KEY), BT::InputPort<std::string>(REF_FRAME_INPUT_PORT_KEY),
           BT::InputPort<double>(VOXEL_LENGTH_INPUT_PORT_KEY), BT::InputPort<double>(SDF_TRUNC_INPUT_PORT_KEY),
+          BT::InputPort<double>(DEPTH_SCALE_INPUT_PORT_KEY), BT::InputPort<double>(DEPTH_TRUNC_INPUT_PORT_KEY),
+          BT::InputPort<double>(TRANSLATION_FILTER_DISTANCE_KEY), BT::InputPort<double>(ROTATION_FILTER_DISTANCE_KEY),
           BT::InputPort<double>(MIN_X_INPUT_PORT_KEY), BT::InputPort<double>(MIN_Y_INPUT_PORT_KEY),
           BT::InputPort<double>(MIN_Z_INPUT_PORT_KEY), BT::InputPort<double>(MAX_X_INPUT_PORT_KEY),
           BT::InputPort<double>(MAX_Y_INPUT_PORT_KEY), BT::InputPort<double>(MAX_Z_INPUT_PORT_KEY),
-          BT::InputPort<double>(DEPTH_SCALE_INPUT_PORT_KEY), BT::InputPort<double>(DEPTH_TRUNC_INPUT_PORT_KEY),
           BT::InputPort<bool>(LIVE_RECONSTRUCTION_INPUT_PORT_KEY) });
   }
 

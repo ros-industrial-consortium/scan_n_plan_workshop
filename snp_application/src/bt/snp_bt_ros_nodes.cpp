@@ -159,6 +159,8 @@ bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& req
 {
   request->tracking_frame = getBTInput<std::string>(this, CAMERA_FRAME_INPUT_PORT_KEY);
   request->relative_frame = getBTInput<std::string>(this, REF_FRAME_INPUT_PORT_KEY);
+  request->translation_distance = getBTInput<double>(this, TRANSLATION_FILTER_DISTANCE_KEY);
+  request->rotational_distance = getBTInput<double>(this, ROTATION_FILTER_DISTANCE_KEY);
   request->tsdf_params.voxel_length = getBTInput<double>(this, VOXEL_LENGTH_INPUT_PORT_KEY);
   request->tsdf_params.sdf_trunc = getBTInput<double>(this, SDF_TRUNC_INPUT_PORT_KEY);
   request->tsdf_params.min_box_values.x = getBTInput<double>(this, MIN_X_INPUT_PORT_KEY);

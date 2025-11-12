@@ -237,14 +237,16 @@
                                   ref_frame="{reference_frame}"
                                   voxel_length="{ir_voxel_length}"
                                   sdf_trunc="{ir_sdf_trunc}"
+                                  depth_scale="{ir_depth_scale}"
+                                  depth_trunc="{ir_depth_trunc}"
+                                  translation_filter_distance="{ir_translation_filter_distance}"
+                                  rotation_filter_distance="{ir_rotation_filter_distance}"
                                   min_x="{ir_min_x}"
                                   min_y="{ir_min_y}"
                                   min_z="{ir_min_z}"
                                   max_x="{ir_max_x}"
                                   max_y="{ir_max_y}"
                                   max_z="{ir_max_z}"
-                                  depth_scale="{ir_depth_scale}"
-                                  depth_trunc="{ir_depth_trunc}"
                                   live_reconstruction="{ir_live}"/>
       <FollowJointTrajectoryAction name="Execute Scan Motion"
                                    action_name="{follow_joint_trajectory_action}"
@@ -421,6 +423,14 @@
                   default="{ir_voxel_length}"/>
       <input_port name="sdf_trunc"
                   default="{ir_sdf_trunc}"/>
+      <input_port name="depth_scale"
+                  default="{ir_depth_scale}"/>
+      <input_port name="depth_trunc"
+                  default="{ir_depth_trunc}"/>
+      <input_port name="translation_filter_distance"
+                  default="{ir_translation_filter_distance}"/>
+      <input_port name="rotation_filter_distance"
+                  default="{ir_rotation_filter_distance}"/>
       <input_port name="min_x"
                   default="{ir_min_x}"/>
       <input_port name="min_y"
@@ -433,10 +443,6 @@
                   default="{ir_max_y}"/>
       <input_port name="max_z"
                   default="{ir_max_z}"/>
-      <input_port name="depth_scale"
-                  default="{ir_depth_scale}"/>
-      <input_port name="depth_trunc"
-                  default="{ir_depth_trunc}"/>
       <input_port name="live_reconstruction"
                   default="{ir_live}"/>
     </Action>
