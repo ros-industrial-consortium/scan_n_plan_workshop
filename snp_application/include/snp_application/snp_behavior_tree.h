@@ -143,6 +143,28 @@ inline const char* IR_TSDF_VOXEL_PARAM = "ir_voxel_length";
  */
 inline const char* IR_TSDF_SDF_PARAM = "ir_sdf_trunc";
 /**
+ * @brief Parameter defining the depth scale factor used to convert depth image pixel values to meters
+ * @ingroup bt_params
+ */
+inline const char* IR_RGBD_DEPTH_SCALE_PARAM = "ir_depth_scale";
+/**
+ * @brief Parameter defining the depth truncation distance (m) of points in depth images
+ * @ingroup bt_params
+ */
+inline const char* IR_RGBD_DEPTH_TRUNC_PARAM = "ir_depth_trunc";
+/**
+ * @brief Parameter defining the minimum translational distance (m) that the camera frame must travel before a new image
+ * is integrated into the TSDF volume
+ * @ingroup bt_params
+ */
+inline const char* IR_TRANSLATION_FILTER_DISTANCE = "ir_translation_filter_distance";
+/**
+ * @brief Parameter defining the minimum rotational distance (rad) that the camera frame must travel before a new image
+ * is integrated into the TSDF volume
+ * @ingroup bt_params
+ */
+inline const char* IR_ROTATION_FILTER_DISTANCE = "ir_rotation_filter_distance";
+/**
  * @brief Parameter defining the x-value of the minimum point of the TSDF volume
  * @ingroup bt_params
  */
@@ -170,16 +192,6 @@ inline const char* IR_TSDF_MAX_Y_PARAM = "ir_max_y";
  * @ingroup bt_params
  */
 inline const char* IR_TSDF_MAX_Z_PARAM = "ir_max_z";
-/**
- * @brief Parameter defining the depth scale factor used to convert depth image pixel values to meters
- * @ingroup bt_params
- */
-inline const char* IR_RGBD_DEPTH_SCALE_PARAM = "ir_depth_scale";
-/**
- * @brief Parameter defining the depth truncation distance (m) of points in depth images
- *  @ingroup bt_params
- */
-inline const char* IR_RGBD_DEPTH_TRUNC_PARAM = "ir_depth_trunc";
 /**
  * @brief Parameter defining a flag for running the reconstruction process with "live" feedback
  * @ingroup bt_params

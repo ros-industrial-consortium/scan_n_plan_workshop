@@ -94,14 +94,16 @@
             <input_port name="ref_frame" default="{reference_frame}"/>
             <input_port name="voxel_length" default="{ir_voxel_length}"/>
             <input_port name="sdf_trunc" default="{ir_sdf_trunc}"/>
+            <input_port name="depth_scale" default="{ir_depth_scale}"/>
+            <input_port name="depth_trunc" default="{ir_depth_trunc}"/>
+            <input_port name="translation_filter_distance" default="{ir_translation_filter_distance}"/>
+            <input_port name="rotation_filter_distance" default="{ir_rotation_filter_distance}"/>
             <input_port name="min_x" default="{ir_min_x}"/>
             <input_port name="min_y" default="{ir_min_y}"/>
             <input_port name="min_z" default="{ir_min_z}"/>
             <input_port name="max_x" default="{ir_max_x}"/>
             <input_port name="max_y" default="{ir_max_y}"/>
             <input_port name="max_z" default="{ir_max_z}"/>
-            <input_port name="depth_scale" default="{ir_depth_scale}"/>
-            <input_port name="depth_trunc" default="{ir_depth_trunc}"/>
             <input_port name="live_reconstruction" default="{ir_live}"/>
         </Action>
         <Action ID="StopReconstructionService" editable="true">
