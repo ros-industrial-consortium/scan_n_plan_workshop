@@ -101,6 +101,12 @@ add_executable(roscon_app src/main.cpp)
 target_link_libraries(roscon_app Qt5::Widgets ${PROJECT_NAME}_widget)
 ament_target_dependencies(roscon_app rclcpp)
 
+# Test
+if(ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(test)
+endif()
+
 # Install the headers
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include/)
 
