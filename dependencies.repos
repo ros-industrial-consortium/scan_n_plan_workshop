@@ -29,4 +29,4 @@
 - git:
     local-name: trajectory_preview
     uri: https://github.com/marip8/trajectory_preview.git
-    version: 2.0.0
+    version: 2.0.1
