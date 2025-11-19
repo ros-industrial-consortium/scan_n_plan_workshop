@@ -54,9 +54,6 @@ public:
 
   void showEvent(QShowEvent* event) override
   {
-    QSettings settings;
-    QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
-
     // Configure the widget from file specified in the parameter
     auto tpp_config_file = snp_application::get_parameter<std::string>(node_, PROCESS_TPP_CONFIG_FILE_PARAM);
     widget_->configure(QString::fromStdString(tpp_config_file));
@@ -76,8 +73,24 @@ public:
     }
 
     QSettings settings;
-    QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
-    node_->set_parameter(rclcpp::Parameter(PROCESS_TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
+    settings.sync();
+
+    switch (settings.status())
+    {
+      case QSettings::Status::AccessError:
+        QMessageBox::warning(this, "Access Error",
+                             "Failed to access the Qt settings for this application; please ensure the directory "
+                             "'$HOME/.config' is read/write accessible.");
+        break;
+      case QSettings::Status::FormatError:
+        QMessageBox::warning(this, "Format Error", "Invalid format for the Qt settings for this application.");
+        break;
+      case QSettings::Status::NoError:
+      default: {
+        QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
+        node_->set_parameter(rclcpp::Parameter(PROCESS_TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
+      }
+    }
 
     event->accept();
   }
