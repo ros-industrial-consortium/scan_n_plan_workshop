@@ -28,5 +28,5 @@
     version: 7a6ace6424adaa81737b95d20d81e1e8c0782ed7
 - git:
     local-name: trajectory_preview
-    uri: https://github.com/marip8/trajectory_preview.git
-    version: 2.0.0
+    uri: https://github.com/swri-robotics/trajectory_preview.git
+    version: 2.0.1
