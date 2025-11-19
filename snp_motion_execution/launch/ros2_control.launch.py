@@ -9,7 +9,6 @@ import os
 
 
 parameters = [
-    {'name': 'robot_description',      'description': 'Path to the URDF/xacro file',                  'default': ''},
     {'name': 'controllers_file',       'description': 'Path to the ros2_control configuration file',  'default': ''},
 ]
 
@@ -23,15 +22,16 @@ def generate_launch_description():
 
 
 def launch(context, *args, **kwargs):
-    robot_description = ParameterValue(LaunchConfiguration('robot_description'))
-
     controllers_file = LaunchConfiguration('controllers_file')
 
     nodes = [
         Node(
             package="controller_manager",
             executable="ros2_control_node",
-            parameters=[{'robot_description': robot_description}, controllers_file],
+            parameters=[controllers_file],
+            remappings=[
+                ('~/robot_description', 'robot_description'),
+            ],
             output="both",
         )
     ]
