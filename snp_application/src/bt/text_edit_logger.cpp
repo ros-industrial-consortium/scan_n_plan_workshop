@@ -19,6 +19,7 @@ void TextEditLogger::callback(BT::Duration /*timestamp*/, const BT::TreeNode& no
 
   static const QString info_html = "<font color=\"Grey\">";
   static const QString success_html = "<font color=\"Green\">";
+  static const QString warn_html = "<font color=\"Orange\">";
   static const QString end_html = "</font>";
   static const QString tab_html = "&nbsp;&nbsp;";
 
@@ -34,10 +35,19 @@ void TextEditLogger::callback(BT::Duration /*timestamp*/, const BT::TreeNode& no
           ss << info_html << "[ " << QString::fromStdString(node.name()) << " ]" << tab_html << "->" << tab_html
              << "RUNNING" << end_html;
           break;
-        case BT::NodeStatus::SUCCESS:
+        case BT::NodeStatus::SUCCESS: {
           ss << success_html << "[ " << QString::fromStdString(node.name()) << " ]" << tab_html << "->" << tab_html
              << "SUCCESS" << end_html;
+
+          QString warn_msg = QString::fromStdString(node.config().blackboard->get<std::string>(WARN_MESSAGE_KEY));
+          if (!warn_msg.isEmpty())
+          {
+            ss << "<br>" << warn_html << warn_msg << end_html;
+            node.config().blackboard->set(WARN_MESSAGE_KEY, "");
+          }
+
           break;
+        }
         case BT::NodeStatus::FAILURE: {
           ss << fail_html << "[ " << QString::fromStdString(node.name()) << " ]";
 
