@@ -137,9 +137,18 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
   }
 
   // Convert to the SNP definition of tool paths
+  std::vector<bool> contain_empty_toolpaths;
   std::vector<snp_msgs::msg::ToolPath> out;
   for (const noether_ros::msg::ToolPaths& tool_paths : response->tool_paths)
   {
+    if (tool_paths.tool_paths.empty())
+    {
+      contain_empty_toolpaths.push_back(true);
+      continue;
+    }
+
+    contain_empty_toolpaths.push_back(false);
+
     for (const noether_ros::msg::ToolPath& tool_path : tool_paths.tool_paths)
     {
       snp_msgs::msg::ToolPath snp_tool_path;
@@ -150,6 +159,18 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
 
       out.push_back(snp_tool_path);
     }
+  }
+
+  if (std::all_of(contain_empty_toolpaths.begin(), contain_empty_toolpaths.end(),
+                  [](bool empty_toolpath) { return empty_toolpath == true; }))
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, "All tool paths are empty! Check tool path planner parameters.");
+    return BT::NodeStatus::FAILURE;
+  }
+  else if (std::any_of(contain_empty_toolpaths.begin(), contain_empty_toolpaths.end(),
+                       [](bool empty_toolpath) { return empty_toolpath == true; }))
+  {
+    config().blackboard->set(WARN_MESSAGE_KEY, "One or more toolpaths are empty! Check tool path planner parameters.");
   }
 
   return setOutputAndCheck(TOOL_PATHS_OUTPUT_PORT_KEY, out);
