@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, HistoryPolicy, ReliabilityPolicy, DurabilityPolicy
 import sys
 import open3d
 from industrial_reconstruction_msgs.srv import StartReconstruction
@@ -9,10 +10,18 @@ from industrial_reconstruction.industrial_reconstruction import meshToRos
 from visualization_msgs.msg import Marker
 import shutil
 import os
+import numpy as np
 
 MESH_FILE_PARAMETER = "mesh_file"
 REFERENCE_FRAME_PARAMETER = "reference_frame"
+TSDF_MIN_X_PARAMETER = "ir_min_x"
+TSDF_MIN_Y_PARAMETER = "ir_min_y"
+TSDF_MIN_Z_PARAMETER = "ir_min_z"
+TSDF_MAX_X_PARAMETER = "ir_max_x"
+TSDF_MAX_Y_PARAMETER = "ir_max_y"
+TSDF_MAX_Z_PARAMETER = "ir_max_z"
 MESH_TOPIC = "mesh"
+TSDF_VOLUME_TOPIC = "tsdf_volume"
 
 
 class ReconstructionSimServer(Node):
@@ -23,13 +32,56 @@ class ReconstructionSimServer(Node):
         self.stop_srv = self.create_service(StopReconstruction, "stop_reconstruction", self.stop_cb)
 
         self.scan_mesh_pub = self.create_publisher(Marker, MESH_TOPIC, 100)
+        self.qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=5
+        )
+        self.tsdf_volume_pub = self.create_publisher(Marker, TSDF_VOLUME_TOPIC, self.qos_profile)
 
-        self.mesh_file_parameter = self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING).value
-        self.reference_frame_parameter = self.declare_parameter(REFERENCE_FRAME_PARAMETER, rclpy.Parameter.Type.STRING).value
+        self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING)
+        self.declare_parameter(REFERENCE_FRAME_PARAMETER, rclpy.Parameter.Type.STRING)
+        self.declare_parameter(TSDF_MIN_X_PARAMETER, rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter(TSDF_MIN_Y_PARAMETER, rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter(TSDF_MIN_Z_PARAMETER, rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter(TSDF_MAX_X_PARAMETER, rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter(TSDF_MAX_Y_PARAMETER, rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter(TSDF_MAX_Z_PARAMETER, rclpy.Parameter.Type.DOUBLE)
 
         self.get_logger().info("Started simulated reconstruction node")
 
     def start_cb(self, _request, response):
+        # Publish the simulated TSDF volume
+        min_bound = np.asarray([self.get_parameter(TSDF_MIN_X_PARAMETER).value,
+                                self.get_parameter(TSDF_MIN_Y_PARAMETER).value,
+                                self.get_parameter(TSDF_MIN_Z_PARAMETER).value])
+        max_bound = np.asarray([self.get_parameter(TSDF_MAX_X_PARAMETER).value,
+                                self.get_parameter(TSDF_MAX_Y_PARAMETER).value,
+                                self.get_parameter(TSDF_MAX_Z_PARAMETER).value])
+
+        crop_box_msg = Marker()
+        crop_box_msg.type = crop_box_msg.CUBE
+        crop_box_msg.action = crop_box_msg.ADD
+        crop_box_msg.id = 1
+        crop_box_msg.frame_locked = True
+        crop_box_msg.scale.x = max_bound[0] - min_bound[0]
+        crop_box_msg.scale.y = max_bound[1] - min_bound[1]
+        crop_box_msg.scale.z = max_bound[2] - min_bound[2]
+        crop_box_msg.pose.position.x = (min_bound[0] + max_bound[0]) / 2.0
+        crop_box_msg.pose.position.y = (min_bound[1] + max_bound[1]) / 2.0
+        crop_box_msg.pose.position.z = (min_bound[2] + max_bound[2]) / 2.0
+        crop_box_msg.pose.orientation.w = 1.0
+        crop_box_msg.pose.orientation.x = 0.0
+        crop_box_msg.pose.orientation.y = 0.0
+        crop_box_msg.pose.orientation.z = 0.0
+        crop_box_msg.color.r = 1.0
+        crop_box_msg.color.g = 0.0
+        crop_box_msg.color.b = 0.0
+        crop_box_msg.color.a = 0.25
+        crop_box_msg.header.frame_id = self.get_parameter(REFERENCE_FRAME_PARAMETER).value
+        self.tsdf_volume_pub.publish(crop_box_msg)
+
         response.success = True
         return response
 
