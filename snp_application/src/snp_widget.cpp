@@ -72,25 +72,16 @@ public:
         break;
     }
 
+    // Get the last saved TPP configuration file from the QSettings
     QSettings settings;
-    settings.sync();
+    const QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
 
-    switch (settings.status())
-    {
-      case QSettings::Status::AccessError:
-        QMessageBox::warning(this, "Access Error",
-                             "Failed to access the Qt settings for this application; please ensure the directory "
-                             "'$HOME/.config' is read/write accessible.");
-        break;
-      case QSettings::Status::FormatError:
-        QMessageBox::warning(this, "Format Error", "Invalid format for the Qt settings for this application.");
-        break;
-      case QSettings::Status::NoError:
-      default: {
-        QString last_file = settings.value(noether::ConfigurableTPPPipelineWidget::SETTINGS_KEY_LAST_FILE).toString();
-        node_->set_parameter(rclcpp::Parameter(PROCESS_TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
-      }
-    }
+    if (last_file.isNull() || last_file.isEmpty())
+      QMessageBox::warning(this, "QSettings Error",
+                           "Failed to extract last saved TPP configuration file from QSettings."
+                           "Please ensure the directory '$HOME/.config' is read/write accessible.");
+    else
+      node_->set_parameter(rclcpp::Parameter(PROCESS_TPP_CONFIG_FILE_PARAM, last_file.toStdString()));
 
     event->accept();
   }
