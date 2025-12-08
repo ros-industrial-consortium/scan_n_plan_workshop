@@ -671,26 +671,34 @@ private:
         throw std::runtime_error(ss.str());
       }
 
-      // Return results
-      res->approach = tesseract_rosutils::toMsg(toJointTrajectory(*program_results.begin()), env_->getState());
-
-      tesseract_planning::CompositeInstruction process_ci(program_results.begin() + 1, program_results.end() - 1);
-      res->process = tesseract_rosutils::toMsg(toJointTrajectory(process_ci), env_->getState());
-
-      res->departure = tesseract_rosutils::toMsg(toJointTrajectory(*(program_results.end() - 1)), env_->getState());
-
-      // Add the end of the approach to the beginning of the process trajectory
+      // TODO DMERZ: DECOMPOSE INTO MULTIPLE PROCESS PLANS, MAKE THIS INTO A LOOP
       {
-        trajectory_msgs::msg::JointTrajectoryPoint approach_end = res->approach.points.back();
-        approach_end.time_from_start = builtin_interfaces::msg::Duration();
-        res->process.points.insert(res->process.points.begin(), approach_end);
-      }
+        snp_msgs::msg::RasterMotionPlan motion_plan_msg;
 
-      // Add the end of the process trajectory to the beginning of the departure trajectory
-      {
-        trajectory_msgs::msg::JointTrajectoryPoint process_end = res->process.points.back();
-        process_end.time_from_start = builtin_interfaces::msg::Duration();
-        res->departure.points.insert(res->departure.points.begin(), process_end);
+        // Return results
+        motion_plan_msg.approach = tesseract_rosutils::toMsg(toJointTrajectory(*program_results.begin()), env_->getState());
+
+        tesseract_planning::CompositeInstruction process_ci(program_results.begin() + 1, program_results.end() - 1);
+        motion_plan_msg.process = tesseract_rosutils::toMsg(toJointTrajectory(process_ci), env_->getState());
+
+        motion_plan_msg.departure = tesseract_rosutils::toMsg(toJointTrajectory(*(program_results.end() - 1)), env_->getState());
+
+        // Add the end of the approach to the beginning of the process trajectory
+        {
+          trajectory_msgs::msg::JointTrajectoryPoint approach_end = motion_plan_msg.approach.points.back();
+          approach_end.time_from_start = builtin_interfaces::msg::Duration();
+          motion_plan_msg.process.points.insert(motion_plan_msg.process.points.begin(), approach_end);
+        }
+
+        // Add the end of the process trajectory to the beginning of the departure trajectory
+        {
+          trajectory_msgs::msg::JointTrajectoryPoint process_end = motion_plan_msg.process.points.back();
+          process_end.time_from_start = builtin_interfaces::msg::Duration();
+          motion_plan_msg.departure.points.insert(motion_plan_msg.departure.points.begin(), process_end);
+        }
+
+        // Add this converted raster motion plan to the response
+        res->motion_plans.push_back(motion_plan_msg);
       }
 
       res->message = "Succesfully planned motion";

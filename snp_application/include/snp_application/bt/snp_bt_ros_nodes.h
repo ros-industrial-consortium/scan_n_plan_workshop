@@ -2,6 +2,8 @@
 
 #include <snp_application/bt/utils.h>
 
+#include <deque>
+
 #include <behaviortree_ros2/bt_action_node.hpp>
 #include <behaviortree_ros2/bt_service_node.hpp>
 #include <behaviortree_ros2/bt_topic_pub_node.hpp>
@@ -168,17 +170,23 @@ public:
   inline static const std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
   inline static const std::string MOTION_GROUP_INPUT_PORT_KEY = "motion_group";
   inline static const std::string TCP_FRAME_INPUT_PORT_KEY = "tcp_frame";
+  /*
   inline static const std::string APPROACH_OUTPUT_PORT_KEY = "approach";
   inline static const std::string PROCESS_OUTPUT_PORT_KEY = "process";
   inline static const std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
+  */
+  inline static const std::string MOTION_PLANS_OUTPUT_PORT_KEY = "motion_plans";
   inline static BT::PortsList providedPorts()
   {
     return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY),
                                 BT::InputPort<std::string>(MOTION_GROUP_INPUT_PORT_KEY),
                                 BT::InputPort<std::string>(TCP_FRAME_INPUT_PORT_KEY),
+                                /*
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
-                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) });
+                                BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY)
+                                */
+                                BT::OutputPort<std::deque<snp_msgs::msg::RasterMotionPlan>>(MOTION_PLANS_OUTPUT_PORT_KEY),});
   }
 
   using SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>::SnpRosServiceNode;
@@ -490,5 +498,27 @@ protected:
 
   rclcpp::Node::SharedPtr node_;
 };
+
+class SplitMotionPlanNode : public BT::SyncActionNode
+{
+public:
+  inline static const std::string MOTION_PLAN_INPUT_PORT_KEY = "motion_plan";
+  inline static const std::string APPROACH_OUTPUT_PORT_KEY = "approach";
+  inline static const std::string PROCESS_OUTPUT_PORT_KEY = "process";
+  inline static const std::string DEPARTURE_OUTPUT_PORT_KEY = "departure";
+  inline static BT::PortsList providedPorts()
+  {
+    return { BT::InputPort<snp_msgs::msg::RasterMotionPlan>(MOTION_PLAN_INPUT_PORT_KEY),
+          BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
+          BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
+          BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) };
+  }
+  explicit SplitMotionPlanNode(const std::string& instance_name, const BT::NodeConfig& config);
+
+protected:
+  BT::NodeStatus tick() override;
+};
+
+
 
 }  // namespace snp_application

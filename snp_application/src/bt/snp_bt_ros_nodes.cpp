@@ -44,12 +44,21 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
     return BT::NodeStatus::FAILURE;
   }
 
+  // convert vector of motion plans to a queue
+  std::deque<snp_msgs::msg::RasterMotionPlan> motion_plans_queue;
+  motion_plans_queue.insert(motion_plans_queue.end(),
+                            std::make_move_iterator(response->motion_plans.begin()),
+                            std::make_move_iterator(response->motion_plans.end()));
+
   // Set output
+  /*
   BT::NodeStatus s1 = setOutputAndCheck(APPROACH_OUTPUT_PORT_KEY, response->approach);
   BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
   BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
+  */
+  BT::NodeStatus s1 = setOutputAndCheck(MOTION_PLANS_OUTPUT_PORT_KEY, motion_plans_queue);
 
-  if (s1 == BT::NodeStatus::SUCCESS && s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS)
+  if (s1 == BT::NodeStatus::SUCCESS /*&& s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS*/)
     return BT::NodeStatus::SUCCESS;
 
   return BT::NodeStatus::FAILURE;
@@ -663,6 +672,41 @@ RosSpinnerNode::RosSpinnerNode(const std::string& instance_name, const BT::NodeC
 BT::NodeStatus RosSpinnerNode::tick()
 {
   rclcpp::spin_some(node_);
+  return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus SplitMotionPlanNode::tick()
+{
+  BT::Expected<snp_msgs::msg::RasterMotionPlan> motion_plan_input = getInput<snp_msgs::msg::RasterMotionPlan>(MOTION_PLAN_INPUT_PORT_KEY);
+  if (!motion_plan_input)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required motion_plan_input value: '" << motion_plan_input.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  snp_msgs::msg::RasterMotionPlan motion_plan = motion_plan_input.value();
+
+  BT::Result s1 = setOutput(APPROACH_OUTPUT_PORT_KEY, motion_plan.approach);
+  BT::Result s2 = setOutput(PROCESS_OUTPUT_PORT_KEY, motion_plan.process);
+  BT::Result s3 = setOutput(DEPARTURE_OUTPUT_PORT_KEY, motion_plan.departure);
+
+  if (!s1)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, s1.get_unexpected().error());
+    return BT::NodeStatus::FAILURE;
+  }
+  if (!s2)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, s2.get_unexpected().error());
+    return BT::NodeStatus::FAILURE;
+  }
+  if (!s3)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, s3.get_unexpected().error());
+    return BT::NodeStatus::FAILURE;
+  }
+
   return BT::NodeStatus::SUCCESS;
 }
 

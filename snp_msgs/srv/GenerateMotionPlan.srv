@@ -14,9 +14,7 @@ string tcp_frame
 # Response
 
 # Motion Plan - a joint trajectory for the robot to follow
-trajectory_msgs/JointTrajectory approach
-trajectory_msgs/JointTrajectory process
-trajectory_msgs/JointTrajectory departure
+snp_msgs/RasterMotionPlan[] motion_plans
 
 # Success and error information
 bool success

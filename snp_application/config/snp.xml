@@ -177,20 +177,20 @@
                                        motion_group="{process_motion_group}"
                                        tcp_frame="{tcp_frame}"
                                        tool_paths="{tool_paths}"
-                                       approach="{approach}"
-                                       process="{process}"
-                                       departure="{departure}"/>
-            <CombineTrajectories name="Combine Trajectories"
-                                 first="{approach}"
-                                 second="{process}"
-                                 output="{trajectory}"/>
-            <CombineTrajectories name="Combine Trajectories"
-                                 first="{trajectory}"
-                                 second="{departure}"
-                                 output="{trajectory}"/>
-            <MotionPlanPub name="Publish Process Motion Plan"
-                           topic_name="motion_plan"
-                           trajectory="{trajectory}"/>
+                                       motion_plans="{motion_plans}"/>
+            <LoopThroughMotionPlans queue="{motion_plans}" value="{motion_plan}">
+              <CombineTrajectories name="Combine Trajectories"
+                                   first="{approach}"
+                                   second="{process}"
+                                   output="{trajectory}"/>
+              <CombineTrajectories name="Combine Trajectories"
+                                   first="{trajectory}"
+                                   second="{departure}"
+                                   output="{trajectory}"/>
+              <MotionPlanPub name="Publish Process Motion Plan"
+                             topic_name="motion_plan"
+                             trajectory="{trajectory}"/>
+            </LoopThroughMotionPlans>
           </Sequence>
         </ReactiveSequence>
       </Progress>
@@ -356,12 +356,8 @@
                   default="{tcp_frame}"/>
       <input_port name="tool_paths"
                   default="{tool_paths}"/>
-      <output_port name="approach"
-                   default="{approach}"/>
-      <output_port name="process"
-                   default="{process}"/>
-      <output_port name="departure"
-                   default="{departure}"/>
+      <output_port name="motion_plans"
+                  default="{motion_plans}"/>
     </Action>
     <Action ID="LoadTrajectoryFromFile"
             editable="true">

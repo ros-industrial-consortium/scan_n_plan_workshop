@@ -9,6 +9,7 @@
 #include <snp_application/bt/snp_sequence_with_memory_node.h>
 
 #include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/decorators/loop_node.h>
 
 BT_REGISTER_NODES(factory)
 {
@@ -23,6 +24,8 @@ BT_REGISTER_NODES(factory)
   factory.registerNodeType<snp_application::SNPSequenceWithMemory>("SNPSequenceWithMemory");
   factory.registerNodeType<snp_application::ReverseTrajectoryNode>("ReverseTrajectory");
   factory.registerNodeType<snp_application::CombineTrajectoriesNode>("CombineTrajectories");
+  factory.registerNodeType<BT::LoopNode<snp_msgs::msg::RasterMotionPlan>>("LoopThroughMotionPlans");
+  factory.registerNodeType<snp_application::SplitMotionPlanNode>("SplitMotionPlan");
 }
 
 BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory, const BT::RosNodeParams& params)
