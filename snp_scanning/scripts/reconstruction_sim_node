@@ -31,14 +31,15 @@ class ReconstructionSimServer(Node):
         self.start_srv = self.create_service(StartReconstruction, "start_reconstruction", self.start_cb)
         self.stop_srv = self.create_service(StopReconstruction, "stop_reconstruction", self.stop_cb)
 
-        self.scan_mesh_pub = self.create_publisher(Marker, MESH_TOPIC, 100)
-        self.qos_profile = QoSProfile(
+        topic_qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=1
         )
-        self.tsdf_volume_pub = self.create_publisher(Marker, TSDF_VOLUME_TOPIC, self.qos_profile)
+
+        self.scan_mesh_pub = self.create_publisher(Marker, MESH_TOPIC, topic_qos)
+        self.tsdf_volume_pub = self.create_publisher(Marker, TSDF_VOLUME_TOPIC, topic_qos)
 
         self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING)
         self.declare_parameter(REFERENCE_FRAME_PARAMETER, rclpy.Parameter.Type.STRING)
