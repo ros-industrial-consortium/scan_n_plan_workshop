@@ -25,6 +25,7 @@ rosidl_generate_interfaces(
   ${PROJECT_NAME}
   "msg/RasterMotionPlan.msg"
   "msg/ToolPath.msg"
+  "msg/ToolPaths.msg"
   "srv/AddScanLink.srv"
   "srv/GenerateMotionPlan.srv"
   "srv/GenerateFreespaceMotionPlan.srv"

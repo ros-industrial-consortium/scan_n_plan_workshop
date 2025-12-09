@@ -29,7 +29,7 @@ BT::NodeStatus EmptyServiceNode::onResponseReceived(const typename Response::Sha
 
 bool GenerateMotionPlanServiceNode::setRequest(typename Request::SharedPtr& request)
 {
-  request->tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
+  request->tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPaths>>(this, TOOL_PATHS_INPUT_PORT_KEY);
   request->motion_group = getBTInput<std::string>(this, MOTION_GROUP_INPUT_PORT_KEY);
   request->tcp_frame = getBTInput<std::string>(this, TCP_FRAME_INPUT_PORT_KEY);
 
@@ -148,9 +148,12 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
   }
 
   // Convert to the SNP definition of tool paths
-  std::vector<snp_msgs::msg::ToolPath> out;
+  std::vector<snp_msgs::msg::ToolPaths> paths_out;
+  paths_out.reserve(response->tool_paths.size());
   for (const noether_ros::msg::ToolPaths& tool_paths : response->tool_paths)
   {
+    snp_msgs::msg::ToolPaths snp_tool_paths;
+    snp_tool_paths.tool_paths.reserve(tool_paths.tool_paths.size());
     for (const noether_ros::msg::ToolPath& tool_path : tool_paths.tool_paths)
     {
       snp_msgs::msg::ToolPath snp_tool_path;
@@ -159,11 +162,12 @@ BT::NodeStatus PlanToolPathServiceNode::onResponseReceived(const typename Respon
       for (geometry_msgs::msg::PoseArray segment : tool_path.segments)
         snp_tool_path.segments.emplace_back(segment);
 
-      out.push_back(snp_tool_path);
+      snp_tool_paths.tool_paths.push_back(snp_tool_path);
     }
+    paths_out.push_back(snp_tool_paths);
   }
 
-  return setOutputAndCheck(TOOL_PATHS_OUTPUT_PORT_KEY, out);
+  return setOutputAndCheck(TOOL_PATHS_OUTPUT_PORT_KEY, paths_out);
 }
 
 bool StartReconstructionServiceNode::setRequest(typename Request::SharedPtr& request)
@@ -714,23 +718,23 @@ BT::NodeStatus SplitMotionPlanNode::tick()
 
 BT::NodeStatus VectorToQueueNode::tick()
 {
-  BT::Expected<snp_msgs::msg::RasterMotionPlan> motion_plan_vector_input = getInput<std::vector<snp_msgs::msg::RasterMotionPlan>>(VECTOR_INPUT_PORT_KEY);
-  if (!motion_plan_vector_input)
+  BT::Expected<std::vector<snp_msgs::msg::RasterMotionPlan>> motion_plans_vector_input = getInput<std::vector<snp_msgs::msg::RasterMotionPlan>>(VECTOR_INPUT_PORT_KEY);
+  if (!motion_plans_vector_input)
   {
     std::stringstream ss;
-    ss << "Failed to get required motion_plan_vector_input value: '" << motion_plan_vector_input.error() << "'";
+    ss << "Failed to get required motion_plans_vector_input value: '" << motion_plans_vector_input.error() << "'";
     config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
     return BT::NodeStatus::FAILURE;
   }
-  std::vector<snp_msgs::msg::RasterMotionPlan> motion_plan_vector = motion_plan_vector_input.value();
+  std::vector<snp_msgs::msg::RasterMotionPlan> motion_plans_vector = motion_plans_vector_input.value();
 
   // convert vector of motion plans to a queue
   std::deque<snp_msgs::msg::RasterMotionPlan> motion_plans_queue;
   motion_plans_queue.insert(motion_plans_queue.end(),
-                            response->motion_plans.begin(),
-                            response->motion_plans.end());
+                            motion_plans_vector.begin(),
+                            motion_plans_vector.end());
 
-  BT::Result s1 = setOutput(QUEUE_OUTPUT_KEY, motion_plans_queue);
+  BT::Result s1 = setOutput(QUEUE_OUTPUT_PORT_KEY, motion_plans_queue);
   if (!s1)
   {
     config().blackboard->set(ERROR_MESSAGE_KEY, s1.get_unexpected().error());

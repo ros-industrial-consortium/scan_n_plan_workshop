@@ -14,6 +14,8 @@
 #include <industrial_reconstruction_msgs/srv/stop_reconstruction.hpp>
 #include <noether_ros/srv/plan_tool_path.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <snp_msgs/msg/raster_motion_plan.hpp>
+#include <snp_msgs/msg/tool_paths.hpp>
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/add_scan_link.hpp>
@@ -178,7 +180,7 @@ public:
   inline static const std::string MOTION_PLANS_OUTPUT_PORT_KEY = "motion_plans";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY),
+    return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPaths>>(TOOL_PATHS_INPUT_PORT_KEY),
                                 BT::InputPort<std::string>(MOTION_GROUP_INPUT_PORT_KEY),
                                 BT::InputPort<std::string>(TCP_FRAME_INPUT_PORT_KEY),
                                 /*
@@ -261,7 +263,7 @@ public:
     return providedBasicPorts({ BT::InputPort<std::string>(CONFIG_FILE_INPUT_PORT_KEY),
                                 BT::InputPort<std::string>(MESH_FILE_INPUT_PORT_KEY),
                                 BT::InputPort<std::string>(MESH_FRAME_INPUT_PORT_KEY),
-                                BT::OutputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_OUTPUT_PORT_KEY) });
+                                BT::OutputPort<std::vector<snp_msgs::msg::ToolPaths>>(TOOL_PATHS_OUTPUT_PORT_KEY) });
   }
 
   using SnpRosServiceNode<noether_ros::srv::PlanToolPath>::SnpRosServiceNode;
@@ -530,7 +532,7 @@ public:
     return { BT::InputPort<std::vector<snp_msgs::msg::RasterMotionPlan>>(VECTOR_INPUT_PORT_KEY),
              BT::OutputPort<std::deque<snp_msgs::msg::RasterMotionPlan>>(QUEUE_OUTPUT_PORT_KEY) };
   }
-  explicit VectorToQueueNode(const std::string* instance_name, const BT::NodeConfig& config);
+  explicit VectorToQueueNode(const std::string& instance_name, const BT::NodeConfig& config);
 
 protected:
   BT::NodeStatus tick() override;
