@@ -94,6 +94,7 @@ class ReconstructionSimServer(Node):
 
             # Publish the mesh visualization message
             msg = meshToRos(open3d.io.read_triangle_mesh(mesh_file))
+            msg.frame_locked = True
             msg.header.frame_id = self.get_parameter(REFERENCE_FRAME_PARAMETER).value
             self.scan_mesh_pub.publish(msg)
 
