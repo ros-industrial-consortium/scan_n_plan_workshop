@@ -2,6 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, HistoryPolicy, ReliabilityPolicy, DurabilityPolicy
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 import sys
 import open3d
 from industrial_reconstruction_msgs.srv import StartReconstruction
@@ -43,12 +44,12 @@ class ReconstructionSimServer(Node):
 
         self.declare_parameter(MESH_FILE_PARAMETER, rclpy.Parameter.Type.STRING)
         self.declare_parameter(REFERENCE_FRAME_PARAMETER, rclpy.Parameter.Type.STRING)
-        self.declare_parameter(TSDF_MIN_X_PARAMETER, rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter(TSDF_MIN_Y_PARAMETER, rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter(TSDF_MIN_Z_PARAMETER, rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter(TSDF_MAX_X_PARAMETER, rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter(TSDF_MAX_Y_PARAMETER, rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter(TSDF_MAX_Z_PARAMETER, rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter(TSDF_MIN_X_PARAMETER, np.nan, ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE))
+        self.declare_parameter(TSDF_MIN_Y_PARAMETER, np.nan, ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE))
+        self.declare_parameter(TSDF_MIN_Z_PARAMETER, np.nan, ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE))
+        self.declare_parameter(TSDF_MAX_X_PARAMETER, np.nan, ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE))
+        self.declare_parameter(TSDF_MAX_Y_PARAMETER, np.nan, ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE))
+        self.declare_parameter(TSDF_MAX_Z_PARAMETER, np.nan, ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE))
 
         self.get_logger().info("Started simulated reconstruction node")
 
