@@ -44,11 +44,13 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
     return BT::NodeStatus::FAILURE;
   }
 
+  /*
   // convert vector of motion plans to a queue
   std::deque<snp_msgs::msg::RasterMotionPlan> motion_plans_queue;
   motion_plans_queue.insert(motion_plans_queue.end(),
                             std::make_move_iterator(response->motion_plans.begin()),
                             std::make_move_iterator(response->motion_plans.end()));
+  */
 
   // Set output
   /*
@@ -56,7 +58,7 @@ BT::NodeStatus GenerateMotionPlanServiceNode::onResponseReceived(const typename 
   BT::NodeStatus s2 = setOutputAndCheck(PROCESS_OUTPUT_PORT_KEY, response->process);
   BT::NodeStatus s3 = setOutputAndCheck(DEPARTURE_OUTPUT_PORT_KEY, response->departure);
   */
-  BT::NodeStatus s1 = setOutputAndCheck(MOTION_PLANS_OUTPUT_PORT_KEY, motion_plans_queue);
+  BT::NodeStatus s1 = setOutputAndCheck(MOTION_PLANS_OUTPUT_PORT_KEY, response->motion_plans);
 
   if (s1 == BT::NodeStatus::SUCCESS /*&& s2 == BT::NodeStatus::SUCCESS && s3 == BT::NodeStatus::SUCCESS*/)
     return BT::NodeStatus::SUCCESS;
@@ -704,6 +706,34 @@ BT::NodeStatus SplitMotionPlanNode::tick()
   if (!s3)
   {
     config().blackboard->set(ERROR_MESSAGE_KEY, s3.get_unexpected().error());
+    return BT::NodeStatus::FAILURE;
+  }
+
+  return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus VectorToQueueNode::tick()
+{
+  BT::Expected<snp_msgs::msg::RasterMotionPlan> motion_plan_vector_input = getInput<std::vector<snp_msgs::msg::RasterMotionPlan>>(VECTOR_INPUT_PORT_KEY);
+  if (!motion_plan_vector_input)
+  {
+    std::stringstream ss;
+    ss << "Failed to get required motion_plan_vector_input value: '" << motion_plan_vector_input.error() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return BT::NodeStatus::FAILURE;
+  }
+  std::vector<snp_msgs::msg::RasterMotionPlan> motion_plan_vector = motion_plan_vector_input.value();
+
+  // convert vector of motion plans to a queue
+  std::deque<snp_msgs::msg::RasterMotionPlan> motion_plans_queue;
+  motion_plans_queue.insert(motion_plans_queue.end(),
+                            response->motion_plans.begin(),
+                            response->motion_plans.end());
+
+  BT::Result s1 = setOutput(QUEUE_OUTPUT_KEY, motion_plans_queue);
+  if (!s1)
+  {
+    config().blackboard->set(ERROR_MESSAGE_KEY, s1.get_unexpected().error());
     return BT::NodeStatus::FAILURE;
   }
 

@@ -186,7 +186,7 @@ public:
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
                                 BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY)
                                 */
-                                BT::OutputPort<std::deque<snp_msgs::msg::RasterMotionPlan>>(MOTION_PLANS_OUTPUT_PORT_KEY),});
+                                BT::OutputPort<std::vector<snp_msgs::msg::RasterMotionPlan>>(MOTION_PLANS_OUTPUT_PORT_KEY),});
   }
 
   using SnpRosServiceNode<snp_msgs::srv::GenerateMotionPlan>::SnpRosServiceNode;
@@ -509,16 +509,31 @@ public:
   inline static BT::PortsList providedPorts()
   {
     return { BT::InputPort<snp_msgs::msg::RasterMotionPlan>(MOTION_PLAN_INPUT_PORT_KEY),
-          BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
-          BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
-          BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) };
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(APPROACH_OUTPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(PROCESS_OUTPUT_PORT_KEY),
+             BT::OutputPort<trajectory_msgs::msg::JointTrajectory>(DEPARTURE_OUTPUT_PORT_KEY) };
   }
+
   explicit SplitMotionPlanNode(const std::string& instance_name, const BT::NodeConfig& config);
 
 protected:
   BT::NodeStatus tick() override;
 };
 
+class VectorToQueueNode : public BT::SyncActionNode
+{
+public:
+  inline static const std::string VECTOR_INPUT_PORT_KEY = "vector";
+  inline static const std::string QUEUE_OUTPUT_PORT_KEY = "queue";
+  inline static BT::PortsList providedPorts()
+  {
+    return { BT::InputPort<std::vector<snp_msgs::msg::RasterMotionPlan>>(VECTOR_INPUT_PORT_KEY),
+             BT::OutputPort<std::deque<snp_msgs::msg::RasterMotionPlan>>(QUEUE_OUTPUT_PORT_KEY) };
+  }
+  explicit VectorToQueueNode(const std::string* instance_name, const BT::NodeConfig& config);
 
+protected:
+  BT::NodeStatus tick() override;
+};
 
 }  // namespace snp_application

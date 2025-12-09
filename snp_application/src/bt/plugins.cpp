@@ -24,8 +24,10 @@ BT_REGISTER_NODES(factory)
   factory.registerNodeType<snp_application::SNPSequenceWithMemory>("SNPSequenceWithMemory");
   factory.registerNodeType<snp_application::ReverseTrajectoryNode>("ReverseTrajectory");
   factory.registerNodeType<snp_application::CombineTrajectoriesNode>("CombineTrajectories");
+
   factory.registerNodeType<BT::LoopNode<snp_msgs::msg::RasterMotionPlan>>("LoopThroughMotionPlans");
   factory.registerNodeType<snp_application::SplitMotionPlanNode>("SplitMotionPlan");
+  factory.registerNodeType<snp_application::VectorToQueueNode>("VectorToQueue");
 }
 
 BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory, const BT::RosNodeParams& params)
