@@ -242,19 +242,17 @@ BT::NodeStatus StopReconstructionServiceNode::onResponseReceived(const typename 
 
 bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
 {
-  auto tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
+  auto tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPaths>>(this, TOOL_PATHS_INPUT_PORT_KEY);
 
-  if (tool_paths.empty() || tool_paths.at(0).segments.empty())
-    return true;
-
-  // Set the frame ID from the first tool path segment
-  msg.header.frame_id = tool_paths.at(0).segments.at(0).header.frame_id;
-
-  for (const snp_msgs::msg::ToolPath& tp : tool_paths)
+  for (const snp_msgs::msg::ToolPaths& tps : tool_paths)
   {
-    for (const geometry_msgs::msg::PoseArray& arr : tp.segments)
+    for (const snp_msgs::msg::ToolPath& tp : tps.tool_paths)
     {
-      msg.poses.insert(msg.poses.end(), arr.poses.begin(), arr.poses.end());
+      for (const geometry_msgs::msg::PoseArray& arr : tp.segments)
+      {
+        msg.poses.insert(msg.poses.end(), arr.poses.begin(), arr.poses.end());
+        msg.header.frame_id = arr.header.frame_id;
+      }
     }
   }
 

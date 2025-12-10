@@ -353,7 +353,7 @@ public:
   inline static const std::string TOOL_PATHS_INPUT_PORT_KEY = "tool_paths";
   inline static BT::PortsList providedPorts()
   {
-    return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPath>>(TOOL_PATHS_INPUT_PORT_KEY) });
+    return providedBasicPorts({ BT::InputPort<std::vector<snp_msgs::msg::ToolPaths>>(TOOL_PATHS_INPUT_PORT_KEY) });
   }
   using BT::RosTopicPubNode<geometry_msgs::msg::PoseArray>::RosTopicPubNode;
 
