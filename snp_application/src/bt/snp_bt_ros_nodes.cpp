@@ -681,6 +681,12 @@ BT::NodeStatus RosSpinnerNode::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
+SplitMotionPlanNode::SplitMotionPlanNode(const std::string& instance_name, const BT::NodeConfig& config)
+  : BT::SyncActionNode(instance_name, config)
+{
+  return;
+}
+
 BT::NodeStatus SplitMotionPlanNode::tick()
 {
   BT::Expected<snp_msgs::msg::RasterMotionPlan> motion_plan_input = getInput<snp_msgs::msg::RasterMotionPlan>(MOTION_PLAN_INPUT_PORT_KEY);
@@ -714,6 +720,12 @@ BT::NodeStatus SplitMotionPlanNode::tick()
   }
 
   return BT::NodeStatus::SUCCESS;
+}
+
+VectorToQueueNode::VectorToQueueNode(const std::string& instance_name, const BT::NodeConfig& config)
+  : BT::SyncActionNode(instance_name, config)
+{
+  return;
 }
 
 BT::NodeStatus VectorToQueueNode::tick()
