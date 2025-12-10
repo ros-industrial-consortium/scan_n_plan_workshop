@@ -639,7 +639,7 @@ private:
       RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
 
       // Create a manipulator info and program from the service request
-      const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
+      const std::string& base_frame = req->tool_paths.at(0).tool_paths.at(0).segments.at(0).header.frame_id;
       if (base_frame.empty())
       {
         throw std::runtime_error("Base frame is empty!");
@@ -654,43 +654,52 @@ private:
       }
       tesseract_common::ManipulatorInfo manip_info(req->motion_group, base_frame, req->tcp_frame);
 
-      // Set up composite instruction and environment
-      tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(req->tool_paths));
-
-      // Invoke the planner
-      auto pd = createProfileDictionary();
-      auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
-      tesseract_planning::CompositeInstruction program_results = plan(program, pd, raster_task_name);
-
-      if (program_results.size() < 3)
+      for (const snp_msgs::msg::ToolPaths& tool_paths : req->tool_paths)
       {
-        std::stringstream ss;
-        ss << "The composite instruction must have at least 3 children (approach, process rasters, and departure). "
-              "This result only has "
-           << program_results.size();
-        throw std::runtime_error(ss.str());
-      }
+        // Set up composite instruction and environment
+        tesseract_planning::CompositeInstruction program = createProgram(manip_info, fromMsg(tool_paths.tool_paths));
 
-      // Return results
-      res->approach = tesseract_rosutils::toMsg(toJointTrajectory(*program_results.begin()), env_->getState());
+        // Invoke the planner
+        auto pd = createProfileDictionary();
+        auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
+        tesseract_planning::CompositeInstruction program_results = plan(program, pd, raster_task_name);
 
-      tesseract_planning::CompositeInstruction process_ci(program_results.begin() + 1, program_results.end() - 1);
-      res->process = tesseract_rosutils::toMsg(toJointTrajectory(process_ci), env_->getState());
+        if (program_results.size() < 3)
+        {
+          std::stringstream ss;
+          ss << "The composite instruction must have at least 3 children (approach, process rasters, and departure). "
+                "This result only has "
+             << program_results.size();
+          throw std::runtime_error(ss.str());
+        }
 
-      res->departure = tesseract_rosutils::toMsg(toJointTrajectory(*(program_results.end() - 1)), env_->getState());
+        // Turn the results into a message
+        snp_msgs::msg::RasterMotionPlan motion_plan_msg;
 
-      // Add the end of the approach to the beginning of the process trajectory
-      {
-        trajectory_msgs::msg::JointTrajectoryPoint approach_end = res->approach.points.back();
-        approach_end.time_from_start = builtin_interfaces::msg::Duration();
-        res->process.points.insert(res->process.points.begin(), approach_end);
-      }
+        // Return results
+        motion_plan_msg.approach = tesseract_rosutils::toMsg(toJointTrajectory(*program_results.begin()), env_->getState());
 
-      // Add the end of the process trajectory to the beginning of the departure trajectory
-      {
-        trajectory_msgs::msg::JointTrajectoryPoint process_end = res->process.points.back();
-        process_end.time_from_start = builtin_interfaces::msg::Duration();
-        res->departure.points.insert(res->departure.points.begin(), process_end);
+        tesseract_planning::CompositeInstruction process_ci(program_results.begin() + 1, program_results.end() - 1);
+        motion_plan_msg.process = tesseract_rosutils::toMsg(toJointTrajectory(process_ci), env_->getState());
+
+        motion_plan_msg.departure = tesseract_rosutils::toMsg(toJointTrajectory(*(program_results.end() - 1)), env_->getState());
+
+        // Add the end of the approach to the beginning of the process trajectory
+        {
+          trajectory_msgs::msg::JointTrajectoryPoint approach_end = motion_plan_msg.approach.points.back();
+          approach_end.time_from_start = builtin_interfaces::msg::Duration();
+          motion_plan_msg.process.points.insert(motion_plan_msg.process.points.begin(), approach_end);
+        }
+
+        // Add the end of the process trajectory to the beginning of the departure trajectory
+        {
+          trajectory_msgs::msg::JointTrajectoryPoint process_end = motion_plan_msg.process.points.back();
+          process_end.time_from_start = builtin_interfaces::msg::Duration();
+          motion_plan_msg.departure.points.insert(motion_plan_msg.departure.points.begin(), process_end);
+        }
+
+        // Add this converted raster motion plan to the response
+        res->motion_plans.push_back(motion_plan_msg);
       }
 
       res->message = "Succesfully planned motion";
