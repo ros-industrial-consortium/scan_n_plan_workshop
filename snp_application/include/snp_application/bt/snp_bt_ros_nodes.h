@@ -530,7 +530,7 @@ public:
   inline static BT::PortsList providedPorts()
   {
     return { BT::InputPort<std::vector<snp_msgs::msg::RasterMotionPlan>>(VECTOR_INPUT_PORT_KEY),
-             BT::OutputPort<std::deque<snp_msgs::msg::RasterMotionPlan>>(QUEUE_OUTPUT_PORT_KEY) };
+             BT::OutputPort<std::shared_ptr<std::deque<snp_msgs::msg::RasterMotionPlan>>>(QUEUE_OUTPUT_PORT_KEY) };
   }
   explicit VectorToQueueNode(const std::string& instance_name, const BT::NodeConfig& config);
 

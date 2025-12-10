@@ -739,8 +739,8 @@ BT::NodeStatus VectorToQueueNode::tick()
   std::vector<snp_msgs::msg::RasterMotionPlan> motion_plans_vector = motion_plans_vector_input.value();
 
   // convert vector of motion plans to a queue
-  std::deque<snp_msgs::msg::RasterMotionPlan> motion_plans_queue;
-  motion_plans_queue.insert(motion_plans_queue.end(),
+  std::shared_ptr<std::deque<snp_msgs::msg::RasterMotionPlan>> motion_plans_queue = std::make_shared<std::deque<snp_msgs::msg::RasterMotionPlan>>();
+  motion_plans_queue->insert(motion_plans_queue->end(),
                             motion_plans_vector.begin(),
                             motion_plans_vector.end());
 
