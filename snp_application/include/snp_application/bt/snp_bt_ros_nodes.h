@@ -17,6 +17,7 @@
 #include <snp_msgs/srv/add_scan_link.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <std_srvs/srv/empty.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 namespace snp_application
 {
@@ -331,6 +332,23 @@ public:
 
   bool setRequest(typename Request::SharedPtr& request) override;
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr& response) override;
+};
+
+/**
+ * @brief Publishes a `visualization_msgs/Marker` message
+ * @ingroup bt_plugins
+ */
+class MarkerPubNode : public BT::RosTopicPubNode<visualization_msgs::msg::Marker>
+{
+public:
+  inline static const std::string MARKER_INPUT_PORT_KEY = "marker";
+  inline static BT::PortsList providedPorts()
+  {
+    return providedBasicPorts({ BT::InputPort<visualization_msgs::msg::Marker>(MARKER_INPUT_PORT_KEY) });
+  }
+  using BT::RosTopicPubNode<visualization_msgs::msg::Marker>::RosTopicPubNode;
+
+  bool setMessage(visualization_msgs::msg::Marker& msg) override;
 };
 
 /**

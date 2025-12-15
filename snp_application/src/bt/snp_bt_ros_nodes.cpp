@@ -225,6 +225,23 @@ BT::NodeStatus StopReconstructionServiceNode::onResponseReceived(const typename 
   return BT::NodeStatus::SUCCESS;
 }
 
+bool MarkerPubNode::setMessage(visualization_msgs::msg::Marker& msg)
+{
+  try
+  {
+    msg = getBTInput<visualization_msgs::msg::Marker>(this, MARKER_INPUT_PORT_KEY);
+  }
+  catch (const std::exception& ex)
+  {
+    std::stringstream ss;
+    ss << "Error extracting marker message: '" << ex.what() << "'";
+    config().blackboard->set(ERROR_MESSAGE_KEY, ss.str());
+    return false;
+  }
+
+  return true;
+}
+
 bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
 {
   auto tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
@@ -675,6 +692,15 @@ inline std::vector<snp_msgs::msg::ToolPath> convertFromString(StringView str)
   segment.header.frame_id = str;
   msg.segments.push_back(segment);
   return { msg };
+}
+
+template <>
+inline visualization_msgs::msg::Marker convertFromString(StringView str)
+{
+  visualization_msgs::msg::Marker msg;
+  msg.header.frame_id = str;
+  msg.action = visualization_msgs::msg::Marker::DELETEALL;
+  return msg;
 }
 
 }  // end namespace BT
