@@ -229,9 +229,6 @@ bool ToolPathsPubNode::setMessage(geometry_msgs::msg::PoseArray& msg)
 {
   auto tool_paths = getBTInput<std::vector<snp_msgs::msg::ToolPath>>(this, TOOL_PATHS_INPUT_PORT_KEY);
 
-  if (tool_paths.empty() || tool_paths.at(0).segments.empty())
-    return true;
-
   // Set the frame ID from the first tool path segment
   msg.header.frame_id = tool_paths.at(0).segments.at(0).header.frame_id;
 
@@ -667,3 +664,17 @@ BT::NodeStatus RosSpinnerNode::tick()
 }
 
 }  // namespace snp_application
+
+namespace BT
+{
+template <>
+inline std::vector<snp_msgs::msg::ToolPath> convertFromString(StringView str)
+{
+  snp_msgs::msg::ToolPath msg;
+  geometry_msgs::msg::PoseArray segment;
+  segment.header.frame_id = str;
+  msg.segments.push_back(segment);
+  return { msg };
+}
+
+}  // end namespace BT
