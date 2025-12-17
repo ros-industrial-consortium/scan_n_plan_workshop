@@ -22,7 +22,9 @@ ROISelectionMeshModifier::ROISelectionMeshModifier()
 std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::PolygonMesh& mesh) const
 {
   // Check if the ROI selection service is ready
-  if (!client_->service_is_ready())
+  rclcpp::spin_some(node_);
+  using namespace std::chrono_literals;
+  if (!client_->wait_for_service(1s))
     throw std::runtime_error("ROI selection service is not available");
 
   // Call the ROI selection service
@@ -45,6 +47,7 @@ std::vector<pcl::PolygonMesh> ROISelectionMeshModifier::modify(const pcl::Polygo
   // Extract the modified meshes
   std::vector<pcl::PolygonMesh> modified_meshes;
 
+  rclcpp::spin_some(node_);
   for (const geometry_msgs::msg::PolygonStamped& polygon : response->selection)
   {
     if (polygon.polygon.points.size() < 3)
