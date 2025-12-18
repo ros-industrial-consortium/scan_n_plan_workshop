@@ -13,7 +13,7 @@
 - git:
     local-name: industrial_reconstruction
     uri: https://github.com/ros-industrial/industrial_reconstruction.git
-    version: dbe6b476ca7c20a23cac118506b40868209fbd9a
+    version: 90fdc690be9230480614b5cf96cc39c873de292c
 - git:
     local-name: rviz_polygon_selection_tool
     uri: https://github.com/swri-robotics/rviz_polygon_selection_tool.git
