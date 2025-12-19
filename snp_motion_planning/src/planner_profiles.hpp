@@ -11,6 +11,7 @@
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_lvs_plan_profile.h>
 #include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
+#include <tesseract_task_composer/planning/profiles/upsample_trajectory_profile.h>
 
 static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
 static const std::string OMPL_DEFAULT_NAMESPACE = "OMPLMotionPlannerTask";
@@ -19,6 +20,7 @@ static const std::string SIMPLE_DEFAULT_NAMESPACE = "SimpleMotionPlannerTask";
 static const std::string MIN_LENGTH_DEFAULT_NAMESPACE = "MinLengthTask";
 static const std::string CONTACT_CHECK_DEFAULT_NAMESPACE = "DiscreteContactCheckTask";
 static const std::string ISP_DEFAULT_NAMESPACE = "IterativeSplineParameterizationTask";
+static const std::string UPSAMPLE_TRAJECTORY_DEFAULT_NAMESPACE = "UpsampleTrajectoryTask";
 
 /**
  * @brief Container for a collision pair with a specifiable minimum allowable contact distance between the link pair
@@ -256,4 +258,10 @@ createContactCheckProfile(double longest_valid_segment_distance, double min_cont
     profile->config.contact_manager_config.margin_data.setPairCollisionMargin(pair.first, pair.second, pair.distance);
 
   return profile;
+}
+
+tesseract_planning::UpsampleTrajectoryProfile::Ptr
+createUpsampleTrajectoryProfile(double longest_valid_segment_distance)
+{
+  return std::make_shared<tesseract_planning::UpsampleTrajectoryProfile>(longest_valid_segment_distance);
 }
