@@ -32,7 +32,8 @@ set(ROS2_DEPS
     snp_msgs
     std_srvs
     trajectory_msgs
-    trajectory_preview)
+    trajectory_preview
+    visualization_msgs)
 
 find_package(ament_cmake REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
@@ -68,7 +69,8 @@ ament_target_dependencies(
   sensor_msgs
   snp_msgs
   std_srvs
-  trajectory_msgs)
+  trajectory_msgs
+  visualization_msgs)
 
 # Widget
 add_library(

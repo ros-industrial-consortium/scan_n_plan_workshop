@@ -32,6 +32,7 @@ BTCPP_EXPORT void BT_RegisterRosNodeFromPlugin(BT::BehaviorTreeFactory& factory,
   factory.registerNodeType<snp_application::RosSpinnerNode>("RosSpinner", params.nh.lock());
   factory.registerNodeType<snp_application::TriggerServiceNode>("TriggerService", params);
   factory.registerNodeType<snp_application::EmptyServiceNode>("EmptyService", params);
+  factory.registerNodeType<snp_application::MarkerPubNode>("MarkerPub", params);
   factory.registerNodeType<snp_application::ToolPathsPubNode>("ToolPathsPub", params);
   factory.registerNodeType<snp_application::MotionPlanPubNode>("MotionPlanPub", params);
   factory.registerNodeType<snp_application::FollowJointTrajectoryActionNode>("FollowJointTrajectoryAction", params);
