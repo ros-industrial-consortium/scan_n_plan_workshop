@@ -2,13 +2,13 @@
 
 #include <memory>
 #include <string>
-#include <tesseract_command_language/profile.h>
+#include <tesseract_common/profile.h>
 
 static const std::string KINEMATIC_LIMITS_CHECK_TASK_NAME = "KinematicLimitsCheckTask";
 
 namespace snp_motion_planning
 {
-struct KinematicLimitsCheckProfile : public tesseract_planning::Profile
+struct KinematicLimitsCheckProfile : public tesseract_common::Profile
 {
   using Ptr = std::shared_ptr<KinematicLimitsCheckProfile>;
   using ConstPtr = std::shared_ptr<const KinematicLimitsCheckProfile>;

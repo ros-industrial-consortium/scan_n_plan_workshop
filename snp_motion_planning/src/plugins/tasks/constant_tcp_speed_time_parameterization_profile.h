@@ -3,13 +3,13 @@
 #include <memory>
 #include <cmath>
 #include <string>
-#include <tesseract_command_language/profile.h>
+#include <tesseract_common/profile.h>
 
 static const std::string CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME = "ConstantTCPSpeedTimeParameterizationTask";
 
 namespace snp_motion_planning
 {
-struct ConstantTCPSpeedTimeParameterizationProfile : public tesseract_planning::Profile
+struct ConstantTCPSpeedTimeParameterizationProfile : public tesseract_common::Profile
 {
   using Ptr = std::shared_ptr<ConstantTCPSpeedTimeParameterizationProfile>;
   using ConstPtr = std::shared_ptr<const ConstantTCPSpeedTimeParameterizationProfile>;
