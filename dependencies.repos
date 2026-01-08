@@ -5,11 +5,11 @@
 - git:
     local-name: noether
     uri: https://github.com/ros-industrial/noether.git
-    version: 0.15.2
+    version: 0.16.0
 - git:
     local-name: noether_ros2
     uri: https://github.com/ros-industrial/noether_ros2.git
-    version: 0.1.1
+    version: 0.2.0
 - git:
     local-name: industrial_reconstruction
     uri: https://github.com/ros-industrial/industrial_reconstruction.git
@@ -17,7 +17,7 @@
 - git:
     local-name: rviz_polygon_selection_tool
     uri: https://github.com/swri-robotics/rviz_polygon_selection_tool.git
-    version: 1.0.0
+    version: 1.2.0
 - git:
     local-name: BehaviorTree.CPP
     uri: https://github.com/BehaviorTree/BehaviorTree.CPP.git
