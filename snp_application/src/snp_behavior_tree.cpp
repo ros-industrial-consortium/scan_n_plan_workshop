@@ -11,6 +11,7 @@ SnpBlackboard::SnpBlackboard(rclcpp::Node::SharedPtr node, BT::Blackboard::Ptr p
 {
   // Set the error message key in the blackboard
   set(ERROR_MESSAGE_KEY, "");
+  set(WARN_MESSAGE_KEY, "");
 
   // Lambda for setting blackboard values from ROS2 parameters
   auto update_from_parameters =
