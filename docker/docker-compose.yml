@@ -4,7 +4,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        - TAG=humble-0.29
+        - TAG=humble-0.30
     environment:
       DISPLAY: $DISPLAY
       XAUTHORITY: $XAUTHORITY
