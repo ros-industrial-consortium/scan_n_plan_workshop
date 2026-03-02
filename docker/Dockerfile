@@ -10,13 +10,17 @@ ENV DEBIAN_FRONTEND noninteractive
 
 USER root
 
-# Update and install Open3d
-RUN apt update -y -qq \
-  && if [[ "${TAG}" < "jazzy" ]] ; then \
-    apt install -y -qq python3-open3d ; \
+# Update
+RUN apt update -y -qq 
+
+# Install Open3d and pyquaternion
+RUN if [[ "${TAG}" < "jazzy" ]] ; then \
+    apt install -y -qq python3-pip python3-open3d \
+    && python3 -m pip install pyquaternion ; \
   else \
     apt install -y -qq python3-pip \
-    && python3 -m pip install open3d --break-system-packages ; \
+    && python3 -m pip install --break-system-packages pyquaternion \
+    && python3 -m pip install --break-system-packages open3d ; \
   fi
 
 # Build the workspace and install the build artifacts
