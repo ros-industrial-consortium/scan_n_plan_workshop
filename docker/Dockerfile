@@ -15,7 +15,7 @@ RUN apt update -y -qq
 
 # Install Open3d and pyquaternion
 RUN if [[ "${TAG}" < "jazzy" ]] ; then \
-    apt install -y -qq python3-open3d \
+    apt install -y -qq python3-pip python3-open3d \
     && python3 -m pip install pyquaternion ; \
   else \
     apt install -y -qq python3-pip \
