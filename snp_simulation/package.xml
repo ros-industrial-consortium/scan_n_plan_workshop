@@ -1,20 +1,27 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>snp_scanning</name>
+  <name>snp_simulation</name>
   <version>7.0.0</version>
-  <description>SNP scanning package</description>
+  <description>SNP simulation package combining scanning and motion execution simulation</description>
   <maintainer email="michael.ripperger@swri.org">Michael Ripperger</maintainer>
   <author email="tyler.marr@swri.org">Tyler Marr</author>
+  <author email="lcbw99@gmail.com">lbayewallace</author>
   <license>Apache 2.0</license>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
   <exec_depend>industrial_reconstruction_msgs</exec_depend>
-  <exec_depend>std_srvs</exec_depend>
-  <exec_depend>rclpy</exec_depend>
-  <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>python3-open3d</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>snp_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
 
   <export>
-    <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
