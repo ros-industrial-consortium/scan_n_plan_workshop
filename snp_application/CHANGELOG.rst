@@ -2,8 +2,8 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+8.0.0 (2026-03-27)
+------------------
 * Added BT node for publishing a visualization_msgs/Marker (`#208 <https://github.com/marip8/scan_n_plan_workshop/issues/208>`_)
 * Added ability to parse tool path message from string to publish empty tool path display (`#207 <https://github.com/marip8/scan_n_plan_workshop/issues/207>`_)
 * Replaced the QSettings status check with a check on the contents of the extracted QSettings value (`#200 <https://github.com/marip8/scan_n_plan_workshop/issues/200>`_)

@@ -2,8 +2,8 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+8.0.0 (2026-03-27)
+------------------
 * Changed SNP motion planning node to subscribe to `robot_description` topic (`#213 <https://github.com/marip8/scan_n_plan_workshop/issues/213>`_)
 * Update `noether` and utilize `noether_ros2` TPP server (`#181 <https://github.com/marip8/scan_n_plan_workshop/issues/181>`_)
 * Dropped support for ROS2 Foxy (`#180 <https://github.com/marip8/scan_n_plan_workshop/issues/180>`_)

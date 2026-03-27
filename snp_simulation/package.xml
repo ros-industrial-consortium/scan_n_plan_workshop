@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>snp_simulation</name>
-  <version>7.0.0</version>
+  <version>8.0.0</version>
   <description>SNP simulation package combining scanning and motion execution simulation</description>
   <maintainer email="michael.ripperger@swri.org">Michael Ripperger</maintainer>
   <author email="tyler.marr@swri.org">Tyler Marr</author>

@@ -2,8 +2,8 @@
 Changelog for package snp_tpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+8.0.0 (2026-03-27)
+------------------
 * Added spin to ROI selection mesh modifier (`#209 <https://github.com/marip8/scan_n_plan_workshop/issues/209>`_)
 * Updated `noether` and utilized `noether_ros2` TPP server (`#181 <https://github.com/marip8/scan_n_plan_workshop/issues/181>`_)
 * Drop support for ROS2 Foxy (`#180 <https://github.com/marip8/scan_n_plan_workshop/issues/180>`_)

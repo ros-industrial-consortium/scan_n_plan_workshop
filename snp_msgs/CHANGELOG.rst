@@ -2,8 +2,8 @@
 Changelog for package snp_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+8.0.0 (2026-03-27)
+------------------
 * Support planning for dynamic scan motion generation (`#190 <https://github.com/marip8/scan_n_plan_workshop/issues/190>`_)
 * Removed unused execute motion plan service (`#185 <https://github.com/marip8/scan_n_plan_workshop/issues/185>`_)
 * Updated `noether` and utilize `noether_ros2` TPP server (`#181 <https://github.com/marip8/scan_n_plan_workshop/issues/181>`_)
