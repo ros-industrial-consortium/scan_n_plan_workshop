@@ -7,6 +7,7 @@
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/add_scan_link.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_collision/vhacd/convex_decomposition_vhacd.h>
@@ -82,6 +83,7 @@ static const std::string TRAJOPT_CARTESIAN_TOLERANCE_PARAM = "cartesian_toleranc
 static const std::string TRAJOPT_CARTESIAN_COEFFICIENT_PARAM = "cartesian_coefficient";
 
 // Topics
+static const std::string ROBOT_DESCRIPTION_TOPIC = "robot_description";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 
 // Services
@@ -114,7 +116,7 @@ tesseract_common::Toolpath fromMsg(const std::vector<snp_msgs::msg::ToolPath>& p
 }
 
 template <typename T>
-T get(rclcpp::Node::SharedPtr node, const std::string& key)
+T get(rclcpp::Node* node, const std::string& key)
 {
   T val;
   if (!node->get_parameter(key, val))
@@ -236,79 +238,94 @@ tesseract_planning::JointWaypoint rosJointStateToJointWaypoint(const sensor_msgs
   return jwp;
 }
 
-class PlanningServer
+class PlanningServer : public rclcpp::Node
 {
 public:
-  PlanningServer(rclcpp::Node::SharedPtr node)
-    : node_(node), env_(std::make_shared<tesseract_environment::Environment>())
+  PlanningServer(const std::string& node_name) : rclcpp::Node(node_name)
   {
     // Declare ROS parameters
-    node_->declare_parameter("robot_description", "");
-    node_->declare_parameter("robot_description_semantic", "");
-    node_->declare_parameter(VERBOSE_PARAM, false);
-    node_->declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, std::vector<std::string>{});
-    node_->declare_parameter<std::vector<std::string>>(SCAN_REDUCED_CONTACT_LINKS_PARAM, std::vector<std::string>{});
-    node_->declare_parameter<double>(OCTREE_RESOLUTION_PARAM, 0.010);
-    node_->declare_parameter<int>(MAX_CONVEX_HULLS, 64);
-    node_->declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");
+    declare_parameter("robot_description_semantic", "");
+    declare_parameter(VERBOSE_PARAM, false);
+    declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, std::vector<std::string>{});
+    declare_parameter<std::vector<std::string>>(SCAN_REDUCED_CONTACT_LINKS_PARAM, std::vector<std::string>{});
+    declare_parameter<double>(OCTREE_RESOLUTION_PARAM, 0.010);
+    declare_parameter<int>(MAX_CONVEX_HULLS, 64);
+    declare_parameter(COLLISION_OBJECT_TYPE_PARAM, "convex_mesh");
 
     // Profiles
-    node_->declare_parameter(MAX_TRANS_VEL_PARAM, 0.05);
-    node_->declare_parameter(MAX_ROT_VEL_PARAM, 1.571);
-    node_->declare_parameter(MAX_TRANS_ACC_PARAM, 0.1);
-    node_->declare_parameter(MAX_ROT_ACC_PARAM, 3.14159);
-    node_->declare_parameter<bool>(CHECK_JOINT_ACC_PARAM, false);
-    node_->declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
-    node_->declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
-    node_->declare_parameter<double>(LVS_PARAM, 0.05);
-    node_->declare_parameter<double>(MIN_CONTACT_DIST_PARAM, 0.0);
-    node_->declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
-    node_->declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
-    node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_TOLERANCE_PARAM, { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
-    node_->declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_COEFFICIENT_PARAM,
-                                                  { 2.5, 2.5, 2.5, 2.5, 2.5, 0.0 });
+    declare_parameter(MAX_TRANS_VEL_PARAM, 0.05);
+    declare_parameter(MAX_ROT_VEL_PARAM, 1.571);
+    declare_parameter(MAX_TRANS_ACC_PARAM, 0.1);
+    declare_parameter(MAX_ROT_ACC_PARAM, 3.14159);
+    declare_parameter<bool>(CHECK_JOINT_ACC_PARAM, false);
+    declare_parameter<double>(VEL_SCALE_PARAM, 1.0);
+    declare_parameter<double>(ACC_SCALE_PARAM, 1.0);
+    declare_parameter<double>(LVS_PARAM, 0.05);
+    declare_parameter<double>(MIN_CONTACT_DIST_PARAM, 0.0);
+    declare_parameter<double>(OMPL_MAX_PLANNING_TIME_PARAM, 5.0);
+    declare_parameter<double>(TCP_MAX_SPEED_PARAM, 0.25);
+    declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_TOLERANCE_PARAM, { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    declare_parameter<std::vector<double>>(TRAJOPT_CARTESIAN_COEFFICIENT_PARAM, { 2.5, 2.5, 2.5, 2.5, 2.5, 0.0 });
 
     // Task composer
-    node_->declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
-    node_->declare_parameter(RASTER_TASK_NAME_PARAM, "");
-    node_->declare_parameter(FREESPACE_TASK_NAME_PARAM, "");
+    declare_parameter(TASK_COMPOSER_CONFIG_FILE_PARAM, "");
+    declare_parameter(RASTER_TASK_NAME_PARAM, "");
+    declare_parameter(FREESPACE_TASK_NAME_PARAM, "");
 
+    // Create the ROS 2 interfaces
+    robot_description_sub_ = create_subscription<std_msgs::msg::String>(
+        ROBOT_DESCRIPTION_TOPIC, rclcpp::QoS(1).reliable().transient_local(),
+        std::bind(&PlanningServer::robotDescriptionCallback, this, std::placeholders::_1));
+    raster_server_ = create_service<snp_msgs::srv::GenerateMotionPlan>(
+        PLANNING_SERVICE,
+        std::bind(&PlanningServer::processMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
+    freespace_server_ = create_service<snp_msgs::srv::GenerateFreespaceMotionPlan>(
+        FREESPACE_PLANNING_SERVICE,
+        std::bind(&PlanningServer::freespaceMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
+    remove_scan_link_server_ = create_service<std_srvs::srv::Empty>(
+        REMOVE_SCAN_LINK_SERVICE,
+        std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
+    add_scan_link_server_ = create_service<snp_msgs::srv::AddScanLink>(
+        ADD_SCAN_LINK_SERVICE,
+        std::bind(&PlanningServer::addScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
+
+    RCLCPP_INFO(get_logger(), "Started SNP motion planning server");
+  }
+
+private:
+  void robotDescriptionCallback(std_msgs::msg::String::UniquePtr msg)
+  {
+    RCLCPP_INFO_STREAM(get_logger(), "Configuring environment...");
+    const auto urdf_string = msg->data;
+    const auto srdf_string = get<std::string>(this, "robot_description_semantic");
+
+    // Reset the Tesseract envionrment components
+    env_.reset();
+    plotter_.reset();
+    tesseract_monitor_.reset();
+
+    // Initialize the environment
+    auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+    env_ = std::make_shared<tesseract_environment::Environment>();
+    if (!env_->init(urdf_string, srdf_string, resource_locator))
     {
-      auto urdf_string = get<std::string>(node_, "robot_description");
-      auto srdf_string = get<std::string>(node_, "robot_description_semantic");
-      auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-      if (!env_->init(urdf_string, srdf_string, resource_locator))
-        throw std::runtime_error("Failed to initialize environment");
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to configure environment");
+      return;
     }
 
     // Create the plotter
     plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
 
     // Create the environment monitor
-    tesseract_monitor_ =
-        std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(node_, env_, TESSERACT_MONITOR_NAMESPACE);
+    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(shared_from_this(), env_,
+                                                                                       TESSERACT_MONITOR_NAMESPACE);
     tesseract_monitor_->setEnvironmentPublishingFrequency(30.0);
     tesseract_monitor_->startPublishingEnvironment();
     tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
 
-    // Advertise the ROS2 service
-    raster_server_ = node_->create_service<snp_msgs::srv::GenerateMotionPlan>(
-        PLANNING_SERVICE,
-        std::bind(&PlanningServer::processMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
-    freespace_server_ = node_->create_service<snp_msgs::srv::GenerateFreespaceMotionPlan>(
-        FREESPACE_PLANNING_SERVICE,
-        std::bind(&PlanningServer::freespaceMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
-    remove_scan_link_server_ = node_->create_service<std_srvs::srv::Empty>(
-        REMOVE_SCAN_LINK_SERVICE,
-        std::bind(&PlanningServer::removeScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
-    add_scan_link_server_ = node_->create_service<snp_msgs::srv::AddScanLink>(
-        ADD_SCAN_LINK_SERVICE,
-        std::bind(&PlanningServer::addScanLinkCallback, this, std::placeholders::_1, std::placeholders::_2));
-
-    RCLCPP_INFO(node_->get_logger(), "Started SNP motion planning server");
+    RCLCPP_INFO_STREAM(get_logger(), "Successfully configured environment");
   }
 
-private:
   tesseract_planning::CompositeInstruction createProgram(const tesseract_common::ManipulatorInfo& info,
                                                          const tesseract_common::Toolpath& raster_strips)
   {
@@ -391,7 +408,7 @@ private:
   {
     // Add the scan as a collision object to the environment
     {
-      auto collision_object_type = get<std::string>(node_, COLLISION_OBJECT_TYPE_PARAM);
+      auto collision_object_type = get<std::string>(this, COLLISION_OBJECT_TYPE_PARAM);
       std::vector<tesseract_geometry::Geometry::Ptr> collision_objects;
       if (collision_object_type == "convex_mesh")
         collision_objects = scanMeshToConvexMesh(mesh_filename);
@@ -399,14 +416,14 @@ private:
         collision_objects = scanMeshToMesh(mesh_filename);
       else if (collision_object_type == "octree")
       {
-        double octree_resolution = get<double>(node_, OCTREE_RESOLUTION_PARAM);
+        double octree_resolution = get<double>(this, OCTREE_RESOLUTION_PARAM);
         if (octree_resolution < std::numeric_limits<double>::epsilon())
           throw std::runtime_error("Octree resolution must be > 0.0");
         collision_objects = { scanMeshToOctree(mesh_filename, octree_resolution) };
       }
       else if (collision_object_type == "convex_decomposition")
       {
-        auto max_convex_hulls = static_cast<uint32_t>(get<int>(node_, MAX_CONVEX_HULLS));
+        auto max_convex_hulls = static_cast<uint32_t>(get<int>(this, MAX_CONVEX_HULLS));
         collision_objects = scanMeshToConvexDecomposition(mesh_filename, max_convex_hulls);
       }
       else
@@ -419,20 +436,38 @@ private:
       }
 
       tesseract_environment::Commands env_cmds = createScanAdditionCommands(
-          collision_objects, mesh_frame, get<std::vector<std::string>>(node_, SCAN_DISABLED_CONTACT_LINKS));
+          collision_objects, mesh_frame, get<std::vector<std::string>>(this, SCAN_DISABLED_CONTACT_LINKS));
 
       env_->applyCommands(env_cmds);
     }
   }
 
-  void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
+  void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr,
+                              std_srvs::srv::Empty::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      RCLCPP_ERROR_STREAM(get_logger(),
+                          "Environment is not yet configured. Waiting for a robot description message on topic '"
+                              << robot_description_sub_->get_topic_name() << "'");
+      return;
+    }
     removeScanLink();
   }
 
   void addScanLinkCallback(const snp_msgs::srv::AddScanLink::Request::SharedPtr req,
                            snp_msgs::srv::AddScanLink::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      res->success = false;
+      std::stringstream ss;
+      ss << "Environment is not yet configured. Waiting for a robot description message on topic '"
+         << robot_description_sub_->get_topic_name() << "'";
+      res->message = ss.str();
+      return;
+    }
+
     try
     {
       addScanLink(req->mesh_filename, req->mesh_frame);
@@ -452,16 +487,16 @@ private:
     // Add custom profiles
     {
       // Get the default minimum distance allowable between any two links
-      auto min_contact_dist = get<double>(node_, MIN_CONTACT_DIST_PARAM);
-      auto longest_valid_segment_length = get<double>(node_, LVS_PARAM);
+      auto min_contact_dist = get<double>(this, MIN_CONTACT_DIST_PARAM);
+      auto longest_valid_segment_length = get<double>(this, LVS_PARAM);
 
-      auto cart_tolerance_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_TOLERANCE_PARAM);
+      auto cart_tolerance_vector = get<std::vector<double>>(this, TRAJOPT_CARTESIAN_TOLERANCE_PARAM);
       if (cart_tolerance_vector.size() != 6)
         throw std::runtime_error("Cartesian tolerance must be of size 6, given a vector of size " +
                                  std::to_string(cart_tolerance_vector.size()));
       Eigen::VectorXd cart_tolerance = trajopt_common::toVectorXd(cart_tolerance_vector);
 
-      auto cart_coeff_vector = get<std::vector<double>>(node_, TRAJOPT_CARTESIAN_COEFFICIENT_PARAM);
+      auto cart_coeff_vector = get<std::vector<double>>(this, TRAJOPT_CARTESIAN_COEFFICIENT_PARAM);
       if (cart_coeff_vector.size() != 6)
         throw std::runtime_error("Cartesian coefficient must be of size 6, given a vector of size " +
                                  std::to_string(cart_coeff_vector.size()));
@@ -472,7 +507,7 @@ private:
       // very close to the scan but still should not contact it
       std::vector<ExplicitCollisionPair> collision_pairs;
       {
-        auto scan_contact_links = get<std::vector<std::string>>(node_, SCAN_REDUCED_CONTACT_LINKS_PARAM);
+        auto scan_contact_links = get<std::vector<std::string>>(this, SCAN_REDUCED_CONTACT_LINKS_PARAM);
         for (const std::string& link : scan_contact_links)
           if (!link.empty())
             collision_pairs.emplace_back(link, SCAN_LINK_NAME, 0.0);
@@ -484,7 +519,7 @@ private:
       // OMPL
       {
         auto profile = createOMPLProfile(min_contact_dist, collision_pairs, longest_valid_segment_length);
-        profile->solver_config.planning_time = get<double>(node_, OMPL_MAX_PLANNING_TIME_PARAM);
+        profile->solver_config.planning_time = get<double>(this, OMPL_MAX_PLANNING_TIME_PARAM);
         profile_dict->addProfile(OMPL_DEFAULT_NAMESPACE, PROFILE, profile);
       }
 
@@ -505,9 +540,9 @@ private:
                                std::make_shared<tesseract_planning::MinLengthProfile>(6));
 
       auto velocity_scaling_factor =
-          clamp(get<double>(node_, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
+          clamp(get<double>(this, VEL_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
       auto acceleration_scaling_factor =
-          clamp(get<double>(node_, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
+          clamp(get<double>(this, ACC_SCALE_PARAM), std::numeric_limits<double>::epsilon(), 1.0);
 
       // ISP profile
       profile_dict->addProfile(ISP_DEFAULT_NAMESPACE, PROFILE,
@@ -520,22 +555,22 @@ private:
           createContactCheckProfile(longest_valid_segment_length, min_contact_dist, collision_pairs));
 
       // Constant TCP time parameterization profile
-      auto vel_trans = get<double>(node_, MAX_TRANS_VEL_PARAM);
-      auto vel_rot = get<double>(node_, MAX_ROT_VEL_PARAM);
-      auto acc_trans = get<double>(node_, MAX_TRANS_ACC_PARAM);
-      auto acc_rot = get<double>(node_, MAX_ROT_ACC_PARAM);
+      auto vel_trans = get<double>(this, MAX_TRANS_VEL_PARAM);
+      auto vel_rot = get<double>(this, MAX_ROT_VEL_PARAM);
+      auto acc_trans = get<double>(this, MAX_TRANS_ACC_PARAM);
+      auto acc_rot = get<double>(this, MAX_ROT_ACC_PARAM);
       auto cart_time_param_profile = std::make_shared<snp_motion_planning::ConstantTCPSpeedTimeParameterizationProfile>(
           vel_trans, vel_rot, acc_trans, acc_rot, velocity_scaling_factor, acceleration_scaling_factor);
       profile_dict->addProfile(CONSTANT_TCP_SPEED_TIME_PARAM_TASK_NAME, PROFILE, cart_time_param_profile);
 
       // Kinematic limit check
-      auto check_joint_acc = get<bool>(node_, CHECK_JOINT_ACC_PARAM);
+      auto check_joint_acc = get<bool>(this, CHECK_JOINT_ACC_PARAM);
       auto kin_limit_check_profile =
           std::make_shared<snp_motion_planning::KinematicLimitsCheckProfile>(true, true, check_joint_acc);
       profile_dict->addProfile(KINEMATIC_LIMITS_CHECK_TASK_NAME, PROFILE, kin_limit_check_profile);
 
       // TCP speed limit task
-      double tcp_max_speed = get<double>(node_, TCP_MAX_SPEED_PARAM);  // m/s
+      double tcp_max_speed = get<double>(this, TCP_MAX_SPEED_PARAM);  // m/s
       auto tcp_speed_limiter_profile = std::make_shared<snp_motion_planning::TCPSpeedLimiterProfile>(tcp_max_speed);
       profile_dict->addProfile(TCP_SPEED_LIMITER_TASK_NAME, PROFILE, tcp_speed_limiter_profile);
     }
@@ -548,7 +583,7 @@ private:
                                                 const std::string& task_name)
   {
     // Set up task composer problem
-    auto task_composer_config_file = get<std::string>(node_, TASK_COMPOSER_CONFIG_FILE_PARAM);
+    auto task_composer_config_file = get<std::string>(this, TASK_COMPOSER_CONFIG_FILE_PARAM);
     const YAML::Node task_composer_config = YAML::LoadFile(task_composer_config_file);
     tesseract_planning::TaskComposerPluginFactory factory(task_composer_config, *env_->getResourceLocator());
 
@@ -570,7 +605,7 @@ private:
 
     // Update log level for debugging
     auto log_level = console_bridge::getLogLevel();
-    if (get<bool>(node_, VERBOSE_PARAM))
+    if (get<bool>(this, VERBOSE_PARAM))
     {
       console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
@@ -634,9 +669,19 @@ private:
   void processMotionPlanCallback(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
                                  snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      res->success = false;
+      std::stringstream ss;
+      ss << "Environment is not yet configured. Waiting for a robot description message on topic '"
+         << robot_description_sub_->get_topic_name() << "'";
+      res->message = ss.str();
+      return;
+    }
+
     try
     {
-      RCLCPP_INFO_STREAM(node_->get_logger(), "Received motion planning request");
+      RCLCPP_INFO_STREAM(get_logger(), "Received motion planning request");
 
       // Create a manipulator info and program from the service request
       const std::string& base_frame = req->tool_paths.at(0).segments.at(0).header.frame_id;
@@ -659,7 +704,7 @@ private:
 
       // Invoke the planner
       auto pd = createProfileDictionary();
-      auto raster_task_name = get<std::string>(node_, RASTER_TASK_NAME_PARAM);
+      auto raster_task_name = get<std::string>(this, RASTER_TASK_NAME_PARAM);
       tesseract_planning::CompositeInstruction program_results = plan(program, pd, raster_task_name);
 
       if (program_results.size() < 3)
@@ -702,14 +747,24 @@ private:
       res->success = false;
     }
 
-    RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
+    RCLCPP_INFO_STREAM(get_logger(), res->message);
   }
   void freespaceMotionPlanCallback(const snp_msgs::srv::GenerateFreespaceMotionPlan::Request::SharedPtr req,
                                    snp_msgs::srv::GenerateFreespaceMotionPlan::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      res->success = false;
+      std::stringstream ss;
+      ss << "Environment is not yet configured. Waiting for a robot description message on topic '"
+         << robot_description_sub_->get_topic_name() << "'";
+      res->message = ss.str();
+      return;
+    }
+
     try
     {
-      RCLCPP_INFO_STREAM(node_->get_logger(), "Received freespace motion planning request");
+      RCLCPP_INFO_STREAM(get_logger(), "Received freespace motion planning request");
 
       tesseract_common::ManipulatorInfo manip_info;
       manip_info.manipulator = req->motion_group;
@@ -731,7 +786,7 @@ private:
 
       // Invoke the planner
       auto pd = createProfileDictionary();
-      auto freespace_task_name = get<std::string>(node_, FREESPACE_TASK_NAME_PARAM);
+      auto freespace_task_name = get<std::string>(this, FREESPACE_TASK_NAME_PARAM);
       tesseract_planning::CompositeInstruction program_results = plan(freespace_program, pd, freespace_task_name);
 
       // Return results
@@ -745,14 +800,15 @@ private:
       res->success = false;
     }
 
-    RCLCPP_INFO_STREAM(node_->get_logger(), res->message);
+    RCLCPP_INFO_STREAM(get_logger(), res->message);
   }
-
-  rclcpp::Node::SharedPtr node_;
 
   tesseract_environment::Environment::Ptr env_;
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
+
+  // ROS 2 Interfaces
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr robot_description_sub_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr raster_server_;
   rclcpp::Service<snp_msgs::srv::GenerateFreespaceMotionPlan>::SharedPtr freespace_server_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
@@ -762,10 +818,9 @@ private:
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>("snp_planning_server");
-  auto server = std::make_shared<PlanningServer>(node);
+  auto server = std::make_shared<PlanningServer>("snp_planning_server");
   rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node);
+  executor.add_node(server);
   executor.spin();
   rclcpp::shutdown();
 }
