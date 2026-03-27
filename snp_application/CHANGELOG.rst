@@ -2,6 +2,25 @@
 Changelog for package snp_application
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added BT node for publishing a visualization_msgs/Marker (`#208 <https://github.com/marip8/scan_n_plan_workshop/issues/208>`_)
+* Added ability to parse tool path message from string to publish empty tool path display (`#207 <https://github.com/marip8/scan_n_plan_workshop/issues/207>`_)
+* Replaced the QSettings status check with a check on the contents of the extracted QSettings value (`#200 <https://github.com/marip8/scan_n_plan_workshop/issues/200>`_)
+* Check last file value from QSettings before updating TPP config file parameter (`#197 <https://github.com/marip8/scan_n_plan_workshop/issues/197>`_)
+* Added missing translation/rotation filter distance parameter to StartReconstructionService behavior tree node (`#195 <https://github.com/marip8/scan_n_plan_workshop/issues/195>`_)
+* Added documentation about BT parameters (`#194 <https://github.com/marip8/scan_n_plan_workshop/issues/194>`_)
+* Fixed issues in BT XML definition (`#192 <https://github.com/marip8/scan_n_plan_workshop/issues/192>`_)
+* Added parameter for camera TCP frame (for use in motion planning) which can be different than the actual calibrated camera optical frame (`#193 <https://github.com/marip8/scan_n_plan_workshop/issues/193>`_)
+* Support planning for dynamic scan motion generation (`#190 <https://github.com/marip8/scan_n_plan_workshop/issues/190>`_)
+* Revised Behavior Tree Structure (`#189 <https://github.com/marip8/scan_n_plan_workshop/issues/189>`_)
+* Add Doxygen Documentation (`#187 <https://github.com/marip8/scan_n_plan_workshop/issues/187>`_)
+* Removed unused execute motion plan service (`#185 <https://github.com/marip8/scan_n_plan_workshop/issues/185>`_)
+* Updated `noether` and utilize `noether_ros2` TPP server (`#181 <https://github.com/marip8/scan_n_plan_workshop/issues/181>`_)
+* Dropped support for ROS2 Foxy (`#180 <https://github.com/marip8/scan_n_plan_workshop/issues/180>`_)
+* Removed setting of cursor position which caused segfaults (`#179 <https://github.com/marip8/scan_n_plan_workshop/issues/179>`_)
+* Contributors: Michael Ripperger
+
 7.0.0 (2025-08-18)
 ------------------
 

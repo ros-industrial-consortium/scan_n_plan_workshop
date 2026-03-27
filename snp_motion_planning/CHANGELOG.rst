@@ -2,6 +2,14 @@
 Changelog for package snp_motion_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Changed SNP motion planning node to subscribe to `robot_description` topic (`#213 <https://github.com/marip8/scan_n_plan_workshop/issues/213>`_)
+* Update `noether` and utilize `noether_ros2` TPP server (`#181 <https://github.com/marip8/scan_n_plan_workshop/issues/181>`_)
+* Dropped support for ROS2 Foxy (`#180 <https://github.com/marip8/scan_n_plan_workshop/issues/180>`_)
+* Add str type in launch param to make all yamls work (`#177 <https://github.com/marip8/scan_n_plan_workshop/issues/177>`_)
+* Contributors: Michael Ripperger, Nikhil Sethi
+
 7.0.0 (2025-08-18)
 ------------------
 * Removed the 180 degree rotation of the tool path waypoints in the motion planner (`#175 <https://github.com/marip8/scan_n_plan_workshop/issues/175>`_)

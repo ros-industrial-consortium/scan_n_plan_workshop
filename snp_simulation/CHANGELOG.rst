@@ -2,6 +2,11 @@
 Changelog for package snp_simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merged snp_scanning and snp_motion_execution packages into new snp_simulation package (`#214 <https://github.com/marip8/scan_n_plan_workshop/issues/214>`_)
+* Contributors: Michael Ripperger
+
 7.0.0 (2025-08-18)
 ------------------
 
