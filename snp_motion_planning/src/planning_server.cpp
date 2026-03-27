@@ -7,6 +7,7 @@
 #include <snp_msgs/srv/generate_motion_plan.hpp>
 #include <snp_msgs/srv/generate_freespace_motion_plan.hpp>
 #include <snp_msgs/srv/add_scan_link.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <tesseract_collision/bullet/convex_hull_utils.h>
 #include <tesseract_collision/vhacd/convex_decomposition_vhacd.h>
@@ -82,6 +83,7 @@ static const std::string TRAJOPT_CARTESIAN_TOLERANCE_PARAM = "cartesian_toleranc
 static const std::string TRAJOPT_CARTESIAN_COEFFICIENT_PARAM = "cartesian_coefficient";
 
 // Topics
+static const std::string ROBOT_DESCRIPTION_TOPIC = "robot_description";
 static const std::string TESSERACT_MONITOR_NAMESPACE = "snp_environment";
 
 // Services
@@ -239,11 +241,9 @@ tesseract_planning::JointWaypoint rosJointStateToJointWaypoint(const sensor_msgs
 class PlanningServer : public rclcpp::Node
 {
 public:
-  PlanningServer(const std::string& node_name)
-    : rclcpp::Node(node_name), env_(std::make_shared<tesseract_environment::Environment>())
+  PlanningServer(const std::string& node_name) : rclcpp::Node(node_name)
   {
     // Declare ROS parameters
-    declare_parameter("robot_description", "");
     declare_parameter("robot_description_semantic", "");
     declare_parameter(VERBOSE_PARAM, false);
     declare_parameter<std::vector<std::string>>(SCAN_DISABLED_CONTACT_LINKS, std::vector<std::string>{});
@@ -272,25 +272,10 @@ public:
     declare_parameter(RASTER_TASK_NAME_PARAM, "");
     declare_parameter(FREESPACE_TASK_NAME_PARAM, "");
 
-    {
-      auto urdf_string = get<std::string>(this, "robot_description");
-      auto srdf_string = get<std::string>(this, "robot_description_semantic");
-      auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-      if (!env_->init(urdf_string, srdf_string, resource_locator))
-        throw std::runtime_error("Failed to initialize environment");
-    }
-
-    // Create the plotter
-    plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
-
-    // Create the environment monitor
-    tesseract_monitor_ =
-        std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(this, env_, TESSERACT_MONITOR_NAMESPACE);
-    tesseract_monitor_->setEnvironmentPublishingFrequency(30.0);
-    tesseract_monitor_->startPublishingEnvironment();
-    tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
-
-    // Advertise the ROS2 service
+    // Create the ROS 2 interfaces
+    robot_description_sub_ = create_subscription<std_msgs::msg::String>(
+        ROBOT_DESCRIPTION_TOPIC, rclcpp::QoS(1).reliable().transient_local(),
+        std::bind(&PlanningServer::robotDescriptionCallback, this, std::placeholders::_1));
     raster_server_ = create_service<snp_msgs::srv::GenerateMotionPlan>(
         PLANNING_SERVICE,
         std::bind(&PlanningServer::processMotionPlanCallback, this, std::placeholders::_1, std::placeholders::_2));
@@ -308,6 +293,39 @@ public:
   }
 
 private:
+  void robotDescriptionCallback(std_msgs::msg::String::UniquePtr msg)
+  {
+    RCLCPP_INFO_STREAM(get_logger(), "Configuring environment...");
+    const auto urdf_string = msg->data;
+    const auto srdf_string = get<std::string>(this, "robot_description_semantic");
+
+    // Reset the Tesseract envionrment components
+    env_.reset();
+    plotter_.reset();
+    tesseract_monitor_.reset();
+
+    // Initialize the environment
+    auto resource_locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+    env_ = std::make_shared<tesseract_environment::Environment>();
+    if (!env_->init(urdf_string, srdf_string, resource_locator))
+    {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to configure environment");
+      return;
+    }
+
+    // Create the plotter
+    plotter_ = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getRootLinkName());
+
+    // Create the environment monitor
+    tesseract_monitor_ = std::make_shared<tesseract_monitoring::ROSEnvironmentMonitor>(shared_from_this(), env_,
+                                                                                       TESSERACT_MONITOR_NAMESPACE);
+    tesseract_monitor_->setEnvironmentPublishingFrequency(30.0);
+    tesseract_monitor_->startPublishingEnvironment();
+    tesseract_monitor_->startStateMonitor(tesseract_monitoring::DEFAULT_JOINT_STATES_TOPIC, false);
+
+    RCLCPP_INFO_STREAM(get_logger(), "Successfully configured environment");
+  }
+
   tesseract_planning::CompositeInstruction createProgram(const tesseract_common::ManipulatorInfo& info,
                                                          const tesseract_common::Toolpath& raster_strips)
   {
@@ -424,14 +442,32 @@ private:
     }
   }
 
-  void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
+  void removeScanLinkCallback(const std_srvs::srv::Empty::Request::SharedPtr,
+                              std_srvs::srv::Empty::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      RCLCPP_ERROR_STREAM(get_logger(),
+                          "Environment is not yet configured. Waiting for a robot description message on topic '"
+                              << robot_description_sub_->get_topic_name() << "'");
+      return;
+    }
     removeScanLink();
   }
 
   void addScanLinkCallback(const snp_msgs::srv::AddScanLink::Request::SharedPtr req,
                            snp_msgs::srv::AddScanLink::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      res->success = false;
+      std::stringstream ss;
+      ss << "Environment is not yet configured. Waiting for a robot description message on topic '"
+         << robot_description_sub_->get_topic_name() << "'";
+      res->message = ss.str();
+      return;
+    }
+
     try
     {
       addScanLink(req->mesh_filename, req->mesh_frame);
@@ -633,6 +669,16 @@ private:
   void processMotionPlanCallback(const snp_msgs::srv::GenerateMotionPlan::Request::SharedPtr req,
                                  snp_msgs::srv::GenerateMotionPlan::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      res->success = false;
+      std::stringstream ss;
+      ss << "Environment is not yet configured. Waiting for a robot description message on topic '"
+         << robot_description_sub_->get_topic_name() << "'";
+      res->message = ss.str();
+      return;
+    }
+
     try
     {
       RCLCPP_INFO_STREAM(get_logger(), "Received motion planning request");
@@ -706,6 +752,16 @@ private:
   void freespaceMotionPlanCallback(const snp_msgs::srv::GenerateFreespaceMotionPlan::Request::SharedPtr req,
                                    snp_msgs::srv::GenerateFreespaceMotionPlan::Response::SharedPtr res)
   {
+    if (!env_)
+    {
+      res->success = false;
+      std::stringstream ss;
+      ss << "Environment is not yet configured. Waiting for a robot description message on topic '"
+         << robot_description_sub_->get_topic_name() << "'";
+      res->message = ss.str();
+      return;
+    }
+
     try
     {
       RCLCPP_INFO_STREAM(get_logger(), "Received freespace motion planning request");
@@ -750,6 +806,9 @@ private:
   tesseract_environment::Environment::Ptr env_;
   tesseract_monitoring::ROSEnvironmentMonitor::Ptr tesseract_monitor_;
   tesseract_rosutils::ROSPlottingPtr plotter_;
+
+  // ROS 2 Interfaces
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr robot_description_sub_;
   rclcpp::Service<snp_msgs::srv::GenerateMotionPlan>::SharedPtr raster_server_;
   rclcpp::Service<snp_msgs::srv::GenerateFreespaceMotionPlan>::SharedPtr freespace_server_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr remove_scan_link_server_;
