@@ -554,6 +554,9 @@ private:
           CONTACT_CHECK_DEFAULT_NAMESPACE, PROFILE,
           createContactCheckProfile(longest_valid_segment_length, min_contact_dist, collision_pairs));
 
+      profile_dict->addProfile(UPSAMPLE_TRAJECTORY_DEFAULT_NAMESPACE, PROFILE,
+                               createUpsampleTrajectoryProfile(longest_valid_segment_length));
+
       // Constant TCP time parameterization profile
       auto vel_trans = get<double>(this, MAX_TRANS_VEL_PARAM);
       auto vel_rot = get<double>(this, MAX_ROT_VEL_PARAM);
