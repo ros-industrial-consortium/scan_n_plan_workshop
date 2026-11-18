@@ -773,7 +773,18 @@ private:
 
       tesseract_planning::CompositeInstruction freespace_program(PROFILE, manip_info);
 
-      tesseract_planning::JointWaypoint wp1 = rosJointStateToJointWaypoint(req->js1);
+      tesseract_planning::JointWaypoint wp1;
+      if (req->js1.name.size() > 0)
+      {
+        // If we got a starting joint states message
+        wp1 = rosJointStateToJointWaypoint(req->js1);
+      }
+      else
+      {
+        // Otherwise plan from the current state
+        const std::vector<std::string> joint_names = env_->getJointGroup(manip_info.manipulator)->getJointNames();
+        wp1 = tesseract_planning::JointWaypoint{ joint_names, env_->getCurrentJointValues(joint_names) };
+      }
       tesseract_planning::JointWaypoint wp2 = rosJointStateToJointWaypoint(req->js2);
 
       // Define a freespace move to the first waypoint
